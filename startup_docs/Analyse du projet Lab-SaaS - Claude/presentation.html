@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Transcription Platform - Architecture Moderne</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #6366f1;
+            --secondary: #8b5cf6;
+            --accent: #ec4899;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --dark: #0f172a;
+            --light: #f8fafc;
+            --glass: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Hero Section */
+        .hero {
+            text-align: center;
+            padding: 4rem 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 30% 50%, rgba(139, 92, 246, 0.3) 0%, transparent 50%),
+                        radial-gradient(circle at 70% 80%, rgba(236, 72, 153, 0.3) 0%, transparent 50%);
+            z-index: -1;
+        }
+
+        .hero h1 {
+            font-size: 4rem;
+            font-weight: 900;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #fff 0%, #a5b4fc 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: fadeInUp 1s ease;
+        }
+
+        .hero .subtitle {
+            font-size: 1.5rem;
+            opacity: 0.9;
+            margin-bottom: 3rem;
+            animation: fadeInUp 1s ease 0.2s both;
+        }
+
+        .hero .badge {
+            display: inline-block;
+            padding: 0.5rem 1.5rem;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border-radius: 50px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            margin: 0.5rem;
+            font-weight: 600;
+            animation: fadeInUp 1s ease 0.4s both;
+        }
+
+        /* Glass Card */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 2rem;
+            margin: 2rem 0;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            animation: fadeInUp 0.8s ease;
+        }
+
+        .glass-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .glass-card h2 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .icon {
+            display: inline-block;
+            width: 2rem;
+            height: 2rem;
+            font-size: 2rem;
+        }
+
+        /* Grid Layout */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+
+        .grid-2 {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        @media (max-width: 768px) {
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Architecture Diagram */
+        .architecture {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+
+        .arch-layer {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-left: 4px solid var(--primary);
+        }
+
+        .arch-layer h4 {
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .tech-stack {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .tech-tag {
+            background: rgba(99, 102, 241, 0.3);
+            padding: 0.3rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            border: 1px solid rgba(99, 102, 241, 0.5);
+        }
+
+        /* Timeline */
+        .timeline {
+            position: relative;
+            padding-left: 2rem;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: linear-gradient(to bottom, var(--primary), var(--accent));
+        }
+
+        .timeline-item {
+            position: relative;
+            padding-left: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -2.5rem;
+            top: 0;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--primary);
+            border: 3px solid white;
+        }
+
+        .timeline-item h4 {
+            font-size: 1.3rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .timeline-item .day {
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        /* Comparison Table */
+        .comparison-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0 0.5rem;
+        }
+
+        .comparison-table thead {
+            background: rgba(99, 102, 241, 0.3);
+        }
+
+        .comparison-table th,
+        .comparison-table td {
+            padding: 1rem;
+            text-align: left;
+        }
+
+        .comparison-table tbody tr {
+            background: rgba(255, 255, 255, 0.05);
+            transition: background 0.3s ease;
+        }
+
+        .comparison-table tbody tr:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .star {
+            color: #fbbf24;
+        }
+
+        /* Feature Box */
+        .feature-box {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%);
+            border-radius: 15px;
+            padding: 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .feature-box:hover {
+            transform: scale(1.05);
+            border-color: var(--primary);
+        }
+
+        .feature-box h3 {
+            font-size: 1.3rem;
+            margin-bottom: 1rem;
+            color: #a5b4fc;
+        }
+
+        .feature-box ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .feature-box li {
+            padding: 0.5rem 0;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+
+        .feature-box li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: var(--success);
+            font-weight: bold;
+        }
+
+        /* Stats */
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 2rem;
+            text-align: center;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .stat-card .number {
+            font-size: 3rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, #fff 0%, var(--accent) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-card .label {
+            font-size: 1rem;
+            opacity: 0.8;
+            margin-top: 0.5rem;
+        }
+
+        /* Code Block */
+        .code-block {
+            background: rgba(15, 23, 42, 0.8);
+            border-radius: 10px;
+            padding: 1.5rem;
+            overflow-x: auto;
+            border-left: 4px solid var(--primary);
+            font-family: 'Fira Code', monospace;
+            font-size: 0.9rem;
+            line-height: 1.8;
+        }
+
+        .code-block pre {
+            margin: 0;
+        }
+
+        /* CTA Button */
+        .cta-section {
+            text-align: center;
+            padding: 4rem 2rem;
+            margin: 4rem 0;
+        }
+
+        .cta-button {
+            display: inline-block;
+            padding: 1.5rem 3rem;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 50px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.4);
+        }
+
+        .cta-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(99, 102, 241, 0.6);
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent);
+        }
+
+        /* Navigation */
+        .nav {
+            position: sticky;
+            top: 0;
+            background: rgba(15, 23, 42, 0.9);
+            backdrop-filter: blur(20px);
+            padding: 1rem 2rem;
+            z-index: 100;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .nav-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            color: var(--accent);
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, #fff 0%, var(--accent) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="nav">
+        <div class="nav-content">
+            <div class="logo">🚀 AI Platform</div>
+            <ul class="nav-links">
+                <li><a href="#architecture">Architecture</a></li>
+                <li><a href="#features">Fonctionnalités</a></li>
+                <li><a href="#timeline">Timeline</a></li>
+                <li><a href="#tech">Technologies</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <h1>AI Transcription Platform</h1>
+        <p class="subtitle">Plateforme SaaS Modulaire pour Services d'Intelligence Artificielle</p>
+        <div>
+            <span class="badge">FastAPI</span>
+            <span class="badge">Next.js</span>
+            <span class="badge">Assembly AI</span>
+            <span class="badge">Docker</span>
+            <span class="badge">PostgreSQL</span>
+        </div>
+    </section>
+
+    <div class="container">
+        <!-- Stats Section -->
+        <div class="stat-grid">
+            <div class="stat-card">
+                <div class="number">12</div>
+                <div class="label">Jours pour MVP</div>
+            </div>
+            <div class="stat-card">
+                <div class="number">5h</div>
+                <div class="label">Free Tier/mois</div>
+            </div>
+            <div class="stat-card">
+                <div class="number">95%</div>
+                <div class="label">Précision IA</div>
+            </div>
+            <div class="stat-card">
+                <div class="number pulse">0€</div>
+                <div class="label">Coût Dev Local</div>
+            </div>
+        </div>
+
+        <!-- Architecture Overview -->
+        <div class="glass-card" id="architecture">
+            <h2><span class="icon">🏗️</span> Architecture Technique</h2>
+            <div class="architecture">
+                <div class="arch-layer">
+                    <h4>🎨 Frontend Layer</h4>
+                    <div class="tech-stack">
+                        <span class="tech-tag">Next.js 14</span>
+                        <span class="tech-tag">Material-UI (MUI)</span>
+                        <span class="tech-tag">Sneat Template v3.0</span>
+                        <span class="tech-tag">TypeScript</span>
+                        <span class="tech-tag">React Query</span>
+                        <span class="tech-tag">Zustand</span>
+                    </div>
+                </div>
+
+                <div class="arch-layer">
+                    <h4>⚡ API Layer</h4>
+                    <div class="tech-stack">
+                        <span class="tech-tag">FastAPI</span>
+                        <span class="tech-tag">Pydantic</span>
+                        <span class="tech-tag">JWT Auth</span>
+                        <span class="tech-tag">WebSocket</span>
+                        <span class="tech-tag">REST API</span>
+                    </div>
+                </div>
+
+                <div class="arch-layer">
+                    <h4>🤖 IA Services Layer</h4>
+                    <div class="tech-stack">
+                        <span class="tech-tag">Assembly AI</span>
+                        <span class="tech-tag">yt-dlp</span>
+                        <span class="tech-tag">Celery Workers</span>
+                        <span class="tech-tag">LanguageTool</span>
+                    </div>
+                </div>
+
+                <div class="arch-layer">
+                    <h4>💾 Data Layer</h4>
+                    <div class="tech-stack">
+                        <span class="tech-tag">PostgreSQL 15</span>
+                        <span class="tech-tag">Redis 7</span>
+                        <span class="tech-tag">SQLAlchemy 2.0</span>
+                        <span class="tech-tag">Alembic</span>
+                    </div>
+                </div>
+
+                <div class="arch-layer">
+                    <h4>🐳 Infrastructure Layer</h4>
+                    <div class="tech-stack">
+                        <span class="tech-tag">Docker</span>
+                        <span class="tech-tag">Docker Compose</span>
+                        <span class="tech-tag">Nginx</span>
+                        <span class="tech-tag">Python 3.11+</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Features Grid -->
+        <div id="features">
+            <h2 style="text-align: center; margin: 3rem 0 2rem; font-size: 2.5rem;">✨ Fonctionnalités Clés</h2>
+            <div class="grid">
+                <div class="feature-box">
+                    <h3>🎥 Transcription YouTube</h3>
+                    <ul>
+                        <li>URL → Texte en minutes</li>
+                        <li>Support multilingue (FR, EN, AR)</li>
+                        <li>Extraction audio automatique</li>
+                        <li>Ponctuation intelligente</li>
+                    </ul>
+                </div>
+
+                <div class="feature-box">
+                    <h3>🔧 Correction IA</h3>
+                    <ul>
+                        <li>Post-traitement linguistique</li>
+                        <li>Normalisation du texte</li>
+                        <li>Segmentation paragraphes</li>
+                        <li>Formatage propre</li>
+                    </ul>
+                </div>
+
+                <div class="feature-box">
+                    <h3>⚡ Traitement Asynchrone</h3>
+                    <ul>
+                        <li>Jobs Celery distribués</li>
+                        <li>Updates temps réel</li>
+                        <li>File d'attente Redis</li>
+                        <li>Scalabilité horizontale</li>
+                    </ul>
+                </div>
+
+                <div class="feature-box">
+                    <h3>🎨 Interface Moderne</h3>
+                    <ul>
+                        <li>Template Sneat premium</li>
+                        <li>Composants Material-UI</li>
+                        <li>Design responsive</li>
+                        <li>UX optimisée</li>
+                    </ul>
+                </div>
+
+                <div class="feature-box">
+                    <h3>🔐 Sécurité Robuste</h3>
+                    <ul>
+                        <li>Authentification JWT</li>
+                        <li>HTTPS/SSL</li>
+                        <li>Validation stricte</li>
+                        <li>Rate limiting</li>
+                    </ul>
+                </div>
+
+                <div class="feature-box">
+                    <h3>📈 Architecture Évolutive</h3>
+                    <ul>
+                        <li>Modules IA extensibles</li>
+                        <li>Microservices ready</li>
+                        <li>API versionnée</li>
+                        <li>Documentation Swagger</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- API Comparison -->
+        <div class="glass-card">
+            <h2><span class="icon">🔍</span> Comparaison APIs Transcription</h2>
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Service</th>
+                        <th>Free Tier</th>
+                        <th>Prix/heure</th>
+                        <th>Multilingue</th>
+                        <th>Qualité</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr style="border-left: 4px solid var(--success);">
+                        <td><strong>Assembly AI</strong> ⭐ Recommandé</td>
+                        <td>5h/mois</td>
+                        <td>$0.90</td>
+                        <td>✅ Excellent</td>
+                        <td><span class="star">★★★★★</span></td>
+                    </tr>
+                    <tr>
+                        <td>OpenAI Whisper</td>
+                        <td>❌</td>
+                        <td>$0.36</td>
+                        <td>✅ Excellent</td>
+                        <td><span class="star">★★★★★</span></td>
+                    </tr>
+                    <tr>
+                        <td>Deepgram</td>
+                        <td>$200 crédits</td>
+                        <td>$0.81</td>
+                        <td>✅ Très bon</td>
+                        <td><span class="star">★★★★☆</span></td>
+                    </tr>
+                    <tr>
+                        <td>Google Speech-to-Text</td>
+                        <td>60min/mois</td>
+                        <td>$1.44</td>
+                        <td>✅ Bon</td>
+                        <td><span class="star">★★★★☆</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Implementation Timeline -->
+        <div class="glass-card" id="timeline">
+            <h2><span class="icon">📅</span> Plan d'Implémentation</h2>
+            <div class="timeline">
+                <div class="timeline-item">
+                    <h4><span class="day">Jour 1</span> - Configuration Environnement</h4>
+                    <p>Setup Docker, structure projet, installation dépendances, configuration bases</p>
+                </div>
+                <div class="timeline-item">
+                    <h4><span class="day">Jours 2-3</span> - Backend Core</h4>
+                    <p>FastAPI app, modèles SQLAlchemy, migrations Alembic, API endpoints de base</p>
+                </div>
+                <div class="timeline-item">
+                    <h4><span class="day">Jours 4-5</span> - Services IA</h4>
+                    <p>Intégration Assembly AI, extraction audio YouTube, service correction linguistique</p>
+                </div>
+                <div class="timeline-item">
+                    <h4><span class="day">Jour 6</span> - Tâches Celery</h4>
+                    <p>Configuration Celery, workers asynchrones, gestion file d'attente Redis</p>
+                </div>
+                <div class="timeline-item">
+                    <h4><span class="day">Jours 7-9</span> - Frontend</h4>
+                    <p>Intégration template Sneat, composants transcription, API client, WebSocket</p>
+                </div>
+                <div class="timeline-item">
+                    <h4><span class="day">Jours 10-11</span> - Tests & Intégration</h4>
+                    <p>Tests unitaires, tests E2E, debugging, optimisations performances</p>
+                </div>
+                <div class="timeline-item">
+                    <h4><span class="day">Jour 12</span> - Polish & Documentation</h4>
+                    <p>UX/UI finitions, documentation complète, guide déploiement</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tech Stack Detail -->
+        <div id="tech">
+            <h2 style="text-align: center; margin: 3rem 0 2rem; font-size: 2.5rem;">🛠️ Stack Technique Détaillée</h2>
+            <div class="grid grid-2">
+                <div class="glass-card">
+                    <h3>Backend Stack</h3>
+                    <div class="code-block">
+<pre>Python 3.11+
+├── FastAPI 0.104+        # Framework API moderne
+├── SQLAlchemy 2.0        # ORM puissant
+├── Pydantic 2.5          # Validation données
+├── Celery 5.3            # Tâches asynchrones
+├── Redis 5.0             # Cache & broker
+├── Alembic 1.12          # Migrations DB
+├── assemblyai 0.17       # API transcription
+└── yt-dlp 2023.11        # Extraction YouTube</pre>
+                    </div>
+                </div>
+
+                <div class="glass-card">
+                    <h3>Frontend Stack</h3>
+                    <div class="code-block">
+<pre>Node.js 18+
+├── Next.js 14            # Framework React
+├── Material-UI 5         # Composants UI
+├── Sneat Template 3.0    # Admin template
+├── TypeScript 5          # Typage statique
+├── React Query           # State serveur
+├── Zustand               # State client
+└── Axios                 # Client HTTP</pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Database Schema -->
+        <div class="glass-card">
+            <h2><span class="icon">💾</span> Modèle de Données</h2>
+            <div class="code-block">
+<pre>┌─────────────────────┐       ┌─────────────────────────┐
+│      users          │       │    transcriptions       │
+├─────────────────────┤       ├─────────────────────────┤
+│ id (UUID) PK        │───┐   │ id (UUID) PK            │
+│ email               │   └──▶│ user_id (UUID) FK       │
+│ hashed_password     │       │ youtube_url             │
+│ full_name           │       │ video_title             │
+│ is_active           │       │ language                │
+│ created_at          │       │ status                  │
+│ updated_at          │       │ raw_transcript          │
+└─────────────────────┘       │ corrected_transcript    │
+                              │ confidence_score        │
+                              │ created_at              │
+                              │ completed_at            │
+                              └─────────┬───────────────┘
+                                        │
+                                        │
+                              ┌─────────▼───────────────┐
+                              │      job_logs           │
+                              ├─────────────────────────┤
+                              │ id (SERIAL) PK          │
+                              │ transcription_id FK     │
+                              │ step                    │
+                              │ status                  │
+                              │ message                 │
+                              │ timestamp               │
+                              └─────────────────────────┘</pre>
+            </div>
+        </div>
+
+        <!-- Workflow Diagram -->
+        <div class="glass-card">
+            <h2><span class="icon">🔄</span> Flux de Traitement</h2>
+            <div class="code-block">
+<pre>
+USER INPUT                                    BACKEND PROCESSING
+─────────                                    ──────────────────
+
+📺 YouTube URL                               ┌─────────────────────┐
+     │                                       │  FastAPI Endpoint   │
+     └──────POST /api/v1/transcriptions────▶│  - Validate URL     │
+                                            │  - Create Job       │
+                                            │  - Return job_id    │
+                                            └──────────┬──────────┘
+                                                       │
+                                            ┌──────────▼──────────┐
+                                            │   Celery Queue      │
+                                            │   (Redis Broker)    │
+                                            └──────────┬──────────┘
+                                                       │
+                         ┌─────────────────────────────┴─────────────────────┐
+                         │                 Celery Worker                      │
+                         │                                                    │
+                         │  1️⃣  Download Audio (yt-dlp)                      │
+                         │      └─▶ Save to /tmp/audio/                       │
+                         │                                                    │
+                         │  2️⃣  Upload to Assembly AI                        │
+                         │      └─▶ Get transcript_id                         │
+                         │                                                    │
+                         │  3️⃣  Poll for Completion                          │
+                         │      └─▶ Check status every 5s                     │
+                         │                                                    │
+                         │  4️⃣  Retrieve Transcription                       │
+                         │      └─▶ Get raw text + metadata                   │
+                         │                                                    │
+                         │  5️⃣  Post-Processing                              │
+                         │      ├─▶ Correct punctuation                       │
+                         │      ├─▶ Normalize text                            │
+                         │      └─▶ Format paragraphs                         │
+                         │                                                    │
+                         │  6️⃣  Save to Database                             │
+                         │      └─▶ Update status: completed                  │
+                         │                                                    │
+                         └────────────────────────────────────────────────────┘
+                                                       │
+FRONTEND UPDATE                            ┌──────────▼──────────┐
+───────────────                            │   WebSocket Event   │
+                                          │   or Polling        │
+🔄 Real-time Status    ◀──────────────────│   - Progress update │
+                                          │   - Status change   │
+✅ Transcription Ready                     └─────────────────────┘
+</pre>
+            </div>
+        </div>
+
+        <!-- Future Modules -->
+        <div class="glass-card">
+            <h2><span class="icon">🚀</span> Modules IA Futurs</h2>
+            <div class="grid">
+                <div style="background: rgba(16, 185, 129, 0.1); padding: 1.5rem; border-radius: 10px; border-left: 4px solid var(--success);">
+                    <h3>📝 Résumé Intelligent</h3>
+                    <p>Génération automatique de résumés courts, moyens et longs à partir des transcriptions</p>
+                    <p style="margin-top: 1rem; opacity: 0.8; font-size: 0.9rem;">API: GPT-4 / Claude</p>
+                </div>
+
+                <div style="background: rgba(236, 72, 153, 0.1); padding: 1.5rem; border-radius: 10px; border-left: 4px solid var(--accent);">
+                    <h3>🔍 Analyse Sémantique</h3>
+                    <p>Extraction d'entités nommées, analyse de sentiments, identification des topics clés</p>
+                    <p style="margin-top: 1rem; opacity: 0.8; font-size: 0.9rem;">NLP: spaCy / Transformers</p>
+                </div>
+
+                <div style="background: rgba(245, 158, 11, 0.1); padding: 1.5rem; border-radius: 10px; border-left: 4px solid var(--warning);">
+                    <h3>🌐 Traduction Auto</h3>
+                    <p>Traduction multilingue des transcriptions vers 50+ langues</p>
+                    <p style="margin-top: 1rem; opacity: 0.8; font-size: 0.9rem;">API: DeepL / Google Translate</p>
+                </div>
+
+                <div style="background: rgba(99, 102, 241, 0.1); padding: 1.5rem; border-radius: 10px; border-left: 4px solid var(--primary);">
+                    <h3>✍️ Génération Contenu</h3>
+                    <p>Création automatique d'articles, scripts, notes structurées à partir des vidéos</p>
+                    <p style="margin-top: 1rem; opacity: 0.8; font-size: 0.9rem;">API: GPT-4 / Claude</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cost Estimation -->
+        <div class="glass-card">
+            <h2><span class="icon">💰</span> Estimation Coûts</h2>
+            <div class="grid grid-2">
+                <div style="background: rgba(16, 185, 129, 0.2); padding: 2rem; border-radius: 15px; text-align: center;">
+                    <h3 style="color: var(--success); font-size: 2rem;">Phase Développement</h3>
+                    <div style="font-size: 4rem; font-weight: 900; margin: 1rem 0;">0€</div>
+                    <p style="font-size: 1.2rem;">
+                        ✅ Assembly AI Free: 5h/mois<br>
+                        ✅ Docker Local: Gratuit<br>
+                        ✅ PostgreSQL: Gratuit<br>
+                        ✅ Redis: Gratuit
+                    </p>
+                </div>
+
+                <div style="background: rgba(99, 102, 241, 0.2); padding: 2rem; border-radius: 15px; text-align: center;">
+                    <h3 style="color: var(--primary); font-size: 2rem;">Production (100h/mois)</h3>
+                    <div style="font-size: 4rem; font-weight: 900; margin: 1rem 0;">~120€</div>
+                    <p style="font-size: 1.2rem;">
+                        📊 Assembly AI: 90€<br>
+                        🖥️ VPS 4GB: 20-40€<br>
+                        💾 Stockage: Inclus
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- CTA Section -->
+        <div class="cta-section">
+            <h2 style="font-size: 3rem; margin-bottom: 2rem;">Prêt à Démarrer ? 🚀</h2>
+            <p style="font-size: 1.3rem; margin-bottom: 3rem; opacity: 0.9;">
+                Architecture complète, code boilerplate, documentation détaillée<br>
+                Tout est prêt pour lancer votre plateforme IA !
+            </p>
+            <a href="#" class="cta-button">Télécharger le Projet Complet</a>
+        </div>
+
+        <!-- Footer -->
+        <div style="text-align: center; padding: 3rem 0; opacity: 0.7; border-top: 1px solid rgba(255, 255, 255, 0.1); margin-top: 4rem;">
+            <p>🎯 MVP Production-Ready en 12 jours</p>
+            <p style="margin-top: 1rem;">Architecture moderne • Scalable • Évolutive • Économique</p>
+            <p style="margin-top: 2rem; font-size: 0.9rem;">
+                Powered by FastAPI • Next.js • Assembly AI • Docker
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // Smooth scroll for navigation
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Animate elements on scroll
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -100px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.glass-card, .feature-box').forEach(el => {
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(30px)';
+            el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+            observer.observe(el);
+        });
+    </script>
+</body>
+</html>

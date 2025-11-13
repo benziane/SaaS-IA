@@ -1,0 +1,251 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: ai_platform_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: aiplatform
+      POSTGRES_PASSWORD: aiplatform_password
+      POSTGRES_DB: aiplatform_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - ai_platform_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aiplatform"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache & Message Broker
+  redis:
+    image: redis:7-alpine
+    container_name: ai_platform_redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass redis_password
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - ai_platform_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend API (FastAPI)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: ai_platform_backend
+    restart: unless-stopped
+    environment:
+      # Database
+      DATABASE_URL: postgresql://aiplatform:aiplatform_password@postgres:5432/aiplatform_db
+      
+      # Redis
+      REDIS_URL: redis://:redis_password@redis:6379/0
+      CELERY_BROKER_URL: redis://:redis_password@redis:6379/1
+      CELERY_RESULT_BACKEND: redis://:redis_password@redis:6379/2
+      
+      # API Keys (à remplacer par vos vraies clés)
+      ASSEMBLYAI_API_KEY: ${ASSEMBLYAI_API_KEY:-your_assemblyai_api_key_here}
+      
+      # Security
+      SECRET_KEY: ${SECRET_KEY:-your-super-secret-key-change-this-in-production}
+      ALGORITHM: HS256
+      ACCESS_TOKEN_EXPIRE_MINUTES: 30
+      
+      # CORS
+      BACKEND_CORS_ORIGINS: '["http://localhost:3000", "http://frontend:3000"]'
+      
+      # Environment
+      ENVIRONMENT: development
+      DEBUG: "true"
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+      - backend_uploads:/app/uploads
+      - backend_temp:/tmp
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - ai_platform_network
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  # Celery Worker
+  celery_worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: ai_platform_celery_worker
+    restart: unless-stopped
+    environment:
+      # Database
+      DATABASE_URL: postgresql://aiplatform:aiplatform_password@postgres:5432/aiplatform_db
+      
+      # Redis
+      REDIS_URL: redis://:redis_password@redis:6379/0
+      CELERY_BROKER_URL: redis://:redis_password@redis:6379/1
+      CELERY_RESULT_BACKEND: redis://:redis_password@redis:6379/2
+      
+      # API Keys
+      ASSEMBLYAI_API_KEY: ${ASSEMBLYAI_API_KEY:-your_assemblyai_api_key_here}
+      
+      # Environment
+      ENVIRONMENT: development
+      DEBUG: "true"
+    volumes:
+      - ./backend:/app
+      - backend_uploads:/app/uploads
+      - backend_temp:/tmp
+    depends_on:
+      - postgres
+      - redis
+      - backend
+    networks:
+      - ai_platform_network
+    command: celery -A app.core.celery_app worker --loglevel=info --concurrency=2
+
+  # Celery Beat (Scheduler - optionnel)
+  celery_beat:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: ai_platform_celery_beat
+    restart: unless-stopped
+    environment:
+      # Database
+      DATABASE_URL: postgresql://aiplatform:aiplatform_password@postgres:5432/aiplatform_db
+      
+      # Redis
+      REDIS_URL: redis://:redis_password@redis:6379/0
+      CELERY_BROKER_URL: redis://:redis_password@redis:6379/1
+      CELERY_RESULT_BACKEND: redis://:redis_password@redis:6379/2
+      
+      # Environment
+      ENVIRONMENT: development
+    volumes:
+      - ./backend:/app
+    depends_on:
+      - postgres
+      - redis
+      - backend
+    networks:
+      - ai_platform_network
+    command: celery -A app.core.celery_app beat --loglevel=info
+
+  # Frontend (Next.js)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: ai_platform_frontend
+    restart: unless-stopped
+    environment:
+      # Backend API URL
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+      NEXT_PUBLIC_WS_URL: ws://localhost:8000
+      
+      # Environment
+      NODE_ENV: development
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      - backend
+    networks:
+      - ai_platform_network
+    command: npm run dev
+
+  # Nginx Reverse Proxy (optionnel pour production)
+  nginx:
+    image: nginx:alpine
+    container_name: ai_platform_nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - ai_platform_network
+    profiles:
+      - production
+
+  # Flower (Celery Monitoring - optionnel)
+  flower:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: ai_platform_flower
+    restart: unless-stopped
+    environment:
+      CELERY_BROKER_URL: redis://:redis_password@redis:6379/1
+      CELERY_RESULT_BACKEND: redis://:redis_password@redis:6379/2
+      FLOWER_PORT: 5555
+    ports:
+      - "5555:5555"
+    depends_on:
+      - redis
+      - celery_worker
+    networks:
+      - ai_platform_network
+    command: celery -A app.core.celery_app flower --port=5555
+    profiles:
+      - monitoring
+
+  # PgAdmin (Database Management - optionnel)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: ai_platform_pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@aiplatform.com
+      PGADMIN_DEFAULT_PASSWORD: admin_password
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      - postgres
+    networks:
+      - ai_platform_network
+    profiles:
+      - monitoring
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  backend_uploads:
+    driver: local
+  backend_temp:
+    driver: local
+  pgadmin_data:
+    driver: local
+
+networks:
+  ai_platform_network:
+    driver: bridge

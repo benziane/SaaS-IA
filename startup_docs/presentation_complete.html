@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plateforme SaaS IA Modulaire - Présentation</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+:root {
+    --primary: #67e8f9;
+    --primary-dark: #22d3ee;
+    --secondary: #a5f3fc;
+    --bg: #ffffff;
+    --bg-light: #f0fdff;
+    --text: #475569;
+    --text-light: #64748b;
+    --border: #e0f2fe;
+    --success: #6ee7b7;
+    --warning: #fde047;
+    --danger: #fca5a5;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    overflow: hidden;
+}
+
+.slide {
+    width: 100vw;
+    height: 100vh;
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 80px 60px;
+    text-align: center;
+}
+
+.slide.active { display: flex; }
+
+h1 { font-size: 4rem; font-weight: 800; margin-bottom: 1rem; color: var(--text); }
+h2 { font-size: 3rem; font-weight: 700; margin-bottom: 1.5rem; color: var(--text); }
+h3 { font-size: 2rem; font-weight: 600; margin-bottom: 1rem; color: var(--text); }
+h4 { font-size: 1.5rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--text); }
+
+.subtitle { font-size: 1.5rem; color: var(--text-light); margin-bottom: 2rem; }
+p { font-size: 1.2rem; line-height: 1.8; margin-bottom: 1rem; }
+
+.badge {
+    display: inline-block;
+    padding: 8px 20px;
+    background: var(--primary);
+    color: #000;
+    font-weight: 600;
+    font-size: 0.9rem;
+    margin: 5px;
+}
+
+.badge-success { background: var(--success); }
+.badge-warning { background: var(--warning); }
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 30px;
+    max-width: 1200px;
+    margin: 40px auto;
+    width: 100%;
+}
+
+.box {
+    background: var(--bg-light);
+    border-left: 4px solid var(--primary);
+    padding: 30px;
+    text-align: left;
+}
+
+.box-danger {
+    background: var(--danger);
+    color: white;
+    border-left-color: #dc2626;
+}
+
+.box-danger h3, .box-danger li { color: white; }
+
+.box-success {
+    background: var(--success);
+    color: white;
+    border-left-color: #16a34a;
+}
+
+.box-success h3, .box-success li { color: white; }
+
+.card {
+    background: var(--bg-light);
+    border: 2px solid var(--border);
+    padding: 30px;
+    text-align: center;
+    transition: transform 0.3s;
+}
+
+.card:hover { transform: translateY(-5px); }
+
+.emoji { font-size: 3rem; margin-bottom: 15px; display: block; }
+
+ul { list-style: none; padding: 0; margin-top: 20px; }
+ul li { margin: 15px 0; font-size: 1.2rem; }
+ul li strong { color: var(--primary-dark); }
+
+code {
+    background: var(--bg-light);
+    padding: 4px 8px;
+    font-family: 'Courier New', monospace;
+    border: 1px solid var(--border);
+}
+
+pre {
+    background: var(--bg-light);
+    border: 2px solid var(--border);
+    padding: 20px;
+    text-align: left;
+    overflow-x: auto;
+}
+
+.navbar {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--bg);
+    border: 2px solid var(--border);
+    padding: 15px 30px;
+    display: flex;
+    gap: 20px;
+    z-index: 1000;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.navbar button {
+    background: var(--primary);
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+    font-weight: 600;
+    color: #000;
+}
+
+.navbar button:hover {
+    background: var(--primary-dark);
+}
+
+.progress-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 4px;
+    background: var(--primary);
+    transition: width 0.3s;
+    z-index: 999;
+}
+
+.slide-info {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    font-size: 1.2rem;
+    font-weight: 700;
+    background: var(--bg);
+    padding: 10px 20px;
+    border: 2px solid var(--primary);
+}
+
+@media (max-width: 768px) {
+    h1 { font-size: 2.5rem; }
+    h2 { font-size: 2rem; }
+    .subtitle { font-size: 1.2rem; }
+    .grid { grid-template-columns: 1fr; gap: 20px; }
+    .slide { padding: 60px 30px; }
+}
+    </style>
+</head>
+<body>
+    <div class="progress-bar" id="progressBar"></div>
+    
+    <div class="navbar">
+        <button onclick="prevSlide()">◀ Précédent</button>
+        <span id="counter">1 / 10</span>
+        <button onclick="nextSlide()">Suivant ▶</button>
+    </div>
+    
+    <div class="slide-info" id="slideInfo">1/10</div>
+
+    <!-- SLIDE 1 -->
+    <div class="slide active">
+        <h1>🚀 Plateforme SaaS IA Modulaire</h1>
+        <p class="subtitle">Écosystème Extensible & Scalable</p>
+        <div style="margin-top: 40px;">
+            <span class="badge badge-success">Architecture Grade S++</span>
+            <span class="badge">Event-Driven</span>
+            <span class="badge">Plugin System</span>
+        </div>
+        <div style="margin-top: 60px; font-size: 1.5rem;">
+            <p><strong style="color: var(--primary-dark); font-size: 2rem;">15 minutes</strong> pour ajouter une nouvelle fonctionnalité IA</p>
+            <p style="margin-top: 20px;">au lieu de <span style="text-decoration: line-through;">2-3 jours</span></p>
+        </div>
+    </div>
+
+    <!-- SLIDE 2 -->
+    <div class="slide">
+        <h2>⚠️ Le Problème</h2>
+        <div class="grid">
+            <div class="box box-danger">
+                <h3>❌ Avant</h3>
+                <ul>
+                    <li>⏱️ <strong>2-3 jours</strong> pour ajouter une fonctionnalité</li>
+                    <li>🔗 Code fortement couplé</li>
+                    <li>🐛 Tests difficiles</li>
+                    <li>📈 Scaling monolithique</li>
+                </ul>
+            </div>
+            <div class="card">
+                <div class="emoji">😓</div>
+                <h4>Impact Business</h4>
+                <p>Time-to-Market lent • Coûts élevés • Innovation freinée</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- SLIDE 3 -->
+    <div class="slide">
+        <h2>💡 La Solution</h2>
+        <div class="grid">
+            <div class="box box-success">
+                <h3>✅ Après</h3>
+                <ul>
+                    <li>⚡ <strong>15 minutes</strong> pour ajouter un module</li>
+                    <li>🧩 Modules découplés</li>
+                    <li>✅ Tests isolés</li>
+                    <li>📊 Scaling granulaire</li>
+                </ul>
+            </div>
+            <div class="card">
+                <div class="emoji">🎯</div>
+                <h4>Gain de Productivité</h4>
+                <div style="font-size: 3rem; font-weight: 700; color: var(--primary-dark); margin: 20px 0;">-95%</div>
+                <p>de temps économisé !</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- SLIDE 4 -->
+    <div class="slide">
+        <h2>🧩 Comment ça Marche ?</h2>
+        <p class="subtitle">Système Auto-Découvert en 5 Étapes</p>
+        <div style="max-width: 1000px; margin: 0 auto;">
+            <div class="box" style="margin: 15px 0;">
+                <h4>1️⃣ Créer un Module</h4>
+                <p>Créer un dossier avec <code>manifest.yaml</code></p>
+            </div>
+            <div class="box" style="margin: 15px 0;">
+                <h4>2️⃣ Découverte Auto</h4>
+                <p>L'orchestrateur détecte tous les modules</p>
+            </div>
+            <div class="box" style="margin: 15px 0;">
+                <h4>3️⃣ Initialisation</h4>
+                <p>Connexion aux dépendances et enregistrement</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- SLIDE 5 -->
+    <div class="slide">
+        <h2>📡 Event-Driven Architecture</h2>
+        <p class="subtitle">Communication Sans Couplage</p>
+        <div class="grid">
+            <div class="card">
+                <div class="emoji">📤</div>
+                <h4>Module A Émet</h4>
+                <pre>event_bus.publish(
+  "transcription.completed",
+  data={"job_id": "123"}
+)</pre>
+            </div>
+            <div class="card">
+                <div class="emoji">📥</div>
+                <h4>Module B Écoute</h4>
+                <pre>@event_bus.on(
+  "transcription.completed"
+)
+async def on_completed(event):
+  send_notification(...)</pre>
+            </div>
+        </div>
+        <div style="margin-top: 40px;">
+            <span class="badge">Pub/Sub</span>
+            <span class="badge">Asynchrone</span>
+            <span class="badge">Découplage Total</span>
+        </div>
+    </div>
+
+    <!-- SLIDE 6 -->
+    <div class="slide">
+        <h2>🎙️ Exemple : Module Transcription</h2>
+        <p class="subtitle">YouTube → Texte en 3 Étapes</p>
+        <div style="max-width: 900px; margin: 40px auto;">
+            <div class="box" style="margin: 15px 0;">
+                <h4>Étape 1 : Extraction Audio</h4>
+                <p>Avec <code>yt-dlp</code></p>
+            </div>
+            <div class="box" style="margin: 15px 0;">
+                <h4>Étape 2 : Transcription</h4>
+                <p>Via <strong>Assembly AI</strong> (multilingue)</p>
+            </div>
+            <div class="box" style="margin: 15px 0;">
+                <h4>Étape 3 : Correction</h4>
+                <p><strong>LanguageTool</strong> ou <strong>GPT-3.5</strong></p>
+            </div>
+        </div>
+        <div style="margin-top: 30px;">
+            <span class="badge badge-success">MVP Fonctionnel</span>
+            <span class="badge">Multi-langues</span>
+        </div>
+    </div>
+
+    <!-- SLIDE 7 -->
+    <div class="slide">
+        <h2>⚡ Ajouter un Module en 15 Min</h2>
+        <div style="max-width: 1000px; margin: 40px auto; text-align: left;">
+            <div class="box" style="margin: 20px 0;">
+                <h3 style="margin-bottom: 20px;">Les 5 Étapes ✨</h3>
+                <p style="margin: 15px 0;"><strong>1️⃣ Créer le dossier</strong><br><code>mkdir app/ai/modules/mon_module</code></p>
+                <p style="margin: 15px 0;"><strong>2️⃣ Copier les templates</strong><br>7 fichiers prêts à l'emploi</p>
+                <p style="margin: 15px 0;"><strong>3️⃣ Adapter le code</strong><br>Rechercher 🔴 À ADAPTER (5 min)</p>
+                <p style="margin: 15px 0;"><strong>4️⃣ Implémenter</strong><br>Logique métier (8 min)</p>
+                <p style="margin: 15px 0;"><strong>5️⃣ Redémarrer</strong><br><code>docker-compose restart backend</code></p>
+            </div>
+        </div>
+        <div style="margin-top: 40px; font-size: 2rem; font-weight: 700; color: var(--primary-dark);">
+            ✅ Module auto-intégré !
+        </div>
+    </div>
+
+    <!-- SLIDE 8 -->
+    <div class="slide">
+        <h2>🛠️ Stack Technique</h2>
+        <div class="grid" style="grid-template-columns: repeat(2, 1fr);">
+            <div class="card">
+                <div class="emoji">🖥️</div>
+                <h4>Backend</h4>
+                <p style="text-align: left; margin-top: 15px;">
+                    • FastAPI 0.109+<br>
+                    • Python 3.11+<br>
+                    • SQLModel<br>
+                    • Celery + Redis
+                </p>
+            </div>
+            <div class="card">
+                <div class="emoji">🎨</div>
+                <h4>Frontend</h4>
+                <p style="text-align: left; margin-top: 15px;">
+                    • Next.js 14<br>
+                    • Sneat MUI v3.0.0<br>
+                    • TypeScript 5.0+<br>
+                    • TanStack Query
+                </p>
+            </div>
+            <div class="card">
+                <div class="emoji">💾</div>
+                <h4>Data</h4>
+                <p style="text-align: left; margin-top: 15px;">
+                    • PostgreSQL 16<br>
+                    • Redis 7<br>
+                    • 98% cache hit rate
+                </p>
+            </div>
+            <div class="card">
+                <div class="emoji">🤖</div>
+                <h4>AI Services</h4>
+                <p style="text-align: left; margin-top: 15px;">
+                    • Assembly AI<br>
+                    • OpenAI GPT-4<br>
+                    • DeepL<br>
+                    • Claude API
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- SLIDE 9 -->
+    <div class="slide">
+        <h2>📊 Résultats & Métriques</h2>
+        <div class="grid" style="grid-template-columns: repeat(2, 1fr);">
+            <div class="card" style="background: linear-gradient(135deg, var(--success) 0%, var(--primary) 100%); color: white; border: none;">
+                <div style="font-size: 3rem; margin-bottom: 20px;">⚡</div>
+                <h4 style="color: white;">Temps de Dev</h4>
+                <div style="font-size: 3.5rem; font-weight: 700; margin: 20px 0;">-95%</div>
+                <p style="color: white;">15 min vs 2-3 jours</p>
+            </div>
+            <div class="card" style="background: linear-gradient(135deg, var(--primary) 0%, #a78bfa 100%); color: white; border: none;">
+                <div style="font-size: 3rem; margin-bottom: 20px;">🚀</div>
+                <h4 style="color: white;">API Performance</h4>
+                <div style="font-size: 3.5rem; font-weight: 700; margin: 20px 0;">&lt;100ms</div>
+                <p style="color: white;">p95 response time</p>
+            </div>
+            <div class="card">
+                <div class="emoji">🎯</div>
+                <h4>Cache Hit Rate</h4>
+                <div style="font-size: 2.5rem; font-weight: 700; color: var(--primary-dark); margin: 15px 0;">98%</div>
+            </div>
+            <div class="card">
+                <div class="emoji">👥</div>
+                <h4>Concurrent Users</h4>
+                <div style="font-size: 2.5rem; font-weight: 700; color: var(--primary-dark); margin: 15px 0;">2000+</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SLIDE 10 -->
+    <div class="slide">
+        <h2>🎯 Roadmap</h2>
+        <div class="grid" style="grid-template-columns: repeat(2, 1fr);">
+            <div class="card" style="border-left: 4px solid var(--success);">
+                <div class="emoji">✅</div>
+                <h4>Phase 1: MVP (S1-2)</h4>
+                <p style="text-align: left;">• Infrastructure core<br>• Module Transcription<br>• API + Docs<br>• Tests</p>
+                <span class="badge badge-success" style="margin-top: 15px;">COMPLÉTÉ</span>
+            </div>
+            <div class="card" style="border-left: 4px solid var(--warning);">
+                <div class="emoji">🔄</div>
+                <h4>Phase 2: Expansion (S3-4)</h4>
+                <p style="text-align: left;">• Module Résumé<br>• Module Traduction<br>• Interface Next.js<br>• Dashboard admin</p>
+                <span class="badge badge-warning" style="margin-top: 15px;">EN COURS</span>
+            </div>
+            <div class="card" style="border-left: 4px solid var(--primary);">
+                <div class="emoji">🔮</div>
+                <h4>Phase 3: Intelligence (S5-6)</h4>
+                <p style="text-align: left;">• Analyse Sémantique<br>• Génération<br>• Voice Synthesis<br>• Automation</p>
+                <span class="badge" style="margin-top: 15px;">À VENIR</span>
+            </div>
+            <div class="card" style="border-left: 4px solid #a78bfa;">
+                <div class="emoji">🚀</div>
+                <h4>Phase 4: Production (S7-9)</h4>
+                <p style="text-align: left;">• CI/CD complet<br>• Monitoring avancé<br>• Tests E2E<br>• Kubernetes</p>
+                <span class="badge" style="margin-top: 15px;">À VENIR</span>
+            </div>
+        </div>
+        <div style="margin-top: 50px; font-size: 1.5rem; font-weight: 600; color: var(--primary-dark);">
+            🎉 Merci ! Questions ?
+        </div>
+    </div>
+
+    <script>
+let currentSlide = 0;
+const slides = document.querySelectorAll('.slide');
+const totalSlides = slides.length;
+
+function showSlide(n) {
+    slides.forEach(s => s.classList.remove('active'));
+    currentSlide = (n + totalSlides) % totalSlides;
+    slides[currentSlide].classList.add('active');
+    updateUI();
+}
+
+function nextSlide() {
+    showSlide(currentSlide + 1);
+}
+
+function prevSlide() {
+    showSlide(currentSlide - 1);
+}
+
+function updateUI() {
+    document.getElementById('counter').textContent = `${currentSlide + 1} / ${totalSlides}`;
+    document.getElementById('slideInfo').textContent = `${currentSlide + 1}/${totalSlides}`;
+    document.getElementById('progressBar').style.width = `${((currentSlide + 1) / totalSlides) * 100}%`;
+}
+
+// Navigation clavier
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === ' ') {
+        e.preventDefault();
+        nextSlide();
+    }
+    if (e.key === 'ArrowLeft' || e.key === 'Backspace') {
+        e.preventDefault();
+        prevSlide();
+    }
+    if (e.key === 'Home') {
+        e.preventDefault();
+        showSlide(0);
+    }
+    if (e.key === 'End') {
+        e.preventDefault();
+        showSlide(totalSlides - 1);
+    }
+});
+
+// Swipe mobile
+let touchStartX = 0;
+let touchEndX = 0;
+document.addEventListener('touchstart', e => touchStartX = e.changedTouches[0].screenX);
+document.addEventListener('touchend', e => {
+    touchEndX = e.changedTouches[0].screenX;
+    if (touchStartX - touchEndX > 50) nextSlide();
+    if (touchEndX - touchStartX > 50) prevSlide();
+});
+
+// Molette de souris
+let lastScroll = Date.now();
+document.addEventListener('wheel', (e) => {
+    const now = Date.now();
+    if (now - lastScroll < 500) return;
+    lastScroll = now;
+    if (e.deltaY > 0) nextSlide();
+    else prevSlide();
+});
+
+updateUI();
+    </script>
+</body>
+</html>

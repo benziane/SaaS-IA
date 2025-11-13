@@ -1,0 +1,203 @@
+Text file: pyproject.toml
+Latest content with line numbers:
+1	# ============================================
+2	# LabSaaS Backend - Configuration Python
+3	# ============================================
+4	
+5	[project]
+6	name = "app"
+7	version = "0.1.0"
+8	description = "LabSaaS Backend API - FastAPI application for telecom devices management with AI assistance"
+9	readme = "README.md"
+10	requires-python = ">=3.11"
+11	license = { text = "Proprietary" }
+12	authors = [
+13	    { name = "Ibrahim BENZIANE", email = "benziane@gmail.com" }
+14	]
+15	
+16	# ============================================
+17	# DÉPENDANCES DE PRODUCTION
+18	# ============================================
+19	dependencies = [
+20	    # Framework Web
+21	    "fastapi>=0.109.0", # Framework FastAPI avec dernières features
+22	    "uvicorn[standard]>=0.27.0", # Serveur ASGI (avec uvloop pour performance)
+23	    # Configuration & Environment
+24	    "pydantic>=2.5.0", # Validation données (v2 obligatoire)
+25	    "pydantic-settings>=2.1.0", # Gestion configuration via .env
+26	    "python-dotenv>=1.0.0", # Chargement fichiers .env
+27	    # Logging
+28	    "structlog>=24.1.0", # Logs structurés JSON
+29	    "python-json-logger>=2.0.0", # JSON formatter pour logs
+30	    # À ajouter aux étapes suivantes :
+31	    # "sqlmodel>=0.0.14",            # ORM (Étape 2)
+32	    # "alembic>=1.13.0",             # Migrations DB (Étape 2)
+33	    # "asyncpg>=0.29.0",             # Driver PostgreSQL async (Étape 2)
+34	    # "python-jose[cryptography]>=3.3.0",  # JWT tokens (Étape 4)
+35	    # "passlib[bcrypt]>=1.7.4",      # Password hashing (Étape 4)
+36	    # "anthropic>=0.9.0",            # Claude API (Étape 12)
+37	    "redis[hiredis]>=5.0.1", # Redis client (async support)
+38	    "httpx>=0.27.0", # HTTP client async pour queries Prometheus
+39	    "prometheus-client>=0.20.0", # Prometheus metrics exposition
+40	    "prometheus-fastapi-instrumentator>=6.1.0", # Instrumentateur Prometheus pour FastAPI
+41	    "sqlmodel>=0.0.25",
+42	    "alembic>=1.16.5",
+43	    "asyncpg>=0.30.0",
+44	    "python-jose[cryptography]>=3.5.0",
+45	    "email-validator>=2.3.0",
+46	    "bcrypt==4.1.2",
+47	    "requests>=2.32.5",
+48	    "google-generativeai>=0.8.5",
+49	    "jinja2>=3.1.6",
+50	    "pandas>=2.3.3",
+51	    "openpyxl>=3.1.5",
+52	    "python-multipart>=0.0.20",
+53	    "sentry-sdk>=2.42.0",
+54	    "cachetools>=6.2.0",
+55	    "robotframework>=7.3.2",
+56	    "rq>=2.6.0",
+57	    "robotframework-databaselibrary>=2.3.2",
+58	    "robotframework-requests>=0.9.7",
+59	    "robotframework-pabot>=2.18.0", # Parallel test execution
+60	    "allure-robotframework>=2.14.0", # Allure reporting
+61	    "celery>=5.4.0", # Task scheduling
+62	    "apscheduler>=3.10.4", # Cron scheduling for campaigns (v2.21.0)
+63	    "croniter>=2.0.5", # Cron expression parsing and validation
+64	    "pytz>=2024.1", # Timezone support for schedules
+65	    "psycopg>=3.2.11",
+66	]
+67	
+68	# ============================================
+69	# DÉPENDANCES DE DÉVELOPPEMENT
+70	# ============================================
+71	[dependency-groups]
+72	dev = [
+73	    # Testing
+74	    "pytest>=7.4.0", # Framework de tests
+75	    "pytest-asyncio>=0.23.0", # Support async pour pytest
+76	    "pytest-cov>=4.1.0", # Coverage des tests
+77	    "pytest-mock>=3.12.0", # Mocking pour tests
+78	    "httpx>=0.26.0", # Client HTTP pour tester API
+79	    "docker>=7.0.0", # Docker SDK pour contrôle conteneurs monitoring
+80	    "pypiwin32>=223; sys_platform == 'win32'", # Docker Windows named pipe support
+81	    # Linting & Formatting
+82	    "ruff>=0.1.11", # Linter ultra-rapide (remplace flake8, isort, etc.)
+83	    "black>=24.1.0", # Code formatter
+84	    "mypy>=1.8.0", # Type checker statique
+85	    # Development tools
+86	    "ipython>=8.20.0", # REPL amélioré
+87	    "watchfiles>=0.21.0", # Hot reload pour développement
+88	]
+89	
+90	# ============================================
+91	# CONFIGURATION BLACK (Formatter)
+92	# ============================================
+93	[tool.black]
+94	line-length = 100
+95	target-version = ["py311"]
+96	include = '\.pyi?$'
+97	extend-exclude = '''
+98	/(
+99	    \.git
+100	  | \.venv
+101	  | \.mypy_cache
+102	  | \.pytest_cache
+103	  | __pycache__
+104	  | alembic/versions
+105	)/
+106	'''
+107	
+108	# ============================================
+109	# CONFIGURATION RUFF (Linter)
+110	# ============================================
+111	[tool.ruff]
+112	line-length = 100
+113	target-version = "py311"
+114	
+115	# Sélection des règles à activer
+116	lint.select = [
+117	    "E",   # pycodestyle errors
+118	    "W",   # pycodestyle warnings
+119	    "F",   # pyflakes
+120	    "I",   # isort (imports triés)
+121	    "N",   # pep8-naming
+122	    "UP",  # pyupgrade (syntaxe moderne Python)
+123	    "B",   # flake8-bugbear (bugs communs)
+124	    "C4",  # flake8-comprehensions
+125	    "SIM", # flake8-simplify
+126	    "RUF", # ruff-specific rules
+127	]
+128	
+129	# Ignorer certaines règles
+130	lint.ignore = [
+131	    "E501",  # Line too long (géré par black)
+132	    "B008",  # Do not perform function calls in argument defaults (FastAPI Depends)
+133	]
+134	
+135	# Fichiers/dossiers à exclure
+136	extend-exclude = [
+137	    "alembic/versions/*.py",
+138	    "__pycache__",
+139	    ".venv",
+140	]
+141	
+142	# ============================================
+143	# CONFIGURATION MYPY (Type Checker)
+144	# ============================================
+145	[tool.mypy]
+146	python_version = "3.11"
+147	strict = true
+148	warn_return_any = true
+149	warn_unused_configs = true
+150	disallow_untyped_defs = true
+151	plugins = ["pydantic.mypy"]
+152	
+153	# Ignorer imports manquants pour packages sans stubs
+154	[[tool.mypy.overrides]]
+155	module = [
+156	    "uvicorn.*",
+157	    "structlog.*",
+158	]
+159	ignore_missing_imports = true
+160	
+161	# ============================================
+162	# CONFIGURATION PYTEST
+163	# ============================================
+164	[tool.pytest.ini_options]
+165	minversion = "7.0"
+166	testpaths = ["tests"]
+167	python_files = ["test_*.py", "*_test.py"]
+168	python_functions = ["test_*"]
+169	asyncio_mode = "auto"
+170	addopts = [
+171	    "--verbose",
+172	    "--strict-markers",
+173	    "--cov=app",
+174	    "--cov-report=term-missing",
+175	    "--cov-report=html",
+176	]
+177	
+178	# ============================================
+179	# CONFIGURATION COVERAGE
+180	# ============================================
+181	[tool.coverage.run]
+182	source = ["app"]
+183	omit = [
+184	    "*/tests/*",
+185	    "*/__pycache__/*",
+186	    "*/.venv/*",
+187	]
+188	
+189	[tool.coverage.report]
+190	precision = 2
+191	show_missing = true
+192	skip_covered = false
+193	fail_under = 80  # CI échoue si coverage < 80%
+194	
+195	# ============================================
+196	# BUILD SYSTEM (uv)
+197	# ============================================
+198	[build-system]
+199	requires = ["hatchling"]
+200	build-backend = "hatchling.build"
+201	

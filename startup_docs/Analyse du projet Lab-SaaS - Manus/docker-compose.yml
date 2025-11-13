@@ -1,0 +1,187 @@
+Text file: docker-compose.yml
+Latest content with line numbers:
+1	services:
+2	  # PostgreSQL 16 - Base de données principale
+3	  postgres:
+4	    image: postgres:16-alpine
+5	    container_name: labsaas-postgres
+6	    environment:
+7	      POSTGRES_DB: labsaas
+8	      POSTGRES_USER: labsaas
+9	      POSTGRES_PASSWORD: labsaas_dev_password
+10	      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=en_US.utf8"
+11	    ports:
+12	      - "5432:5432"
+13	    volumes:
+14	      - postgres-data:/var/lib/postgresql/data
+15	      - ./backend/scripts/init-db.sql:/docker-entrypoint-initdb.d/init.sql:ro
+16	    networks:
+17	      - labsaas-network
+18	    healthcheck:
+19	      test: ["CMD-SHELL", "pg_isready -U labsaas -d labsaas"]
+20	      interval: 10s
+21	      timeout: 5s
+22	      retries: 5
+23	    restart: unless-stopped
+24	
+25	  # Redis 7 - Cache & Sessions
+26	  redis:
+27	    image: redis:7-alpine
+28	    container_name: labsaas-redis
+29	    ports:
+30	      - "6379:6379"
+31	    volumes:
+32	      - redis-data:/data
+33	    networks:
+34	      - labsaas-network
+35	    command: >
+36	      redis-server
+37	      --appendonly yes
+38	      --appendfsync everysec
+39	      --maxmemory 256mb
+40	      --maxmemory-policy allkeys-lru
+41	    healthcheck:
+42	      test: ["CMD", "redis-cli", "ping"]
+43	      interval: 10s
+44	      timeout: 3s
+45	      retries: 5
+46	    restart: unless-stopped
+47	
+48	  # Backend FastAPI (à décommenter après Étape 1)
+49	  # api:
+50	  #   build:
+51	  #     context: ./backend
+52	  #     dockerfile: Dockerfile
+53	  #   container_name: labsaas-api
+54	  #   environment:
+55	  #     DATABASE_URL: postgresql://labsaas:labsaas_dev_password@postgres:5432/labsaas
+56	  #     REDIS_URL: redis://redis:6379/0
+57	  #     JWT_SECRET: ${JWT_SECRET}
+58	  #     ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+59	  #   ports:
+60	  #     - "8000:8000"
+61	  #   volumes:
+62	  #     - ./backend:/app
+63	  #   depends_on:
+64	  #     postgres:
+65	  #       condition: service_healthy
+66	  #     redis:
+67	  #       condition: service_healthy
+68	  #   networks:
+69	  #     - labsaas-network
+70	  #   command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+71	  #   restart: unless-stopped
+72	
+73	  # Frontend React (à décommenter après Étape 8)
+74	  # web:
+75	  #   build:
+76	  #     context: ./frontend
+77	  #     dockerfile: Dockerfile
+78	  #   container_name: labsaas-web
+79	  #   ports:
+80	  #     - "5173:5173"
+81	  #   volumes:
+82	  #     - ./frontend:/app
+83	  #     - /app/node_modules
+84	  #   networks:
+85	  #     - labsaas-network
+86	  #   command: npm run dev -- --host
+87	  #   restart: unless-stopped
+88	
+89	  # Prometheus - Collecte métriques
+90	  prometheus:
+91	    image: prom/prometheus:latest
+92	    container_name: labsaas-prometheus
+93	    profiles: ["monitoring"]  # Ne démarre pas par défaut, contrôlé par Settings
+94	    ports:
+95	      - "9090:9090"
+96	    volumes:
+97	      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+98	      - ./monitoring/prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro
+99	      - prometheus-data:/prometheus
+100	    networks:
+101	      - labsaas-network
+102	    command:
+103	      - '--config.file=/etc/prometheus/prometheus.yml'
+104	      - '--storage.tsdb.path=/prometheus'
+105	      - '--web.enable-admin-api'
+106	      - '--web.enable-lifecycle'
+107	      - '--storage.tsdb.retention.time=15d'
+108	    restart: "no"  # Contrôlé manuellement depuis Settings
+109	    healthcheck:
+110	      test: ["CMD", "wget", "--spider", "-q", "http://localhost:9090/-/healthy"]
+111	      interval: 30s
+112	      timeout: 10s
+113	      retries: 3
+114	
+115	  # Alertmanager - Gestion alertes
+116	  alertmanager:
+117	    image: prom/alertmanager:latest
+118	    container_name: labsaas-alertmanager
+119	    profiles: ["monitoring"]  # Ne démarre pas par défaut, contrôlé par Settings
+120	    ports:
+121	      - "9093:9093"
+122	    volumes:
+123	      - ./monitoring/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+124	      - alertmanager-data:/alertmanager
+125	    networks:
+126	      - labsaas-network
+127	    command:
+128	      - '--config.file=/etc/alertmanager/alertmanager.yml'
+129	      - '--storage.path=/alertmanager'
+130	      - '--web.external-url=http://localhost:9093'
+131	    restart: "no"  # Contrôlé manuellement depuis Settings
+132	    healthcheck:
+133	      test: ["CMD", "wget", "--spider", "-q", "http://localhost:9093/-/healthy"]
+134	      interval: 30s
+135	      timeout: 10s
+136	      retries: 3
+137	    # depends_on retiré : permet contrôle indépendant depuis Settings
+138	
+139	  # Grafana - Dashboards
+140	  grafana:
+141	    image: grafana/grafana:latest
+142	    container_name: labsaas-grafana
+143	    profiles: ["monitoring"]  # Ne démarre pas par défaut, contrôlé par Settings
+144	    ports:
+145	      - "3000:3000"
+146	    volumes:
+147	      - grafana-data:/var/lib/grafana
+148	      - ./monitoring/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+149	      - ./monitoring/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+150	      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+151	    networks:
+152	      - labsaas-network
+153	    environment:
+154	      - GF_SECURITY_ADMIN_USER=admin
+155	      - GF_SECURITY_ADMIN_PASSWORD=admin
+156	      - GF_USERS_ALLOW_SIGN_UP=false
+157	      - GF_SERVER_ROOT_URL=http://localhost:3000
+158	      - GF_INSTALL_PLUGINS=grafana-piechart-panel
+159	      - GF_AUTH_ANONYMOUS_ENABLED=false
+160	    restart: "no"  # Contrôlé manuellement depuis Settings
+161	    healthcheck:
+162	      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/api/health"]
+163	      interval: 30s
+164	      timeout: 10s
+165	      retries: 3
+166	    # depends_on retiré : permet contrôle indépendant depuis Settings
+167	
+168	networks:
+169	  labsaas-network:
+170	    driver: bridge
+171	    name: labsaas-network
+172	
+173	volumes:
+174	  postgres-data:
+175	    name: labsaas-postgres-data
+176	  redis-data:
+177	    name: labsaas-redis-data
+178	  prometheus-data:
+179	    name: labsaas-prometheus-data
+180	  alertmanager-data:
+181	    name: labsaas-alertmanager-data
+182	  grafana-data:
+183	    name: labsaas-grafana-data
+184	
+185	

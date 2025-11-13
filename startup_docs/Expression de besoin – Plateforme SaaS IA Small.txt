@@ -1,0 +1,41 @@
+
+Tu es un designer / intégrateur Laravel expert (Blade + Tailwind, Livewire-ready). Ta mission : générer UNIQUEMENT un template Blade (ou à défaut un layout HTML/CSS très facile à convertir en Blade) pour la page suivante du projet “Sifate Voyage”.
+
+1. Inspirations de design :
+   - URL du site de référence : https://preview.wptravelkit.com/travel-scope/
+   - Explique comment tu reprends son style (structure, composants, animations) sans le copier à l’identique.
+
+2. Identité actuelle de Sifate Voyage :
+   - Site existant : https://www.sifatehajj.com/
+   - Activité : agence spécialisée Omra & Hajj.
+   - Palette à respecter : extraire les couleurs principales du site actuel (précise-les dans ta réponse et utilise-les dans le template).
+   - Tonalité visuelle : premium, spiritualité, confiance, modernité.
+   - Typographies : privilégier Google Fonts compatibles (par ex. Playfair Display + Inter ou équivalent).
+   - Iconographie : privilégier icônes orientées voyage / spiritualité (ex. Kaaba, avion, mosquée).
+
+3. Contraintes Laravel :
+   - Utiliser le format d’un layout Blade (`resources/views/layouts/...`) et/ou d’une page (`resources/views/...`).
+   - Prévoir les sections réutilisables (`@section`, `@yield`, `@include`) et les composants (`@component` ou `@include` adaptés).
+   - Prévoir les classes Tailwind existantes (le projet utilise Tailwind + Vite).
+   - Préparer les slots pour les données dynamiques (ex. `{{ $trip->name }}`) quand nécessaire, mais mets des placeholders explicites avec commentaires pour que je puisse remplacer facilement.
+   - Ne pas inclure le contrôleur, ni routes, ni Livewire : seulement le template.
+
+4. Structure attendue :
+   - Header avec navigation (liens génériques : Accueil, Offres Omra, Offres Hajj, À propos, Contact).
+   - Hero section inspirée du site de référence, mais adaptée à Sifate Voyage (headline, CTA double : “Découvrir les offres” / “Parler à un conseiller WhatsApp”).
+   - Sections suivantes : offres mises en avant, témoignages clients, accompagnement & guides, informations pratiques (visa, santé), bloc “Pourquoi Sifate Voyage ?”, FAQ rapide, footer complet.
+   - Prévoir un composant “Offre” réutilisable (card ou bloc).
+   - Prévoir des appels à l’action cohérents (CTA primaires et secondaires).
+
+5. Accessibilité & performance :
+   - HTML sémantique, attributs `aria`, textes alternatifs sur les images.
+  - Responsive design (mobile-first, breakpoints Tailwind).
+   - Optimisations : placeholders d’images avec classes Tailwind adaptées.
+
+6. Sortie attendue :
+   - Fournir d’abord un résumé de tes choix (couleurs, typographies, sections).
+   - Ensuite le template Blade complet (ou HTML/CSS prêt à convertir) avec commentaires pour les zones dynamiques.
+   - Inclure les directives Vite/Tailwind si nécessaire (`@vite(['resources/css/app.css', 'resources/js/app.js'])`).
+   - Aucune explication inutile après le code.
+
+Objectif : livrer un template premium, prêt à intégrer dans mon projet Laravel existant, aligné à l’identité Sifate Voyage mais inspiré du thème fourni.
