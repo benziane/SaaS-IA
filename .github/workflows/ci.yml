@@ -1,0 +1,189 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  backend-tests:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        python-version: ['3.11', '3.12']
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+        cache: 'pip'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        if [ -f v0/backend/requirements.txt ]; then
+          pip install -r v0/backend/requirements.txt
+        fi
+        pip install pytest pytest-cov pytest-asyncio black ruff mypy
+    
+    - name: Lint with ruff
+      run: |
+        if [ -d v0/backend ]; then
+          ruff check v0/backend/app
+        fi
+    
+    - name: Format check with black
+      run: |
+        if [ -d v0/backend ]; then
+          black --check v0/backend/app
+        fi
+    
+    - name: Type check with mypy
+      continue-on-error: true
+      run: |
+        if [ -d v0/backend ]; then
+          mypy v0/backend/app --ignore-missing-imports
+        fi
+    
+    - name: Run tests with pytest
+      env:
+        DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/test_db
+        REDIS_URL: redis://localhost:6379/0
+        ENVIRONMENT: test
+      run: |
+        if [ -d v0/backend ]; then
+          cd v0/backend
+          pytest --cov=app --cov-report=xml --cov-report=term
+        fi
+    
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v4
+      with:
+        file: ./v0/backend/coverage.xml
+        flags: backend
+        name: backend-coverage
+
+  frontend-tests:
+    name: Frontend Tests
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        node-version: ['18.x', '20.x']
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+        cache-dependency-path: v0/frontend/package-lock.json
+    
+    - name: Install dependencies
+      run: |
+        if [ -d v0/frontend ]; then
+          cd v0/frontend
+          npm ci
+        fi
+    
+    - name: Lint
+      run: |
+        if [ -d v0/frontend ]; then
+          cd v0/frontend
+          npm run lint || true
+        fi
+    
+    - name: Type check
+      run: |
+        if [ -d v0/frontend ]; then
+          cd v0/frontend
+          npm run type-check || true
+        fi
+    
+    - name: Run tests
+      run: |
+        if [ -d v0/frontend ]; then
+          cd v0/frontend
+          npm test || true
+        fi
+    
+    - name: Build
+      run: |
+        if [ -d v0/frontend ]; then
+          cd v0/frontend
+          npm run build || true
+        fi
+
+  docker-build:
+    name: Docker Build Test
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    
+    - name: Build backend image
+      if: hashFiles('v0/backend/Dockerfile') != ''
+      run: |
+        docker build -t saas-ia-backend:test v0/backend
+    
+    - name: Build frontend image
+      if: hashFiles('v0/frontend/Dockerfile') != ''
+      run: |
+        docker build -t saas-ia-frontend:test v0/frontend
+
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+    
+    - name: Upload Trivy results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: 'trivy-results.sarif'
+
