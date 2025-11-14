@@ -1,6 +1,6 @@
 /**
  * Auth Layout - Hybrid Approach (Sneat BlankLayout + MVP Auth)
- * Uses Sneat's BlankLayout for login/register pages
+ * Uses Sneat's BlankLayout for login/register pages - REFONTE
  */
 
 // Type Imports
@@ -9,8 +9,8 @@ import type { ChildrenType } from '@core/types';
 // Layout Imports
 import BlankLayout from '@layouts/BlankLayout';
 
-// HOC Imports
-import GuestOnlyRoute from '@/hocs/GuestOnlyRoute';
+// Guard Imports (REFONTE)
+import { GuestGuard } from '@/components/guards';
 
 // Util Imports
 import { getSystemMode } from '@core/utils/serverHelpers';
@@ -24,10 +24,10 @@ export default async function AuthLayout({ children }: ChildrenType) {
   const systemMode = await getSystemMode();
 
   return (
-    <GuestOnlyRoute>
+    <GuestGuard>
       <BlankLayout systemMode={systemMode}>
         {children}
       </BlankLayout>
-    </GuestOnlyRoute>
+    </GuestGuard>
   );
 }

@@ -9,7 +9,7 @@ import { toast } from 'sonner';
 
 import { extractErrorMessage } from '@/lib/apiClient';
 import { queryKeys } from '@/lib/queryClient';
-import { useAuthStore } from '@/lib/store';
+import { useAuth } from '@/contexts/AuthContext';
 
 import { authApi } from '../api';
 import type { LoginRequest, LoginResponse, RegisterRequest, User } from '../types';
@@ -50,22 +50,21 @@ export function useRegister(): UseMutationResult<User, Error, RegisterRequest> {
  * Login mutation
  */
 export function useLogin(): UseMutationResult<LoginResponse, Error, LoginRequest> {
-  const router = useRouter();
   const queryClient = useQueryClient();
-  const { login: loginStore } = useAuthStore();
+  const { login } = useAuth();
   
   return useMutation({
     mutationFn: (data: LoginRequest) => authApi.login(data),
-    onSuccess: async (response, variables) => {
-      // Store token FIRST (localStorage + Cookie for middleware)
+    onSuccess: async (response) => {
+      // IMPORTANT: Save token FIRST before calling getCurrentUser
+      // (apiClient needs it in localStorage to add Authorization header)
       localStorage.setItem('auth_token', response.access_token);
-      document.cookie = `auth_token=${response.access_token}; path=/; max-age=1800; SameSite=Lax`;
       
       // Get user data (now with token in headers)
       const user = await authApi.getCurrentUser();
       
-      // Update store
-      loginStore(user, response.access_token);
+      // Update context (handles cookie, redirect)
+      login(user, response.access_token);
       
       // Invalidate auth queries
       await queryClient.invalidateQueries({ queryKey: queryKeys.auth.all });
@@ -73,9 +72,6 @@ export function useLogin(): UseMutationResult<LoginResponse, Error, LoginRequest
       toast.success('Login successful', {
         description: `Welcome back, ${user.email}!`,
       });
-      
-      // Redirect to dashboard
-      router.push('/dashboard');
     },
     onError: (error: Error) => {
       toast.error('Failed to login', {
@@ -93,9 +89,8 @@ export function useLogin(): UseMutationResult<LoginResponse, Error, LoginRequest
  * Logout mutation
  */
 export function useLogout(): UseMutationResult<void, Error, void> {
-  const router = useRouter();
   const queryClient = useQueryClient();
-  const { logout: logoutStore } = useAuthStore();
+  const { logout } = useAuth();
   
   return useMutation({
     mutationFn: async () => {
@@ -103,19 +98,13 @@ export function useLogout(): UseMutationResult<void, Error, void> {
       return Promise.resolve();
     },
     onSuccess: () => {
-      // Clear store
-      logoutStore();
-      
-      // Clear cookie
-      document.cookie = 'auth_token=; path=/; max-age=0';
-      
       // Clear all queries
       queryClient.clear();
       
-      toast.success('Logged out successfully');
+      // Update context (handles localStorage, cookie, redirect)
+      logout();
       
-      // Redirect to login
-      router.push('/login');
+      toast.success('Logged out successfully');
     },
     onError: (error: Error) => {
       toast.error('Failed to logout', {

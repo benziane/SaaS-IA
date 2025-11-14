@@ -30,20 +30,31 @@ const AuthGuard = ({ children }: Props) => {
   const isLoading = useAuthStore(state => state.isLoading)
   const isInitialized = useAuthInit() // Initialiser l'auth au démarrage
 
+  console.log('[AuthGuard] State:', { isInitialized, isAuthenticated, isLoading });
+
   useEffect(() => {
+    console.log('[AuthGuard] useEffect triggered', { isInitialized, isAuthenticated, isLoading });
+    
     // Attendre que l'initialisation soit terminée
-    if (!isInitialized) return
+    if (!isInitialized) {
+      console.log('[AuthGuard] Waiting for initialization...');
+      return;
+    }
 
     // Si pas en cours de chargement et pas authentifié
     if (!isLoading && !isAuthenticated) {
       // Rediriger vers login avec redirect param
-      const currentPath = window.location.pathname
-      router.replace(`/login?redirect=${encodeURIComponent(currentPath)}`)
+      const currentPath = window.location.pathname;
+      console.log('[AuthGuard] Not authenticated, redirecting to login from:', currentPath);
+      router.replace(`/login?redirect=${encodeURIComponent(currentPath)}`);
+    } else {
+      console.log('[AuthGuard] User is authenticated or loading');
     }
   }, [isInitialized, isAuthenticated, isLoading, router])
 
   // Afficher loader pendant initialisation ou vérification auth
   if (!isInitialized || isLoading || !isAuthenticated) {
+    console.log('[AuthGuard] Showing loader:', { isInitialized, isLoading, isAuthenticated });
     return (
       <Box
         sx={{
@@ -58,6 +69,7 @@ const AuthGuard = ({ children }: Props) => {
     )
   }
 
+  console.log('[AuthGuard] Rendering children');
   // Utilisateur authentifié → afficher contenu
   return <>{children}</>
 }

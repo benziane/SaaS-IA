@@ -17,21 +17,21 @@ function Stop-ProcessOnPort {
         $connections = Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction SilentlyContinue
         
         if ($connections) {
-            $pids = $connections | Select-Object -ExpandProperty OwningProcess -Unique
+            $processList = $connections | Select-Object -ExpandProperty OwningProcess -Unique
             
-            Log "Found $($pids.Count) process(es) on port $Port" "Yellow"
+            Log "Found $($processList.Count) process(es) on port $Port" "Yellow"
             
-            foreach ($pid in $pids) {
+            foreach ($processId in $processList) {
                 try {
-                    $process = Get-Process -Id $pid -ErrorAction SilentlyContinue
+                    $process = Get-Process -Id $processId -ErrorAction SilentlyContinue
                     if ($process) {
-                        Log "  Stopping $ServiceName (PID: $pid, Name: $($process.Name))..." "Cyan"
-                        Stop-Process -Id $pid -Force -ErrorAction SilentlyContinue
+                        Log "  Stopping $ServiceName (PID: $processId, Name: $($process.Name))..." "Cyan"
+                        Stop-Process -Id $processId -Force -ErrorAction SilentlyContinue
                         Start-Sleep -Milliseconds 500
                         Log "  ✅ Process stopped" "Green"
                     }
                 } catch {
-                    Log "  ⚠️  Could not stop PID $pid" "Yellow"
+                    Log "  ⚠️  Could not stop PID $processId" "Yellow"
                 }
             }
             
@@ -51,7 +51,7 @@ function Stop-ProcessOnPort {
             return $true
         }
     } catch {
-        Log "❌ Error checking port $Port: $($_.Exception.Message)" "Red"
+        Log "Error checking port ${Port}: $($_.Exception.Message)" "Red"
         return $false
     }
 }

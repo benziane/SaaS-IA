@@ -69,14 +69,14 @@ function Stop-ProcessOnPort {
         $connections = Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction SilentlyContinue
         
         if ($connections) {
-            $pids = $connections | Select-Object -ExpandProperty OwningProcess -Unique
+            $processList = $connections | Select-Object -ExpandProperty OwningProcess -Unique
             
-            foreach ($pid in $pids) {
+            foreach ($processId in $processList) {
                 try {
-                    $process = Get-Process -Id $pid -ErrorAction SilentlyContinue
+                    $process = Get-Process -Id $processId -ErrorAction SilentlyContinue
                     if ($process) {
-                        Log "  [CLEANUP] Stopping $ServiceName on port $Port (PID: $pid)..." "Yellow"
-                        Stop-Process -Id $pid -Force -ErrorAction SilentlyContinue
+                        Log "  [CLEANUP] Stopping $ServiceName on port $Port (PID: $processId)..." "Yellow"
+                        Stop-Process -Id $processId -Force -ErrorAction SilentlyContinue
                         Start-Sleep -Milliseconds 500
                         Log "  [OK] Process stopped" "Green"
                     }
