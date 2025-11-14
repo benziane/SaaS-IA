@@ -1,5 +1,5 @@
 // Type Imports
-import type { VerticalMenuItemDataType, VerticalMenuSectionDataType } from '@menu/types'
+import type { VerticalMenuDataType as MenuDataType } from '@menu/vertical-menu'
 
 /**
  * Menu Types - SaaS-IA MVP
@@ -8,5 +8,5 @@ import type { VerticalMenuItemDataType, VerticalMenuSectionDataType } from '@men
  * Réexporte les types de @menu pour faciliter l'utilisation.
  */
 
-export type VerticalMenuDataType = VerticalMenuItemDataType | VerticalMenuSectionDataType
+export type VerticalMenuDataType = MenuDataType
 

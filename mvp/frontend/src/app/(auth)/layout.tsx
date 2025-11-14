@@ -12,14 +12,20 @@ import BlankLayout from '@layouts/BlankLayout';
 // HOC Imports
 import GuestOnlyRoute from '@/hocs/GuestOnlyRoute';
 
+// Util Imports
+import { getSystemMode } from '@core/utils/serverHelpers';
+
 /* ========================================================================
    COMPONENT
    ======================================================================== */
 
-export default function AuthLayout({ children }: ChildrenType) {
+export default async function AuthLayout({ children }: ChildrenType) {
+  // Vars
+  const systemMode = await getSystemMode();
+
   return (
     <GuestOnlyRoute>
-      <BlankLayout>
+      <BlankLayout systemMode={systemMode}>
         {children}
       </BlankLayout>
     </GuestOnlyRoute>

@@ -5,7 +5,7 @@ import { useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 
 // Hook Imports
-import { useAuth } from '@/features/auth/hooks/useAuth'
+import useAuth from '@/features/auth/hooks/useAuth'
 
 // Component Imports
 import { CircularProgress, Box } from '@mui/material'

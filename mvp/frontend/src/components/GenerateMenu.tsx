@@ -5,15 +5,8 @@ import type { ReactNode } from 'react'
 import type { ChipProps } from '@mui/material/Chip'
 
 // Type Imports
-import type {
-  VerticalMenuDataType,
-  VerticalSectionDataType,
-  VerticalSubMenuDataType,
-  VerticalMenuItemDataType,
-  HorizontalMenuDataType,
-  HorizontalSubMenuDataType,
-  HorizontalMenuItemDataType
-} from '@/types/menuTypes'
+import type { VerticalMenuDataType } from '@menu/vertical-menu'
+import type { HorizontalMenuDataType } from '@menu/horizontal-menu'
 
 // Component Imports
 import { SubMenu as HorizontalSubMenu, MenuItem as HorizontalMenuItem } from '@menu/horizontal-menu'

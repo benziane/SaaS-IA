@@ -19,7 +19,7 @@ import AuthGuard from '@/hocs/AuthGuard';
 export default function DashboardLayout({ children }: ChildrenType) {
   return (
     <AuthGuard>
-      <LayoutWrapper verticalLayout>
+      <LayoutWrapper verticalLayout={true}>
         {children}
       </LayoutWrapper>
     </AuthGuard>
