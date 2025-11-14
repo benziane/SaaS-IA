@@ -127,7 +127,7 @@ check-status.bat
 9. View Redis Logs
 10. Open Backend (http://localhost:8004)
 11. Open API Docs (http://localhost:8004/docs)
-12. Open Frontend (http://localhost:5174)
+12. Open Frontend (http://localhost:3002)
 13. Docker Compose Status
 14. Clean Only (No Restart)
 15. Restart with KeepDB
@@ -147,7 +147,7 @@ quick-commands.bat
 | Service | Port | Container |
 |---------|------|-----------|
 | Backend (FastAPI) | 8004 | saas-ia-mvp-backend |
-| Frontend (Next.js) | 5174 | - |
+| Frontend (Next.js) | 3002 | - |
 | PostgreSQL | 5435 | saas-ia-mvp-db |
 | Redis | 6382 | saas-ia-mvp-redis |
 
@@ -155,7 +155,7 @@ quick-commands.bat
 
 - 🐍 Backend: http://localhost:8004
 - 📚 API Docs: http://localhost:8004/docs
-- 🌐 Frontend: http://localhost:5174
+- 🌐 Frontend: http://localhost:3002
 - 🐘 PostgreSQL: postgresql://aiuser:aipassword@localhost:5435/ai_saas
 - 🔴 Redis: redis://localhost:6382
 

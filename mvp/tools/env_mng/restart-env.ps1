@@ -95,7 +95,7 @@ if (-not (Test-Docker)) {
 
 Step "STOPPING PROCESSES        "
 
-# Stop Frontend (Node.js on port 5174)
+# Stop Frontend (Node.js on port 3002)
 Get-Process node -ErrorAction SilentlyContinue | Where-Object {
     $_.Path -like "*SaaS-IA*"
 } | Stop-Process -Force -ErrorAction SilentlyContinue
@@ -262,8 +262,8 @@ if (-not (Test-Path "node_modules")) {
     Log "[OK] npm packages exist (skipped)" "Green"
 }
 
-# Start Frontend on port 5174 (Vite default)
-Log "Starting frontend on port 5174..." "Cyan"
+# Start Frontend on port 3002 (Vite default)
+Log "Starting frontend on port 3002..." "Cyan"
 Start-Process "pwsh.exe" -ArgumentList "-NoExit","-Command","cd '$FRONTEND'; npm run dev" -WorkingDirectory $FRONTEND
 
 Pop-Location
@@ -272,7 +272,7 @@ Pop-Location
 if (-not $SkipBrowser) {
     Log "[BROWSER] Opening browser..." "Cyan"
     Start-Sleep 3
-    Start-Process "http://localhost:5174"
+    Start-Process "http://localhost:3002"
 }
 
 # Wait for services
@@ -290,7 +290,7 @@ Log "Services:" "Cyan"
 Log "  Docker:     PostgreSQL:5435, Redis:6382" "White"
 Log "  Backend:    http://localhost:8004" "White"
 Log "  API Docs:   http://localhost:8004/docs" "White"
-Log "  Frontend:   http://localhost:5174" "White"
+Log "  Frontend:   http://localhost:3002" "White"
 Log ""
 Log "Logs:" "Cyan"
 Log "  Backend:   docker-compose logs -f saas-ia-backend" "White"

@@ -16,7 +16,7 @@ Scripts PowerShell ultra-optimisés pour gérer l'environnement SaaS-IA MVP :
 - ✅ **Restart** : Redémarrage avec nettoyage optionnel
 - ✅ **Check Status** : Vérification rapide de l'état des services
 - ⚡ **Parallélisation** : Checks ultra-rapides (<500ms)
-- 🎯 **Ports SaaS-IA** : Backend:8004, Frontend:5174, PostgreSQL:5435, Redis:6382
+- 🎯 **Ports SaaS-IA** : Backend:8004, Frontend:3002, PostgreSQL:5435, Redis:6382
 
 ---
 
@@ -55,7 +55,7 @@ check-status.bat
 - ✅ Vérifie et démarre Docker Desktop si nécessaire
 - ✅ Lance Docker Compose (Backend + PostgreSQL + Redis)
 - ✅ Installe les dépendances npm si nécessaire
-- ✅ Démarre le frontend Next.js (port 5174)
+- ✅ Démarre le frontend Next.js (port 3002)
 - ✅ Ouvre automatiquement le navigateur
 - ✅ Détecte si les services sont déjà en cours d'exécution
 
@@ -174,7 +174,7 @@ check-status.bat
 | Service | Port Externe | Port Interne | Container |
 |---------|--------------|--------------|-----------|
 | **Backend (FastAPI)** | 8004 | 8000 | saas-ia-mvp-backend |
-| **Frontend (Next.js)** | 5174 | 3000 | - |
+| **Frontend (Next.js)** | 3002 | 3000 | - |
 | **PostgreSQL** | 5435 | 5432 | saas-ia-mvp-db |
 | **Redis** | 6382 | 6379 | saas-ia-mvp-redis |
 
@@ -182,7 +182,7 @@ check-status.bat
 
 - 🐍 **Backend** : http://localhost:8004
 - 📚 **API Docs (Swagger)** : http://localhost:8004/docs
-- 🌐 **Frontend** : http://localhost:5174
+- 🌐 **Frontend** : http://localhost:3002
 - 🐘 **PostgreSQL** : postgresql://aiuser:aipassword@localhost:5435/ai_saas
 - 🔴 **Redis** : redis://localhost:6382
 
@@ -385,7 +385,7 @@ start-env.bat
 
 ```powershell
 # Vérifier quel processus utilise le port
-Get-NetTCPConnection -LocalPort 8004,5174,5435,6382 | 
+Get-NetTCPConnection -LocalPort 8004,3002,5435,6382 | 
     Select-Object LocalPort, OwningProcess
 
 # Arrêter proprement
@@ -507,7 +507,7 @@ mvp/tools/env_mng/
 # Dans start-env.ps1, stop-env.ps1, restart-env.ps1, check-status.ps1
 # Remplacer :
 8004  # Backend
-5174  # Frontend
+3002  # Frontend
 5435  # PostgreSQL
 6382  # Redis
 ```
@@ -568,7 +568,7 @@ $jobs += @{
 - ✅ Première version
 - ✅ Scripts séparés : start, stop, restart, check-status
 - ✅ Parallélisation ultra-rapide des checks
-- ✅ Adaptation des ports SaaS-IA (8004, 5174, 5435, 6382)
+- ✅ Adaptation des ports SaaS-IA (8004, 3002, 5435, 6382)
 - ✅ Health checks HTTP pour le backend
 - ✅ 3 modes de restart (full, quick, clean)
 - ✅ Option `-KeepDB`

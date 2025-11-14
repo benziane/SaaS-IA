@@ -36,15 +36,15 @@ Log ""
 
 Step "STOPPING PROCESSES        "
 
-# Stop Frontend (Node.js on port 5174)
+# Stop Frontend (Node.js on port 3002)
 $frontendProcesses = Get-Process node -ErrorAction SilentlyContinue | Where-Object {
     $_.Path -like "*SaaS-IA*" -or 
-    (Get-NetTCPConnection -OwningProcess $_.Id -ErrorAction SilentlyContinue | Where-Object { $_.LocalPort -eq 5174 })
+    (Get-NetTCPConnection -OwningProcess $_.Id -ErrorAction SilentlyContinue | Where-Object { $_.LocalPort -eq 3002 })
 }
 
 if ($frontendProcesses) {
     $frontendProcesses | Stop-Process -Force -ErrorAction SilentlyContinue
-    Log "  [OK] Stopped Frontend (Node.js port 5174)" "Cyan"
+    Log "  [OK] Stopped Frontend (Node.js port 3002)" "Cyan"
 } else {
     Log "  [INFO] Frontend not running" "Gray"
 }
