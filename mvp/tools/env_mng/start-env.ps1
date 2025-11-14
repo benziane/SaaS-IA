@@ -151,8 +151,8 @@ if (-not $BackendOnly) {
     Push-Location $FRONTEND
     
     # Check if already running
-    if (Test-Port 3002) {
-        Log "[WARN] Frontend already running on port 3002" "Yellow"
+    if (Test-Port 5174) {
+        Log "[WARN] Frontend already running on port 5174" "Yellow"
         Log "Run stop-env.bat first to restart" "Cyan"
     } else {
         # Check if node_modules exists (simple check like WeLAB)
@@ -173,18 +173,18 @@ if (-not $BackendOnly) {
             Log "[OK] npm packages exist (skipped)" "Green"
         }
         
-        # Start Frontend on port 3002 (SaaS-IA dedicated port)
-        Log "Starting frontend on port 3002..." "Cyan"
-        Start-Process "pwsh.exe" -ArgumentList "-NoExit","-Command","cd '$FRONTEND'; npm run dev -- --port 3002" -WorkingDirectory $FRONTEND
+        # Start Frontend on port 5174 (SaaS-IA dedicated port)
+        Log "Starting frontend on port 5174..." "Cyan"
+        Start-Process "pwsh.exe" -ArgumentList "-NoExit","-Command","cd '$FRONTEND'; npm run dev -- --port 5174" -WorkingDirectory $FRONTEND
         
         Start-Sleep 3
-        Log "[OK] Frontend:   http://localhost:3002" "Green"
+        Log "[OK] Frontend:   http://localhost:5174" "Green"
         
         # Open browser
         if (-not $SkipBrowser) {
             Log "Opening browser..." "Cyan"
             Start-Sleep 2
-            Start-Process "http://localhost:3002"
+            Start-Process "http://localhost:5174"
         }
     }
     
@@ -211,7 +211,7 @@ if (-not $FrontendOnly) {
 if (-not $BackendOnly) {
     Log ""
     Log "Frontend:" "Cyan"
-    Log "  App:        http://localhost:3002" "White"
+    Log "  App:        http://localhost:5174" "White"
 }
 
 Log ""

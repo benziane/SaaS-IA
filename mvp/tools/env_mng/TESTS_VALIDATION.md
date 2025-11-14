@@ -92,7 +92,7 @@
   "elapsed_ms": 5749.8021,
   "services": {
     "Backend": { "Status": "INACTIVE", "Port": 8004 },
-    "Frontend": { "Status": "INACTIVE", "Port": 3002 },
+    "Frontend": { "Status": "INACTIVE", "Port": 5174 },
     "PostgreSQL": { "Status": "INACTIVE", "Port": 5435 },
     "Redis": { "Status": "INACTIVE", "Port": 6382 },
     "Docker": { "Status": "OK", "Version": "28.5.1" }
@@ -120,7 +120,7 @@
 | Service | Port | État | Note |
 |---------|------|------|------|
 | **Backend** | 8004 | INACTIVE | Normal (non démarré) |
-| **Frontend** | 3002 | INACTIVE | Normal (non démarré) |
+| **Frontend** | 5174 | INACTIVE | Normal (non démarré) |
 | **PostgreSQL** | 5435 | INACTIVE | Normal (non démarré) |
 | **Redis** | 6382 | INACTIVE | Normal (non démarré) |
 | **Docker** | - | **RUNNING** | Version 28.5.1 ✅ |

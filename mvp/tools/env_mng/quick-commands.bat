@@ -22,7 +22,7 @@ echo  8. View PostgreSQL Logs
 echo  9. View Redis Logs
 echo  10. Open Backend (http://localhost:8004)
 echo  11. Open API Docs (http://localhost:8004/docs)
-echo  12. Open Frontend (http://localhost:3002)
+echo  12. Open Frontend (http://localhost:5174)
 echo  13. Docker Compose Status
 echo  14. Clean Only (No Restart)
 echo  15. Restart with KeepDB
@@ -142,8 +142,8 @@ goto MENU
 
 :OPEN_FRONTEND
 echo.
-echo Opening Frontend (http://localhost:3002)...
-start http://localhost:3002
+echo Opening Frontend (http://localhost:5174)...
+start http://localhost:5174
 timeout /t 2 >nul
 goto MENU
 

@@ -4,8 +4,8 @@
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 
-// Hook Imports
-import useAuth from '@/features/auth/hooks/useAuth'
+// Store Imports
+import { useAuthStore } from '@/lib/store'
 
 // Component Imports
 import { CircularProgress, Box } from '@mui/material'
@@ -25,7 +25,8 @@ type Props = {
 const AuthGuard = ({ children }: Props) => {
   // Hooks
   const router = useRouter()
-  const { isAuthenticated, isLoading } = useAuth()
+  const isAuthenticated = useAuthStore(state => state.isAuthenticated)
+  const isLoading = useAuthStore(state => state.isLoading)
 
   useEffect(() => {
     // Si pas en cours de chargement et pas authentifié

@@ -4,8 +4,8 @@
 import { useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 
-// Hook Imports
-import useAuth from '@/features/auth/hooks/useAuth'
+// Store Imports
+import { useAuthStore } from '@/lib/store'
 
 // Component Imports
 import { CircularProgress, Box } from '@mui/material'
@@ -28,7 +28,8 @@ const GuestOnlyRoute = ({ children }: Props) => {
   // Hooks
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { isAuthenticated, isLoading } = useAuth()
+  const isAuthenticated = useAuthStore(state => state.isAuthenticated)
+  const isLoading = useAuthStore(state => state.isLoading)
 
   useEffect(() => {
     // Si pas en cours de chargement et authentifié

@@ -146,7 +146,7 @@ function Get-AllServicesStatus {
             } catch {}
             
             return $result
-        } -ArgumentList 3002
+        } -ArgumentList 5174
         Name = "Frontend"
         Critical = $true
     }
@@ -299,7 +299,7 @@ function Show-Results {
         $details = "Port $($frontend.Port) | PID $($frontend.PID) | RAM $($frontend.Memory)MB | Uptime $uptime"
         Write-ServiceStatus "Frontend (Next.js)" "OK" $details
     } else {
-        Write-ServiceStatus "Frontend (Next.js)" "INACTIVE" "Port 3002 not listening"
+        Write-ServiceStatus "Frontend (Next.js)" "INACTIVE" "Port 5174 not listening"
         $script:FailedServices += "Frontend"
     }
     
@@ -363,7 +363,7 @@ function Show-Results {
         Log "Quick Access:" "White"
         Log "   - Backend:    http://localhost:8004" "Cyan"
         Log "   - API Docs:   http://localhost:8004/docs" "Cyan"
-        Log "   - Frontend:   http://localhost:3002" "Cyan"
+        Log "   - Frontend:   http://localhost:5174" "Cyan"
         Log "   - PostgreSQL: localhost:5435" "Cyan"
         Log "   - Redis:      localhost:6382" "Cyan"
         Log ""
