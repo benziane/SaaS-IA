@@ -1,6 +1,6 @@
 # 🗺️ ROADMAP - SaaS-IA MVP
 
-**Date** : 2025-11-14  
+**Date** : 2025-11-14 (Mise à jour 03h50)  
 **Version Actuelle** : MVP 1.0.0 (Grade S++ 94/100)  
 **Objectif** : Version Production 2.0.0 (Grade S++ 98/100)
 
@@ -8,13 +8,201 @@
 
 ## 📋 VUE D'ENSEMBLE
 
-Cette roadmap détaille **tout ce qu'il reste à faire** pour passer du MVP actuel à une version production complète et robuste.
+Cette roadmap détaille **tout ce qu'il reste à faire** pour passer du MVP actuel à une version production complète et robuste, **incluant le Module Transcription YouTube** (architecture MVP simplifiée V2).
 
 ### Priorités
 - 🔴 **CRITIQUE** : Bloquant pour production
 - 🟡 **IMPORTANT** : Nécessaire pour qualité production
 - 🟢 **SOUHAITABLE** : Amélioration expérience
 - 🔵 **FUTUR** : Évolution long terme
+- ⭐ **NOUVEAU** : Module Transcription YouTube (12-14h)
+
+---
+
+## ⭐ PHASE 0 : MODULE TRANSCRIPTION YOUTUBE (2-3 jours) - NOUVEAU !
+
+### 0.1 Module Transcription MVP Simplifié (⭐ NOUVEAU - PRIORITÉ ABSOLUE)
+
+**Objectif** : Implémenter le premier module IA fonctionnel  
+**Impact** : Valeur ajoutée immédiate, validation architecture modulaire  
+**Temps estimé** : 12-14h (2 jours)  
+**Architecture** : Voir `MODULE_TRANSCRIPTION_MVP_SIMPLIFIE.md` (V2 validée)
+
+#### Pourquoi cette architecture ?
+
+**Décisions clés validées** :
+- ✅ **SQLModel async** (cohérent avec MVP existant)
+- ✅ **BackgroundTasks** (pas Celery - suffisant pour <1000 jobs/jour)
+- ✅ **Whisper API** (97% moins cher qu'Assembly AI : $0.36/h vs $15/h)
+- ✅ **YouTube Transcript API** (gratuit, légal, instantané - 60% success rate)
+- ✅ **Pas de yt-dlp** (évite risques légaux ToS YouTube)
+
+**Comparaison Architecture V1 vs V2** :
+
+| Aspect | V1 (Documents initiaux) | V2 (MVP Simplifié) | Gagnant |
+|--------|-------------------------|-------------------|---------|
+| **ORM** | SQLAlchemy sync | SQLModel async | 🏆 V2 |
+| **Tasks** | Celery | BackgroundTasks | 🏆 V2 |
+| **Transcription** | Assembly AI ($15/h) | Whisper ($0.36/h) | 🏆 V2 (-97%) |
+| **Download** | yt-dlp (risque légal) | YouTube API | 🏆 V2 |
+| **Setup** | 4h (Celery) | 0h | 🏆 V2 |
+| **Temps implémentation** | 30-44h | 12-14h | 🏆 V2 (-68%) |
+| **Coût/mois** | $250+ | $6-30 | 🏆 V2 (-97%) |
+
+#### Jour 1 : Backend Core (6h)
+
+**Matin (3h)** :
+```bash
+cd backend
+
+# 1. Model + Migration
+alembic revision --autogenerate -m "add transcriptions table"
+alembic upgrade head
+
+# 2. Créer structure
+mkdir -p app/services/transcription
+touch app/models/transcription.py
+touch app/schemas/transcription.py
+touch app/services/transcription/youtube_service.py
+touch app/services/transcription/whisper_service.py
+touch app/services/transcription/correction_service.py
+touch app/services/transcription/processor.py
+
+# 3. Installer dépendances
+poetry add youtube-transcript-api openai
+```
+
+**Fichiers à créer** :
+- [ ] `app/models/transcription.py` (SQLModel)
+- [ ] `app/schemas/transcription.py` (Pydantic)
+- [ ] `app/services/transcription/youtube_service.py` (YouTube Transcript API)
+- [ ] Tests unitaires YouTubeService
+
+**Après-midi (3h)** :
+- [ ] `app/services/transcription/whisper_service.py` (OpenAI Whisper API)
+- [ ] `app/services/transcription/correction_service.py` (Regex basique)
+- [ ] `app/services/transcription/processor.py` (Background task)
+- [ ] Tests unitaires services
+
+#### Jour 2 : API + Frontend (6h)
+
+**Matin (3h)** :
+```bash
+# Backend
+touch app/routes/transcription.py
+
+# Enregistrer router dans main.py
+# from app.routes.transcription import router as transcription_router
+# app.include_router(transcription_router, prefix="/api")
+```
+
+**Fichiers à créer** :
+- [ ] `app/routes/transcription.py` (POST, GET, LIST)
+- [ ] Rate limiting (5 transcriptions/heure)
+- [ ] Tests d'intégration API
+- [ ] Documentation OpenAPI
+
+**Après-midi (3h)** :
+```bash
+# Frontend
+mkdir -p frontend/src/features/transcription
+touch frontend/src/features/transcription/api.ts
+touch frontend/src/features/transcription/types.ts
+touch frontend/src/features/transcription/hooks/useTranscriptions.ts
+touch frontend/src/features/transcription/hooks/useTranscriptionMutations.ts
+```
+
+**Fichiers à créer** :
+- [ ] Page `/transcription` (form + table)
+- [ ] Form validation (Zod)
+- [ ] Polling status (React Query - 3s)
+- [ ] Progress bar
+- [ ] Result display + Export TXT
+
+#### Configuration
+
+**Backend** :
+```bash
+# .env
+OPENAI_API_KEY=sk-...  # Clé OpenAI pour Whisper API
+```
+
+**Variables à ajouter** :
+- [ ] `OPENAI_API_KEY` dans `.env.example`
+- [ ] Documentation coûts Whisper ($0.006/min)
+- [ ] Rate limiting configuré (5/hour)
+
+#### Tests
+
+**Backend** :
+```bash
+cd backend
+pytest tests/unit/test_transcription_service.py -v
+pytest tests/integration/test_transcription_api.py -v
+pytest --cov=app/services/transcription --cov-report=term
+```
+
+**Frontend** :
+```bash
+cd frontend
+npm test -- src/features/transcription
+npm run test:e2e -- transcription.spec.ts
+```
+
+**Objectif Coverage** : ≥ 85%
+
+#### Livrables Phase 0
+
+**Backend** :
+- [ ] Model `Transcription` (SQLModel)
+- [ ] Migration Alembic
+- [ ] Schemas Pydantic (Create, Read, Status, Filter)
+- [ ] YouTubeService (YouTube Transcript API)
+- [ ] WhisperService (OpenAI Whisper API - fallback)
+- [ ] CorrectionService (regex basique)
+- [ ] Background processor (BackgroundTasks)
+- [ ] Routes API (POST, GET, LIST)
+- [ ] Rate limiting (5/hour)
+- [ ] Tests unitaires (≥85%)
+
+**Frontend** :
+- [ ] Page `/transcription`
+- [ ] Form validation (Zod)
+- [ ] Polling status (React Query)
+- [ ] Progress bar
+- [ ] Result display
+- [ ] Export TXT
+- [ ] Tests E2E (Playwright)
+
+**Documentation** :
+- [ ] README module transcription
+- [ ] Guide utilisateur (comment transcrire)
+- [ ] Documentation API (Swagger)
+- [ ] Coûts estimés (Whisper API)
+
+#### Métriques Cibles
+
+| Métrique | Cible | Mesure |
+|----------|-------|--------|
+| **Temps implémentation** | 12-14h | 2 jours |
+| **Coverage tests** | ≥85% | pytest/vitest |
+| **Performance** | <2x durée vidéo | Temps transcription |
+| **Coût/mois** | <$30 | 100 vidéos × 10min |
+| **Success rate** | ≥95% | Transcriptions complétées |
+| **Rate limit** | 5/hour | slowapi |
+
+#### Migration Path (Si besoin futur)
+
+**Quand migrer vers Celery ?**
+- Volume >1000 transcriptions/jour
+- Durée moyenne >10 minutes
+- Besoin queue prioritaire
+- Besoin retry avancé
+
+**Effort migration** : 4-6h
+- Setup Celery + Redis broker
+- Convertir BackgroundTasks → `@celery_app.task`
+- Tests
 
 ---
 
@@ -1077,6 +1265,10 @@ async def verify_api_key(api_key: str = Header(...)):
 
 | Phase | Priorité | Temps | Statut |
 |-------|----------|-------|--------|
+| **Phase 0 : Module Transcription** | ⭐ | 2-3 j | **À FAIRE EN PRIORITÉ** |
+| Backend Core | ⭐ | 6h | À faire |
+| API + Frontend | ⭐ | 6h | À faire |
+| Tests + Doc | ⭐ | 2-3h | À faire |
 | **Phase 1 : Critiques** | 🔴 | 2-3 sem | À faire |
 | Tests automatisés | 🔴 | 1 sem | À faire |
 | Config production | 🔴 | 2-3 j | À faire |
@@ -1101,6 +1293,9 @@ async def verify_api_key(api_key: str = Header(...)):
 
 ### Par Impact
 
+**Impact Immédiat (Valeur Ajoutée)** :
+0. **Module Transcription YouTube** (Premier module IA fonctionnel) ⭐
+
 **Impact Critique (Bloquant Production)** :
 1. Tests automatisés (Coverage 0% → 85%)
 2. Configuration production (Sécurité)
@@ -1123,10 +1318,36 @@ async def verify_api_key(api_key: str = Header(...)):
 
 ## 🎯 OBJECTIFS PAR MILESTONE
 
+### Milestone 0 : Premier Module IA (2-3 jours) ⭐ NOUVEAU !
+**Objectif** : Module Transcription YouTube fonctionnel
+
+**Checklist** :
+- [ ] Model Transcription (SQLModel)
+- [ ] Migration Alembic
+- [ ] YouTubeService (YouTube Transcript API)
+- [ ] WhisperService (OpenAI Whisper API)
+- [ ] CorrectionService (regex)
+- [ ] Background processor (BackgroundTasks)
+- [ ] Routes API (POST, GET, LIST)
+- [ ] Rate limiting (5/hour)
+- [ ] Page frontend `/transcription`
+- [ ] Form + validation (Zod)
+- [ ] Polling status (React Query)
+- [ ] Progress bar + result display
+- [ ] Tests (≥85% coverage)
+- [ ] Documentation API
+
+**Grade cible** : S++ (95/100)  
+**Temps** : 12-14h (2 jours)  
+**Coût** : <$30/mois (100 vidéos × 10min)
+
+---
+
 ### Milestone 1 : Production-Ready (1 mois)
 **Objectif** : Déploiement production sécurisé
 
 **Checklist** :
+- [ ] **Module Transcription opérationnel** ⭐
 - [ ] Tests automatisés (≥85% coverage)
 - [ ] Configuration production validée
 - [ ] Admin test supprimé
@@ -1144,12 +1365,13 @@ async def verify_api_key(api_key: str = Header(...)):
 **Objectif** : Expérience utilisateur optimale
 
 **Checklist** :
-- [ ] Dashboard avec stats
-- [ ] Notifications temps réel
+- [ ] Dashboard avec stats (incluant transcriptions)
+- [ ] Notifications temps réel (WebSocket)
 - [ ] Profil utilisateur éditable
-- [ ] Pagination et filtres
+- [ ] Pagination et filtres (transcriptions)
 - [ ] Cache Redis optimisé
 - [ ] Performance optimisée
+- [ ] Export formats multiples (PDF, DOCX, SRT)
 
 **Grade cible** : S++ (99/100)
 
@@ -1159,7 +1381,7 @@ async def verify_api_key(api_key: str = Header(...)):
 **Objectif** : Plateforme multi-modules mature
 
 **Checklist** :
-- [ ] 3+ modules IA supplémentaires
+- [ ] 3+ modules IA supplémentaires (Génération texte, Traduction, etc.)
 - [ ] Système de crédits
 - [ ] Multi-tenancy
 - [ ] API publique
@@ -1179,7 +1401,24 @@ Pour toute question ou suggestion sur cette roadmap :
 ---
 
 **Roadmap maintenue par** : Assistant IA  
-**Dernière mise à jour** : 2025-11-14  
-**Version** : 1.0.0  
+**Dernière mise à jour** : 2025-11-14 (03h50)  
+**Version** : 1.1.0 (Ajout Module Transcription YouTube)  
 **Statut** : ✅ À JOUR
+
+---
+
+## 📝 CHANGELOG
+
+### Version 1.1.0 (2025-11-14 - 03h50)
+- ⭐ **AJOUT** : Phase 0 - Module Transcription YouTube (architecture MVP simplifiée V2)
+- ✅ **VALIDATION** : Architecture cohérente avec MVP existant (SQLModel async, BackgroundTasks)
+- 💰 **ÉCONOMIE** : Whisper API ($0.36/h) au lieu d'Assembly AI ($15/h) = -97%
+- ⚡ **RAPIDITÉ** : 12-14h au lieu de 30-44h = -68%
+- 🔒 **LÉGALITÉ** : YouTube Transcript API au lieu de yt-dlp
+- 📊 **MILESTONE 0** : Ajout milestone "Premier Module IA" (2-3 jours)
+
+### Version 1.0.0 (2025-11-14)
+- 🎉 Version initiale de la roadmap
+- 📋 Phases 1-4 définies
+- 🎯 Milestones 1-3 établis
 
