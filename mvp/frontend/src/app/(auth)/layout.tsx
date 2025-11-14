@@ -1,27 +1,27 @@
 /**
- * Auth Layout - Grade S++
- * Layout for authentication pages (login, register)
+ * Auth Layout - Hybrid Approach (Sneat BlankLayout + MVP Auth)
+ * Uses Sneat's BlankLayout for login/register pages
  */
 
-import type { ReactNode } from 'react';
+// Type Imports
+import type { ChildrenType } from '@core/types';
 
-/* ========================================================================
-   TYPES
-   ======================================================================== */
+// Layout Imports
+import BlankLayout from '@layouts/BlankLayout';
 
-interface AuthLayoutProps {
-  children: ReactNode;
-}
+// HOC Imports
+import GuestOnlyRoute from '@/hocs/GuestOnlyRoute';
 
 /* ========================================================================
    COMPONENT
    ======================================================================== */
 
-export default function AuthLayout({ children }: AuthLayoutProps): JSX.Element {
+export default function AuthLayout({ children }: ChildrenType) {
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      {children}
-    </div>
+    <GuestOnlyRoute>
+      <BlankLayout>
+        {children}
+      </BlankLayout>
+    </GuestOnlyRoute>
   );
 }
-

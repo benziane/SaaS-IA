@@ -1,13 +1,18 @@
 /**
- * Root Layout - Grade S++
- * Main application layout
+ * Root Layout - Hybrid Approach (MVP + Sneat)
+ * Main application layout with Sneat theme system
  */
 
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
 
+// Component Imports
 import Providers from '@/components/Providers';
 
+// Util Imports
+import { getMode, getSettingsFromCookie, getSystemMode } from '@core/utils/serverHelpers';
+
+// Style Imports
 import './globals.css';
 
 /* ========================================================================
@@ -69,14 +74,27 @@ interface RootLayoutProps {
    COMPONENT
    ======================================================================== */
 
-export default function RootLayout({ children }: RootLayoutProps): JSX.Element {
+export default async function RootLayout({ children }: RootLayoutProps): Promise<JSX.Element> {
+  // Vars
+  const direction = 'ltr'; // TODO: Add i18n support later
+  const mode = await getMode();
+  const settingsCookie = await getSettingsFromCookie();
+  const systemMode = await getSystemMode();
+
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" dir={direction} suppressHydrationWarning>
       <head>
         {/* Security Headers are in next.config.ts */}
       </head>
       <body>
-        <Providers>{children}</Providers>
+        <Providers 
+          direction={direction}
+          mode={mode}
+          settingsCookie={settingsCookie}
+          systemMode={systemMode}
+        >
+          {children}
+        </Providers>
       </body>
     </html>
   );
