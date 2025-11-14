@@ -62,6 +62,40 @@ function Start-Docker {
     return $false
 }
 
+function Stop-ProcessOnPort {
+    param([int]$Port, [string]$ServiceName = "Service")
+    
+    try {
+        $connections = Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction SilentlyContinue
+        
+        if ($connections) {
+            $pids = $connections | Select-Object -ExpandProperty OwningProcess -Unique
+            
+            foreach ($pid in $pids) {
+                try {
+                    $process = Get-Process -Id $pid -ErrorAction SilentlyContinue
+                    if ($process) {
+                        Log "  [CLEANUP] Stopping $ServiceName on port $Port (PID: $pid)..." "Yellow"
+                        Stop-Process -Id $pid -Force -ErrorAction SilentlyContinue
+                        Start-Sleep -Milliseconds 500
+                        Log "  [OK] Process stopped" "Green"
+                    }
+                } catch {
+                    # Ignore errors, process might already be stopped
+                }
+            }
+            
+            # Vérifier que le port est bien libéré
+            Start-Sleep -Milliseconds 500
+        }
+        
+        return $true
+    } catch {
+        Log "  [WARN] Could not stop process on port $Port" "Yellow"
+        return $false
+    }
+}
+
 # ============================================
 # MAIN EXECUTION
 # ============================================
@@ -94,6 +128,10 @@ if (-not (Test-Docker)) {
 # ============================================
 
 Step "STOPPING PROCESSES        "
+
+# Force cleanup ports first
+Stop-ProcessOnPort -Port 3002 -ServiceName "Frontend"
+Stop-ProcessOnPort -Port 8004 -ServiceName "Backend"
 
 # Stop Frontend (Node.js on port 3002)
 Get-Process node -ErrorAction SilentlyContinue | Where-Object {

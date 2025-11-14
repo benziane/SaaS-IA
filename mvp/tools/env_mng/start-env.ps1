@@ -72,6 +72,43 @@ function Test-Port {
     }
 }
 
+function Stop-ProcessOnPort {
+    param([int]$Port, [string]$ServiceName = "Service")
+    
+    try {
+        $connections = Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction SilentlyContinue
+        
+        if ($connections) {
+            $pids = $connections | Select-Object -ExpandProperty OwningProcess -Unique
+            
+            foreach ($pid in $pids) {
+                try {
+                    $process = Get-Process -Id $pid -ErrorAction SilentlyContinue
+                    if ($process) {
+                        Log "  [CLEANUP] Stopping $ServiceName on port $Port (PID: $pid)..." "Yellow"
+                        Stop-Process -Id $pid -Force -ErrorAction SilentlyContinue
+                        Start-Sleep -Milliseconds 500
+                        Log "  [OK] Process stopped" "Green"
+                    }
+                } catch {
+                    # Ignore errors, process might already be stopped
+                }
+            }
+            
+            # Vérifier que le port est bien libéré
+            Start-Sleep -Milliseconds 500
+            if (-not (Test-Port -Port $Port)) {
+                return $true
+            }
+        }
+        
+        return $true
+    } catch {
+        Log "  [WARN] Could not stop process on port $Port" "Yellow"
+        return $false
+    }
+}
+
 # ============================================
 # MAIN EXECUTION
 # ============================================
@@ -85,6 +122,12 @@ Log "===========================================================" "Cyan"
 Log "         SAAS-IA ENVIRONMENT - START                      " "Cyan"
 Log "===========================================================" "Cyan"
 Log ""
+
+# Cleanup ports before starting
+Step "CLEANUP PORTS              "
+Stop-ProcessOnPort -Port 3002 -ServiceName "Frontend"
+Stop-ProcessOnPort -Port 8004 -ServiceName "Backend"
+Log "[OK] Ports cleaned" "Green"
 
 # Check Docker
 if (-not (Test-Docker)) {
