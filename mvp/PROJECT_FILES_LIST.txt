@@ -1,0 +1,50 @@
+Structure du dossier pour le volume Windows
+Le numéro de série du volume est 587D-C8D2
+C:.
+|   .grade
+|   ENTERPRISE_GRADE.md
+|   FINAL_SUMMARY.md
+|   IMPLEMENTATION_COMPLETE.md
+|   project-map.json
+|   PROJECT_FILES_LIST.txt
+|   README.md
+|   show-grade.bat
+|   TESTS_MVP_GUIDE.md
+|   update-project-map.bat
+|   update-project-map.sh
+|   
+\---backend
+    |   .dockerignore
+    |   .env.example
+    |   docker-compose.yml
+    |   Dockerfile
+    |   pyproject.toml
+    |   requirements.txt
+    |   
+    +---app
+    |   |   auth.py
+    |   |   config.py
+    |   |   database.py
+    |   |   main.py
+    |   |   __init__.py
+    |   |   
+    |   +---models
+    |   |       transcription.py
+    |   |       user.py
+    |   |       __init__.py
+    |   |       
+    |   +---modules
+    |   |   \---transcription
+    |   |           routes.py
+    |   |           service.py
+    |   |           __init__.py
+    |   |           
+    |   \---schemas
+    |           transcription.py
+    |           user.py
+    |           __init__.py
+    |           
+    +---scripts
+    |       generate_project_map.py
+    |       
+    \---tests

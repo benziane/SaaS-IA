@@ -1,0 +1,1900 @@
+{
+  "project": {
+    "name": "SaaS-IA MVP",
+    "version": "1.0.0",
+    "generated_at": "2025-11-13T20:48:07.524592Z",
+    "root_path": "C:\\Users\\ibzpc\\Git\\SaaS-IA\\mvp\\backend"
+  },
+  "stats": {
+    "total_modules": 1,
+    "total_files": 15,
+    "total_lines": 1470,
+    "total_complexity": 108,
+    "total_routes": 9
+  },
+  "modules": [
+    {
+      "name": "scripts",
+      "type": "utility",
+      "files": [
+        {
+          "path": "app\\auth.py",
+          "lines": 192,
+          "imports": [
+            {
+              "type": "from_import",
+              "module": "datetime",
+              "name": "datetime",
+              "alias": null,
+              "line": 5
+            },
+            {
+              "type": "from_import",
+              "module": "datetime",
+              "name": "timedelta",
+              "alias": null,
+              "line": 5
+            },
+            {
+              "type": "from_import",
+              "module": "typing",
+              "name": "Optional",
+              "alias": null,
+              "line": 6
+            },
+            {
+              "type": "from_import",
+              "module": "fastapi",
+              "name": "APIRouter",
+              "alias": null,
+              "line": 8
+            },
+            {
+              "type": "from_import",
+              "module": "fastapi",
+              "name": "Depends",
+              "alias": null,
+              "line": 8
+            },
+            {
+              "type": "from_import",
+              "module": "fastapi",
+              "name": "HTTPException",
+              "alias": null,
+              "line": 8
+            },
+            {
+              "type": "from_import",
+              "module": "fastapi",
+              "name": "status",
+              "alias": null,
+              "line": 8
+            },
+            {
+              "type": "from_import",
+              "module": "fastapi.security",
+              "name": "OAuth2PasswordBearer",
+              "alias": null,
+              "line": 9
+            },
+            {
+              "type": "from_import",
+              "module": "fastapi.security",
+              "name": "OAuth2PasswordRequestForm",
+              "alias": null,
+              "line": 9
+            },
+            {
+              "type": "from_import",
+              "module": "jose",
+              "name": "JWTError",
+              "alias": null,
+              "line": 10
+            },
+            {
+              "type": "from_import",
+              "module": "jose",
+              "name": "jwt",
+              "alias": null,
+              "line": 10
+            },
+            {
+              "type": "from_import",
+              "module": "passlib.context",
+              "name": "CryptContext",
+              "alias": null,
+              "line": 11
+            },
+            {
+              "type": "from_import",
+              "module": "sqlmodel",
+              "name": "select",
+              "alias": null,
+              "line": 12
+            },
+            {
+              "type": "from_import",
+              "module": "sqlmodel.ext.asyncio.session",
+              "name": "AsyncSession",
+              "alias": null,
+              "line": 13
+            },
+            {
+              "type": "from_import",
+              "module": "app.config",
+              "name": "settings",
+              "alias": null,
+              "line": 15
+            },
+            {
+              "type": "from_import",
+              "module": "app.database",
+              "name": "get_session",
+              "alias": null,
+              "line": 16
+            },
+            {
+              "type": "from_import",
+              "module": "app.models.user",
+              "name": "User",
+              "alias": null,
+              "line": 17
+            },
+            {
+              "type": "from_import",
+              "module": "app.models.user",
+              "name": "Role",
+              "alias": null,
+              "line": 17
+            },
+            {
+              "type": "from_import",
+              "module": "app.schemas.user",
+              "name": "UserCreate",
+              "alias": null,
+              "line": 18
+            },
+            {
+              "type": "from_import",
+              "module": "app.schemas.user",
+              "name": "UserRead",
+              "alias": null,
+              "line": 18
+            },
+            {
+              "type": "from_import",
+              "module": "app.schemas.user",
+              "name": "Token",
+              "alias": null,
+              "line": 18
+            },
+            {
+              "type": "from_import",
+              "module": "app.schemas.user",
+              "name": "TokenData",
+              "alias": null,
+              "line": 18
+            }
+          ],
+          "exports": [],
+          "functions": [
+            {
+              "name": "verify_password",
+              "line": 30,
+              "is_async": false,
+              "args": [
+                "plain_password",
+                "hashed_password"
+              ],
+              "decorators": 0
+            },
+            {
+              "name": "get_password_hash",
+              "line": 35,
+              "is_async": false,
+              "args": [
+                "password"
+              ],
+              "decorators": 0
+            },
+            {
+              "name": "create_access_token",
+              "line": 40,
+              "is_async": false,
+              "args": [
+                "data",
+                "expires_delta"
+              ],
+              "decorators": 0
+            },
+            {
+              "name": "get_user_by_email",
+              "line": 55,
+              "is_async": true,
+              "args": [
+                "session",
+                "email"
+              ],
+              "decorators": 0
+            },
+            {
+              "name": "authenticate_user",
+              "line": 62,
+              "is_async": true,
+              "args": [
+                "session",
+                "email",
+                "password"
+              ],
+              "decorators": 0
+            },
+            {
+              "name": "get_current_user",
+              "line": 75,
+              "is_async": true,
+              "args": [
+                "token",
+                "session"
+              ],
+              "decorators": 0
+            },
+            {
+              "name": "get_current_active_user",
+              "line": 108,
+              "is_async": true,
+              "args": [
+                "current_user"
+              ],
+              "decorators": 0
+            },
+            {
+              "name": "require_role",
+              "line": 115,
+              "is_async": false,
+              "args": [
+                "required_role"
+              ],
+              "decorators": 0
+            },
+            {
+              "name": "role_checker",
+              "line": 117,
+              "is_async": true,
+              "args": [
+                "current_user"
+              ],
+              "decorators": 0
+            },
+            {
+              "name": "register",
+              "line": 130,
+              "is_async": true,
+              "args": [
+                "user_data",
+                "session"
+              ],
+              "decorators": 1
+            },
+            {
+              "name": "login",
+              "line": 163,
+              "is_async": true,
+              "args": [
+                "form_data",
+                "session"
+              ],
+              "decorators": 1
+            },
+            {
+              "name": "read_users_me",
+              "line": 188,
+              "is_async": true,
+              "args": [
+                "current_user"
+              ],
+              "decorators": 1
+            }
+          ],
+          "classes": [],
+          "routes": [
+            {
+              "method": "POST",
+              "path": "/register",
+              "function": "register",
+              "line": 130
+            },
+            {
+              "method": "POST",
+              "path": "/login",
+              "function": "login",
+              "line": 163
+            },
+            {
+              "method": "GET",
+              "path": "/me",
+              "function": "read_users_me",
+              "line": 188
+            }
+          ],
+          "complexity": 26
+        },
+        {
+          "path": "app\\config.py",
+          "lines": 52,
+          "imports": [
+            {
+              "type": "from_import",
+              "module": "typing",
+              "name": "List",
+              "alias": null,
+              "line": 5
+            },
+            {
+              "type": "from_import",
+              "module": "pydantic_settings",
+              "name": "BaseSettings",
+              "alias": null,
+              "line": 6
+            },
+            {
+              "type": "from_import",
+              "module": "pydantic_settings",
+              "name": "SettingsConfigDict",
+              "alias": null,
+              "line": 6
+            }
+          ],
+          "exports": [],
+          "functions": [
+            {
+              "name": "cors_origins_list",
+              "line": 44,
+              "is_async": false,
+              "args": [
+                "self"
+              ],
+              "decorators": 1
+            }
+          ],
+          "classes": [
+            {
+              "name": "Settings",
+              "line": 9,
+              "bases": [
+                "BaseSettings"
+              ],
+              "methods": []
+            }
+          ],
+          "routes": [],
+          "complexity": 1
+        },
+        {
+          "path": "app\\database.py",
+          "lines": 70,
+          "imports": [
+            {
+              "type": "from_import",
+              "module": "contextlib",
+              "name": "asynccontextmanager",
+              "alias": null,
+              "line": 5
+            },
+            {
+              "type": "from_import",
+              "module": "typing",
+              "name": "AsyncGenerator",
+              "alias": null,
+              "line": 6
+            },
+            {
+              "type": "from_import",
+              "module": "sqlmodel",
+              "name": "SQLModel",
+              "alias": null,
+              "line": 8
+            },
+            {
+              "type": "from_import",
+              "module": "sqlmodel",
+              "name": "create_engine",
+              "alias": null,
+              "line": 8
+            },
+            {
+              "type": "from_import",
+              "module": "sqlmodel",
+              "name": "Session",
+              "alias": null,
+              "line": 8
+            },
+            {
+              "type": "from_import",
+              "module": "sqlmodel.ext.asyncio.session",
+              "name": "AsyncSession",
+              "alias": null,
+              "line": 9
+            },
+            {
+              "type": "from_import",
+              "module": "sqlalchemy.ext.asyncio",
+              "name": "create_async_engine",
+              "alias": null,
+              "line": 10
+            },
+            {
+              "type": "from_import",
+              "module": "sqlalchemy.orm",
+              "name": "sessionmaker",
+              "alias": null,
+              "line": 11
+            },
+            {
+              "type": "from_import",
+              "module": "app.config",
+              "name": "settings",
+              "alias": null,
+              "line": 13
+            },
+            {
+              "type": "from_import",
+              "module": "app.models.user",
+              "name": "User",
+              "alias": null,
+              "line": 38
+            },
+            {
+              "type": "from_import",
+              "module": "app.models.user",
+              "name": "Role",
+              "alias": null,
+              "line": 38
+            },
+            {
+              "type": "from_import",
+              "module": "app.models.transcription",
+              "name": "Transcription",
+              "alias": null,
+              "line": 39
+            },
+            {
+              "type": "from_import",
+              "module": "app.models.transcription",
+              "name": "TranscriptionStatus",
+              "alias": null,
+              "line": 39
+            }
+          ],
+          "exports": [],
+          "functions": [
+            {
+              "name": "init_db",
+              "line": 34,
+              "is_async": true,
+              "args": [],
+              "decorators": 0
+            },
+            {
+              "name": "get_session",
+              "line": 45,
+              "is_async": true,
+              "args": [],
+              "decorators": 0
+            },
+            {
+              "name": "get_session_context",
+              "line": 59,
+              "is_async": true,
+              "args": [],
+              "decorators": 1
+            }
+          ],
+          "classes": [],
+          "routes": [],
+          "complexity": 3
+        },
+        {
+          "path": "app\\main.py",
+          "lines": 112,
+          "imports": [
+            {
+              "type": "import",
+              "module": "structlog",
+              "alias": null,
+              "line": 7
+            },
+            {
+              "type": "from_import",
+              "module": "fastapi",
+              "name": "FastAPI",
+              "alias": null,
+              "line": 8
+            },
+            {
+              "type": "from_import",
+              "module": "fastapi.middleware.cors",
+              "name": "CORSMiddleware",
+              "alias": null,
+              "line": 9
+            },
+            {
+              "type": "from_import",
+              "module": "contextlib",
+              "name": "asynccontextmanager",
+              "alias": null,
+              "line": 10
+            },
+            {
+              "type": "from_import",
+              "module": "app.config",
+              "name": "settings",
+              "alias": null,
+              "line": 12
+            },
+            {
+              "type": "from_import",
+              "module": "app.database",
+              "name": "init_db",
+              "alias": null,
+              "line": 13
+            },
+            {
+              "type": "from_import",
+              "module": "app.auth",
+              "name": "router",
+              "alias": "auth_router",
+              "line": 14
+            },
+            {
+              "type": "from_import",
+              "module": "app.modules.transcription.routes",
+              "name": "router",
+              "alias": "transcription_router",
+              "line": 15
+            },
+            {
+              "type": "import",
+              "module": "uvicorn",
+              "alias": null,
+              "line": 103
+            }
+          ],
+          "exports": [],
+          "functions": [
+            {
+              "name": "lifespan",
+              "line": 22,
+              "is_async": true,
+              "args": [
+                "app"
+              ],
+              "decorators": 1
+            },
+            {
+              "name": "health_check",
+              "line": 72,
+              "is_async": true,
+              "args": [],
+              "decorators": 1
+            },
+            {
+              "name": "root",
+              "line": 88,
+              "is_async": true,
+              "args": [],
+              "decorators": 1
+            }
+          ],
+          "classes": [],
+          "routes": [
+            {
+              "method": "GET",
+              "path": "/health",
+              "function": "health_check",
+              "line": 72
+            },
+            {
+              "method": "GET",
+              "path": "/",
+              "function": "root",
+              "line": 88
+            }
+          ],
+          "complexity": 3
+        },
+        {
+          "path": "app\\__init__.py",
+          "lines": 10,
+          "imports": [],
+          "exports": [],
+          "functions": [],
+          "classes": [],
+          "routes": [],
+          "complexity": 0
+        },
+        {
+          "path": "scripts\\generate_project_map.py",
+          "lines": 365,
+          "imports": [
+            {
+              "type": "import",
+              "module": "ast",
+              "alias": null,
+              "line": 12
+            },
+            {
+              "type": "import",
+              "module": "json",
+              "alias": null,
+              "line": 13
+            },
+            {
+              "type": "import",
+              "module": "os",
+              "alias": null,
+              "line": 14
+            },
+            {
+              "type": "import",
+              "module": "sys",
+              "alias": null,
+              "line": 15
+            },
+            {
+              "type": "from_import",
+              "module": "datetime",
+              "name": "datetime",
+              "alias": null,
+              "line": 16
+            },
+            {
+              "type": "from_import",
+              "module": "pathlib",
+              "name": "Path",
+              "alias": null,
+              "line": 17
+            },
+            {
+              "type": "from_import",
+              "module": "typing",
+              "name": "List",
+              "alias": null,
+              "line": 18
+            },
+            {
+              "type": "from_import",
+              "module": "typing",
+              "name": "Dict",
+              "alias": null,
+              "line": 18
+            },
+            {
+              "type": "from_import",
+              "module": "typing",
+              "name": "Set",
+              "alias": null,
+              "line": 18
+            },
+            {
+              "type": "from_import",
+              "module": "typing",
+              "name": "Any",
+              "alias": null,
+              "line": 18
+            },
+            {
+              "type": "from_import",
+              "module": "typing",
+              "name": "Optional",
+              "alias": null,
+              "line": 18
+            },
+            {
+              "type": "from_import",
+              "module": "collections",
+              "name": "defaultdict",
+              "alias": null,
+              "line": 19
+            },
+            {
+              "type": "import",
+              "module": "sys",
+              "alias": null,
+              "line": 315
+            }
+          ],
+          "exports": [],
+          "functions": [
+            {
+              "name": "__init__",
+              "line": 28,
+              "is_async": false,
+              "args": [
+                "self",
+                "filepath"
+              ],
+              "decorators": 0
+            },
+            {
+              "name": "visit_Import",
+              "line": 37,
+              "is_async": false,
+              "args": [
+                "self",
+                "node"
+              ],
+              "decorators": 0
+            },
+            {
+              "name": "visit_ImportFrom",
+              "line": 48,
+              "is_async": false,
+              "args": [
+                "self",
+                "node"
+              ],
+              "decorators": 0
+            },
+            {
+              "name": "visit_FunctionDef",
+              "line": 61,
+              "is_async": false,
+              "args": [
+                "self",
+                "node"
+              ],
+              "decorators": 0
+            },
+            {
+              "name": "visit_AsyncFunctionDef",
+              "line": 102,
+              "is_async": false,
+              "args": [
+                "self",
+                "node"
+              ],
+              "decorators": 0
+            },
+            {
+              "name": "visit_ClassDef",
+              "line": 106,
+              "is_async": false,
+              "args": [
+                "self",
+                "node"
+              ],
+              "decorators": 0
+            },
+            {
+              "name": "_calculate_complexity",
+              "line": 122,
+              "is_async": false,
+              "args": [
+                "self",
+                "node"
+              ],
+              "decorators": 0
+            },
+            {
+              "name": "_get_name",
+              "line": 134,
+              "is_async": false,
+              "args": [
+                "self",
+                "node"
+              ],
+              "decorators": 0
+            },
+            {
+              "name": "analyze_python_file",
+              "line": 143,
+              "is_async": false,
+              "args": [
+                "filepath"
+              ],
+              "decorators": 0
+            },
+            {
+              "name": "scan_project",
+              "line": 177,
+              "is_async": false,
+              "args": [
+                "root_path"
+              ],
+              "decorators": 0
+            },
+            {
+              "name": "main",
+              "line": 312,
+              "is_async": false,
+              "args": [],
+              "decorators": 0
+            }
+          ],
+          "classes": [
+            {
+              "name": "PythonFileAnalyzer",
+              "line": 25,
+              "bases": [
+                "ast.NodeVisitor"
+              ],
+              "methods": []
+            }
+          ],
+          "routes": [],
+          "complexity": 49
+        },
+        {
+          "path": "app\\models\\transcription.py",
+          "lines": 58,
+          "imports": [
+            {
+              "type": "from_import",
+              "module": "datetime",
+              "name": "datetime",
+              "alias": null,
+              "line": 5
+            },
+            {
+              "type": "from_import",
+              "module": "enum",
+              "name": "Enum",
+              "alias": null,
+              "line": 6
+            },
+            {
+              "type": "from_import",
+              "module": "typing",
+              "name": "Optional",
+              "alias": null,
+              "line": 7
+            },
+            {
+              "type": "from_import",
+              "module": "uuid",
+              "name": "UUID",
+              "alias": null,
+              "line": 8
+            },
+            {
+              "type": "from_import",
+              "module": "uuid",
+              "name": "uuid4",
+              "alias": null,
+              "line": 8
+            },
+            {
+              "type": "from_import",
+              "module": "sqlmodel",
+              "name": "Field",
+              "alias": null,
+              "line": 10
+            },
+            {
+              "type": "from_import",
+              "module": "sqlmodel",
+              "name": "SQLModel",
+              "alias": null,
+              "line": 10
+            }
+          ],
+          "exports": [
+            "TranscriptionStatus",
+            "Transcription"
+          ],
+          "functions": [],
+          "classes": [
+            {
+              "name": "TranscriptionStatus",
+              "line": 13,
+              "bases": [
+                "str",
+                "Enum"
+              ],
+              "methods": []
+            },
+            {
+              "name": "Transcription",
+              "line": 21,
+              "bases": [
+                "SQLModel"
+              ],
+              "methods": []
+            },
+            {
+              "name": "Config",
+              "line": 49,
+              "bases": [],
+              "methods": []
+            }
+          ],
+          "routes": [],
+          "complexity": 0
+        },
+        {
+          "path": "app\\models\\user.py",
+          "lines": 43,
+          "imports": [
+            {
+              "type": "from_import",
+              "module": "datetime",
+              "name": "datetime",
+              "alias": null,
+              "line": 5
+            },
+            {
+              "type": "from_import",
+              "module": "enum",
+              "name": "Enum",
+              "alias": null,
+              "line": 6
+            },
+            {
+              "type": "from_import",
+              "module": "typing",
+              "name": "Optional",
+              "alias": null,
+              "line": 7
+            },
+            {
+              "type": "from_import",
+              "module": "uuid",
+              "name": "UUID",
+              "alias": null,
+              "line": 8
+            },
+            {
+              "type": "from_import",
+              "module": "uuid",
+              "name": "uuid4",
+              "alias": null,
+              "line": 8
+            },
+            {
+              "type": "from_import",
+              "module": "sqlmodel",
+              "name": "Field",
+              "alias": null,
+              "line": 10
+            },
+            {
+              "type": "from_import",
+              "module": "sqlmodel",
+              "name": "SQLModel",
+              "alias": null,
+              "line": 10
+            }
+          ],
+          "exports": [
+            "Role",
+            "User"
+          ],
+          "functions": [],
+          "classes": [
+            {
+              "name": "Role",
+              "line": 13,
+              "bases": [
+                "str",
+                "Enum"
+              ],
+              "methods": []
+            },
+            {
+              "name": "User",
+              "line": 19,
+              "bases": [
+                "SQLModel"
+              ],
+              "methods": []
+            },
+            {
+              "name": "Config",
+              "line": 33,
+              "bases": [],
+              "methods": []
+            }
+          ],
+          "routes": [],
+          "complexity": 0
+        },
+        {
+          "path": "app\\models\\__init__.py",
+          "lines": 15,
+          "imports": [
+            {
+              "type": "from_import",
+              "module": "app.models.user",
+              "name": "User",
+              "alias": null,
+              "line": 5
+            },
+            {
+              "type": "from_import",
+              "module": "app.models.user",
+              "name": "Role",
+              "alias": null,
+              "line": 5
+            },
+            {
+              "type": "from_import",
+              "module": "app.models.transcription",
+              "name": "Transcription",
+              "alias": null,
+              "line": 6
+            },
+            {
+              "type": "from_import",
+              "module": "app.models.transcription",
+              "name": "TranscriptionStatus",
+              "alias": null,
+              "line": 6
+            }
+          ],
+          "exports": [],
+          "functions": [],
+          "classes": [],
+          "routes": [],
+          "complexity": 0
+        },
+        {
+          "path": "app\\schemas\\transcription.py",
+          "lines": 73,
+          "imports": [
+            {
+              "type": "from_import",
+              "module": "typing",
+              "name": "Optional",
+              "alias": null,
+              "line": 5
+            },
+            {
+              "type": "from_import",
+              "module": "uuid",
+              "name": "UUID",
+              "alias": null,
+              "line": 6
+            },
+            {
+              "type": "from_import",
+              "module": "datetime",
+              "name": "datetime",
+              "alias": null,
+              "line": 7
+            },
+            {
+              "type": "from_import",
+              "module": "pydantic",
+              "name": "BaseModel",
+              "alias": null,
+              "line": 9
+            },
+            {
+              "type": "from_import",
+              "module": "pydantic",
+              "name": "Field",
+              "alias": null,
+              "line": 9
+            },
+            {
+              "type": "from_import",
+              "module": "pydantic",
+              "name": "HttpUrl",
+              "alias": null,
+              "line": 9
+            },
+            {
+              "type": "from_import",
+              "module": "app.models.transcription",
+              "name": "TranscriptionStatus",
+              "alias": null,
+              "line": 11
+            }
+          ],
+          "exports": [
+            "TranscriptionCreate",
+            "TranscriptionUpdate",
+            "TranscriptionRead"
+          ],
+          "functions": [],
+          "classes": [
+            {
+              "name": "TranscriptionCreate",
+              "line": 14,
+              "bases": [
+                "BaseModel"
+              ],
+              "methods": []
+            },
+            {
+              "name": "Config",
+              "line": 19,
+              "bases": [],
+              "methods": []
+            },
+            {
+              "name": "TranscriptionUpdate",
+              "line": 28,
+              "bases": [
+                "BaseModel"
+              ],
+              "methods": []
+            },
+            {
+              "name": "TranscriptionRead",
+              "line": 37,
+              "bases": [
+                "BaseModel"
+              ],
+              "methods": []
+            },
+            {
+              "name": "Config",
+              "line": 53,
+              "bases": [],
+              "methods": []
+            }
+          ],
+          "routes": [],
+          "complexity": 0
+        },
+        {
+          "path": "app\\schemas\\user.py",
+          "lines": 77,
+          "imports": [
+            {
+              "type": "from_import",
+              "module": "typing",
+              "name": "Optional",
+              "alias": null,
+              "line": 5
+            },
+            {
+              "type": "from_import",
+              "module": "uuid",
+              "name": "UUID",
+              "alias": null,
+              "line": 6
+            },
+            {
+              "type": "from_import",
+              "module": "datetime",
+              "name": "datetime",
+              "alias": null,
+              "line": 7
+            },
+            {
+              "type": "from_import",
+              "module": "pydantic",
+              "name": "BaseModel",
+              "alias": null,
+              "line": 9
+            },
+            {
+              "type": "from_import",
+              "module": "pydantic",
+              "name": "EmailStr",
+              "alias": null,
+              "line": 9
+            },
+            {
+              "type": "from_import",
+              "module": "pydantic",
+              "name": "Field",
+              "alias": null,
+              "line": 9
+            },
+            {
+              "type": "from_import",
+              "module": "app.models.user",
+              "name": "Role",
+              "alias": null,
+              "line": 11
+            }
+          ],
+          "exports": [
+            "UserCreate",
+            "UserLogin",
+            "UserRead",
+            "Token",
+            "TokenData"
+          ],
+          "functions": [],
+          "classes": [
+            {
+              "name": "UserCreate",
+              "line": 14,
+              "bases": [
+                "BaseModel"
+              ],
+              "methods": []
+            },
+            {
+              "name": "Config",
+              "line": 20,
+              "bases": [],
+              "methods": []
+            },
+            {
+              "name": "UserLogin",
+              "line": 30,
+              "bases": [
+                "BaseModel"
+              ],
+              "methods": []
+            },
+            {
+              "name": "UserRead",
+              "line": 36,
+              "bases": [
+                "BaseModel"
+              ],
+              "methods": []
+            },
+            {
+              "name": "Config",
+              "line": 45,
+              "bases": [],
+              "methods": []
+            },
+            {
+              "name": "Token",
+              "line": 59,
+              "bases": [
+                "BaseModel"
+              ],
+              "methods": []
+            },
+            {
+              "name": "Config",
+              "line": 64,
+              "bases": [],
+              "methods": []
+            },
+            {
+              "name": "TokenData",
+              "line": 73,
+              "bases": [
+                "BaseModel"
+              ],
+              "methods": []
+            }
+          ],
+          "routes": [],
+          "complexity": 0
+        },
+        {
+          "path": "app\\schemas\\__init__.py",
+          "lines": 22,
+          "imports": [
+            {
+              "type": "from_import",
+              "module": "app.schemas.user",
+              "name": "UserCreate",
+              "alias": null,
+              "line": 5
+            },
+            {
+              "type": "from_import",
+              "module": "app.schemas.user",
+              "name": "UserRead",
+              "alias": null,
+              "line": 5
+            },
+            {
+              "type": "from_import",
+              "module": "app.schemas.user",
+              "name": "UserLogin",
+              "alias": null,
+              "line": 5
+            },
+            {
+              "type": "from_import",
+              "module": "app.schemas.user",
+              "name": "Token",
+              "alias": null,
+              "line": 5
+            },
+            {
+              "type": "from_import",
+              "module": "app.schemas.transcription",
+              "name": "TranscriptionCreate",
+              "alias": null,
+              "line": 6
+            },
+            {
+              "type": "from_import",
+              "module": "app.schemas.transcription",
+              "name": "TranscriptionRead",
+              "alias": null,
+              "line": 6
+            },
+            {
+              "type": "from_import",
+              "module": "app.schemas.transcription",
+              "name": "TranscriptionUpdate",
+              "alias": null,
+              "line": 6
+            }
+          ],
+          "exports": [],
+          "functions": [],
+          "classes": [],
+          "routes": [],
+          "complexity": 0
+        },
+        {
+          "path": "app\\modules\\transcription\\routes.py",
+          "lines": 132,
+          "imports": [
+            {
+              "type": "from_import",
+              "module": "typing",
+              "name": "List",
+              "alias": null,
+              "line": 5
+            },
+            {
+              "type": "from_import",
+              "module": "uuid",
+              "name": "UUID",
+              "alias": null,
+              "line": 6
+            },
+            {
+              "type": "from_import",
+              "module": "fastapi",
+              "name": "APIRouter",
+              "alias": null,
+              "line": 8
+            },
+            {
+              "type": "from_import",
+              "module": "fastapi",
+              "name": "BackgroundTasks",
+              "alias": null,
+              "line": 8
+            },
+            {
+              "type": "from_import",
+              "module": "fastapi",
+              "name": "Depends",
+              "alias": null,
+              "line": 8
+            },
+            {
+              "type": "from_import",
+              "module": "fastapi",
+              "name": "HTTPException",
+              "alias": null,
+              "line": 8
+            },
+            {
+              "type": "from_import",
+              "module": "fastapi",
+              "name": "status",
+              "alias": null,
+              "line": 8
+            },
+            {
+              "type": "from_import",
+              "module": "fastapi",
+              "name": "Query",
+              "alias": null,
+              "line": 8
+            },
+            {
+              "type": "from_import",
+              "module": "sqlmodel.ext.asyncio.session",
+              "name": "AsyncSession",
+              "alias": null,
+              "line": 9
+            },
+            {
+              "type": "from_import",
+              "module": "app.database",
+              "name": "get_session",
+              "alias": null,
+              "line": 11
+            },
+            {
+              "type": "from_import",
+              "module": "app.auth",
+              "name": "get_current_user",
+              "alias": null,
+              "line": 12
+            },
+            {
+              "type": "from_import",
+              "module": "app.models.user",
+              "name": "User",
+              "alias": null,
+              "line": 13
+            },
+            {
+              "type": "from_import",
+              "module": "app.schemas.transcription",
+              "name": "TranscriptionCreate",
+              "alias": null,
+              "line": 14
+            },
+            {
+              "type": "from_import",
+              "module": "app.schemas.transcription",
+              "name": "TranscriptionRead",
+              "alias": null,
+              "line": 14
+            },
+            {
+              "type": "from_import",
+              "module": "app.modules.transcription.service",
+              "name": "TranscriptionService",
+              "alias": null,
+              "line": 15
+            }
+          ],
+          "exports": [],
+          "functions": [
+            {
+              "name": "get_transcription_service",
+              "line": 21,
+              "is_async": false,
+              "args": [],
+              "decorators": 0
+            },
+            {
+              "name": "create_transcription",
+              "line": 27,
+              "is_async": true,
+              "args": [
+                "data",
+                "background_tasks",
+                "current_user",
+                "session",
+                "service"
+              ],
+              "decorators": 1
+            },
+            {
+              "name": "get_transcription",
+              "line": 56,
+              "is_async": true,
+              "args": [
+                "job_id",
+                "current_user",
+                "session",
+                "service"
+              ],
+              "decorators": 1
+            },
+            {
+              "name": "list_transcriptions",
+              "line": 83,
+              "is_async": true,
+              "args": [
+                "skip",
+                "limit",
+                "current_user",
+                "session",
+                "service"
+              ],
+              "decorators": 1
+            },
+            {
+              "name": "delete_transcription",
+              "line": 103,
+              "is_async": true,
+              "args": [
+                "job_id",
+                "current_user",
+                "session",
+                "service"
+              ],
+              "decorators": 1
+            }
+          ],
+          "classes": [],
+          "routes": [
+            {
+              "method": "POST",
+              "path": "/",
+              "function": "create_transcription",
+              "line": 27
+            },
+            {
+              "method": "GET",
+              "path": "/{job_id}",
+              "function": "get_transcription",
+              "line": 56
+            },
+            {
+              "method": "GET",
+              "path": "/",
+              "function": "list_transcriptions",
+              "line": 83
+            },
+            {
+              "method": "DELETE",
+              "path": "/{job_id}",
+              "function": "delete_transcription",
+              "line": 103
+            }
+          ],
+          "complexity": 9
+        },
+        {
+          "path": "app\\modules\\transcription\\service.py",
+          "lines": 240,
+          "imports": [
+            {
+              "type": "import",
+              "module": "asyncio",
+              "alias": null,
+              "line": 5
+            },
+            {
+              "type": "from_import",
+              "module": "datetime",
+              "name": "datetime",
+              "alias": null,
+              "line": 6
+            },
+            {
+              "type": "from_import",
+              "module": "typing",
+              "name": "Optional",
+              "alias": null,
+              "line": 7
+            },
+            {
+              "type": "from_import",
+              "module": "typing",
+              "name": "List",
+              "alias": null,
+              "line": 7
+            },
+            {
+              "type": "from_import",
+              "module": "uuid",
+              "name": "UUID",
+              "alias": null,
+              "line": 8
+            },
+            {
+              "type": "import",
+              "module": "structlog",
+              "alias": null,
+              "line": 10
+            },
+            {
+              "type": "from_import",
+              "module": "sqlmodel",
+              "name": "select",
+              "alias": null,
+              "line": 11
+            },
+            {
+              "type": "from_import",
+              "module": "sqlmodel.ext.asyncio.session",
+              "name": "AsyncSession",
+              "alias": null,
+              "line": 12
+            },
+            {
+              "type": "from_import",
+              "module": "app.config",
+              "name": "settings",
+              "alias": null,
+              "line": 14
+            },
+            {
+              "type": "from_import",
+              "module": "app.models.transcription",
+              "name": "Transcription",
+              "alias": null,
+              "line": 15
+            },
+            {
+              "type": "from_import",
+              "module": "app.models.transcription",
+              "name": "TranscriptionStatus",
+              "alias": null,
+              "line": 15
+            },
+            {
+              "type": "from_import",
+              "module": "app.database",
+              "name": "get_session_context",
+              "alias": null,
+              "line": 16
+            },
+            {
+              "type": "import",
+              "module": "assemblyai",
+              "alias": "aai",
+              "line": 36
+            }
+          ],
+          "exports": [],
+          "functions": [
+            {
+              "name": "__init__",
+              "line": 25,
+              "is_async": false,
+              "args": [
+                "self"
+              ],
+              "decorators": 0
+            },
+            {
+              "name": "create_job",
+              "line": 44,
+              "is_async": true,
+              "args": [
+                "self",
+                "video_url",
+                "user_id",
+                "language",
+                "session"
+              ],
+              "decorators": 0
+            },
+            {
+              "name": "process_transcription",
+              "line": 74,
+              "is_async": true,
+              "args": [
+                "self",
+                "job_id"
+              ],
+              "decorators": 0
+            },
+            {
+              "name": "_mock_transcribe",
+              "line": 143,
+              "is_async": true,
+              "args": [
+                "self",
+                "video_url"
+              ],
+              "decorators": 0
+            },
+            {
+              "name": "_real_transcribe",
+              "line": 179,
+              "is_async": true,
+              "args": [
+                "self",
+                "video_url"
+              ],
+              "decorators": 0
+            },
+            {
+              "name": "get_job",
+              "line": 201,
+              "is_async": true,
+              "args": [
+                "self",
+                "job_id",
+                "session"
+              ],
+              "decorators": 0
+            },
+            {
+              "name": "list_user_jobs",
+              "line": 205,
+              "is_async": true,
+              "args": [
+                "self",
+                "user_id",
+                "session",
+                "skip",
+                "limit"
+              ],
+              "decorators": 0
+            },
+            {
+              "name": "delete_job",
+              "line": 225,
+              "is_async": true,
+              "args": [
+                "self",
+                "job_id",
+                "session"
+              ],
+              "decorators": 0
+            }
+          ],
+          "classes": [
+            {
+              "name": "TranscriptionService",
+              "line": 22,
+              "bases": [],
+              "methods": []
+            }
+          ],
+          "routes": [],
+          "complexity": 17
+        },
+        {
+          "path": "app\\modules\\transcription\\__init__.py",
+          "lines": 9,
+          "imports": [],
+          "exports": [],
+          "functions": [],
+          "classes": [],
+          "routes": [],
+          "complexity": 0
+        }
+      ],
+      "routes": [
+        {
+          "method": "POST",
+          "path": "/register",
+          "function": "register",
+          "line": 130
+        },
+        {
+          "method": "POST",
+          "path": "/login",
+          "function": "login",
+          "line": 163
+        },
+        {
+          "method": "GET",
+          "path": "/me",
+          "function": "read_users_me",
+          "line": 188
+        },
+        {
+          "method": "GET",
+          "path": "/health",
+          "function": "health_check",
+          "line": 72
+        },
+        {
+          "method": "GET",
+          "path": "/",
+          "function": "root",
+          "line": 88
+        },
+        {
+          "method": "POST",
+          "path": "/",
+          "function": "create_transcription",
+          "line": 27
+        },
+        {
+          "method": "GET",
+          "path": "/{job_id}",
+          "function": "get_transcription",
+          "line": 56
+        },
+        {
+          "method": "GET",
+          "path": "/",
+          "function": "list_transcriptions",
+          "line": 83
+        },
+        {
+          "method": "DELETE",
+          "path": "/{job_id}",
+          "function": "delete_transcription",
+          "line": 103
+        }
+      ],
+      "dependencies": {
+        "internal": [
+          "app.auth",
+          "app.config",
+          "app.database",
+          "app.models.transcription",
+          "app.models.user",
+          "app.modules.transcription.routes",
+          "app.modules.transcription.service",
+          "app.schemas.transcription",
+          "app.schemas.user"
+        ],
+        "external": [
+          "assemblyai",
+          "ast",
+          "asyncio",
+          "collections",
+          "contextlib",
+          "datetime",
+          "enum",
+          "fastapi",
+          "jose",
+          "json",
+          "os",
+          "passlib",
+          "pathlib",
+          "pydantic",
+          "pydantic_settings",
+          "sqlalchemy",
+          "sqlmodel",
+          "structlog",
+          "sys",
+          "typing",
+          "uuid",
+          "uvicorn"
+        ]
+      },
+      "metrics": {
+        "lines": 1470,
+        "complexity": 108,
+        "functions": 43,
+        "classes": 22
+      }
+    }
+  ],
+  "api_endpoints": [
+    {
+      "method": "POST",
+      "path": "/register",
+      "function": "register",
+      "line": 130
+    },
+    {
+      "method": "POST",
+      "path": "/login",
+      "function": "login",
+      "line": 163
+    },
+    {
+      "method": "GET",
+      "path": "/me",
+      "function": "read_users_me",
+      "line": 188
+    },
+    {
+      "method": "GET",
+      "path": "/health",
+      "function": "health_check",
+      "line": 72
+    },
+    {
+      "method": "GET",
+      "path": "/",
+      "function": "root",
+      "line": 88
+    },
+    {
+      "method": "POST",
+      "path": "/",
+      "function": "create_transcription",
+      "line": 27
+    },
+    {
+      "method": "GET",
+      "path": "/{job_id}",
+      "function": "get_transcription",
+      "line": 56
+    },
+    {
+      "method": "GET",
+      "path": "/",
+      "function": "list_transcriptions",
+      "line": 83
+    },
+    {
+      "method": "DELETE",
+      "path": "/{job_id}",
+      "function": "delete_transcription",
+      "line": 103
+    }
+  ],
+  "dependency_graph": {
+    "scripts": [
+      "transcription"
+    ]
+  },
+  "architecture_rules": {
+    "backend_framework": "FastAPI",
+    "orm": "SQLModel",
+    "database": "PostgreSQL",
+    "cache": "Redis",
+    "auth": "JWT",
+    "async": true
+  }
+}

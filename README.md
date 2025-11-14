@@ -1,5 +1,7 @@
 # 🚀 SaaS-IA - Plateforme SaaS Multi-Modules IA
 
+[![Enterprise Grade](https://img.shields.io/badge/Enterprise%20Grade-S%2B%20(94%25)-gold?style=for-the-badge&logo=star)](./mvp/ENTERPRISE_GRADE.md)
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://www.python.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue.svg)](https://www.typescriptlang.org/)
@@ -7,7 +9,8 @@
 [![React](https://img.shields.io/badge/React-18+-blue.svg)](https://reactjs.org/)
 [![CI](https://github.com/benziane/SaaS-IA/workflows/CI/badge.svg)](https://github.com/benziane/SaaS-IA/actions)
 
-> Plateforme SaaS modulaire et évolutive intégrant des services d'Intelligence Artificielle pour automatiser et optimiser vos workflows.
+> Plateforme SaaS modulaire et évolutive intégrant des services d'Intelligence Artificielle  
+> **🏆 MVP Backend : Enterprise Grade S+ (94/100)** - Qualité exceptionnelle
 
 ## 📋 Table des matières
 

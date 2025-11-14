@@ -1,0 +1,85 @@
+version: '3.8'
+name: saas-ia
+
+services:
+  # SaaS-IA Backend API
+  saas-ia-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: saas-ia-backend
+    ports:
+      - "8004:8000"  # Port externe: 8004, interne: 8000
+    environment:
+      - DATABASE_URL=postgresql://saas_ia_user:saas_ia_dev_password@postgres:5432/saas_ia
+      - REDIS_URL=redis://redis:6379
+      - ASSEMBLYAI_API_KEY=${ASSEMBLYAI_API_KEY:-MOCK}
+      - SECRET_KEY=${SECRET_KEY:-dev-secret-key-change-in-prod}
+      - ENVIRONMENT=development
+      - DEBUG=True
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./app:/app/app
+      - ./scripts:/app/scripts
+      - ./tests:/app/tests
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    networks:
+      - saas-ia-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: saas-ia-postgres
+    environment:
+      POSTGRES_DB: saas_ia
+      POSTGRES_USER: saas_ia_user
+      POSTGRES_PASSWORD: saas_ia_dev_password
+    ports:
+      - "5435:5432"  # Port externe: 5435, interne: 5432
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U saas_ia_user -d saas_ia"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - saas-ia-network
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: saas-ia-redis
+    ports:
+      - "6382:6379"  # Port externe: 6382, interne: 6379
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - saas-ia-network
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  saas-ia-network:
+    driver: bridge
+

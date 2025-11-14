@@ -1,0 +1,1065 @@
+{
+  "ScanDate": "2025-11-13 21:03:58",
+  "AvailablePorts": {
+    "Frontend (3000-3100)": [
+      3002,
+      3003,
+      3004,
+      3005,
+      3006,
+      3007,
+      3008,
+      3009,
+      3010,
+      3011,
+      3012,
+      3013,
+      3014,
+      3015,
+      3016,
+      3017,
+      3018,
+      3019,
+      3020,
+      3021,
+      3022,
+      3023,
+      3024,
+      3025,
+      3026,
+      3027,
+      3028,
+      3029,
+      3030,
+      3031,
+      3032,
+      3033,
+      3034,
+      3035,
+      3036,
+      3037,
+      3038,
+      3039,
+      3040,
+      3041,
+      3042,
+      3043,
+      3044,
+      3045,
+      3046,
+      3047,
+      3048,
+      3049,
+      3050,
+      3051,
+      3052,
+      3053,
+      3054,
+      3055,
+      3056,
+      3057,
+      3058,
+      3059,
+      3060,
+      3061,
+      3062,
+      3063,
+      3064,
+      3065,
+      3066,
+      3067,
+      3068,
+      3069,
+      3070,
+      3071,
+      3072,
+      3073,
+      3074,
+      3075,
+      3076,
+      3077,
+      3078,
+      3079,
+      3080,
+      3081,
+      3082,
+      3083,
+      3084,
+      3085,
+      3086,
+      3087,
+      3088,
+      3089,
+      3090,
+      3091,
+      3092,
+      3093,
+      3094,
+      3095,
+      3096,
+      3097,
+      3098,
+      3099,
+      3100
+    ],
+    "Frontend Alt (5000-5200)": [
+      5002,
+      5003,
+      5004,
+      5005,
+      5006,
+      5007,
+      5008,
+      5009,
+      5010,
+      5011,
+      5012,
+      5013,
+      5014,
+      5015,
+      5016,
+      5017,
+      5018,
+      5019,
+      5020,
+      5021,
+      5022,
+      5023,
+      5024,
+      5025,
+      5026,
+      5027,
+      5028,
+      5029,
+      5030,
+      5031,
+      5032,
+      5033,
+      5034,
+      5035,
+      5036,
+      5037,
+      5038,
+      5039,
+      5040,
+      5041,
+      5042,
+      5043,
+      5044,
+      5045,
+      5046,
+      5047,
+      5048,
+      5049,
+      5051,
+      5052,
+      5053,
+      5054,
+      5055,
+      5056,
+      5057,
+      5058,
+      5059,
+      5060,
+      5061,
+      5062,
+      5063,
+      5064,
+      5065,
+      5066,
+      5067,
+      5068,
+      5069,
+      5070,
+      5071,
+      5072,
+      5073,
+      5074,
+      5075,
+      5076,
+      5077,
+      5078,
+      5079,
+      5080,
+      5081,
+      5082,
+      5083,
+      5084,
+      5085,
+      5086,
+      5087,
+      5088,
+      5089,
+      5090,
+      5091,
+      5092,
+      5093,
+      5094,
+      5095,
+      5096,
+      5097,
+      5098,
+      5099,
+      5100,
+      5101,
+      5102,
+      5103,
+      5104,
+      5105,
+      5106,
+      5107,
+      5108,
+      5109,
+      5110,
+      5111,
+      5112,
+      5113,
+      5114,
+      5115,
+      5116,
+      5117,
+      5118,
+      5119,
+      5120,
+      5121,
+      5122,
+      5123,
+      5124,
+      5125,
+      5126,
+      5127,
+      5128,
+      5129,
+      5130,
+      5131,
+      5132,
+      5133,
+      5134,
+      5135,
+      5136,
+      5137,
+      5138,
+      5139,
+      5140,
+      5141,
+      5142,
+      5143,
+      5144,
+      5145,
+      5146,
+      5147,
+      5148,
+      5149,
+      5150,
+      5151,
+      5152,
+      5153,
+      5154,
+      5155,
+      5156,
+      5157,
+      5158,
+      5159,
+      5160,
+      5161,
+      5162,
+      5163,
+      5164,
+      5165,
+      5166,
+      5167,
+      5168,
+      5169,
+      5170,
+      5171,
+      5172,
+      5177,
+      5178,
+      5179,
+      5180,
+      5181,
+      5182,
+      5183,
+      5184,
+      5185,
+      5186,
+      5187,
+      5188,
+      5189,
+      5190,
+      5191,
+      5192,
+      5193,
+      5194,
+      5195,
+      5196,
+      5197,
+      5198,
+      5199,
+      5200
+    ],
+    "Services (9000-9100)": [
+      9001,
+      9002,
+      9003,
+      9004,
+      9005,
+      9006,
+      9007,
+      9008,
+      9009,
+      9010,
+      9011,
+      9012,
+      9013,
+      9014,
+      9015,
+      9016,
+      9017,
+      9018,
+      9019,
+      9020,
+      9021,
+      9022,
+      9023,
+      9024,
+      9025,
+      9026,
+      9027,
+      9028,
+      9029,
+      9030,
+      9031,
+      9032,
+      9033,
+      9034,
+      9035,
+      9036,
+      9037,
+      9038,
+      9039,
+      9040,
+      9041,
+      9042,
+      9043,
+      9044,
+      9045,
+      9046,
+      9047,
+      9048,
+      9049,
+      9050,
+      9051,
+      9052,
+      9053,
+      9054,
+      9055,
+      9056,
+      9057,
+      9058,
+      9059,
+      9060,
+      9061,
+      9062,
+      9063,
+      9064,
+      9065,
+      9066,
+      9067,
+      9068,
+      9069,
+      9070,
+      9071,
+      9072,
+      9073,
+      9074,
+      9075,
+      9076,
+      9077,
+      9078,
+      9079,
+      9080,
+      9081,
+      9082,
+      9083,
+      9084,
+      9085,
+      9086,
+      9087,
+      9088,
+      9089,
+      9091,
+      9092,
+      9094,
+      9095,
+      9096,
+      9097,
+      9098,
+      9099,
+      9100
+    ],
+    "Backend (8000-8100)": [
+      8004,
+      8005,
+      8006,
+      8007,
+      8008,
+      8009,
+      8011,
+      8012,
+      8013,
+      8014,
+      8015,
+      8016,
+      8017,
+      8018,
+      8019,
+      8021,
+      8022,
+      8023,
+      8024,
+      8027,
+      8028,
+      8029,
+      8030,
+      8031,
+      8032,
+      8033,
+      8034,
+      8035,
+      8036,
+      8037,
+      8038,
+      8039,
+      8040,
+      8041,
+      8042,
+      8043,
+      8044,
+      8045,
+      8046,
+      8047,
+      8048,
+      8049,
+      8050,
+      8051,
+      8052,
+      8053,
+      8054,
+      8055,
+      8056,
+      8057,
+      8058,
+      8059,
+      8060,
+      8061,
+      8062,
+      8063,
+      8064,
+      8065,
+      8066,
+      8067,
+      8068,
+      8069,
+      8070,
+      8071,
+      8072,
+      8073,
+      8074,
+      8075,
+      8076,
+      8077,
+      8078,
+      8079,
+      8082,
+      8083,
+      8084,
+      8085,
+      8086,
+      8087,
+      8088,
+      8090,
+      8091,
+      8092,
+      8093,
+      8094,
+      8095,
+      8096,
+      8098,
+      8099,
+      8100
+    ]
+  },
+  "Projects": {
+    "SaaS-IA": [
+      {
+        "File": "docker-compose.yml",
+        "Path": "\\startup_docs\\Analyse du projet Lab-SaaS - Claude\\docker-compose.yml",
+        "Port": 3000,
+        "Type": "localhost URL"
+      },
+      {
+        "File": "README.md",
+        "Path": "\\startup_docs\\starting\\README.md",
+        "Port": 3001,
+        "Type": "localhost URL"
+      },
+      {
+        "File": "QUICKSTART.md",
+        "Path": "\\v0\\QUICKSTART.md",
+        "Port": 5050,
+        "Type": "localhost URL"
+      },
+      {
+        "File": "config.py",
+        "Path": "\\startup_docs\\Analyse du projet Lab-SaaS - Manus\\config.py",
+        "Port": 5173,
+        "Type": "localhost URL"
+      },
+      {
+        "File": "config.py",
+        "Path": "\\startup_docs\\Analyse du projet Lab-SaaS - Manus\\config.py",
+        "Port": 5432,
+        "Type": "localhost URL"
+      },
+      {
+        "File": "QUICKSTART.md",
+        "Path": "\\startup_docs\\Analyse du projet Lab-SaaS - Claude\\QUICKSTART.md",
+        "Port": 5555,
+        "Type": "localhost URL"
+      },
+      {
+        "File": "config.py",
+        "Path": "\\startup_docs\\Analyse du projet Lab-SaaS - Manus\\config.py",
+        "Port": 6379,
+        "Type": "localhost URL"
+      },
+      {
+        "File": "README.md",
+        "Path": "\\startup_docs\\starting\\README.md",
+        "Port": 8000,
+        "Type": "localhost URL"
+      },
+      {
+        "File": ".env.example",
+        "Path": "\\v0\\backend\\.env.example",
+        "Port": 9090,
+        "Type": ".env PORT"
+      },
+      {
+        "File": "docker-compose.yml",
+        "Path": "\\startup_docs\\Analyse du projet Lab-SaaS - Manus\\docker-compose.yml",
+        "Port": 9093,
+        "Type": "localhost URL"
+      }
+    ],
+    "WeLAB": [
+      {
+        "File": "MERGED_MARKDOWN_FULL_GIT_WELAB.md",
+        "Path": "\\MERGED_MARKDOWN_FULL_GIT_WELAB.md",
+        "Port": 1080,
+        "Type": "Docker Compose port"
+      },
+      {
+        "File": "MERGED_MARKDOWN_FULL_GIT_WELAB.md",
+        "Path": "\\MERGED_MARKDOWN_FULL_GIT_WELAB.md",
+        "Port": 1081,
+        "Type": "Docker Compose port"
+      },
+      {
+        "File": "MERGED_MARKDOWN_FULL_GIT_WELAB.md",
+        "Path": "\\MERGED_MARKDOWN_FULL_GIT_WELAB.md",
+        "Port": 1234,
+        "Type": "Docker Compose port"
+      },
+      {
+        "File": "MERGED_MARKDOWN_FULL_GIT_WELAB.md",
+        "Path": "\\MERGED_MARKDOWN_FULL_GIT_WELAB.md",
+        "Port": 2379,
+        "Type": "localhost URL"
+      },
+      {
+        "File": "MERGED_MARKDOWN_FULL_GIT_WELAB.md",
+        "Path": "\\MERGED_MARKDOWN_FULL_GIT_WELAB.md",
+        "Port": 3000,
+        "Type": "localhost URL"
+      },
+      {
+        "File": "MERGED_MARKDOWN_FULL_GIT_WELAB.md",
+        "Path": "\\MERGED_MARKDOWN_FULL_GIT_WELAB.md",
+        "Port": 3306,
+        "Type": "localhost URL"
+      },
+      {
+        "File": "lighthouserc.js",
+        "Path": "\\frontend\\lighthouserc.js",
+        "Port": 4173,
+        "Type": "localhost URL"
+      },
+      {
+        "File": "MERGED_MARKDOWN_FULL_GIT_WELAB.md",
+        "Path": "\\MERGED_MARKDOWN_FULL_GIT_WELAB.md",
+        "Port": 4444,
+        "Type": "Docker Compose port"
+      },
+      {
+        "File": "README.md",
+        "Path": "\\docs\\overview\\README.md",
+        "Port": 5000,
+        "Type": "localhost URL"
+      },
+      {
+        "File": "MERGED_MARKDOWN_FULL_GIT_WELAB.md",
+        "Path": "\\MERGED_MARKDOWN_FULL_GIT_WELAB.md",
+        "Port": 5173,
+        "Type": "localhost URL"
+      },
+      {
+        "File": "README-SCRIPTS.md",
+        "Path": "\\tools\\env_mng\\README-SCRIPTS.md",
+        "Port": 5174,
+        "Type": "Command line port"
+      },
+      {
+        "File": "SIDEBAR-ENHANCED-V2-DEMO-GUIDE.md",
+        "Path": "\\dev\\design-system\\SIDEBAR-ENHANCED-V2-DEMO-GUIDE.md",
+        "Port": 5175,
+        "Type": "localhost URL"
+      },
+      {
+        "File": "MERGED_MARKDOWN_FULL_GIT_WELAB.md",
+        "Path": "\\MERGED_MARKDOWN_FULL_GIT_WELAB.md",
+        "Port": 5176,
+        "Type": "localhost URL"
+      },
+      {
+        "File": "MERGED_MARKDOWN_FULL_GIT_WELAB.md",
+        "Path": "\\MERGED_MARKDOWN_FULL_GIT_WELAB.md",
+        "Port": 5432,
+        "Type": "localhost URL"
+      },
+      {
+        "File": "verify_user.py",
+        "Path": "\\backend\\verify_user.py",
+        "Port": 5433,
+        "Type": "localhost URL"
+      },
+      {
+        "File": "STORYBOOK-SUMMARY.md",
+        "Path": "\\dev\\design-system\\STORYBOOK-SUMMARY.md",
+        "Port": 6006,
+        "Type": "localhost URL"
+      },
+      {
+        "File": "MERGED_MARKDOWN_FULL_GIT_WELAB.md",
+        "Path": "\\MERGED_MARKDOWN_FULL_GIT_WELAB.md",
+        "Port": 6379,
+        "Type": "localhost URL"
+      },
+      {
+        "File": "WELAB_PORTS_CORRECTION_COMPLETE.md",
+        "Path": "\\dev\\testing\\WELAB_PORTS_CORRECTION_COMPLETE.md",
+        "Port": 6380,
+        "Type": "localhost URL"
+      },
+      {
+        "File": "HIERARCHY-PERMISSIONS-IMPLEMENTATION.md",
+        "Path": "\\docs\\permissions-management\\HIERARCHY-PERMISSIONS-IMPLEMENTATION.md",
+        "Port": 8000,
+        "Type": "localhost URL"
+      },
+      {
+        "File": "CORRECTION-HIERARCHY-MANAGEMENT.md",
+        "Path": "\\docs\\hierarchy-management\\04-AUDITS-REPORTS\\CORRECTION-HIERARCHY-MANAGEMENT.md",
+        "Port": 8001,
+        "Type": "localhost URL"
+      },
+      {
+        "File": "MERGED_MARKDOWN_FULL_GIT_WELAB.md",
+        "Path": "\\MERGED_MARKDOWN_FULL_GIT_WELAB.md",
+        "Port": 8080,
+        "Type": "Docker Compose port"
+      },
+      {
+        "File": "MERGED_MARKDOWN_FULL_GIT_WELAB.md",
+        "Path": "\\MERGED_MARKDOWN_FULL_GIT_WELAB.md",
+        "Port": 8081,
+        "Type": ".env PORT"
+      },
+      {
+        "File": "MERGED_MARKDOWN_FULL_GIT_WELAB.md",
+        "Path": "\\MERGED_MARKDOWN_FULL_GIT_WELAB.md",
+        "Port": 8089,
+        "Type": "localhost URL"
+      },
+      {
+        "File": "REACT-DEVTOOLS.md",
+        "Path": "\\frontend\\REACT-DEVTOOLS.md",
+        "Port": 8097,
+        "Type": "localhost URL"
+      },
+      {
+        "File": "MERGED_MARKDOWN_FULL_GIT_WELAB.md",
+        "Path": "\\MERGED_MARKDOWN_FULL_GIT_WELAB.md",
+        "Port": 8888,
+        "Type": "localhost URL"
+      },
+      {
+        "File": "MERGED_MARKDOWN_FULL_GIT_WELAB.md",
+        "Path": "\\MERGED_MARKDOWN_FULL_GIT_WELAB.md",
+        "Port": 9000,
+        "Type": "Docker Compose port"
+      },
+      {
+        "File": ".env.backup",
+        "Path": "\\.env.backup",
+        "Port": 9090,
+        "Type": ".env PORT"
+      },
+      {
+        "File": "search_service.py",
+        "Path": "\\backend\\app\\hierarchy\\search_service.py",
+        "Port": 9200,
+        "Type": "localhost URL"
+      },
+      {
+        "File": "MERGED_MARKDOWN_FULL_GIT_WELAB.md",
+        "Path": "\\MERGED_MARKDOWN_FULL_GIT_WELAB.md",
+        "Port": 9323,
+        "Type": "localhost URL"
+      },
+      {
+        "File": "MERGED_MARKDOWN_FULL_GIT_WELAB.md",
+        "Path": "\\MERGED_MARKDOWN_FULL_GIT_WELAB.md",
+        "Port": 27017,
+        "Type": "localhost URL"
+      },
+      {
+        "File": "MERGED_MARKDOWN_FULL_GIT_WELAB.md",
+        "Path": "\\MERGED_MARKDOWN_FULL_GIT_WELAB.md",
+        "Port": 44711,
+        "Type": "Docker Compose port"
+      },
+      {
+        "File": "MERGED_MARKDOWN_FULL_GIT_WELAB.md",
+        "Path": "\\MERGED_MARKDOWN_FULL_GIT_WELAB.md",
+        "Port": 49823,
+        "Type": "Docker Compose port"
+      },
+      {
+        "File": "MERGED_MARKDOWN_FULL_GIT_WELAB.md",
+        "Path": "\\MERGED_MARKDOWN_FULL_GIT_WELAB.md",
+        "Port": 52738,
+        "Type": "Docker Compose port"
+      },
+      {
+        "File": "MERGED_MARKDOWN_FULL_GIT_WELAB.md",
+        "Path": "\\MERGED_MARKDOWN_FULL_GIT_WELAB.md",
+        "Port": 57362,
+        "Type": "Docker Compose port"
+      }
+    ],
+    "Provisioning": [
+      {
+        "File": ".env",
+        "Path": "\\dev\\Design\\flask-adminlte-design\\.env",
+        "Port": 3306,
+        "Type": ".env PORT"
+      },
+      {
+        "File": "docker-compose.yml",
+        "Path": "\\docker-compose.yml",
+        "Port": 5000,
+        "Type": "localhost URL"
+      },
+      {
+        "File": "mock.py",
+        "Path": "\\backend\\config\\mock.py",
+        "Port": 5001,
+        "Type": "localhost URL"
+      },
+      {
+        "File": "MERGED_MARKDOWN_FULL_PROVISIONING_DOCS.md",
+        "Path": "\\docs\\MERGED_MARKDOWN_FULL_PROVISIONING_DOCS.md",
+        "Port": 5432,
+        "Type": "localhost URL"
+      },
+      {
+        "File": "development.py",
+        "Path": "\\backend\\config\\development.py",
+        "Port": 5433,
+        "Type": "localhost URL"
+      },
+      {
+        "File": "00-LIRE-EN-PREMIER.md",
+        "Path": "\\tools\\env_mng\\00-LIRE-EN-PREMIER.md",
+        "Port": 5434,
+        "Type": "localhost URL"
+      },
+      {
+        "File": "03-SOLUTION_HOT_SWAP_EDA.md",
+        "Path": "\\docs\\05-operations\\01-runbooks\\03-SOLUTION_HOT_SWAP_EDA.md",
+        "Port": 6379,
+        "Type": "localhost URL"
+      },
+      {
+        "File": "README.md",
+        "Path": "\\dev\\Design\\flask-adminlte-design\\static\\assets\\plugins\\raphael\\README.md",
+        "Port": 8000,
+        "Type": "localhost URL"
+      },
+      {
+        "File": "API-DEBUG-MONITOR-GUIDE.md",
+        "Path": "\\dev\\Debug_Widget\\API-DEBUG-MONITOR-GUIDE.md",
+        "Port": 8001,
+        "Type": "localhost URL"
+      }
+    ],
+    "Markdown-Viewer": [
+      {
+        "File": "docker-compose.yml",
+        "Path": "\\docker-compose.yml",
+        "Port": 8002,
+        "Type": "localhost URL"
+      },
+      {
+        "File": "INSTALLATION.md",
+        "Path": "\\docs\\INSTALLATION.md",
+        "Port": 8003,
+        "Type": "Docker Compose port"
+      },
+      {
+        "File": "CHANGELOG_v0.0.1.md",
+        "Path": "\\CHANGELOG_v0.0.1.md",
+        "Port": 8020,
+        "Type": "localhost URL"
+      },
+      {
+        "File": "config.yaml",
+        "Path": "\\config.yaml",
+        "Port": 8025,
+        "Type": "Docker Compose port"
+      }
+    ],
+    "Sifate-Voyage": [
+      {
+        "File": "06-CONFIGURATION.md",
+        "Path": "\\docs\\infrastructure\\06-CONFIGURATION.md",
+        "Port": 1025,
+        "Type": ".env PORT"
+      },
+      {
+        "File": "06-CONFIGURATION.md",
+        "Path": "\\docs\\infrastructure\\06-CONFIGURATION.md",
+        "Port": 1026,
+        "Type": ".env PORT"
+      },
+      {
+        "File": ".env.example",
+        "Path": "\\docs\\poubelle\\_design\\sneat-vuetify-vuejs-laravel-admin-template-v2.2.0\\javascript-version\\starter-kit\\.env.example",
+        "Port": 2525,
+        "Type": ".env PORT"
+      },
+      {
+        "File": "06-CONFIGURATION.md",
+        "Path": "\\docs\\infrastructure\\06-CONFIGURATION.md",
+        "Port": 3306,
+        "Type": ".env PORT"
+      },
+      {
+        "File": "MERGED_MARKDOWN_FULL_SIFATE-VOYAGE_DOCS.md",
+        "Path": "\\docs\\MERGED_MARKDOWN_FULL_SIFATE-VOYAGE_DOCS.md",
+        "Port": 3307,
+        "Type": "localhost URL"
+      },
+      {
+        "File": "DOCKER_MIGRATION_GUIDE.md",
+        "Path": "\\docs\\poubelle\\_archive\\DOCKER_MIGRATION_GUIDE.md",
+        "Port": 3308,
+        "Type": ".env PORT"
+      },
+      {
+        "File": "TESTS_DIAGNOSTICS.md",
+        "Path": "\\docs\\poubelle\\_archive\\TESTS_DIAGNOSTICS.md",
+        "Port": 5175,
+        "Type": "localhost URL"
+      },
+      {
+        "File": "MERGED_MARKDOWN_FULL_SIFATE-VOYAGE_DOCS.md",
+        "Path": "\\docs\\MERGED_MARKDOWN_FULL_SIFATE-VOYAGE_DOCS.md",
+        "Port": 5176,
+        "Type": ".env PORT"
+      },
+      {
+        "File": "06-CONFIGURATION.md",
+        "Path": "\\docs\\infrastructure\\06-CONFIGURATION.md",
+        "Port": 6379,
+        "Type": ".env PORT"
+      },
+      {
+        "File": "DEPLACEMENT_PROJET.md",
+        "Path": "\\docs\\poubelle\\_archive\\DEPLACEMENT_PROJET.md",
+        "Port": 6381,
+        "Type": "localhost URL"
+      },
+      {
+        "File": "composer.json",
+        "Path": "\\vendor\\filp\\whoops\\composer.json",
+        "Port": 8000,
+        "Type": "localhost URL"
+      },
+      {
+        "File": "TESTS_COMPLETS_REUSSIS.md",
+        "Path": "\\docs\\poubelle\\_archive\\TESTS_COMPLETS_REUSSIS.md",
+        "Port": 8002,
+        "Type": "localhost URL"
+      },
+      {
+        "File": "MERGED_MARKDOWN_FULL_SIFATE-VOYAGE_DOCS.md",
+        "Path": "\\docs\\MERGED_MARKDOWN_FULL_SIFATE-VOYAGE_DOCS.md",
+        "Port": 8003,
+        "Type": "localhost URL"
+      },
+      {
+        "File": "MISSION_ACCOMPLIE.md",
+        "Path": "\\docs\\poubelle\\_archive\\MISSION_ACCOMPLIE.md",
+        "Port": 8010,
+        "Type": "localhost URL"
+      },
+      {
+        "File": "MERGED_MARKDOWN_FULL_SIFATE-VOYAGE_DOCS.md",
+        "Path": "\\docs\\MERGED_MARKDOWN_FULL_SIFATE-VOYAGE_DOCS.md",
+        "Port": 8026,
+        "Type": "localhost URL"
+      }
+    ],
+    "Design": [
+      {
+        "File": ".env.example",
+        "Path": "\\javascript-version\\full-version\\.env.example",
+        "Port": 3000,
+        "Type": "localhost URL"
+      },
+      {
+        "File": "FastAPI_Ultimate_Guide.md",
+        "Path": "\\materio_by_claude\\FastAPI_Ultimate_Guide.md",
+        "Port": 4317,
+        "Type": "localhost URL"
+      },
+      {
+        "File": "FastAPI_Ultimate_Guide.md",
+        "Path": "\\materio_by_claude\\FastAPI_Ultimate_Guide.md",
+        "Port": 8000,
+        "Type": "Command line port"
+      }
+    ]
+  },
+  "Conflicts": [
+    {
+      "Projects": [
+        "SaaS-IA",
+        "WeLAB",
+        "Design"
+      ],
+      "Port": 3000
+    },
+    {
+      "Projects": [
+        "WeLAB",
+        "Provisioning",
+        "Sifate-Voyage"
+      ],
+      "Port": 3306
+    },
+    {
+      "Projects": [
+        "WeLAB",
+        "Provisioning"
+      ],
+      "Port": 5000
+    },
+    {
+      "Projects": [
+        "SaaS-IA",
+        "WeLAB"
+      ],
+      "Port": 5173
+    },
+    {
+      "Projects": [
+        "WeLAB",
+        "Sifate-Voyage"
+      ],
+      "Port": 5175
+    },
+    {
+      "Projects": [
+        "WeLAB",
+        "Sifate-Voyage"
+      ],
+      "Port": 5176
+    },
+    {
+      "Projects": [
+        "SaaS-IA",
+        "WeLAB",
+        "Provisioning"
+      ],
+      "Port": 5432
+    },
+    {
+      "Projects": [
+        "WeLAB",
+        "Provisioning"
+      ],
+      "Port": 5433
+    },
+    {
+      "Projects": [
+        "SaaS-IA",
+        "WeLAB",
+        "Provisioning",
+        "Sifate-Voyage"
+      ],
+      "Port": 6379
+    },
+    {
+      "Projects": [
+        "SaaS-IA",
+        "WeLAB",
+        "Provisioning",
+        "Sifate-Voyage",
+        "Design"
+      ],
+      "Port": 8000
+    },
+    {
+      "Projects": [
+        "WeLAB",
+        "Provisioning"
+      ],
+      "Port": 8001
+    },
+    {
+      "Projects": [
+        "Markdown-Viewer",
+        "Sifate-Voyage"
+      ],
+      "Port": 8002
+    },
+    {
+      "Projects": [
+        "Markdown-Viewer",
+        "Sifate-Voyage"
+      ],
+      "Port": 8003
+    },
+    {
+      "Projects": [
+        "SaaS-IA",
+        "WeLAB"
+      ],
+      "Port": 9090
+    }
+  ]
+}
