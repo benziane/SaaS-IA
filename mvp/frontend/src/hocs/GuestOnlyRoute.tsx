@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 
 // Store Imports
 import { useAuthStore } from '@/lib/store'
+import { useAuthInit } from '@/lib/useAuthInit'
 
 // Component Imports
 import { CircularProgress, Box } from '@mui/material'
@@ -30,34 +31,22 @@ const GuestOnlyRoute = ({ children }: Props) => {
   const searchParams = useSearchParams()
   const isAuthenticated = useAuthStore(state => state.isAuthenticated)
   const isLoading = useAuthStore(state => state.isLoading)
+  const isInitialized = useAuthInit() // Initialiser l'auth au démarrage
 
   useEffect(() => {
+    // Attendre que l'initialisation soit terminée
+    if (!isInitialized) return
+
     // Si pas en cours de chargement et authentifié
     if (!isLoading && isAuthenticated) {
       // Récupérer redirect param ou rediriger vers dashboard par défaut
       const redirectUrl = searchParams?.get('redirect') || '/dashboard'
       router.replace(redirectUrl)
     }
-  }, [isAuthenticated, isLoading, router, searchParams])
+  }, [isInitialized, isAuthenticated, isLoading, router, searchParams])
 
-  // Afficher loader pendant vérification auth
-  if (isLoading) {
-    return (
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          minHeight: '100vh'
-        }}
-      >
-        <CircularProgress />
-      </Box>
-    )
-  }
-
-  // Si authentifié, afficher loader (redirect en cours)
-  if (isAuthenticated) {
+  // Afficher loader pendant initialisation ou vérification auth
+  if (!isInitialized || isLoading || isAuthenticated) {
     return (
       <Box
         sx={{

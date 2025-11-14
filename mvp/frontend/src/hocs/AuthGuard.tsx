@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 
 // Store Imports
 import { useAuthStore } from '@/lib/store'
+import { useAuthInit } from '@/lib/useAuthInit'
 
 // Component Imports
 import { CircularProgress, Box } from '@mui/material'
@@ -27,18 +28,22 @@ const AuthGuard = ({ children }: Props) => {
   const router = useRouter()
   const isAuthenticated = useAuthStore(state => state.isAuthenticated)
   const isLoading = useAuthStore(state => state.isLoading)
+  const isInitialized = useAuthInit() // Initialiser l'auth au démarrage
 
   useEffect(() => {
+    // Attendre que l'initialisation soit terminée
+    if (!isInitialized) return
+
     // Si pas en cours de chargement et pas authentifié
     if (!isLoading && !isAuthenticated) {
       // Rediriger vers login avec redirect param
       const currentPath = window.location.pathname
       router.replace(`/login?redirect=${encodeURIComponent(currentPath)}`)
     }
-  }, [isAuthenticated, isLoading, router])
+  }, [isInitialized, isAuthenticated, isLoading, router])
 
-  // Afficher loader pendant vérification auth
-  if (isLoading || !isAuthenticated) {
+  // Afficher loader pendant initialisation ou vérification auth
+  if (!isInitialized || isLoading || !isAuthenticated) {
     return (
       <Box
         sx={{
