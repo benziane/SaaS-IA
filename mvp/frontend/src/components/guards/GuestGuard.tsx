@@ -7,7 +7,6 @@
 
 import { useEffect, type ReactNode } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { CircularProgress, Box } from '@mui/material';
 
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -27,7 +26,7 @@ export function GuestGuard({ children }: GuestGuardProps) {
   useEffect(() => {
     // Attendre la fin du chargement
     if (isLoading) return;
-
+    
     // Si déjà authentifié, rediriger vers dashboard ou redirect param
     if (isAuthenticated) {
       const redirectUrl = searchParams?.get('redirect') || '/dashboard';
@@ -35,23 +34,8 @@ export function GuestGuard({ children }: GuestGuardProps) {
     }
   }, [isAuthenticated, isLoading, router, searchParams]);
 
-  // Afficher loader pendant chargement ou redirection
-  if (isLoading || isAuthenticated) {
-    return (
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          minHeight: '100vh',
-        }}
-      >
-        <CircularProgress />
-      </Box>
-    );
-  }
-
-  // Utilisateur NON authentifié → afficher contenu (login/register)
+  // Afficher le contenu immédiatement (pas de loader)
+  // La redirection se fera en arrière-plan si déjà authentifié
   return <>{children}</>;
 }
 

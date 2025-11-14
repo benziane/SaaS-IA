@@ -44,28 +44,59 @@ interface AuthProviderProps {
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
-  // Initialisation synchrone depuis localStorage
-  const [user, setUser] = useState<User | null>(() => {
-    if (typeof window === 'undefined') return null;
-    try {
-      const storedUser = localStorage.getItem('auth_user');
-      return storedUser ? JSON.parse(storedUser) : null;
-    } catch {
-      return null;
-    }
-  });
-  
-  const [token, setToken] = useState<string | null>(() => {
-    if (typeof window === 'undefined') return null;
-    try {
-      return localStorage.getItem('auth_token');
-    } catch {
-      return null;
-    }
-  });
-  
-  const [isLoading, setIsLoading] = useState(false);
+  // État initial TOUJOURS null pour éviter erreur d'hydration
+  const [token, setToken] = useState<string | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [mounted, setMounted] = useState(false);
   const router = useRouter();
+  
+  // Initialisation côté client uniquement (après hydration)
+  useEffect(() => {
+    setMounted(true);
+    
+    try {
+      // 1. Essayer localStorage d'abord
+      const storedToken = localStorage.getItem('auth_token');
+      const storedUser = localStorage.getItem('auth_user');
+      
+      if (storedToken && storedUser) {
+        setToken(storedToken);
+        setUser(JSON.parse(storedUser));
+        setIsLoading(false);
+        return;
+      }
+      
+      // 2. Sinon essayer cookie
+      const cookies = document.cookie.split(';');
+      for (const cookie of cookies) {
+        const [name, value] = cookie.trim().split('=');
+        if (name === 'auth_token') {
+          setToken(value);
+          // Fetch user avec ce token
+          fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8004'}/api/auth/me`, {
+            headers: { Authorization: `Bearer ${value}` }
+          })
+            .then(res => res.ok ? res.json() : null)
+            .then(userData => {
+              if (userData) {
+                setUser(userData);
+                localStorage.setItem('auth_user', JSON.stringify(userData));
+              }
+            })
+            .catch(() => {})
+            .finally(() => setIsLoading(false));
+          return;
+        }
+      }
+      
+      // Pas de token trouvé
+      setIsLoading(false);
+    } catch (error) {
+      console.error('[AuthContext] Init error:', error);
+      setIsLoading(false);
+    }
+  }, []);
 
   // Login
   const login = useCallback((newUser: User, newToken: string) => {

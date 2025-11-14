@@ -7,7 +7,6 @@
 
 import { useEffect, type ReactNode } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { CircularProgress, Box } from '@mui/material';
 
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -27,7 +26,7 @@ export function AuthGuard({ children }: AuthGuardProps) {
   useEffect(() => {
     // Attendre la fin du chargement
     if (isLoading) return;
-
+    
     // Si pas authentifié, rediriger vers login
     if (!isAuthenticated) {
       const redirectUrl = `/login?redirect=${encodeURIComponent(pathname)}`;
@@ -35,23 +34,8 @@ export function AuthGuard({ children }: AuthGuardProps) {
     }
   }, [isAuthenticated, isLoading, router, pathname]);
 
-  // Afficher loader pendant chargement ou redirection
-  if (isLoading || !isAuthenticated) {
-    return (
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          minHeight: '100vh',
-        }}
-      >
-        <CircularProgress />
-      </Box>
-    );
-  }
-
-  // Utilisateur authentifié → afficher contenu
+  // Afficher le contenu immédiatement (pas de loader)
+  // La redirection se fera en arrière-plan si non authentifié
   return <>{children}</>;
 }
 
