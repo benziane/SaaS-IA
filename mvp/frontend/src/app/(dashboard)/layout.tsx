@@ -3,6 +3,8 @@
  * Uses Sneat's VerticalLayout with MVP JWT authentication - REFONTE
  */
 
+'use client';
+
 // Type Imports
 import type { ChildrenType } from '@core/types';
 

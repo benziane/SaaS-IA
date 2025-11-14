@@ -44,35 +44,28 @@ interface AuthProviderProps {
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
-  const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  // Initialisation synchrone depuis localStorage
+  const [user, setUser] = useState<User | null>(() => {
+    if (typeof window === 'undefined') return null;
+    try {
+      const storedUser = localStorage.getItem('auth_user');
+      return storedUser ? JSON.parse(storedUser) : null;
+    } catch {
+      return null;
+    }
+  });
+  
+  const [token, setToken] = useState<string | null>(() => {
+    if (typeof window === 'undefined') return null;
+    try {
+      return localStorage.getItem('auth_token');
+    } catch {
+      return null;
+    }
+  });
+  
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-
-  // Initialisation au montage (une seule fois)
-  useEffect(() => {
-    const initAuth = () => {
-      try {
-        // Récupérer token depuis localStorage
-        const storedToken = localStorage.getItem('auth_token');
-        const storedUser = localStorage.getItem('auth_user');
-
-        if (storedToken && storedUser) {
-          setToken(storedToken);
-          setUser(JSON.parse(storedUser));
-        }
-      } catch (error) {
-        console.error('[AuthContext] Init error:', error);
-        // En cas d'erreur, nettoyer
-        localStorage.removeItem('auth_token');
-        localStorage.removeItem('auth_user');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    initAuth();
-  }, []);
 
   // Login
   const login = useCallback((newUser: User, newToken: string) => {

@@ -9,11 +9,11 @@ import type { ChildrenType } from '@core/types';
 // Layout Imports
 import BlankLayout from '@layouts/BlankLayout';
 
-// Guard Imports (REFONTE)
-import { GuestGuard } from '@/components/guards';
-
 // Util Imports
 import { getSystemMode } from '@core/utils/serverHelpers';
+
+// Client Component
+import AuthLayoutClient from './layout-client';
 
 /* ========================================================================
    COMPONENT
@@ -24,10 +24,10 @@ export default async function AuthLayout({ children }: ChildrenType) {
   const systemMode = await getSystemMode();
 
   return (
-    <GuestGuard>
-      <BlankLayout systemMode={systemMode}>
+    <BlankLayout systemMode={systemMode}>
+      <AuthLayoutClient>
         {children}
-      </BlankLayout>
-    </GuestGuard>
+      </AuthLayoutClient>
+    </BlankLayout>
   );
 }
