@@ -4,9 +4,8 @@
 import { useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 
-// Store Imports
-import { useAuthStore } from '@/lib/store'
-import { useAuthInit } from '@/lib/useAuthInit'
+// Auth Context
+import { useAuth } from '@/contexts/AuthContext'
 
 // Component Imports
 import { CircularProgress, Box } from '@mui/material'
@@ -17,36 +16,31 @@ type Props = {
 
 /**
  * GuestOnlyRoute Component
- * 
- * Protège les routes qui ne doivent être accessibles QUE par les utilisateurs NON authentifiés.
- * (Ex: /login, /register)
- * 
- * Redirige vers /dashboard si l'utilisateur est déjà authentifié.
- * 
- * Utilise le store Zustand (JWT backend) au lieu de NextAuth.
+ *
+ * Protects routes that should only be accessible by NON-authenticated users.
+ * (e.g., /login, /register)
+ *
+ * Redirects to /dashboard if the user is already authenticated.
  */
 const GuestOnlyRoute = ({ children }: Props) => {
   // Hooks
   const router = useRouter()
   const searchParams = useSearchParams()
-  const isAuthenticated = useAuthStore(state => state.isAuthenticated)
-  const isLoading = useAuthStore(state => state.isLoading)
-  const isInitialized = useAuthInit() // Initialiser l'auth au démarrage
+  const { isAuthenticated, isLoading } = useAuth()
 
   useEffect(() => {
-    // Attendre que l'initialisation soit terminée
-    if (!isInitialized) return
+    // Wait until loading is complete
+    if (isLoading) return
 
-    // Si pas en cours de chargement et authentifié
-    if (!isLoading && isAuthenticated) {
-      // Récupérer redirect param ou rediriger vers dashboard par défaut
+    // If authenticated, redirect away from guest-only pages
+    if (isAuthenticated) {
       const redirectUrl = searchParams?.get('redirect') || '/dashboard'
       router.replace(redirectUrl)
     }
-  }, [isInitialized, isAuthenticated, isLoading, router, searchParams])
+  }, [isAuthenticated, isLoading, router, searchParams])
 
-  // Afficher loader pendant initialisation ou vérification auth
-  if (!isInitialized || isLoading || isAuthenticated) {
+  // Show loader while checking auth or if already authenticated (redirect pending)
+  if (isLoading || isAuthenticated) {
     return (
       <Box
         sx={{
@@ -61,9 +55,8 @@ const GuestOnlyRoute = ({ children }: Props) => {
     )
   }
 
-  // Utilisateur NON authentifié → afficher contenu (login, register)
+  // User is NOT authenticated -> show content (login, register)
   return <>{children}</>
 }
 
 export default GuestOnlyRoute
-

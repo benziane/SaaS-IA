@@ -48,26 +48,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [token, setToken] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [mounted, setMounted] = useState(false);
   const router = useRouter();
-  
+
   // Initialisation côté client uniquement (après hydration)
   useEffect(() => {
-    console.log('[AuthContext] Initializing...');
-    setMounted(true);
-    
+
     try {
       // 1. Essayer localStorage d'abord
       const storedToken = localStorage.getItem('auth_token');
       const storedUser = localStorage.getItem('auth_user');
-      
-      console.log('[AuthContext] localStorage:', { 
-        hasToken: !!storedToken, 
-        hasUser: !!storedUser 
-      });
-      
+
       if (storedToken && storedUser) {
-        console.log('[AuthContext] Found token + user in localStorage');
         setToken(storedToken);
         setUser(JSON.parse(storedUser));
         setIsLoading(false);
@@ -77,9 +68,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // 2. Sinon essayer cookie
       const cookies = document.cookie.split(';');
       for (const cookie of cookies) {
-        const [name, value] = cookie.trim().split('=');
-        if (name === 'auth_token') {
-          console.log('[AuthContext] Found token in cookie, fetching user...');
+        const parts = cookie.trim().split('=');
+        const name = parts[0];
+        const value = parts[1];
+        if (name === 'auth_token' && value) {
           setToken(value);
           // Fetch user avec ce token
           fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8004'}/api/auth/me`, {
@@ -88,16 +80,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
             .then(res => res.ok ? res.json() : null)
             .then(userData => {
               if (userData) {
-                console.log('[AuthContext] User fetched:', userData.email);
                 setUser(userData);
                 localStorage.setItem('auth_user', JSON.stringify(userData));
               }
             })
-            .catch((err) => {
-              console.error('[AuthContext] Fetch user error:', err);
+            .catch(() => {
+              // Token from cookie was invalid or network error
             })
             .finally(() => {
-              console.log('[AuthContext] Init complete (from cookie)');
               setIsLoading(false);
             });
           return;
@@ -105,10 +95,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
       
       // Pas de token trouvé
-      console.log('[AuthContext] No token found, user not authenticated');
       setIsLoading(false);
-    } catch (error) {
-      console.error('[AuthContext] Init error:', error);
+    } catch {
       setIsLoading(false);
     }
   }, []);
@@ -129,8 +117,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       
       // Rediriger vers dashboard
       router.push('/dashboard');
-    } catch (error) {
-      console.error('[AuthContext] Login error:', error);
+    } catch {
       toast.error('Login failed', {
         description: 'Could not save authentication data',
       });
@@ -153,8 +140,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
       
       // Rediriger vers login
       router.push('/login');
-    } catch (error) {
-      console.error('[AuthContext] Logout error:', error);
+    } catch {
+      // Logout cleanup failed silently
     }
   }, [router]);
 

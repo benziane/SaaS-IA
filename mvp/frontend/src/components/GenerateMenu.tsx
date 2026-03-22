@@ -5,8 +5,15 @@ import type { ReactNode } from 'react'
 import type { ChipProps } from '@mui/material/Chip'
 
 // Type Imports
-import type { VerticalMenuDataType } from '@menu/vertical-menu'
-import type { HorizontalMenuDataType } from '@menu/horizontal-menu'
+import type {
+  VerticalMenuDataType,
+  VerticalSectionDataType,
+  VerticalSubMenuDataType,
+  VerticalMenuItemDataType,
+  HorizontalMenuDataType,
+  HorizontalSubMenuDataType,
+  HorizontalMenuItemDataType,
+} from '@/types/menuTypes'
 
 // Component Imports
 import { SubMenu as HorizontalSubMenu, MenuItem as HorizontalMenuItem } from '@menu/horizontal-menu'
@@ -26,12 +33,27 @@ export const GenerateVerticalMenu = ({ menuData }: { menuData: VerticalMenuDataT
 
       // Check if the current item is a section
       if (menuSectionItem.isSection) {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { children, isSection, ...rest } = menuSectionItem
+        const { children, label, icon, prefix, suffix } = menuSectionItem
+
+        const Icon = icon ? <i className={icon} /> : undefined
+
+        const sectionPrefix: ReactNode =
+          prefix && (prefix as ChipProps).label ? (
+            <CustomChip size='small' round='true' {...(prefix as ChipProps)} />
+          ) : (
+            (prefix as ReactNode)
+          )
+
+        const sectionSuffix: ReactNode =
+          suffix && (suffix as ChipProps).label ? (
+            <CustomChip size='small' round='true' {...(suffix as ChipProps)} />
+          ) : (
+            (suffix as ReactNode)
+          )
 
         // If it is, return a MenuSection component and call generateMenu with the current menuSectionItem's children
         return (
-          <MenuSection key={index} {...rest}>
+          <MenuSection key={index} label={label} prefix={sectionPrefix} suffix={sectionSuffix} {...(Icon && { icon: Icon })}>
             {children && renderMenuItems(children)}
           </MenuSection>
         )
@@ -72,10 +94,7 @@ export const GenerateVerticalMenu = ({ menuData }: { menuData: VerticalMenuDataT
       }
 
       // If the current item is neither a section nor a sub menu, return a MenuItem component
-      const { label, icon, prefix, suffix, ...rest } = menuItem
-
-      // Localize the href
-      const href = rest.href
+      const { label, icon, prefix, suffix, href, disabled, target } = menuItem
 
       const Icon = icon ? <i className={icon} /> : null
 
@@ -98,8 +117,9 @@ export const GenerateVerticalMenu = ({ menuData }: { menuData: VerticalMenuDataT
           key={index}
           prefix={menuItemPrefix}
           suffix={menuItemSuffix}
-          {...rest}
           href={href}
+          disabled={disabled}
+          target={target}
           {...(Icon && { icon: Icon })}
         >
           {label}
@@ -156,10 +176,7 @@ export const GenerateHorizontalMenu = ({ menuData }: { menuData: HorizontalMenuD
       }
 
       // If the current item is not a sub menu, return a MenuItem component
-      const { label, icon, prefix, suffix, ...rest } = menuItem
-
-      // Localize the href
-      const href = rest.href
+      const { label, icon, prefix, suffix, href, disabled, target } = menuItem
 
       const Icon = icon ? <i className={icon} /> : null
 
@@ -182,8 +199,9 @@ export const GenerateHorizontalMenu = ({ menuData }: { menuData: HorizontalMenuD
           key={index}
           prefix={menuItemPrefix}
           suffix={menuItemSuffix}
-          {...rest}
           href={href}
+          disabled={disabled}
+          target={target}
           {...(Icon && { icon: Icon })}
         >
           {label}

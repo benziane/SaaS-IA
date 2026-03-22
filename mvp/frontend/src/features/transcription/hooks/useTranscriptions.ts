@@ -21,7 +21,7 @@ export function useTranscriptions(
   filters?: TranscriptionFilters
 ): UseQueryResult<TranscriptionListResponse, Error> {
   return useQuery({
-    queryKey: queryKeys.transcriptions.list(filters),
+    queryKey: queryKeys.transcriptions.list(filters as Record<string, unknown> | undefined),
     queryFn: () => transcriptionApi.listTranscriptions(filters),
     staleTime: QUERY_STALE_TIME.CRITICAL, // 30 seconds - frequent updates
     refetchInterval: 5000, // Poll every 5 seconds for real-time updates

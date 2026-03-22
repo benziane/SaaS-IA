@@ -64,7 +64,7 @@ export function Providers({
       <QueryClientProvider client={queryClient}>
         <VerticalNavProvider>
           <SettingsProvider settingsCookie={settingsCookie} mode={mode}>
-            <ThemeProvider direction={direction} systemMode={systemMode}>
+            <ThemeProvider direction={direction} systemMode={systemMode ?? 'light'}>
               {children}
               
               {/* Toast Notifications - Grade S++ (MVP) */}
@@ -74,16 +74,11 @@ export function Providers({
                 richColors
                 closeButton
                 duration={6000}
-                toastOptions={{
-                  error: {
-                    duration: 8000, // Errors stay longer
-                  },
-                }}
               />
               
               {/* React Query Devtools - Development Only (MVP) */}
               {process.env.NODE_ENV === 'development' && (
-                <ReactQueryDevtools initialIsOpen={false} position="bottom-right" />
+                <ReactQueryDevtools initialIsOpen={false} buttonPosition="bottom-right" />
               )}
             </ThemeProvider>
           </SettingsProvider>

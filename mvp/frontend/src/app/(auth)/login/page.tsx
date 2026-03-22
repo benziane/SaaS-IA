@@ -72,10 +72,8 @@ export default function LoginPage(): JSX.Element {
   const quickLogin = async (email: string, password: string): Promise<void> => {
     try {
       await loginMutation.mutateAsync({ email, password });
-    } catch (error) {
+    } catch {
       // Error is already handled by useLogin hook (toast)
-      // Just prevent the error from propagating
-      console.error('Quick Login failed:', error);
     }
   };
   

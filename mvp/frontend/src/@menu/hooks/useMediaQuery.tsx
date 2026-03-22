@@ -21,6 +21,8 @@ const useMediaQuery = (breakpoint?: string): boolean => {
 
       return () => window.removeEventListener('resize', listener)
     }
+
+    return undefined
   }, [matches, breakpoint])
 
   return matches

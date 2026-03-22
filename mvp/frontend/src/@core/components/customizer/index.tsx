@@ -46,7 +46,29 @@ import primaryColorConfig from '@configs/primaryColorConfig'
 import { useSettings } from '@core/hooks/useSettings'
 
 // Style Imports
-import styles from './styles.module.css'
+import _styles from './styles.module.css'
+
+// CSS module with explicit property types for noUncheckedIndexedAccess compatibility
+const styles = _styles as {
+  customizer: string
+  show: string
+  smallScreen: string
+  toggler: string
+  header: string
+  customizerTitle: string
+  customizerSubtitle: string
+  dotStyles: string
+  customizerBody: string
+  itemWrapper: string
+  itemLabel: string
+  primaryColorWrapper: string
+  primaryColor: string
+  modeWrapper: string
+  hr: string
+  colorPopup: string
+  colorInput: string
+  active: string
+}
 
 type CustomizerProps = {
   breakpoint?: Breakpoint | 'xxl' | `${number}px` | `${number}rem` | `${number}em`
@@ -74,7 +96,7 @@ const DebouncedColorPicker = (props: DebouncedColorPickerProps) => {
   const { settings, isColorFromPrimaryConfig, handleChange } = props
 
   // States
-  const [debouncedColor, setDebouncedColor] = useState(settings.primaryColor ?? primaryColorConfig[0].main)
+  const [debouncedColor, setDebouncedColor] = useState(settings.primaryColor ?? primaryColorConfig[0]?.main)
 
   // Hooks
   useDebounce(() => handleChange('primaryColor', debouncedColor), 200, [debouncedColor])
@@ -82,12 +104,12 @@ const DebouncedColorPicker = (props: DebouncedColorPickerProps) => {
   return (
     <>
       <HexColorPicker
-        color={!isColorFromPrimaryConfig ? (settings.primaryColor ?? primaryColorConfig[0].main) : '#eee'}
+        color={!isColorFromPrimaryConfig ? (settings.primaryColor ?? primaryColorConfig[0]?.main) : '#eee'}
         onChange={setDebouncedColor}
       />
       <HexColorInput
         className={styles.colorInput}
-        color={!isColorFromPrimaryConfig ? (settings.primaryColor ?? primaryColorConfig[0].main) : '#eee'}
+        color={!isColorFromPrimaryConfig ? (settings.primaryColor ?? primaryColorConfig[0]?.main) : '#eee'}
         onChange={setDebouncedColor}
         prefixed
         placeholder='Type a color'

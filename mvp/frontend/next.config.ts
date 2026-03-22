@@ -10,14 +10,8 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   compress: true,
 
-  /* TypeScript Config - Mode "Prod Rapide" */
-  typescript: {
-    ignoreBuildErrors: true,
-  },
-
-  /* ESLint Config - Mode "Prod Rapide" */
+  /* ESLint Config */
   eslint: {
-    ignoreDuringBuilds: true,
     dirs: ['src'],
   },
   

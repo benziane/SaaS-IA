@@ -25,7 +25,7 @@ import { useSettings } from '@core/hooks/useSettings'
 import navigationCustomStyles from '@core/styles/vertical/navigationCustomStyles'
 
 type Props = {
-  mode: Mode
+  mode?: Mode
 }
 
 const StyledBoxForShadow = styled('div')(({ theme }) => ({

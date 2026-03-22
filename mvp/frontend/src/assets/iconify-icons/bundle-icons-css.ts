@@ -8,8 +8,6 @@
 // Minimal iconify icons bundle for MVP
 // In production, this would bundle all used icons
 
-console.log('Iconify icons CSS bundle - MVP mode (minimal)')
-
 // Export empty for now - icons will be loaded dynamically
 export {}
 

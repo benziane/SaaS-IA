@@ -24,21 +24,15 @@ export function AuthGuard({ children }: AuthGuardProps) {
   const pathname = usePathname();
 
   useEffect(() => {
-    console.log('[AuthGuard] State:', { isAuthenticated, isLoading, pathname });
-    
     // Attendre la fin du chargement
     if (isLoading) {
-      console.log('[AuthGuard] Still loading, waiting...');
       return;
     }
-    
+
     // Si pas authentifié, rediriger vers login
     if (!isAuthenticated) {
-      console.log('[AuthGuard] Not authenticated, redirecting to login');
       const redirectUrl = `/login?redirect=${encodeURIComponent(pathname)}`;
       router.replace(redirectUrl);
-    } else {
-      console.log('[AuthGuard] Authenticated, showing content');
     }
   }, [isAuthenticated, isLoading, router, pathname]);
 

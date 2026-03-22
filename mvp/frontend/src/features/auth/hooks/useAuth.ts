@@ -1,12 +1,12 @@
 /**
- * Auth Hooks - Grade S++
+ * Auth Hooks
  * React Query hooks for authentication
  */
 
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 
 import { QUERY_STALE_TIME, queryKeys } from '@/lib/queryClient';
-import { useAuthStore } from '@/lib/store';
+import { useAuth } from '@/contexts/AuthContext';
 
 import { authApi } from '../api';
 import type { User } from '../types';
@@ -19,8 +19,8 @@ import type { User } from '../types';
  * Get current user
  */
 export function useCurrentUser(): UseQueryResult<User, Error> {
-  const isAuthenticated = useAuthStore(state => state.isAuthenticated);
-  
+  const { isAuthenticated } = useAuth();
+
   return useQuery({
     queryKey: queryKeys.auth.me(),
     queryFn: () => authApi.getCurrentUser(),
@@ -37,4 +37,3 @@ export function useCurrentUser(): UseQueryResult<User, Error> {
 export default {
   useCurrentUser,
 };
-
