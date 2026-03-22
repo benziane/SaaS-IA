@@ -44,6 +44,7 @@ import {
 import {
   AudioFile,
   AutoFixHigh,
+  Chat,
   Close,
   CloudUpload,
   ContentCopy,
@@ -58,6 +59,7 @@ import {
   Visibility,
 } from '@mui/icons-material';
 import { useCallback, useMemo, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Controller, useForm } from 'react-hook-form';
 
 import {
@@ -312,6 +314,7 @@ interface TranscriptionDetailProps {
 }
 
 function TranscriptionDetail({ transcription, onClose }: TranscriptionDetailProps): JSX.Element {
+  const router = useRouter();
   const { startStream, stopStream, isStreaming } = useSSE();
   const [improvedText, setImprovedText] = useState('');
   const [streamDone, setStreamDone] = useState(false);
@@ -451,17 +454,30 @@ function TranscriptionDetail({ transcription, onClose }: TranscriptionDetailProp
               <Stack direction="row" spacing={1} alignItems="center">
                 <ExportButtons transcription={transcription} />
                 {transcription.status === TranscriptionStatus.COMPLETED && !isStreaming && (
-                  <Tooltip title="Improve transcription text using AI">
-                    <Button
-                      size="small"
-                      variant="outlined"
-                      color="secondary"
-                      startIcon={<AutoFixHigh />}
-                      onClick={handleImproveWithAI}
-                    >
-                      Improve with AI
-                    </Button>
-                  </Tooltip>
+                  <>
+                    <Tooltip title="Chat with AI about this transcription">
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        color="primary"
+                        startIcon={<Chat />}
+                        onClick={() => router.push(`/chat?transcription_id=${transcription.id}`)}
+                      >
+                        Chat about this
+                      </Button>
+                    </Tooltip>
+                    <Tooltip title="Improve transcription text using AI">
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        color="secondary"
+                        startIcon={<AutoFixHigh />}
+                        onClick={handleImproveWithAI}
+                      >
+                        Improve with AI
+                      </Button>
+                    </Tooltip>
+                  </>
                 )}
                 {isStreaming && (
                   <Tooltip title="Stop AI streaming">

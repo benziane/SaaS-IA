@@ -1,0 +1,9 @@
+{
+  "name": "conversation",
+  "version": "1.0.0",
+  "description": "AI conversation chat with SSE streaming, optionally linked to transcriptions",
+  "prefix": "/api/conversations",
+  "tags": ["conversations"],
+  "enabled": true,
+  "dependencies": []
+}

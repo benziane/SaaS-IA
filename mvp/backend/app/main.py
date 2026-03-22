@@ -15,10 +15,10 @@ from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
 from app.config import settings
 from app.database import init_db
 from app.auth import router as auth_router
-from app.modules.transcription.routes import router as transcription_router
 from app.ai_assistant.routes import router as ai_assistant_router
 from app.rate_limit import limiter, rate_limit_exceeded_handler
 from app.metrics import PrometheusMiddleware
+from app.modules import ModuleRegistry
 
 # Initialize structured logger
 logger = structlog.get_logger()
@@ -90,15 +90,17 @@ app.include_router(
 )
 
 app.include_router(
-    transcription_router,
-    prefix="/api/transcription",
-    tags=["Transcription"]
-)
-
-app.include_router(
     ai_assistant_router,
     prefix="/api/ai-assistant",
     tags=["AI Assistant"]
+)
+
+# Auto-discover and register plugin modules
+registered = ModuleRegistry.discover_modules(app)
+logger.info(
+    "modules_registered",
+    count=len(registered),
+    modules=[m["name"] for m in registered],
 )
 
 
@@ -118,6 +120,22 @@ async def health_check(request: Request):
         "app_name": settings.APP_NAME,
         "environment": settings.ENVIRONMENT,
         "version": "1.0.0"
+    }
+
+
+# Registered modules endpoint
+@app.get("/api/modules", tags=["Modules"])
+async def list_modules():
+    """
+    List all registered plugin modules.
+
+    Returns metadata for every module that was successfully discovered
+    and loaded at startup.
+    """
+    modules = ModuleRegistry.get_registered_modules()
+    return {
+        "count": len(modules),
+        "modules": modules,
     }
 
 

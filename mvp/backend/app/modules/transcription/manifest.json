@@ -1,0 +1,9 @@
+{
+  "name": "transcription",
+  "version": "1.0.0",
+  "description": "YouTube and multi-source audio/video transcription",
+  "prefix": "/api/transcription",
+  "tags": ["transcription"],
+  "enabled": true,
+  "dependencies": ["assemblyai"]
+}

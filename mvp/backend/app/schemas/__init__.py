@@ -8,6 +8,13 @@ from app.schemas.transcription import (
     TranscriptionRead,
     TranscriptionUpdate,
 )
+from app.schemas.conversation import (
+    ConversationCreate,
+    ConversationRead,
+    ConversationWithMessages,
+    MessageCreate,
+    MessageRead,
+)
 
 __all__ = [
     "UserCreate",
@@ -17,5 +24,10 @@ __all__ = [
     "TranscriptionCreate",
     "TranscriptionRead",
     "TranscriptionUpdate",
+    "ConversationCreate",
+    "ConversationRead",
+    "ConversationWithMessages",
+    "MessageCreate",
+    "MessageRead",
 ]
 

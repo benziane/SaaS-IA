@@ -37,7 +37,23 @@ const verticalMenuData = (): VerticalMenuDataType[] => [
       },
     ],
   },
-  
+  {
+    label: 'Chat IA',
+    href: '/chat',
+    icon: 'tabler:message-chatbot',
+  },
+
+  // Platform Section
+  {
+    label: 'Platform',
+    isSection: true,
+  },
+  {
+    label: 'Modules',
+    href: '/modules',
+    icon: 'tabler:puzzle',
+  },
+
   // Account Section
   {
     label: 'Account',
