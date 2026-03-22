@@ -1,0 +1,9 @@
+{
+  "name": "compare",
+  "version": "1.0.0",
+  "description": "Multi-model AI comparison with parallel execution and voting",
+  "prefix": "/api/compare",
+  "tags": ["compare"],
+  "enabled": true,
+  "dependencies": []
+}

@@ -1,0 +1,9 @@
+{
+  "name": "pipelines",
+  "version": "1.0.0",
+  "description": "AI Pipeline Builder - chain AI operations with visual editor",
+  "prefix": "/api/pipelines",
+  "tags": ["pipelines"],
+  "enabled": true,
+  "dependencies": []
+}

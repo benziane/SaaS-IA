@@ -187,11 +187,11 @@ Introduire des plans (Free / Pro / Enterprise) :
 
 ---
 
-## PHASE 6 : INNOVATIONS DIFFERENCIANTES [FUTUR]
+## PHASE 6 : INNOVATIONS DIFFERENCIANTES [EN COURS]
 
 > Vision produit a long terme. Ce qui positionne SaaS-IA comme plateforme.
 
-### 6.1 AI Pipeline Builder (drag and drop)
+### 6.1 AI Pipeline Builder (drag and drop) [FAIT]
 
 **Effort** : 3-4 semaines | **Impact** : Tres haut | **Priorite** : P3
 
@@ -209,7 +209,7 @@ Permettre a l'utilisateur de chainer des operations IA visuellement :
 
 Positionne SaaS-IA comme une **plateforme d'orchestration IA**, pas juste un outil.
 
-### 6.2 Analyse comparative multi-modele
+### 6.2 Analyse comparative multi-modele [FAIT]
 
 **Effort** : 1-2 semaines | **Impact** : Haut | **Priorite** : P2
 
@@ -300,7 +300,7 @@ Transformer SaaS-IA en outil collaboratif :
 
 **Sprint 3** : 5.1 + 5.3 -- Celery workers + Quotas/plans. Prepare la mise en production reelle et la monetisation. **[FAIT]**
 
-**Sprint 4+** : 6.1, 6.2, 6.4 -- Pipeline builder, Compare, Knowledge base. Differenciateurs qui positionnent SaaS-IA comme plateforme.
+**Sprint 4** : 6.1 + 6.2 -- Pipeline builder + Compare multi-modele. Differenciateurs plateforme. **[FAIT]**
 
 ---
 
@@ -379,6 +379,25 @@ Transformer SaaS-IA en outil collaboratif :
 | GET | /plans | Plans disponibles |
 | GET | /quota | Quota et usage de l'utilisateur courant |
 
+### Compare (`/api/compare`)
+| Methode | Endpoint | Description |
+|---------|----------|-------------|
+| POST | /run | Comparaison multi-modele parallele |
+| POST | /{id}/vote | Vote qualite provider |
+| GET | /stats | Statistiques qualite par provider |
+
+### Pipelines (`/api/pipelines`)
+| Methode | Endpoint | Description |
+|---------|----------|-------------|
+| POST | / | Creer un pipeline |
+| GET | / | Lister les pipelines |
+| GET | /{id} | Detail d'un pipeline |
+| PUT | /{id} | Modifier un pipeline |
+| DELETE | /{id} | Supprimer un pipeline |
+| POST | /{id}/execute | Executer un pipeline |
+| GET | /{id}/executions | Historique des executions |
+| GET | /executions/{id} | Detail d'une execution |
+
 ---
 
 ## PAGES FRONTEND
@@ -392,10 +411,18 @@ Transformer SaaS-IA en outil collaboratif :
 | /transcription/debug | Interface debug temps reel (dev/admin) | FAIT |
 | /profile | Profil utilisateur et changement mot de passe | FAIT |
 | /billing | Plan, usage quotas et plans disponibles | FAIT |
+| /compare | Comparaison multi-modele IA | FAIT |
+| /pipelines | Pipeline builder IA | FAIT |
 
 ---
 
 ## CHANGELOG
+
+### v2.4.0 (2026-03-22)
+- Sprint 4 : Compare multi-modele (execution parallele, voting, stats)
+- Sprint 4 : AI Pipeline Builder (CRUD, execution sequentielle, 4 types de steps)
+- 12 nouveaux fichiers backend, 8 fichiers frontend, 22 nouveaux tests
+- Documentation technique : docs/SPRINT4_COMPARE_PIPELINES.md
 
 ### v2.3.0 (2026-03-22)
 - Sprint 3 : Celery workers (taches persistantes, retry backoff, Flower monitoring)

@@ -42,6 +42,16 @@ const verticalMenuData = (): VerticalMenuDataType[] => [
     href: '/chat',
     icon: 'tabler:message-chatbot',
   },
+  {
+    label: 'Compare',
+    href: '/compare',
+    icon: 'tabler:arrows-diff',
+  },
+  {
+    label: 'Pipelines',
+    href: '/pipelines',
+    icon: 'tabler:git-branch',
+  },
 
   // Platform Section
   {

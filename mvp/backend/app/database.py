@@ -39,6 +39,8 @@ async def init_db() -> None:
         from app.models.transcription import Transcription, TranscriptionStatus  # noqa: F401
         from app.models.conversation import Conversation, Message  # noqa: F401
         from app.models.billing import Plan, UserQuota  # noqa: F401
+        from app.models.compare import ComparisonResult, ComparisonVote  # noqa: F401
+        from app.models.pipeline import Pipeline, PipelineExecution  # noqa: F401
 
         # Create all tables
         await conn.run_sync(SQLModel.metadata.create_all)

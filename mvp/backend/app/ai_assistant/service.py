@@ -635,6 +635,37 @@ Contenu restructuré :"""
 
         return result
 
+    @staticmethod
+    async def process_text_with_provider(
+        text: str,
+        task: str = "general",
+        provider_name: str = "gemini",
+    ) -> dict:
+        """Process text using a specific provider (for comparison mode)."""
+        from app.ai_assistant.providers.gemini import GeminiProvider
+        from app.ai_assistant.providers.claude import ClaudeProvider
+        from app.ai_assistant.providers.groq import GroqProvider
+
+        providers_map = {
+            "gemini": GeminiProvider,
+            "claude": ClaudeProvider,
+            "groq": GroqProvider,
+        }
+
+        provider_class = providers_map.get(provider_name)
+        if provider_class is None:
+            raise ValueError(f"Unknown provider: {provider_name}")
+
+        provider = provider_class()
+        prompt = f"Task: {task}\n\n{text}"
+
+        result = await provider.complete(prompt)
+        return {
+            "processed_text": result,
+            "model": provider.model_name,
+            "provider": provider_name,
+        }
+
     @classmethod
     async def stream_text(
         cls,
