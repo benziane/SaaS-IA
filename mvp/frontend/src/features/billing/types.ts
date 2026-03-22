@@ -26,3 +26,12 @@ export interface UserQuota {
   period_end: string;
   usage_percent: number;
 }
+
+export interface CheckoutResponse {
+  checkout_url: string;
+  session_id: string;
+}
+
+export interface PortalResponse {
+  portal_url: string;
+}

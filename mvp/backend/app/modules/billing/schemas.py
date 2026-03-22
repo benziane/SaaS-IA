@@ -6,7 +6,7 @@ from datetime import date, datetime
 from typing import Optional
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class PlanRead(BaseModel):
@@ -39,3 +39,19 @@ class QuotaRead(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class CheckoutRequest(BaseModel):
+    """Request to create a Stripe checkout session."""
+    plan_name: str = Field(..., description="Plan to subscribe to (pro)")
+
+
+class CheckoutResponse(BaseModel):
+    """Response with Stripe checkout URL."""
+    checkout_url: str
+    session_id: str
+
+
+class PortalResponse(BaseModel):
+    """Response with Stripe billing portal URL."""
+    portal_url: str

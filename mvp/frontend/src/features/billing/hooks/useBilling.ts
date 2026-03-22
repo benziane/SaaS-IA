@@ -5,10 +5,10 @@
 
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 
-import { getPlans, getQuota } from '../api';
-import type { Plan, UserQuota } from '../types';
+import { createCheckout, createPortal, getPlans, getQuota } from '../api';
+import type { CheckoutResponse, Plan, PortalResponse, UserQuota } from '../types';
 
 export function usePlans() {
   return useQuery<Plan[]>({
@@ -23,5 +23,23 @@ export function useQuota() {
     queryKey: ['billing', 'quota'],
     queryFn: getQuota,
     refetchInterval: 30 * 1000,
+  });
+}
+
+export function useCheckout() {
+  return useMutation<CheckoutResponse, Error, string>({
+    mutationFn: createCheckout,
+    onSuccess: (data) => {
+      window.location.href = data.checkout_url;
+    },
+  });
+}
+
+export function usePortal() {
+  return useMutation<PortalResponse, Error, void>({
+    mutationFn: createPortal,
+    onSuccess: (data) => {
+      window.location.href = data.portal_url;
+    },
   });
 }

@@ -16,6 +16,9 @@ redis==5.0.1
 celery[redis]==5.3.6
 flower==2.0.1
 
+# Payments
+stripe==8.0.0
+
 # Validation & Settings
 pydantic==2.5.0
 pydantic-settings==2.1.0
