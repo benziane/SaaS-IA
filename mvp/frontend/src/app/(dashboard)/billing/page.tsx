@@ -16,7 +16,7 @@ import { usePlans, useQuota } from '@/features/billing/hooks/useBilling';
 import type { Plan } from '@/features/billing/types';
 
 function formatPrice(cents: number): string {
-  if (cents === 0) return 'Free';
+  if (cents === 0) { return 'Free'; }
   return `${(cents / 100).toFixed(0)} EUR/month`;
 }
 

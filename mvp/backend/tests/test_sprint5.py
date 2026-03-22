@@ -235,13 +235,13 @@ class TestModuleManifests:
     """Test Sprint 5 module manifests."""
 
     def test_knowledge_manifest(self):
-        with open("mvp/backend/app/modules/knowledge/manifest.json") as f:
+        with open("app/modules/knowledge/manifest.json") as f:
             manifest = json.load(f)
         assert manifest["name"] == "knowledge"
         assert manifest["prefix"] == "/api/knowledge"
 
     def test_api_keys_manifest(self):
-        with open("mvp/backend/app/modules/api_keys/manifest.json") as f:
+        with open("app/modules/api_keys/manifest.json") as f:
             manifest = json.load(f)
         assert manifest["name"] == "api_keys"
         assert manifest["prefix"] == "/api/keys"

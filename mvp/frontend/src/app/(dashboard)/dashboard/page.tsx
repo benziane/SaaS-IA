@@ -11,7 +11,6 @@ import {
   CardContent,
   Chip,
   Grid,
-  LinearProgress,
   List,
   ListItem,
   ListItemText,
@@ -22,7 +21,6 @@ import {
   AccessTime,
   CheckCircle,
   Error as ErrorIcon,
-  HourglassEmpty,
   Transcribe,
 } from '@mui/icons-material';
 import { useCurrentUser } from '@/features/auth/hooks';
