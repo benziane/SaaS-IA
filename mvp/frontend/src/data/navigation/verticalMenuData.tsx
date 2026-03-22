@@ -38,6 +38,17 @@ const verticalMenuData = (): VerticalMenuDataType[] => [
     ],
   },
   
+  // Account Section
+  {
+    label: 'Account',
+    isSection: true,
+  },
+  {
+    label: 'Profile',
+    href: '/profile',
+    icon: 'tabler:user-circle',
+  },
+
   // Future Modules (commented for now)
   // {
   //   label: 'Text Generation',

@@ -2,7 +2,7 @@
 Transcription API routes
 """
 
-from typing import List
+from typing import List, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status, Query, Request, WebSocket, WebSocketDisconnect
@@ -12,7 +12,8 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from app.database import get_session
 from app.auth import get_current_user
 from app.models.user import User, Role
-from app.schemas.transcription import TranscriptionCreate, TranscriptionRead
+from app.models.transcription import TranscriptionStatus
+from app.schemas.transcription import TranscriptionCreate, TranscriptionRead, PaginatedResponse
 from app.modules.transcription.service import TranscriptionService
 from app.modules.transcription.websocket import get_debug_manager
 from app.transcription.audio_cache import get_audio_cache
@@ -73,6 +74,28 @@ async def create_transcription(
     return job
 
 
+@router.get("/stats")
+@limiter.limit("20/minute")
+async def get_transcription_stats(
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+    service: TranscriptionService = Depends(get_transcription_service)
+):
+    """
+    Get transcription statistics for the current user.
+
+    Returns aggregate counts, total duration, average confidence,
+    and the 5 most recent transcription jobs.
+
+    Rate limit: 20 requests/minute
+    """
+    return await service.get_user_stats(
+        user_id=current_user.id,
+        session=session,
+    )
+
+
 @router.get("/{job_id}", response_model=TranscriptionRead)
 @limiter.limit(get_rate_limit("transcription_get"))
 async def get_transcription(
@@ -106,30 +129,40 @@ async def get_transcription(
     return job
 
 
-@router.get("/", response_model=List[TranscriptionRead])
+@router.get("/", response_model=PaginatedResponse[TranscriptionRead])
 @limiter.limit(get_rate_limit("transcription_list"))
 async def list_transcriptions(
     request: Request,
     skip: int = Query(0, ge=0, description="Number of items to skip"),
-    limit: int = Query(100, ge=1, le=1000, description="Maximum number of items to return"),
+    limit: int = Query(20, ge=1, le=100, description="Maximum number of items to return"),
+    status: Optional[TranscriptionStatus] = Query(None, description="Filter by transcription status"),
     current_user: User = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
     service: TranscriptionService = Depends(get_transcription_service)
 ):
     """
-    List all transcription jobs for the current user
-    
+    List all transcription jobs for the current user with pagination.
+
+    Returns a paginated response containing items, total count, and pagination metadata.
+
     Rate limit: 20 requests/minute
     """
-    
-    jobs = await service.list_user_jobs(
+
+    items, total = await service.list_user_jobs(
         user_id=current_user.id,
         session=session,
         skip=skip,
-        limit=limit
+        limit=limit,
+        status=status
     )
-    
-    return jobs
+
+    return PaginatedResponse(
+        items=items,
+        total=total,
+        skip=skip,
+        limit=limit,
+        has_more=(skip + limit) < total
+    )
 
 
 @router.delete("/{job_id}", status_code=status.HTTP_204_NO_CONTENT)

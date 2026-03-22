@@ -56,16 +56,72 @@ class UserRead(BaseModel):
         }
 
 
+class UserUpdateProfile(BaseModel):
+    """Schema for updating user profile"""
+    full_name: str = Field(..., min_length=1, max_length=255)
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "full_name": "Jane Doe"
+            }
+        }
+
+
+class PasswordChange(BaseModel):
+    """Schema for changing password"""
+    current_password: str = Field(..., min_length=1)
+    new_password: str = Field(..., min_length=8, max_length=100)
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "current_password": "oldpassword123",
+                "new_password": "newpassword456"
+            }
+        }
+
+
 class Token(BaseModel):
-    """Schema for JWT token response"""
+    """Schema for JWT token response (legacy, kept for backward compatibility)"""
     access_token: str
     token_type: str = "bearer"
-    
+
     class Config:
         json_schema_extra = {
             "example": {
                 "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
                 "token_type": "bearer"
+            }
+        }
+
+
+class TokenResponse(BaseModel):
+    """Schema for JWT token response with refresh token"""
+    access_token: str
+    refresh_token: str
+    token_type: str = "bearer"
+    expires_in: int
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                "token_type": "bearer",
+                "expires_in": 1800
+            }
+        }
+
+
+class RefreshTokenRequest(BaseModel):
+    """Schema for refresh token request"""
+    refresh_token: str
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
             }
         }
 

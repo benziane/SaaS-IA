@@ -15,7 +15,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from app.config import settings
 from app.database import get_session
 from app.models.user import User, Role
-from app.schemas.user import UserCreate, UserRead, Token, TokenData
+from app.schemas.user import UserCreate, UserRead, Token, TokenData, TokenResponse, RefreshTokenRequest, UserUpdateProfile, PasswordChange
 from app.rate_limit import limiter, get_rate_limit
 
 # Router
@@ -39,17 +39,31 @@ def get_password_hash(password: str) -> str:
 
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
-    """Create a JWT access token"""
+    """Create a JWT access token with type='access' claim"""
     to_encode = data.copy()
-    
+
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
     else:
         expire = datetime.utcnow() + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-    
-    to_encode.update({"exp": expire})
+
+    to_encode.update({"exp": expire, "type": "access"})
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
-    
+
+    return encoded_jwt
+
+
+def create_refresh_token(user_id: str) -> str:
+    """Create a long-lived JWT refresh token with type='refresh' claim"""
+    expire = datetime.utcnow() + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
+
+    to_encode = {
+        "sub": user_id,
+        "exp": expire,
+        "type": "refresh",
+    }
+    encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+
     return encoded_jwt
 
 
@@ -87,10 +101,15 @@ async def get_current_user(
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         email: str = payload.get("sub")
-        
+
         if email is None:
             raise credentials_exception
-        
+
+        # Reject refresh tokens used as access tokens
+        token_type = payload.get("type")
+        if token_type == "refresh":
+            raise credentials_exception
+
         token_data = TokenData(email=email)
     except JWTError:
         raise credentials_exception
@@ -166,7 +185,7 @@ async def register(
     return new_user
 
 
-@router.post("/login", response_model=Token)
+@router.post("/login", response_model=TokenResponse)
 @limiter.limit(get_rate_limit("auth_login"))
 async def login(
     request: Request,
@@ -174,27 +193,90 @@ async def login(
     session: AsyncSession = Depends(get_session)
 ):
     """
-    Login and get JWT token
-    
+    Login and get JWT access token + refresh token.
+
     Rate limit: 5 requests/minute (anti-brute force)
     """
-    
+
     user = await authenticate_user(session, form_data.username, form_data.password)
-    
+
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
+
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
         data={"sub": user.email},
         expires_delta=access_token_expires
     )
-    
-    return {"access_token": access_token, "token_type": "bearer"}
+    refresh_token = create_refresh_token(user_id=user.email)
+
+    return {
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "token_type": "bearer",
+        "expires_in": settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+    }
+
+
+@router.post("/refresh", response_model=TokenResponse)
+@limiter.limit(get_rate_limit("auth_login"))
+async def refresh(
+    request: Request,
+    body: RefreshTokenRequest,
+    session: AsyncSession = Depends(get_session)
+):
+    """
+    Refresh an expired access token using a valid refresh token.
+
+    Returns a new access token and a rotated refresh token.
+    Rate limit: same as login (5 requests/minute)
+    """
+
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Invalid or expired refresh token",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
+    try:
+        payload = jwt.decode(
+            body.refresh_token,
+            settings.SECRET_KEY,
+            algorithms=[settings.ALGORITHM],
+        )
+        email: str = payload.get("sub")
+        token_type: str = payload.get("type")
+
+        if email is None or token_type != "refresh":
+            raise credentials_exception
+
+    except JWTError:
+        raise credentials_exception
+
+    # Verify that the user still exists and is active
+    user = await get_user_by_email(session, email=email)
+
+    if user is None or not user.is_active:
+        raise credentials_exception
+
+    # Issue new token pair (token rotation)
+    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    new_access_token = create_access_token(
+        data={"sub": user.email},
+        expires_delta=access_token_expires,
+    )
+    new_refresh_token = create_refresh_token(user_id=user.email)
+
+    return {
+        "access_token": new_access_token,
+        "refresh_token": new_refresh_token,
+        "token_type": "bearer",
+        "expires_in": settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+    }
 
 
 @router.get("/me", response_model=UserRead)
@@ -205,8 +287,68 @@ async def read_users_me(
 ):
     """
     Get current user information
-    
+
     Rate limit: 20 requests/minute
     """
     return current_user
+
+
+@router.put("/profile", response_model=UserRead)
+@limiter.limit(get_rate_limit("auth_me"))
+async def update_profile(
+    request: Request,
+    profile_data: UserUpdateProfile,
+    current_user: User = Depends(get_current_active_user),
+    session: AsyncSession = Depends(get_session)
+):
+    """
+    Update current user profile (full_name)
+
+    Rate limit: 20 requests/minute
+    """
+    current_user.full_name = profile_data.full_name
+    current_user.updated_at = datetime.utcnow()
+
+    session.add(current_user)
+    await session.commit()
+    await session.refresh(current_user)
+
+    return current_user
+
+
+@router.put("/password")
+@limiter.limit("3/minute")
+async def change_password(
+    request: Request,
+    password_data: PasswordChange,
+    current_user: User = Depends(get_current_active_user),
+    session: AsyncSession = Depends(get_session)
+):
+    """
+    Change current user password
+
+    Rate limit: 3 requests/minute
+    """
+    # Validate current password
+    if not verify_password(password_data.current_password, current_user.hashed_password):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Current password is incorrect"
+        )
+
+    # Prevent setting the same password
+    if verify_password(password_data.new_password, current_user.hashed_password):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="New password must be different from current password"
+        )
+
+    # Update password
+    current_user.hashed_password = get_password_hash(password_data.new_password)
+    current_user.updated_at = datetime.utcnow()
+
+    session.add(current_user)
+    await session.commit()
+
+    return {"message": "Password changed successfully"}
 

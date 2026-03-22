@@ -59,16 +59,17 @@ export function useLogin(): UseMutationResult<LoginResponse, Error, LoginRequest
       // IMPORTANT: Save token FIRST before calling getCurrentUser
       // (apiClient needs it in localStorage to add Authorization header)
       localStorage.setItem('auth_token', response.access_token);
-      
+      localStorage.setItem('auth_refresh_token', response.refresh_token);
+
       // Get user data (now with token in headers)
       const user = await authApi.getCurrentUser();
-      
+
       // Update context (handles cookie, redirect)
-      login(user, response.access_token);
-      
+      login(user, response.access_token, response.refresh_token);
+
       // Invalidate auth queries
       await queryClient.invalidateQueries({ queryKey: queryKeys.auth.all });
-      
+
       toast.success('Login successful', {
         description: `Welcome back, ${user.email}!`,
       });

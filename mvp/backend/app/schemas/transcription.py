@@ -2,13 +2,24 @@
 Transcription schemas for request/response validation
 """
 
-from typing import Optional
+from typing import Generic, List, Optional, TypeVar
 from uuid import UUID
 from datetime import datetime
 
 from pydantic import BaseModel, Field, HttpUrl
 
 from app.models.transcription import TranscriptionStatus
+
+T = TypeVar("T")
+
+
+class PaginatedResponse(BaseModel, Generic[T]):
+    """Generic paginated response wrapper"""
+    items: List[T]
+    total: int = Field(..., description="Total number of items matching the query")
+    skip: int = Field(..., description="Number of items skipped")
+    limit: int = Field(..., description="Maximum number of items per page")
+    has_more: bool = Field(..., description="Whether more items are available beyond this page")
 
 
 class TranscriptionCreate(BaseModel):

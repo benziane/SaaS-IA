@@ -16,6 +16,15 @@ const YOUTUBE_URL_REGEX =
    TRANSCRIPTION CREATE SCHEMA
    ======================================================================== */
 
+export const LANGUAGE_OPTIONS = [
+  { value: 'auto', label: 'Auto-detect' },
+  { value: 'fr', label: 'French' },
+  { value: 'en', label: 'English' },
+  { value: 'ar', label: 'Arabic' },
+  { value: 'es', label: 'Spanish' },
+  { value: 'de', label: 'German' },
+] as const;
+
 export const transcriptionCreateSchema = z.object({
   video_url: z
     .string()
@@ -23,6 +32,10 @@ export const transcriptionCreateSchema = z.object({
     .url('Invalid URL format')
     .regex(YOUTUBE_URL_REGEX, 'Invalid YouTube URL. Please provide a valid YouTube video URL')
     .trim(),
+  language: z
+    .string()
+    .optional()
+    .default('auto'),
 });
 
 export type TranscriptionCreateSchema = z.infer<typeof transcriptionCreateSchema>;

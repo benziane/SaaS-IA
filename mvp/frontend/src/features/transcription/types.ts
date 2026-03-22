@@ -21,13 +21,17 @@ export enum TranscriptionStatus {
 export interface Transcription {
   id: string;
   video_url: string;
+  language: string | null;
   status: TranscriptionStatus;
   text: string | null;
   confidence: number | null;
+  duration_seconds: number | null;
   error: string | null;
+  retry_count: number;
   created_at: string;
   updated_at: string;
-  user_id: number;
+  completed_at: string | null;
+  user_id: string;
 }
 
 /* ========================================================================
@@ -36,15 +40,46 @@ export interface Transcription {
 
 export interface TranscriptionCreateRequest {
   video_url: string;
+  language?: string;
 }
 
 /* ========================================================================
    RESPONSES
    ======================================================================== */
 
-export interface TranscriptionListResponse {
-  items: Transcription[];
+/**
+ * Generic paginated response matching the backend PaginatedResponse schema.
+ */
+export interface PaginatedResponse<T> {
+  items: T[];
   total: number;
+  skip: number;
+  limit: number;
+  has_more: boolean;
+}
+
+export type TranscriptionListResponse = PaginatedResponse<Transcription>;
+
+/* ========================================================================
+   STATS
+   ======================================================================== */
+
+export interface RecentTranscription {
+  id: string;
+  video_url: string;
+  status: TranscriptionStatus;
+  created_at: string;
+}
+
+export interface TranscriptionStats {
+  total_transcriptions: number;
+  completed: number;
+  failed: number;
+  pending: number;
+  processing: number;
+  total_duration_seconds: number;
+  avg_confidence: number | null;
+  recent_transcriptions: RecentTranscription[];
 }
 
 /* ========================================================================
@@ -53,6 +88,7 @@ export interface TranscriptionListResponse {
 
 export interface TranscriptionFormData {
   video_url: string;
+  language?: string;
 }
 
 /* ========================================================================

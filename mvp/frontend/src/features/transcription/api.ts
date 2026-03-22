@@ -12,6 +12,7 @@ import type {
   TranscriptionCreateRequest,
   TranscriptionFilters,
   TranscriptionListResponse,
+  TranscriptionStats,
 } from './types';
 
 /* ========================================================================
@@ -21,6 +22,7 @@ import type {
 const TRANSCRIPTION_ENDPOINTS = {
   LIST: '/api/transcription',
   CREATE: '/api/transcription',
+  STATS: '/api/transcription/stats',
   GET: (id: string) => `/api/transcription/${id}`,
   DELETE: (id: string) => `/api/transcription/${id}`,
 } as const;
@@ -36,7 +38,7 @@ export async function listTranscriptions(
   filters?: TranscriptionFilters
 ): Promise<TranscriptionListResponse> {
   const params = new URLSearchParams();
-  
+
   if (filters?.status) {
     params.append('status', filters.status);
   }
@@ -46,15 +48,20 @@ export async function listTranscriptions(
   if (filters?.limit !== undefined) {
     params.append('limit', filters.limit.toString());
   }
-  
+
+  // Backend returns a plain array; wrap into paginated format
   const response: AxiosResponse<Transcription[]> = await apiClient.get(
     `${TRANSCRIPTION_ENDPOINTS.LIST}?${params.toString()}`
   );
-  
-  // Backend returns array, we need to wrap it
+
+  const skip = filters?.skip ?? 0;
+  const limit = filters?.limit ?? 100;
   return {
     items: response.data,
-    total: response.data.length, // TODO: Backend should return total count
+    total: response.data.length,
+    skip,
+    limit,
+    has_more: response.data.length >= limit,
   };
 }
 
@@ -82,6 +89,16 @@ export async function getTranscription(id: string): Promise<Transcription> {
 }
 
 /**
+ * Get transcription statistics for the current user
+ */
+export async function getStats(): Promise<TranscriptionStats> {
+  const response: AxiosResponse<TranscriptionStats> = await apiClient.get(
+    TRANSCRIPTION_ENDPOINTS.STATS
+  );
+  return response.data;
+}
+
+/**
  * Delete a transcription
  */
 export async function deleteTranscription(id: string): Promise<void> {
@@ -96,6 +113,7 @@ export const transcriptionApi = {
   listTranscriptions,
   createTranscription,
   getTranscription,
+  getStats,
   deleteTranscription,
 } as const;
 

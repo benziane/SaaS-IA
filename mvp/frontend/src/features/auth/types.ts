@@ -10,8 +10,23 @@
 export interface User {
   id: number;
   email: string;
+  full_name: string | null;
   role: 'admin' | 'user';
   is_active: boolean;
+  created_at: string;
+}
+
+/* ========================================================================
+   PROFILE
+   ======================================================================== */
+
+export interface UpdateProfileRequest {
+  full_name: string;
+}
+
+export interface ChangePasswordRequest {
+  current_password: string;
+  new_password: string;
 }
 
 /* ========================================================================
@@ -34,7 +49,9 @@ export interface LoginRequest {
 
 export interface LoginResponse {
   access_token: string;
+  refresh_token: string;
   token_type: string;
+  expires_in: number;
 }
 
 /* ========================================================================

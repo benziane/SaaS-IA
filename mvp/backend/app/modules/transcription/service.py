@@ -8,6 +8,7 @@ from typing import Optional, List
 from uuid import UUID
 
 import structlog
+from sqlalchemy import func
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
@@ -351,21 +352,108 @@ class TranscriptionService:
         user_id: UUID,
         session: AsyncSession,
         skip: int = 0,
-        limit: int = 100
-    ) -> List[Transcription]:
-        """List all transcription jobs for a user"""
-        
+        limit: int = 100,
+        status: Optional[TranscriptionStatus] = None
+    ) -> tuple[List[Transcription], int]:
+        """
+        List transcription jobs for a user with pagination and optional status filter.
+
+        Returns a tuple of (items, total_count).
+        """
+        # Build base filter conditions
+        conditions = [Transcription.user_id == user_id]
+        if status is not None:
+            conditions.append(Transcription.status == status)
+
+        # Count query
+        count_statement = select(func.count()).select_from(Transcription).where(*conditions)
+        count_result = await session.execute(count_statement)
+        total = count_result.scalar_one()
+
+        # Data query
         statement = (
             select(Transcription)
-            .where(Transcription.user_id == user_id)
+            .where(*conditions)
             .order_by(Transcription.created_at.desc())
             .offset(skip)
             .limit(limit)
         )
-        
+
         result = await session.execute(statement)
-        return result.scalars().all()
+        items = result.scalars().all()
+
+        return items, total
     
+    async def get_user_stats(self, user_id: UUID, session: AsyncSession) -> dict:
+        """Get transcription statistics for a user"""
+
+        # Counts by status
+        status_result = await session.execute(
+            select(
+                Transcription.status,
+                func.count().label("cnt"),
+            )
+            .where(Transcription.user_id == user_id)
+            .group_by(Transcription.status)
+        )
+        status_counts: dict[str, int] = {}
+        for row in status_result.all():
+            status_counts[row.status] = row.cnt
+
+        completed = status_counts.get(TranscriptionStatus.COMPLETED, 0)
+        failed = status_counts.get(TranscriptionStatus.FAILED, 0)
+        pending = status_counts.get(TranscriptionStatus.PENDING, 0)
+        processing = status_counts.get(TranscriptionStatus.PROCESSING, 0)
+        total = completed + failed + pending + processing
+
+        # Total duration (sum of completed transcription durations)
+        duration_result = await session.execute(
+            select(func.coalesce(func.sum(Transcription.duration_seconds), 0))
+            .where(Transcription.user_id == user_id)
+            .where(Transcription.status == TranscriptionStatus.COMPLETED)
+        )
+        total_duration_seconds = duration_result.scalar() or 0
+
+        # Average confidence
+        confidence_result = await session.execute(
+            select(func.avg(Transcription.confidence))
+            .where(Transcription.user_id == user_id)
+            .where(Transcription.status == TranscriptionStatus.COMPLETED)
+            .where(Transcription.confidence.isnot(None))
+        )
+        avg_confidence = confidence_result.scalar()
+        if avg_confidence is not None:
+            avg_confidence = round(float(avg_confidence), 4)
+
+        # Recent transcriptions (last 5)
+        recent_result = await session.execute(
+            select(Transcription)
+            .where(Transcription.user_id == user_id)
+            .order_by(Transcription.created_at.desc())
+            .limit(5)
+        )
+        recent_jobs = recent_result.scalars().all()
+        recent_transcriptions = [
+            {
+                "id": str(job.id),
+                "video_url": job.video_url,
+                "status": job.status.value,
+                "created_at": job.created_at.isoformat(),
+            }
+            for job in recent_jobs
+        ]
+
+        return {
+            "total_transcriptions": total,
+            "completed": completed,
+            "failed": failed,
+            "pending": pending,
+            "processing": processing,
+            "total_duration_seconds": int(total_duration_seconds),
+            "avg_confidence": avg_confidence,
+            "recent_transcriptions": recent_transcriptions,
+        }
+
     async def delete_job(self, job_id: UUID, session: AsyncSession) -> bool:
         """Delete a transcription job"""
         

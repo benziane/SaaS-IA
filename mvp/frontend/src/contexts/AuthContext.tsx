@@ -16,8 +16,10 @@ import { toast } from 'sonner';
 export interface User {
   id: number;
   email: string;
+  full_name: string | null;
   role: 'admin' | 'user';
   is_active: boolean;
+  created_at: string;
 }
 
 interface AuthContextType {
@@ -25,7 +27,7 @@ interface AuthContextType {
   token: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (user: User, token: string) => void;
+  login: (user: User, token: string, refreshToken?: string) => void;
   logout: () => void;
 }
 
@@ -102,19 +104,23 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, []);
 
   // Login
-  const login = useCallback((newUser: User, newToken: string) => {
+  const login = useCallback((newUser: User, newToken: string, newRefreshToken?: string) => {
     try {
       // Sauvegarder dans localStorage
       localStorage.setItem('auth_token', newToken);
       localStorage.setItem('auth_user', JSON.stringify(newUser));
-      
+
+      if (newRefreshToken) {
+        localStorage.setItem('auth_refresh_token', newRefreshToken);
+      }
+
       // Sauvegarder dans cookie pour middleware
       document.cookie = `auth_token=${newToken}; path=/; max-age=1800; SameSite=Lax`;
-      
-      // Mettre à jour state
+
+      // Mettre a jour state
       setToken(newToken);
       setUser(newUser);
-      
+
       // Rediriger vers dashboard
       router.push('/dashboard');
     } catch {
@@ -129,15 +135,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       // Nettoyer localStorage
       localStorage.removeItem('auth_token');
+      localStorage.removeItem('auth_refresh_token');
       localStorage.removeItem('auth_user');
-      
+
       // Nettoyer cookie
       document.cookie = 'auth_token=; path=/; max-age=0';
-      
-      // Réinitialiser state
+
+      // Reinitialiser state
       setToken(null);
       setUser(null);
-      
+
       // Rediriger vers login
       router.push('/login');
     } catch {
