@@ -10,6 +10,8 @@ from typing import Dict, Optional
 from datetime import datetime, timedelta
 import structlog
 
+from app.utils.sanitize import validate_no_path_traversal
+
 logger = structlog.get_logger()
 
 
@@ -46,8 +48,17 @@ class AudioCacheManager:
             str: Cached file path
         """
         try:
-            # Create job-specific directory
+            # Validate job_id against path traversal
+            validate_no_path_traversal(job_id, label="job_id")
+
+            # Create job-specific directory and verify it resolves within cache
             job_cache_dir = os.path.join(self._cache_dir, job_id)
+            resolved = os.path.realpath(job_cache_dir)
+            cache_root = os.path.realpath(self._cache_dir)
+            if not resolved.startswith(cache_root + os.sep) and resolved != cache_root:
+                raise ValueError(
+                    f"Invalid job_id: resolved path escapes cache directory"
+                )
             os.makedirs(job_cache_dir, exist_ok=True)
             
             # Copy audio file to cache
@@ -89,11 +100,13 @@ class AudioCacheManager:
         Returns:
             dict: Audio info (path, metadata) or None if not found/expired
         """
+        validate_no_path_traversal(job_id, label="job_id")
+
         if job_id not in self._cache:
             return None
-        
+
         entry = self._cache[job_id]
-        
+
         # Check if expired
         if datetime.utcnow() > entry["expires_at"]:
             logger.info("audio_cache_expired", job_id=job_id)
@@ -118,11 +131,13 @@ class AudioCacheManager:
         Returns:
             bool: True if deleted, False if not found
         """
+        validate_no_path_traversal(job_id, label="job_id")
+
         if job_id not in self._cache:
             return False
-        
+
         entry = self._cache[job_id]
-        
+
         try:
             # Delete job directory
             job_cache_dir = os.path.dirname(entry["path"])

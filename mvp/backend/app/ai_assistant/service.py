@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.ai_assistant.providers.base import BaseAIProvider
 from app.ai_assistant.providers import GeminiProvider, ClaudeProvider, GroqProvider
+from app.metrics import ai_provider_requests_total
 
 # AI Router components
 from app.ai_assistant.classification.content_classifier import ContentClassifier
@@ -449,6 +450,10 @@ Contenu restructuré :"""
         try:
             processed_text = await provider.complete(prompt)
             
+            ai_provider_requests_total.labels(
+                provider=provider_name, success="true"
+            ).inc()
+
             logger.info(
                 "text_processing_success",
                 task=task,
@@ -456,7 +461,7 @@ Contenu restructuré :"""
                 original_length=len(text),
                 processed_length=len(processed_text)
             )
-            
+
             return {
                 "original_text": text,
                 "processed_text": processed_text.strip(),
@@ -464,8 +469,12 @@ Contenu restructuré :"""
                 "task_performed": task,
                 "improvements": [f"Processed with {provider.model_name}"]
             }
-            
+
         except Exception as e:
+            ai_provider_requests_total.labels(
+                provider=provider_name, success="false"
+            ).inc()
+
             logger.error(
                 "text_processing_error",
                 task=task,

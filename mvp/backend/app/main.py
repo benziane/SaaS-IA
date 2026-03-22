@@ -7,8 +7,10 @@ Main entry point for the API
 import structlog
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import PlainTextResponse
 from contextlib import asynccontextmanager
 from slowapi.errors import RateLimitExceeded
+from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
 
 from app.config import settings
 from app.database import init_db
@@ -16,6 +18,7 @@ from app.auth import router as auth_router
 from app.modules.transcription.routes import router as transcription_router
 from app.ai_assistant.routes import router as ai_assistant_router
 from app.rate_limit import limiter, rate_limit_exceeded_handler
+from app.metrics import PrometheusMiddleware
 
 # Initialize structured logger
 logger = structlog.get_logger()
@@ -67,6 +70,9 @@ app = FastAPI(
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)
 
+# Prometheus metrics middleware (added before CORS so it wraps all requests)
+app.add_middleware(PrometheusMiddleware)
+
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
@@ -113,6 +119,28 @@ async def health_check(request: Request):
         "environment": settings.ENVIRONMENT,
         "version": "1.0.0"
     }
+
+
+# Prometheus metrics endpoint
+@app.get("/metrics", tags=["Monitoring"], include_in_schema=False)
+async def metrics(request: Request):
+    """
+    Expose Prometheus metrics in text format.
+
+    Access is restricted: the endpoint is available when ENVIRONMENT is
+    ``development``, or when the request carries a valid
+    ``X-Metrics-Token`` header matching the application SECRET_KEY.
+    """
+    is_dev = settings.ENVIRONMENT == "development"
+    token_valid = request.headers.get("X-Metrics-Token") == settings.SECRET_KEY
+
+    if not (is_dev or token_valid):
+        return PlainTextResponse("Forbidden", status_code=403)
+
+    return PlainTextResponse(
+        content=generate_latest(),
+        media_type=CONTENT_TYPE_LATEST,
+    )
 
 
 # Root endpoint

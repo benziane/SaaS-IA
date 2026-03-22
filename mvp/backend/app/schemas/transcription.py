@@ -2,13 +2,21 @@
 Transcription schemas for request/response validation
 """
 
+import re
 from typing import Generic, List, Optional, TypeVar
 from uuid import UUID
 from datetime import datetime
 
-from pydantic import BaseModel, Field, HttpUrl
+from pydantic import BaseModel, Field, HttpUrl, field_validator
 
 from app.models.transcription import TranscriptionStatus
+
+# Accepted YouTube URL patterns (must match at least one)
+_YOUTUBE_URL_PATTERNS = [
+    re.compile(r'^https?://(?:www\.)?youtube\.com/watch\?.*v=[a-zA-Z0-9_-]{11}'),
+    re.compile(r'^https?://(?:www\.)?youtu\.be/[a-zA-Z0-9_-]{11}'),
+    re.compile(r'^https?://(?:www\.)?youtube\.com/embed/[a-zA-Z0-9_-]{11}'),
+]
 
 T = TypeVar("T")
 
@@ -24,9 +32,25 @@ class PaginatedResponse(BaseModel, Generic[T]):
 
 class TranscriptionCreate(BaseModel):
     """Schema for creating a transcription job"""
-    video_url: str = Field(..., max_length=500, description="YouTube video URL")
+    video_url: str = Field(..., max_length=2048, description="YouTube video URL")
     language: Optional[str] = Field("auto", max_length=10, description="Language code (e.g., 'en', 'fr', 'auto')")
-    
+
+    @field_validator("video_url")
+    @classmethod
+    def validate_youtube_url(cls, v: str) -> str:
+        """Validate that the URL is a legitimate YouTube video URL."""
+        v = v.strip()
+        if not v:
+            raise ValueError("video_url must not be empty")
+        if len(v) > 2048:
+            raise ValueError("video_url must not exceed 2048 characters")
+        if not any(pattern.match(v) for pattern in _YOUTUBE_URL_PATTERNS):
+            raise ValueError(
+                "video_url must be a valid YouTube URL "
+                "(youtube.com/watch?v=, youtu.be/, or youtube.com/embed/)"
+            )
+        return v
+
     class Config:
         json_schema_extra = {
             "example": {

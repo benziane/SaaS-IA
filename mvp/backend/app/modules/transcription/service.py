@@ -13,6 +13,7 @@ from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.config import settings
+from app.metrics import transcription_jobs_total
 from app.models.transcription import Transcription, TranscriptionStatus
 from app.database import get_session_context
 
@@ -62,6 +63,8 @@ class TranscriptionService:
         await session.commit()
         await session.refresh(job)
         
+        transcription_jobs_total.labels(status="pending").inc()
+
         logger.info(
             "transcription_job_created",
             job_id=str(job.id),
@@ -117,6 +120,8 @@ class TranscriptionService:
                 
                 await session.commit()
                 
+                transcription_jobs_total.labels(status="completed").inc()
+
                 logger.info(
                     "transcription_completed",
                     job_id=str(job.id),
@@ -124,7 +129,7 @@ class TranscriptionService:
                     confidence=result.get("confidence"),
                     mock_mode=self.mock_mode
                 )
-                
+
             except Exception as e:
                 # Handle errors
                 job.status = TranscriptionStatus.FAILED
@@ -134,6 +139,8 @@ class TranscriptionService:
                 
                 await session.commit()
                 
+                transcription_jobs_total.labels(status="failed").inc()
+
                 logger.error(
                     "transcription_failed",
                     job_id=str(job.id),
