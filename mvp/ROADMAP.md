@@ -187,7 +187,7 @@ Introduire des plans (Free / Pro / Enterprise) :
 
 ---
 
-## PHASE 6 : INNOVATIONS DIFFERENCIANTES [EN COURS]
+## PHASE 6 : INNOVATIONS DIFFERENCIANTES [FAIT]
 
 > Vision produit a long terme. Ce qui positionne SaaS-IA comme plateforme.
 
@@ -223,7 +223,7 @@ L'AI Router choisit actuellement UN modele automatiquement. Offrir un mode "Comp
 
 **Differenciateur marche** : aucun outil grand public ne propose cette fonctionnalite.
 
-### 6.3 API publique et Marketplace
+### 6.3 API publique et Marketplace [FAIT]
 
 **Effort** : 3-4 semaines | **Impact** : Tres haut | **Priorite** : P3
 
@@ -242,7 +242,7 @@ GET  /v1/jobs/{id}           # Statut d'un job
 POST /v1/pipelines/{id}/run  # Executer un pipeline
 ```
 
-### 6.4 Knowledge Base et RAG
+### 6.4 Knowledge Base et RAG [FAIT]
 
 **Effort** : 3-4 semaines | **Impact** : Tres haut | **Priorite** : P3
 
@@ -301,6 +301,8 @@ Transformer SaaS-IA en outil collaboratif :
 **Sprint 3** : 5.1 + 5.3 -- Celery workers + Quotas/plans. Prepare la mise en production reelle et la monetisation. **[FAIT]**
 
 **Sprint 4** : 6.1 + 6.2 -- Pipeline builder + Compare multi-modele. Differenciateurs plateforme. **[FAIT]**
+
+**Sprint 5** : 6.3 + 6.4 -- API publique + Knowledge base RAG. Ouvre la plateforme aux developpeurs et au RAG. **[FAIT]**
 
 ---
 
@@ -398,6 +400,29 @@ Transformer SaaS-IA en outil collaboratif :
 | GET | /{id}/executions | Historique des executions |
 | GET | /executions/{id} | Detail d'une execution |
 
+### Knowledge Base (`/api/knowledge`)
+| Methode | Endpoint | Description |
+|---------|----------|-------------|
+| POST | /upload | Upload et indexer un document |
+| GET | /documents | Lister les documents |
+| DELETE | /documents/{id} | Supprimer un document |
+| POST | /search | Recherche semantique |
+| POST | /ask | Question RAG avec IA |
+
+### API Keys (`/api/keys`)
+| Methode | Endpoint | Description |
+|---------|----------|-------------|
+| POST | / | Creer une cle API |
+| GET | / | Lister les cles |
+| DELETE | /{id} | Revoquer une cle |
+
+### Public API (`/v1`)
+| Methode | Endpoint | Description |
+|---------|----------|-------------|
+| POST | /transcribe | Soumettre une transcription |
+| POST | /process | Traitement IA |
+| GET | /jobs/{id} | Statut d'un job |
+
 ---
 
 ## PAGES FRONTEND
@@ -413,10 +438,18 @@ Transformer SaaS-IA en outil collaboratif :
 | /billing | Plan, usage quotas et plans disponibles | FAIT |
 | /compare | Comparaison multi-modele IA | FAIT |
 | /pipelines | Pipeline builder IA | FAIT |
+| /knowledge | Knowledge base: upload, recherche, RAG | FAIT |
+| /api-docs | Gestion cles API + documentation publique | FAIT |
 
 ---
 
 ## CHANGELOG
+
+### v2.5.0 (2026-03-22)
+- Sprint 5 : Knowledge Base RAG (upload documents, chunking, TF-IDF search, RAG queries)
+- Sprint 5 : API publique v1 (cles API SHA-256, endpoints /v1/transcribe, /v1/process, /v1/jobs)
+- 14 nouveaux fichiers backend, 9 fichiers frontend, 28 nouveaux tests
+- Documentation technique : docs/SPRINT5_KNOWLEDGE_API.md
 
 ### v2.4.0 (2026-03-22)
 - Sprint 4 : Compare multi-modele (execution parallele, voting, stats)

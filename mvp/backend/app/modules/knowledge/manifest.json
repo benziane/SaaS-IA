@@ -1,0 +1,9 @@
+{
+  "name": "knowledge",
+  "version": "1.0.0",
+  "description": "Knowledge base with document upload, chunking, search, and RAG queries",
+  "prefix": "/api/knowledge",
+  "tags": ["knowledge"],
+  "enabled": true,
+  "dependencies": []
+}

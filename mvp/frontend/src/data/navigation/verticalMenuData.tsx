@@ -52,6 +52,11 @@ const verticalMenuData = (): VerticalMenuDataType[] => [
     href: '/pipelines',
     icon: 'tabler:git-branch',
   },
+  {
+    label: 'Knowledge Base',
+    href: '/knowledge',
+    icon: 'tabler:books',
+  },
 
   // Platform Section
   {
@@ -62,6 +67,11 @@ const verticalMenuData = (): VerticalMenuDataType[] => [
     label: 'Modules',
     href: '/modules',
     icon: 'tabler:puzzle',
+  },
+  {
+    label: 'API & Keys',
+    href: '/api-docs',
+    icon: 'tabler:key',
   },
 
   // Account Section

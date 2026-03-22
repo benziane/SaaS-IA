@@ -41,6 +41,8 @@ async def init_db() -> None:
         from app.models.billing import Plan, UserQuota  # noqa: F401
         from app.models.compare import ComparisonResult, ComparisonVote  # noqa: F401
         from app.models.pipeline import Pipeline, PipelineExecution  # noqa: F401
+        from app.models.knowledge import Document, DocumentChunk  # noqa: F401
+        from app.models.api_key import APIKey  # noqa: F401
 
         # Create all tables
         await conn.run_sync(SQLModel.metadata.create_all)

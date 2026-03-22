@@ -103,6 +103,14 @@ logger.info(
     modules=[m["name"] for m in registered],
 )
 
+# Public API v1 routes (API key authentication)
+from app.modules.api_keys.public_routes import router as public_api_router
+app.include_router(
+    public_api_router,
+    prefix="/v1",
+    tags=["Public API v1"],
+)
+
 
 # Health check endpoint
 @app.get("/health", tags=["Health"])

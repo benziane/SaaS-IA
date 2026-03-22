@@ -1,0 +1,9 @@
+{
+  "name": "api_keys",
+  "version": "1.0.0",
+  "description": "API key management for public API authentication",
+  "prefix": "/api/keys",
+  "tags": ["api_keys"],
+  "enabled": true,
+  "dependencies": []
+}
