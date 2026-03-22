@@ -83,35 +83,42 @@ SaaS-IA est une plateforme modulaire d'intelligence artificielle. La vision est 
 
 ---
 
-## PHASE 4 : AMELIORATIONS IMMEDIATES [A FAIRE]
+## PHASE 4 : AMELIORATIONS IMMEDIATES — Sprint 1 [FAIT]
 
 > Quick wins a fort impact. Infrastructure backend deja prete.
 
-### 4.1 Streaming SSE des reponses IA
+### 4.1 Streaming SSE des reponses IA [FAIT]
 
-**Effort** : 3-5 jours | **Impact** : Haut | **Priorite** : P0
-
-L'infrastructure existe deja (`AsyncGenerator` dans `BaseAIProvider.stream_chat()`), mais le frontend attend la reponse complete. Implementer Server-Sent Events sur `/api/ai-assistant/process-text` pour afficher les tokens en temps reel (effet ChatGPT).
+**Effort** : 3-5 jours | **Impact** : Haut
 
 **Backend** :
-- Endpoint SSE avec `StreamingResponse` + `text/event-stream`
-- Format : `data: {token}\n\n` par chunk
+- `POST /api/ai-assistant/stream` : endpoint SSE avec `StreamingResponse` + `text/event-stream`
+- Pipeline AI Router complet (classification, selection modele, prompt dynamique)
+- Format : `data: {"token": "...", "provider": "gemini"}\n\n` par chunk
+- Event final : `data: {"done": true, "provider": "...", "tokens_streamed": N}\n\n`
+- Gestion deconnexion client (`request.is_disconnected()`)
+- Headers anti-buffering : `Cache-Control: no-cache`, `X-Accel-Buffering: no`
 
 **Frontend** :
-- Hook `useSSE()` avec `EventSource` API
-- Affichage progressif dans le composant resultat
-- Indicateur de generation en cours
+- Hook `useSSE.ts` reutilisable (fetch + ReadableStream + AbortController)
+- Composant `StreamingText.tsx` avec curseur anime et metadata provider
+- Bouton "Improve with AI" sur les transcriptions completees
+- Affichage progressif token par token (effet ChatGPT)
 
-### 4.2 Multi-source de transcription
+### 4.2 Multi-source de transcription [FAIT]
 
-**Effort** : 5-7 jours | **Impact** : Haut | **Priorite** : P0
+**Backend** :
+- `POST /api/transcription/upload` : upload multipart (MP3, WAV, MP4, M4A, OGG, WEBM, FLAC)
+- Validation MIME type + extension + taille (max 500MB)
+- Champs `source_type` et `original_filename` en base de donnees
+- Support URLs non-YouTube via `source_type="url"` (yt-dlp multi-plateforme)
+- Rate limiting upload 5 req/min
 
-Etendre le module transcription au-dela de YouTube :
-
-- **Upload fichiers** : MP3, WAV, MP4, M4A via endpoint multipart (max 500MB)
-- **URLs multi-plateformes** : Vimeo, Dailymotion, X/Twitter (yt-dlp supporte 1000+ sites nativement)
-- **Enregistrement micro** : Web Audio API + MediaRecorder dans le navigateur, envoi du blob au backend
-- Ajout d'un champ `source_type` au schema (youtube, upload, recording, url)
+**Frontend 3 onglets** :
+- **YouTube / URL** : formulaire existant, etendu aux URLs non-YouTube
+- **Upload File** : zone drag & drop, preview fichier (nom/taille/type), barre de progression upload
+- **Record Audio** : composant `AudioRecorder.tsx` (MediaRecorder API, timer, preview audio, auto-upload)
+- Icones source dans la liste (YouTube, Upload, Link) avec tooltip
 
 ### 4.3 Chat contextuel post-transcription
 
