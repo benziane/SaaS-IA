@@ -1,1424 +1,408 @@
-# 🗺️ ROADMAP - SaaS-IA MVP
+# ROADMAP - SaaS-IA Platform
 
-**Date** : 2025-11-14 (Mise à jour 03h50)  
-**Version Actuelle** : MVP 1.0.0 (Grade S++ 94/100)  
-**Objectif** : Version Production 2.0.0 (Grade S++ 98/100)
-
----
-
-## 📋 VUE D'ENSEMBLE
-
-Cette roadmap détaille **tout ce qu'il reste à faire** pour passer du MVP actuel à une version production complète et robuste, **incluant le Module Transcription YouTube** (architecture MVP simplifiée V2).
-
-### Priorités
-- 🔴 **CRITIQUE** : Bloquant pour production
-- 🟡 **IMPORTANT** : Nécessaire pour qualité production
-- 🟢 **SOUHAITABLE** : Amélioration expérience
-- 🔵 **FUTUR** : Évolution long terme
-- ⭐ **NOUVEAU** : Module Transcription YouTube (12-14h)
+**Date de mise a jour** : 2026-03-22
+**Version actuelle** : MVP 2.0.0
+**Objectif** : Plateforme SaaS d'orchestration IA multi-modules, production-ready
 
 ---
 
-## ⭐ PHASE 0 : MODULE TRANSCRIPTION YOUTUBE (2-3 jours) - NOUVEAU !
+## VUE D'ENSEMBLE
 
-### 0.1 Module Transcription MVP Simplifié (⭐ NOUVEAU - PRIORITÉ ABSOLUE)
+SaaS-IA est une plateforme modulaire d'intelligence artificielle. La vision est de passer d'un outil de transcription a une **plateforme d'orchestration IA** permettant de chainer, comparer et deployer des services IA via une interface unifiee.
 
-**Objectif** : Implémenter le premier module IA fonctionnel  
-**Impact** : Valeur ajoutée immédiate, validation architecture modulaire  
-**Temps estimé** : 12-14h (2 jours)  
-**Architecture** : Voir `MODULE_TRANSCRIPTION_MVP_SIMPLIFIE.md` (V2 validée)
+### Legendes
 
-#### Pourquoi cette architecture ?
+- FAIT : Implemente et fonctionnel
+- EN COURS : Partiellement implemente
+- A FAIRE : Planifie, non demarre
+- FUTUR : Vision long terme
 
-**Décisions clés validées** :
-- ✅ **SQLModel async** (cohérent avec MVP existant)
-- ✅ **BackgroundTasks** (pas Celery - suffisant pour <1000 jobs/jour)
-- ✅ **Whisper API** (97% moins cher qu'Assembly AI : $0.36/h vs $15/h)
-- ✅ **YouTube Transcript API** (gratuit, légal, instantané - 60% success rate)
-- ✅ **Pas de yt-dlp** (évite risques légaux ToS YouTube)
+---
 
-**Comparaison Architecture V1 vs V2** :
+## PHASE 0 : ASSAINISSEMENT SECURITE [FAIT]
 
-| Aspect | V1 (Documents initiaux) | V2 (MVP Simplifié) | Gagnant |
-|--------|-------------------------|-------------------|---------|
-| **ORM** | SQLAlchemy sync | SQLModel async | 🏆 V2 |
-| **Tasks** | Celery | BackgroundTasks | 🏆 V2 |
-| **Transcription** | Assembly AI ($15/h) | Whisper ($0.36/h) | 🏆 V2 (-97%) |
-| **Download** | yt-dlp (risque légal) | YouTube API | 🏆 V2 |
-| **Setup** | 4h (Celery) | 0h | 🏆 V2 |
-| **Temps implémentation** | 30-44h | 12-14h | 🏆 V2 (-68%) |
-| **Coût/mois** | $250+ | $6-30 | 🏆 V2 (-97%) |
+> Reprise du projet apres plusieurs semaines d'arret. Nettoyage complet.
 
-#### Jour 1 : Backend Core (6h)
+| Tache | Statut |
+|-------|--------|
+| Suppression cles API hardcodees (gemini.py, 3 cles retirees) | FAIT |
+| Suppression credentials par defaut dans config.py | FAIT |
+| Checks de securite au demarrage (SECRET_KEY, DATABASE_URL) | FAIT |
+| Protection endpoints debug (role ADMIN ou env development) | FAIT |
+| Correction bare `except:` en `except Exception:` | FAIT |
+| Ajout .gitignore defense en profondeur (mvp/, mvp/backend/) | FAIT |
+| Remplacement URLs localhost hardcodees par env vars | FAIT |
+| UserDropdown : donnees reelles depuis AuthContext | FAIT |
 
-**Matin (3h)** :
-```bash
-cd backend
+---
 
-# 1. Model + Migration
-alembic revision --autogenerate -m "add transcriptions table"
-alembic upgrade head
+## PHASE 1 : STABILISATION TECHNIQUE [FAIT]
 
-# 2. Créer structure
-mkdir -p app/services/transcription
-touch app/models/transcription.py
-touch app/schemas/transcription.py
-touch app/services/transcription/youtube_service.py
-touch app/services/transcription/whisper_service.py
-touch app/services/transcription/correction_service.py
-touch app/services/transcription/processor.py
+> TypeScript strict, auth unifiee, error boundaries, nettoyage code.
 
-# 3. Installer dépendances
-poetry add youtube-transcript-api openai
-```
+| Tache | Statut |
+|-------|--------|
+| TypeScript strict mode reactive (ignoreBuildErrors retire) | FAIT |
+| Correction de toutes les erreurs TypeScript | FAIT |
+| Unification systeme auth (AuthContext seul, suppression useAuthStore) | FAIT |
+| Suppression AuthGuard duplique (hocs/) | FAIT |
+| Error boundaries Next.js (error.tsx, not-found.tsx) | FAIT |
+| Nettoyage console.log de debug (AuthContext, AuthGuard, store) | FAIT |
+| Reorganisation fichiers orphelins (docs/changelog/, tests/) | FAIT |
+| Declaration types CSS modules et SVG | FAIT |
 
-**Fichiers à créer** :
-- [ ] `app/models/transcription.py` (SQLModel)
-- [ ] `app/schemas/transcription.py` (Pydantic)
-- [ ] `app/services/transcription/youtube_service.py` (YouTube Transcript API)
-- [ ] Tests unitaires YouTubeService
+---
 
-**Après-midi (3h)** :
-- [ ] `app/services/transcription/whisper_service.py` (OpenAI Whisper API)
-- [ ] `app/services/transcription/correction_service.py` (Regex basique)
-- [ ] `app/services/transcription/processor.py` (Background task)
-- [ ] Tests unitaires services
+## PHASE 2 : FONCTIONNALITES CORE [FAIT]
 
-#### Jour 2 : API + Frontend (6h)
+> Refresh token, pagination, dashboard, transcription complete, profil.
 
-**Matin (3h)** :
-```bash
-# Backend
-touch app/routes/transcription.py
+| Tache | Statut |
+|-------|--------|
+| **Refresh token** : rotation JWT 7 jours backend + intercepteur auto frontend | FAIT |
+| **Pagination** : PaginatedResponse generique, total count, has_more | FAIT |
+| **Dashboard** : stats reelles (total, completed, failed, duree), transcriptions recentes | FAIT |
+| **Transcription** : selection langue, affichage resultats, export TXT/SRT, copie clipboard | FAIT |
+| **Profil** : page profil, edition nom, changement mot de passe, validation Zod | FAIT |
+| Navigation : entree "Profile" dans le menu lateral | FAIT |
 
-# Enregistrer router dans main.py
-# from app.routes.transcription import router as transcription_router
-# app.include_router(transcription_router, prefix="/api")
-```
+---
 
-**Fichiers à créer** :
-- [ ] `app/routes/transcription.py` (POST, GET, LIST)
-- [ ] Rate limiting (5 transcriptions/heure)
-- [ ] Tests d'intégration API
-- [ ] Documentation OpenAPI
+## PHASE 3 : PRODUCTION-READY [FAIT]
 
-**Après-midi (3h)** :
-```bash
-# Frontend
-mkdir -p frontend/src/features/transcription
-touch frontend/src/features/transcription/api.ts
-touch frontend/src/features/transcription/types.ts
-touch frontend/src/features/transcription/hooks/useTranscriptions.ts
-touch frontend/src/features/transcription/hooks/useTranscriptionMutations.ts
-```
+> Redis rate limit, validation, CI/CD, tests, metriques.
 
-**Fichiers à créer** :
-- [ ] Page `/transcription` (form + table)
-- [ ] Form validation (Zod)
-- [ ] Polling status (React Query - 3s)
-- [ ] Progress bar
-- [ ] Result display + Export TXT
+| Tache | Statut |
+|-------|--------|
+| **Rate limiting Redis** : migration in-memory vers Redis avec fallback graceful | FAIT |
+| **Validation renforcee** : YouTube URL regex, password strength, sanitize HTML, path traversal | FAIT |
+| **CI/CD GitHub Actions** : lint, type check, tests, build, Trivy security scan, Codecov | FAIT |
+| **Tests unitaires** : 105 tests (auth, schemas, classification) - 100% pass | FAIT |
+| **Prometheus metrics** : http_requests, request_duration, active_requests, transcription_jobs, ai_provider | FAIT |
+| **Dependabot** : mises a jour automatiques pip, npm, docker, GitHub Actions | FAIT |
 
-#### Configuration
+---
+
+## PHASE 4 : AMELIORATIONS IMMEDIATES [A FAIRE]
+
+> Quick wins a fort impact. Infrastructure backend deja prete.
+
+### 4.1 Streaming SSE des reponses IA
+
+**Effort** : 3-5 jours | **Impact** : Haut | **Priorite** : P0
+
+L'infrastructure existe deja (`AsyncGenerator` dans `BaseAIProvider.stream_chat()`), mais le frontend attend la reponse complete. Implementer Server-Sent Events sur `/api/ai-assistant/process-text` pour afficher les tokens en temps reel (effet ChatGPT).
 
 **Backend** :
-```bash
-# .env
-OPENAI_API_KEY=sk-...  # Clé OpenAI pour Whisper API
-```
-
-**Variables à ajouter** :
-- [ ] `OPENAI_API_KEY` dans `.env.example`
-- [ ] Documentation coûts Whisper ($0.006/min)
-- [ ] Rate limiting configuré (5/hour)
-
-#### Tests
-
-**Backend** :
-```bash
-cd backend
-pytest tests/unit/test_transcription_service.py -v
-pytest tests/integration/test_transcription_api.py -v
-pytest --cov=app/services/transcription --cov-report=term
-```
+- Endpoint SSE avec `StreamingResponse` + `text/event-stream`
+- Format : `data: {token}\n\n` par chunk
 
 **Frontend** :
-```bash
-cd frontend
-npm test -- src/features/transcription
-npm run test:e2e -- transcription.spec.ts
-```
+- Hook `useSSE()` avec `EventSource` API
+- Affichage progressif dans le composant resultat
+- Indicateur de generation en cours
 
-**Objectif Coverage** : ≥ 85%
+### 4.2 Multi-source de transcription
 
-#### Livrables Phase 0
+**Effort** : 5-7 jours | **Impact** : Haut | **Priorite** : P0
 
-**Backend** :
-- [ ] Model `Transcription` (SQLModel)
-- [ ] Migration Alembic
-- [ ] Schemas Pydantic (Create, Read, Status, Filter)
-- [ ] YouTubeService (YouTube Transcript API)
-- [ ] WhisperService (OpenAI Whisper API - fallback)
-- [ ] CorrectionService (regex basique)
-- [ ] Background processor (BackgroundTasks)
-- [ ] Routes API (POST, GET, LIST)
-- [ ] Rate limiting (5/hour)
-- [ ] Tests unitaires (≥85%)
+Etendre le module transcription au-dela de YouTube :
 
-**Frontend** :
-- [ ] Page `/transcription`
-- [ ] Form validation (Zod)
-- [ ] Polling status (React Query)
-- [ ] Progress bar
-- [ ] Result display
-- [ ] Export TXT
-- [ ] Tests E2E (Playwright)
+- **Upload fichiers** : MP3, WAV, MP4, M4A via endpoint multipart (max 500MB)
+- **URLs multi-plateformes** : Vimeo, Dailymotion, X/Twitter (yt-dlp supporte 1000+ sites nativement)
+- **Enregistrement micro** : Web Audio API + MediaRecorder dans le navigateur, envoi du blob au backend
+- Ajout d'un champ `source_type` au schema (youtube, upload, recording, url)
 
-**Documentation** :
-- [ ] README module transcription
-- [ ] Guide utilisateur (comment transcrire)
-- [ ] Documentation API (Swagger)
-- [ ] Coûts estimés (Whisper API)
+### 4.3 Chat contextuel post-transcription
 
-#### Métriques Cibles
+**Effort** : 5-7 jours | **Impact** : Haut | **Priorite** : P1
 
-| Métrique | Cible | Mesure |
-|----------|-------|--------|
-| **Temps implémentation** | 12-14h | 2 jours |
-| **Coverage tests** | ≥85% | pytest/vitest |
-| **Performance** | <2x durée vidéo | Temps transcription |
-| **Coût/mois** | <$30 | 100 vidéos × 10min |
-| **Success rate** | ≥95% | Transcriptions complétées |
-| **Rate limit** | 5/hour | slowapi |
+`conversation_history` existe dans l'interface provider mais n'est pas exploite. Ajouter un chat interactif apres transcription :
 
-#### Migration Path (Si besoin futur)
-
-**Quand migrer vers Celery ?**
-- Volume >1000 transcriptions/jour
-- Durée moyenne >10 minutes
-- Besoin queue prioritaire
-- Besoin retry avancé
-
-**Effort migration** : 4-6h
-- Setup Celery + Redis broker
-- Convertir BackgroundTasks → `@celery_app.task`
-- Tests
+- Le texte transcrit devient le contexte systeme de la conversation
+- L'utilisateur peut poser des questions : "Resume en 3 points", "Traduis en anglais", "Quels sont les arguments ?"
+- Historique de conversation persiste en base (table `conversations`)
+- Interface chat dans un panneau lateral sur la page transcription
 
 ---
 
-## 🔴 PHASE 1 : CRITIQUES PRODUCTION (2-3 semaines)
+## PHASE 5 : RENOVATIONS ARCHITECTURE [A FAIRE]
 
-### 1.1 Tests Automatisés (🔴 CRITIQUE)
+> Refactoring structurel pour passer a l'echelle.
 
-**Problème** : Coverage 0%, aucun test automatisé  
-**Impact** : Risque de régression, pas de CI/CD fiable  
-**Temps estimé** : 1 semaine
+### 5.1 Event-Driven Architecture avec Celery
 
-#### Backend Tests
+**Effort** : 1-2 semaines | **Impact** : Haut | **Priorite** : P1
 
-**À implémenter** :
+Les transcriptions tournent dans `BackgroundTasks` FastAPI (liees au processus web, perdues en cas de crash).
 
-```python
-# tests/test_auth.py
-@pytest.mark.asyncio
-async def test_register_user():
-    """Test user registration"""
-    # Test création utilisateur
-    # Test email déjà existant
-    # Test validation password
+- Migrer vers **Celery + Redis** comme broker de taches
+- Jobs persistants survivant aux redemarrages
+- Retry automatique avec backoff exponentiel
+- Monitoring des workers via Flower dashboard
+- Scaling horizontal : ajouter des workers independamment
+- Le Redis est deja dans le `docker-compose.yml`
 
-@pytest.mark.asyncio
-async def test_login():
-    """Test login flow"""
-    # Test login valide
-    # Test login invalide
-    # Test rate limiting
+**Critere de migration** : >100 transcriptions/jour ou duree moyenne >10 minutes.
 
-@pytest.mark.asyncio
-async def test_jwt_token():
-    """Test JWT token"""
-    # Test génération token
-    # Test validation token
-    # Test expiration token
+### 5.2 Plugin Registry auto-discoverable
 
-# tests/test_transcription.py
-@pytest.mark.asyncio
-async def test_create_transcription():
-    """Test transcription creation"""
-    # Test création job
-    # Test mode MOCK
-    # Test validation URL
+**Effort** : 1-2 semaines | **Impact** : Moyen | **Priorite** : P1
 
-@pytest.mark.asyncio
-async def test_transcription_status():
-    """Test transcription status"""
-    # Test récupération status
-    # Test mise à jour status
-    # Test erreurs
+Les modules sont codes en dur dans `main.py` (include_router). Creer un systeme de plugins :
+
+```
+mvp/backend/app/modules/
+  __registry__.py          # Auto-scan et register des modules
+  transcription/
+    manifest.json          # {name, version, routes, dependencies, enabled}
+  summarization/
+    manifest.json
+  translation/
+    manifest.json
 ```
 
-**Objectif Coverage** : ≥ 85%
+Chaque module declare un `manifest.json`. Le registry scanne au demarrage et monte les routes automatiquement. Permet d'activer/desactiver des modules par configuration sans toucher au code.
 
-**Commandes** :
-```bash
-cd backend
-pytest --cov=app --cov-report=html --cov-report=term
-pytest --cov-fail-under=85
-```
+### 5.3 Multi-tenancy et systeme de quotas
 
-#### Frontend Tests
+**Effort** : 2-3 semaines | **Impact** : Tres haut | **Priorite** : P2
 
-**À implémenter** :
+Introduire des plans (Free / Pro / Enterprise) :
 
-```typescript
-// src/features/auth/__tests__/useAuth.test.tsx
-describe('useAuth', () => {
-  it('should login successfully', async () => {
-    // Test login
-  });
-  
-  it('should handle login error', async () => {
-    // Test erreur login
-  });
-  
-  it('should logout successfully', async () => {
-    // Test logout
-  });
-});
+- Table `plans` : nom, limites (transcriptions/mois, minutes audio, appels IA)
+- Table `user_quotas` : consommation courante par utilisateur
+- Middleware de verification de quota avant chaque operation couteuse
+- Dashboard utilisateur avec barre de progression de consommation
+- Webhook/notification quand quota atteint 80%, 100%
+- Prepare la monetisation
 
-// src/features/auth/__tests__/LoginPage.test.tsx
-describe('LoginPage', () => {
-  it('should render login form', () => {
-    // Test rendu
-  });
-  
-  it('should validate form inputs', async () => {
-    // Test validation
-  });
-  
-  it('should submit form', async () => {
-    // Test soumission
-  });
-});
+**Plans suggeres** :
 
-// src/tests/e2e/auth.spec.ts (Playwright)
-test('complete auth flow', async ({ page }) => {
-  // Test E2E complet
-  await page.goto('http://localhost:3002/login');
-  await page.fill('[name="email"]', 'test@test.com');
-  await page.fill('[name="password"]', 'password123');
-  await page.click('button[type="submit"]');
-  await expect(page).toHaveURL('/dashboard');
-});
-```
-
-**Objectif Coverage** : ≥ 85%
-
-**Commandes** :
-```bash
-cd frontend
-npm test -- --coverage
-npm run test:e2e
-```
-
-**Livrables** :
-- [ ] Tests unitaires backend (≥85% coverage)
-- [ ] Tests unitaires frontend (≥85% coverage)
-- [ ] Tests E2E (scénarios critiques)
-- [ ] Tests accessibilité (axe-core)
-- [ ] CI/CD avec tests automatiques
+| Plan | Transcriptions/mois | Minutes audio | Appels IA | Prix |
+|------|---------------------|---------------|-----------|------|
+| Free | 10 | 60 | 50 | 0 EUR |
+| Pro | 100 | 600 | 500 | 19 EUR/mois |
+| Enterprise | Illimite | Illimite | Illimite | Sur devis |
 
 ---
 
-### 1.2 Configuration Production (🔴 CRITIQUE)
+## PHASE 6 : INNOVATIONS DIFFERENCIANTES [FUTUR]
 
-**Problème** : Configuration dev hardcodée  
-**Impact** : Failles sécurité, pas prêt pour déploiement  
-**Temps estimé** : 2-3 jours
+> Vision produit a long terme. Ce qui positionne SaaS-IA comme plateforme.
 
-#### Backend
+### 6.1 AI Pipeline Builder (drag and drop)
 
-**À faire** :
+**Effort** : 3-4 semaines | **Impact** : Tres haut | **Priorite** : P3
 
-```python
-# app/config.py
-class Settings(BaseSettings):
-    # ❌ AVANT
-    SECRET_KEY: str = "change-me-in-production-use-strong-random-key"
-    DEBUG: bool = True
-    CORS_ORIGINS: str = "http://localhost:3002,http://localhost:8004"
-    
-    # ✅ APRÈS
-    SECRET_KEY: str = Field(..., min_length=32)  # Obligatoire
-    DEBUG: bool = Field(default=False)  # False par défaut
-    CORS_ORIGINS: str = Field(...)  # Obligatoire
-    ENVIRONMENT: str = Field(default="production")
-    
-    @validator('SECRET_KEY')
-    def validate_secret_key(cls, v):
-        if v == "change-me-in-production-use-strong-random-key":
-            raise ValueError("SECRET_KEY must be changed in production")
-        return v
+Permettre a l'utilisateur de chainer des operations IA visuellement :
+
+```
+[YouTube URL] -> [Transcription] -> [Resume] -> [Traduction FR->EN] -> [Export PDF]
 ```
 
-**Variables d'environnement production** :
-```bash
-# .env.production
-SECRET_KEY=<généré avec openssl rand -hex 32>
-ALGORITHM=HS256
-ACCESS_TOKEN_EXPIRE_MINUTES=30
-DATABASE_URL=postgresql://user:pass@prod-db:5432/saas_ia
-REDIS_URL=redis://prod-redis:6379
-ASSEMBLYAI_API_KEY=<clé réelle>
-CORS_ORIGINS=https://app.saas-ia.com
-DEBUG=False
-ENVIRONMENT=production
-LOG_LEVEL=WARNING
+- Interface drag and drop avec React Flow
+- Chaque bloc = un module IA avec entree/sortie typee
+- Sauvegarde des pipelines comme templates reutilisables
+- Execution asynchrone avec suivi de progression par etape
+- Marketplace de templates communautaires
+
+Positionne SaaS-IA comme une **plateforme d'orchestration IA**, pas juste un outil.
+
+### 6.2 Analyse comparative multi-modele
+
+**Effort** : 1-2 semaines | **Impact** : Haut | **Priorite** : P2
+
+L'AI Router choisit actuellement UN modele automatiquement. Offrir un mode "Compare" :
+
+- Envoie le meme prompt a 2-3 providers en parallele (Gemini, Claude, Groq)
+- Affiche les resultats cote a cote avec temps de reponse et cout estime
+- L'utilisateur vote pour la meilleure reponse
+- Les votes alimentent un feedback loop pour affiner le ModelSelector
+- Metriques de qualite par provider et par domaine de contenu
+
+**Differenciateur marche** : aucun outil grand public ne propose cette fonctionnalite.
+
+### 6.3 API publique et Marketplace
+
+**Effort** : 3-4 semaines | **Impact** : Tres haut | **Priorite** : P3
+
+- Cles API par utilisateur (gerees dans le profil)
+- Documentation OpenAPI interactive avec exemples
+- SDK client auto-genere (Python, TypeScript)
+- **Marketplace de modules** : les developpeurs tiers publient des modules IA
+- Webhooks pour integration dans des workflows externes (Zapier, Make, n8n)
+- Modele economique : commission sur les modules payants
+
+**Endpoints API publique** :
+```
+POST /v1/transcribe          # Transcription directe
+POST /v1/process             # Traitement IA generique
+GET  /v1/jobs/{id}           # Statut d'un job
+POST /v1/pipelines/{id}/run  # Executer un pipeline
 ```
 
-#### Frontend
+### 6.4 Knowledge Base et RAG
 
-**À faire** :
+**Effort** : 3-4 semaines | **Impact** : Tres haut | **Priorite** : P3
 
-```typescript
-// Cookie avec flag Secure + HttpOnly
-document.cookie = `auth_token=${token}; path=/; max-age=1800; SameSite=Strict; Secure`;
+Base de connaissances par utilisateur avec recherche semantique :
 
-// next.config.ts - Headers sécurité renforcés
-headers: [
-  { key: 'X-Frame-Options', value: 'DENY' },
-  { key: 'X-Content-Type-Options', value: 'nosniff' },
-  { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
-  { key: 'Strict-Transport-Security', value: 'max-age=31536000; includeSubDomains' },
-  { key: 'Content-Security-Policy', value: "default-src 'self'; ..." }
-]
-```
+- Upload de documents (PDF, DOCX, TXT) indexes en **vector database** (pgvector dans PostgreSQL)
+- Les transcriptions sont automatiquement indexees
+- Les requetes IA utilisent le RAG (Retrieval-Augmented Generation) pour repondre en se basant sur les documents de l'utilisateur
+- Recherche semantique cross-document
+- Exemple : "Qu'est-ce qui a ete dit sur le budget dans toutes mes reunions transcrites ?"
 
-**Variables d'environnement production** :
-```bash
-# .env.production
-NEXT_PUBLIC_API_URL=https://api.saas-ia.com
-NODE_ENV=production
-```
+**Stack technique** :
+- pgvector (extension PostgreSQL, pas de service supplementaire)
+- Embeddings via modele gratuit (Gemini embedding ou all-MiniLM-L6-v2)
+- Chunking intelligent (respect des paragraphes, overlap)
 
-**Livrables** :
-- [ ] SECRET_KEY obligatoire et validée
-- [ ] DEBUG=False par défaut
-- [ ] CORS restreint au domaine production
-- [ ] Cookies avec flags Secure + HttpOnly
-- [ ] CSP (Content Security Policy)
-- [ ] HTTPS uniquement
-- [ ] Variables d'environnement documentées
+### 6.5 Collaboration temps reel
+
+**Effort** : 3-4 semaines | **Impact** : Haut | **Priorite** : P4
+
+Transformer SaaS-IA en outil collaboratif :
+
+- **Workspaces** partages entre utilisateurs
+- Annotations collaboratives sur les transcriptions
+- Commentaires et tags
+- Partage de resultats par lien public (avec expiration)
+- Notifications en temps reel (WebSocket deja en place)
+- Roles par workspace (owner, editor, viewer)
 
 ---
 
-### 1.3 Gestion Utilisateur Admin Test (🔴 CRITIQUE)
+## MATRICE PRIORITE / IMPACT
 
-**Problème** : Utilisateur `admin@saas-ia.com` / `admin123` en base  
-**Impact** : Faille sécurité majeure en production  
-**Temps estimé** : 1 jour
-
-**À faire** :
-
-1. **Script de nettoyage** :
-```sql
--- scripts/cleanup_test_users.sql
-DELETE FROM transcriptions WHERE user_id IN (
-  SELECT id FROM users WHERE email LIKE '%@saas-ia.com'
-);
-DELETE FROM users WHERE email LIKE '%@saas-ia.com';
-```
-
-2. **Script création admin production** :
-```python
-# scripts/create_admin_prod.py
-import getpass
-import asyncio
-from app.auth import get_password_hash
-from app.database import get_session
-from app.models.user import User, Role
-
-async def create_admin():
-    email = input("Admin email: ")
-    password = getpass.getpass("Admin password (min 12 chars): ")
-    full_name = input("Full name: ")
-    
-    if len(password) < 12:
-        print("Password must be at least 12 characters")
-        return
-    
-    hashed = get_password_hash(password)
-    
-    async with get_session() as session:
-        admin = User(
-            email=email,
-            hashed_password=hashed,
-            full_name=full_name,
-            role=Role.ADMIN,
-            is_active=True
-        )
-        session.add(admin)
-        await session.commit()
-        print(f"Admin created: {email}")
-
-if __name__ == "__main__":
-    asyncio.run(create_admin())
-```
-
-3. **Désactiver Quick Login en production** :
-```typescript
-// login/page.tsx
-{process.env.NODE_ENV === 'development' && (
-  // Quick Login visible uniquement en dev
-)}
-```
-
-**Livrables** :
-- [ ] Script suppression utilisateurs test
-- [ ] Script création admin production sécurisé
-- [ ] Quick Login désactivé en production
-- [ ] Documentation procédure création admin
+| # | Proposition | Effort | Impact Business | Priorite |
+|---|-------------|--------|----------------|----------|
+| 4.1 | Streaming SSE | Faible | Haut | **P0** |
+| 4.2 | Multi-source transcription | Moyen | Haut | **P0** |
+| 4.3 | Chat contextuel | Moyen | Haut | **P1** |
+| 5.1 | Celery workers | Moyen | Moyen | **P1** |
+| 5.2 | Plugin registry | Moyen | Moyen | **P1** |
+| 6.2 | Compare multi-modele | Moyen | Haut | **P2** |
+| 5.3 | Multi-tenancy / quotas | Eleve | Tres haut | **P2** |
+| 6.1 | Pipeline builder | Eleve | Tres haut | **P3** |
+| 6.3 | API publique / marketplace | Eleve | Tres haut | **P3** |
+| 6.4 | Knowledge base RAG | Eleve | Tres haut | **P3** |
+| 6.5 | Collaboration temps reel | Eleve | Haut | **P4** |
 
 ---
 
-### 1.4 Logs Sensibles (🔴 CRITIQUE)
+## SPRINTS RECOMMANDES
 
-**Problème** : Logs peuvent contenir données sensibles  
-**Impact** : Fuite d'informations, non-conformité RGPD  
-**Temps estimé** : 2 jours
+**Sprint 1** (immediat) : 4.1 + 4.2 -- Streaming SSE + Multi-source. Effet "wow" maximal, infrastructure backend deja prete.
 
-**À faire** :
+**Sprint 2** : 4.3 + 5.2 -- Chat contextuel + Plugin registry. Transforme la plateforme d'un outil mono-feature en architecture extensible.
 
-```python
-# app/logging.py
-import structlog
-from typing import Any
+**Sprint 3** : 5.1 + 5.3 -- Celery workers + Quotas/plans. Prepare la mise en production reelle et la monetisation.
 
-def mask_sensitive_data(logger, method_name, event_dict):
-    """Masquer données sensibles dans les logs"""
-    sensitive_keys = ['password', 'token', 'secret', 'api_key']
-    
-    for key in sensitive_keys:
-        if key in event_dict:
-            event_dict[key] = '***MASKED***'
-    
-    return event_dict
-
-structlog.configure(
-    processors=[
-        mask_sensitive_data,  # Masquer données sensibles
-        structlog.stdlib.add_log_level,
-        structlog.stdlib.PositionalArgumentsFormatter(),
-        structlog.processors.TimeStamper(fmt="iso"),
-        structlog.processors.StackInfoRenderer(),
-        structlog.processors.format_exc_info,
-        structlog.processors.JSONRenderer()
-    ]
-)
-```
-
-**Livrables** :
-- [ ] Masquage automatique données sensibles
-- [ ] Logs structurés JSON (production)
-- [ ] Rotation logs (logrotate)
-- [ ] Rétention logs (30 jours max)
+**Sprint 4+** : 6.1, 6.2, 6.4 -- Pipeline builder, Compare, Knowledge base. Differenciateurs qui positionnent SaaS-IA comme plateforme.
 
 ---
 
-## 🟡 PHASE 2 : IMPORTANT QUALITÉ (3-4 semaines)
+## STACK TECHNIQUE ACTUELLE
 
-### 2.1 Refresh Tokens (🟡 IMPORTANT)
+### Backend
+- **Framework** : FastAPI 0.109 (async Python 3.11)
+- **ORM** : SQLModel 0.0.14 (SQLAlchemy async + Pydantic)
+- **Database** : PostgreSQL 16 (AsyncPG)
+- **Cache** : Redis 7 (rate limiting, sessions)
+- **Auth** : JWT access + refresh tokens, RBAC (user/admin)
+- **AI Providers** : Gemini Flash, Claude Sonnet, Groq Llama 70B
+- **AI Router** : Classification contenu + selection modele + prompt dynamique
+- **Transcription** : AssemblyAI + yt-dlp + detection langue
+- **Monitoring** : Prometheus metrics, structlog
+- **Tests** : pytest + pytest-asyncio (105 tests)
 
-**Problème** : Token expire après 30 min, utilisateur déconnecté  
-**Impact** : UX dégradée, frustration utilisateur  
-**Temps estimé** : 3-4 jours
+### Frontend
+- **Framework** : Next.js 15 (App Router) + React 18
+- **UI** : Material-UI 6 + Sneat Admin Template + Tailwind CSS 3
+- **State** : AuthContext (React Context) + TanStack Query 5
+- **Forms** : React Hook Form + Zod
+- **HTTP** : Axios avec intercepteurs (retry, refresh token auto)
+- **Notifications** : Sonner
 
-**À implémenter** :
-
-```python
-# app/models/user.py
-class RefreshToken(SQLModel, table=True):
-    __tablename__ = "refresh_tokens"
-    
-    id: UUID = Field(default_factory=uuid4, primary_key=True)
-    user_id: UUID = Field(foreign_key="users.id")
-    token: str = Field(unique=True, index=True)
-    expires_at: datetime
-    is_revoked: bool = Field(default=False)
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-
-# app/auth.py
-def create_refresh_token(user_id: UUID) -> str:
-    """Créer refresh token (7 jours)"""
-    token = secrets.token_urlsafe(32)
-    expires_at = datetime.utcnow() + timedelta(days=7)
-    # Stocker en DB
-    return token
-
-@router.post("/refresh")
-async def refresh_access_token(refresh_token: str):
-    """Rafraîchir access token"""
-    # Vérifier refresh token
-    # Générer nouveau access token
-    # Retourner nouveau access token
-```
-
-**Livrables** :
-- [ ] Table `refresh_tokens` en DB
-- [ ] Endpoint `/auth/refresh`
-- [ ] Rotation automatique côté frontend
-- [ ] Révocation tokens (logout)
-- [ ] Tests refresh flow
+### Infrastructure
+- **Containers** : Docker Compose (backend, PostgreSQL, Redis)
+- **CI/CD** : GitHub Actions (lint, test, build, security scan)
+- **Ports** : Backend 8004, Frontend 3002, PostgreSQL 5435, Redis 6382
 
 ---
 
-### 2.2 Cache Redis Avancé (🟡 IMPORTANT)
+## API ENDPOINTS ACTUELS
 
-**Problème** : Redis installé mais non utilisé  
-**Impact** : Performance sous-optimale, coûts API élevés  
-**Temps estimé** : 2-3 jours
+### Auth (`/api/auth`)
+| Methode | Endpoint | Description |
+|---------|----------|-------------|
+| POST | /register | Inscription utilisateur |
+| POST | /login | Connexion (retourne access + refresh token) |
+| POST | /refresh | Rotation de tokens |
+| GET | /me | Utilisateur courant |
+| PUT | /profile | Mise a jour profil |
+| PUT | /password | Changement mot de passe |
 
-**À implémenter** :
+### Transcription (`/api/transcription`)
+| Methode | Endpoint | Description |
+|---------|----------|-------------|
+| POST | / | Creer une transcription |
+| GET | / | Lister (pagine, filtre par statut) |
+| GET | /stats | Statistiques utilisateur |
+| GET | /{id} | Detail d'une transcription |
+| DELETE | /{id} | Supprimer |
+| WS | /debug/{id} | WebSocket debug (dev/admin) |
+| GET | /debug/{id}/audio | Telecharger audio cache (dev/admin) |
+| POST | /debug/transcribe/{id} | Transcription sync (dev/admin) |
 
-```python
-# app/cache.py
-import redis.asyncio as redis
-from functools import wraps
-import json
+### AI Assistant (`/api/ai-assistant`)
+| Methode | Endpoint | Description |
+|---------|----------|-------------|
+| GET | /providers | Liste des providers IA |
+| POST | /process-text | Traitement IA (avec AI Router) |
+| GET | /health | Sante du module |
+| POST | /classify-content | Classification de contenu |
+| POST | /classify-batch | Classification batch |
 
-redis_client = redis.from_url(settings.REDIS_URL)
-
-def cache(ttl: int = 300):
-    """Décorateur cache Redis"""
-    def decorator(func):
-        @wraps(func)
-        async def wrapper(*args, **kwargs):
-            # Générer clé cache
-            cache_key = f"{func.__name__}:{args}:{kwargs}"
-            
-            # Vérifier cache
-            cached = await redis_client.get(cache_key)
-            if cached:
-                return json.loads(cached)
-            
-            # Exécuter fonction
-            result = await func(*args, **kwargs)
-            
-            # Stocker en cache
-            await redis_client.setex(
-                cache_key,
-                ttl,
-                json.dumps(result, default=str)
-            )
-            
-            return result
-        return wrapper
-    return decorator
-
-# Usage
-@cache(ttl=3600)  # Cache 1 heure
-async def get_transcription(transcription_id: UUID):
-    # Récupérer transcription
-    return transcription
-```
-
-**Stratégie cache** :
-
-| Donnée | TTL | Raison |
-|--------|-----|--------|
-| Transcriptions complétées | 1 heure | Rarement modifiées |
-| User profile | 15 min | Peut changer |
-| Liste transcriptions | 5 min | Souvent mise à jour |
-| Stats dashboard | 10 min | Calculs coûteux |
-
-**Livrables** :
-- [ ] Décorateur cache Redis
-- [ ] Cache transcriptions complétées
-- [ ] Cache profil utilisateur
-- [ ] Invalidation cache intelligente
-- [ ] Monitoring cache (hit rate)
+### System
+| Methode | Endpoint | Description |
+|---------|----------|-------------|
+| GET | / | Info application |
+| GET | /health | Health check |
+| GET | /metrics | Prometheus (dev ou token) |
 
 ---
 
-### 2.3 Monitoring & Observabilité (🟡 IMPORTANT)
+## PAGES FRONTEND
 
-**Problème** : Pas de monitoring, pas d'alertes  
-**Impact** : Détection problèmes tardive, debugging difficile  
-**Temps estimé** : 1 semaine
-
-**À implémenter** :
-
-#### Prometheus + Grafana
-
-```python
-# app/metrics.py
-from prometheus_client import Counter, Histogram, Gauge
-
-# Métriques HTTP
-http_requests_total = Counter(
-    'http_requests_total',
-    'Total HTTP requests',
-    ['method', 'endpoint', 'status']
-)
-
-http_request_duration = Histogram(
-    'http_request_duration_seconds',
-    'HTTP request duration',
-    ['method', 'endpoint']
-)
-
-# Métriques métier
-transcriptions_total = Counter(
-    'transcriptions_total',
-    'Total transcriptions',
-    ['status']
-)
-
-active_users = Gauge(
-    'active_users',
-    'Number of active users'
-)
-
-# Middleware
-@app.middleware("http")
-async def prometheus_middleware(request, call_next):
-    start_time = time.time()
-    response = await call_next(request)
-    duration = time.time() - start_time
-    
-    http_requests_total.labels(
-        method=request.method,
-        endpoint=request.url.path,
-        status=response.status_code
-    ).inc()
-    
-    http_request_duration.labels(
-        method=request.method,
-        endpoint=request.url.path
-    ).observe(duration)
-    
-    return response
-```
-
-**Dashboard Grafana** :
-- Requêtes HTTP (rate, latence, erreurs)
-- Transcriptions (total, par statut, durée)
-- Utilisateurs (actifs, inscriptions, logins)
-- Base de données (connexions, queries, latence)
-- Redis (hit rate, mémoire, connexions)
-
-#### Logs Centralisés (ELK ou CloudWatch)
-
-```yaml
-# docker-compose.yml
-services:
-  elasticsearch:
-    image: elasticsearch:8.11.0
-    
-  logstash:
-    image: logstash:8.11.0
-    
-  kibana:
-    image: kibana:8.11.0
-```
-
-**Livrables** :
-- [ ] Prometheus metrics endpoint
-- [ ] Grafana dashboards
-- [ ] Alertes (email/Slack)
-- [ ] Logs centralisés (ELK/CloudWatch)
-- [ ] Tracing distribué (optionnel)
+| Route | Description | Statut |
+|-------|-------------|--------|
+| /login | Connexion | FAIT |
+| /register | Inscription | FAIT |
+| /dashboard | Tableau de bord avec stats reelles | FAIT |
+| /transcription | Gestion transcriptions (create, list, export) | FAIT |
+| /transcription/debug | Interface debug temps reel (dev/admin) | FAIT |
+| /profile | Profil utilisateur et changement mot de passe | FAIT |
 
 ---
 
-### 2.4 CI/CD Complet (🟡 IMPORTANT)
-
-**Problème** : CI/CD basique, pas de déploiement auto  
-**Impact** : Déploiements manuels, risque erreurs  
-**Temps estimé** : 1 semaine
-
-**À implémenter** :
-
-```yaml
-# .github/workflows/ci-cd.yml
-name: CI/CD Pipeline
-
-on:
-  push:
-    branches: [main, develop]
-  pull_request:
-    branches: [main]
-
-jobs:
-  backend-tests:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Setup Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
-      - name: Install dependencies
-        run: |
-          cd backend
-          pip install poetry
-          poetry install
-      - name: Run tests
-        run: |
-          cd backend
-          poetry run pytest --cov=app --cov-fail-under=85
-      - name: Upload coverage
-        uses: codecov/codecov-action@v3
-  
-  frontend-tests:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Setup Node
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18'
-      - name: Install dependencies
-        run: |
-          cd frontend
-          npm ci
-      - name: Run tests
-        run: |
-          cd frontend
-          npm test -- --coverage
-      - name: Run E2E tests
-        run: |
-          cd frontend
-          npm run test:e2e
-  
-  security-scan:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Run Trivy
-        uses: aquasecurity/trivy-action@master
-      - name: Run Bandit
-        run: |
-          cd backend
-          poetry run bandit -r app/
-  
-  deploy-staging:
-    needs: [backend-tests, frontend-tests, security-scan]
-    if: github.ref == 'refs/heads/develop'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Deploy to staging
-        run: |
-          # Déploiement staging
-  
-  deploy-production:
-    needs: [backend-tests, frontend-tests, security-scan]
-    if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Deploy to production
-        run: |
-          # Déploiement production
-```
-
-**Livrables** :
-- [ ] Tests automatiques sur PR
-- [ ] Scan sécurité (Trivy, Bandit)
-- [ ] Déploiement auto staging (develop)
-- [ ] Déploiement auto production (main)
-- [ ] Rollback automatique si erreur
-
----
-
-### 2.5 Documentation API Améliorée (🟡 IMPORTANT)
-
-**Problème** : Swagger basique, pas d'exemples  
-**Impact** : Intégration difficile pour développeurs  
-**Temps estimé** : 2-3 jours
-
-**À améliorer** :
-
-```python
-# app/auth.py
-@router.post(
-    "/register",
-    response_model=UserRead,
-    status_code=status.HTTP_201_CREATED,
-    summary="Register new user",
-    description="""
-    Register a new user account.
-    
-    **Rate limit**: 5 requests/minute
-    
-    **Requirements**:
-    - Email must be valid and unique
-    - Password must be at least 8 characters
-    - Full name is optional
-    
-    **Returns**:
-    - 201: User created successfully
-    - 400: Email already registered or validation error
-    - 429: Rate limit exceeded
-    """,
-    responses={
-        201: {
-            "description": "User created successfully",
-            "content": {
-                "application/json": {
-                    "example": {
-                        "id": "123e4567-e89b-12d3-a456-426614174000",
-                        "email": "user@example.com",
-                        "full_name": "John Doe",
-                        "role": "user",
-                        "is_active": true,
-                        "created_at": "2025-01-01T00:00:00Z"
-                    }
-                }
-            }
-        },
-        400: {
-            "description": "Email already registered",
-            "content": {
-                "application/json": {
-                    "example": {
-                        "detail": "Email already registered"
-                    }
-                }
-            }
-        }
-    }
-)
-async def register(...):
-    ...
-```
-
-**Livrables** :
-- [ ] Descriptions complètes endpoints
-- [ ] Exemples requêtes/réponses
-- [ ] Codes erreurs documentés
-- [ ] Guide démarrage rapide
-- [ ] Collection Postman/Insomnia
-
----
-
-## 🟢 PHASE 3 : AMÉLIORATIONS UX (2-3 semaines)
-
-### 3.1 Dashboard Riche (🟢 SOUHAITABLE)
-
-**Objectif** : Dashboard avec statistiques et graphiques  
-**Temps estimé** : 1 semaine
-
-**À implémenter** :
-
-```typescript
-// dashboard/page.tsx
-<Grid container spacing={3}>
-  {/* Stats Cards */}
-  <Grid item xs={12} sm={6} md={3}>
-    <StatsCard
-      title="Total Transcriptions"
-      value={stats.total}
-      icon={<TranscriptIcon />}
-      trend="+12%"
-    />
-  </Grid>
-  
-  {/* Graphiques */}
-  <Grid item xs={12} md={8}>
-    <Chart
-      type="line"
-      data={transcriptionsOverTime}
-      title="Transcriptions Over Time"
-    />
-  </Grid>
-  
-  {/* Recent Activity */}
-  <Grid item xs={12} md={4}>
-    <RecentActivity activities={recentActivities} />
-  </Grid>
-</Grid>
-```
-
-**Livrables** :
-- [ ] Stats cards (total, pending, completed, failed)
-- [ ] Graphiques (Chart.js ou Recharts)
-- [ ] Activité récente
-- [ ] Filtres temporels (jour, semaine, mois)
-
----
-
-### 3.2 Notifications en Temps Réel (🟢 SOUHAITABLE)
-
-**Objectif** : Notifier utilisateur quand transcription terminée  
-**Temps estimé** : 3-4 jours
-
-**À implémenter** :
-
-```python
-# app/websocket.py
-from fastapi import WebSocket
-
-@app.websocket("/ws/{user_id}")
-async def websocket_endpoint(websocket: WebSocket, user_id: UUID):
-    await websocket.accept()
-    
-    # Écouter événements transcription
-    async for message in redis_pubsub:
-        if message['user_id'] == user_id:
-            await websocket.send_json({
-                "type": "transcription_completed",
-                "data": message['data']
-            })
-```
-
-```typescript
-// frontend - useWebSocket.ts
-export function useWebSocket(userId: string) {
-  useEffect(() => {
-    const ws = new WebSocket(`ws://localhost:8004/ws/${userId}`);
-    
-    ws.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      if (data.type === 'transcription_completed') {
-        toast.success('Transcription completed!');
-        queryClient.invalidateQueries(['transcriptions']);
-      }
-    };
-    
-    return () => ws.close();
-  }, [userId]);
-}
-```
-
-**Livrables** :
-- [ ] WebSocket endpoint backend
-- [ ] Hook useWebSocket frontend
-- [ ] Notifications toast
-- [ ] Reconnexion automatique
-
----
-
-### 3.3 Profil Utilisateur (🟢 SOUHAITABLE)
-
-**Objectif** : Page profil avec édition infos  
-**Temps estimé** : 2-3 jours
-
-**À implémenter** :
-
-```typescript
-// profile/page.tsx
-<Card>
-  <CardHeader>
-    <Avatar src={user.avatar} />
-    <Typography variant="h5">{user.full_name}</Typography>
-  </CardHeader>
-  
-  <CardContent>
-    <Form onSubmit={handleUpdate}>
-      <TextField
-        label="Full Name"
-        value={fullName}
-        onChange={(e) => setFullName(e.target.value)}
-      />
-      
-      <TextField
-        label="Email"
-        value={user.email}
-        disabled
-      />
-      
-      <Button type="submit">Update Profile</Button>
-    </Form>
-    
-    <Divider />
-    
-    <Typography variant="h6">Change Password</Typography>
-    <Form onSubmit={handlePasswordChange}>
-      <TextField
-        type="password"
-        label="Current Password"
-      />
-      <TextField
-        type="password"
-        label="New Password"
-      />
-      <Button type="submit">Change Password</Button>
-    </Form>
-  </CardContent>
-</Card>
-```
-
-**Livrables** :
-- [ ] Page profil utilisateur
-- [ ] Édition nom/email
-- [ ] Changement mot de passe
-- [ ] Upload avatar (optionnel)
-- [ ] Historique activité
-
----
-
-### 3.4 Pagination & Filtres (🟢 SOUHAITABLE)
-
-**Objectif** : Pagination et filtres sur liste transcriptions  
-**Temps estimé** : 2 jours
-
-**À implémenter** :
-
-```python
-# app/modules/transcription/routes.py
-@router.get("/", response_model=PaginatedResponse[TranscriptionRead])
-async def list_transcriptions(
-    skip: int = Query(0, ge=0),
-    limit: int = Query(20, ge=1, le=100),
-    status: Optional[TranscriptionStatus] = None,
-    search: Optional[str] = None,
-    sort_by: str = Query("created_at", regex="^(created_at|status)$"),
-    sort_order: str = Query("desc", regex="^(asc|desc)$"),
-    current_user: User = Depends(get_current_user),
-    session: AsyncSession = Depends(get_session)
-):
-    # Filtrage + tri + pagination
-    query = select(Transcription).where(Transcription.user_id == current_user.id)
-    
-    if status:
-        query = query.where(Transcription.status == status)
-    
-    if search:
-        query = query.where(Transcription.video_url.ilike(f"%{search}%"))
-    
-    if sort_order == "desc":
-        query = query.order_by(desc(getattr(Transcription, sort_by)))
-    else:
-        query = query.order_by(asc(getattr(Transcription, sort_by)))
-    
-    total = await session.scalar(select(func.count()).select_from(query.subquery()))
-    
-    query = query.offset(skip).limit(limit)
-    result = await session.execute(query)
-    items = result.scalars().all()
-    
-    return {
-        "items": items,
-        "total": total,
-        "skip": skip,
-        "limit": limit
-    }
-```
-
-**Livrables** :
-- [ ] Pagination backend
-- [ ] Filtres (status, search)
-- [ ] Tri (date, status)
-- [ ] Composant Pagination frontend
-- [ ] Composant Filtres frontend
-
----
-
-## 🔵 PHASE 4 : ÉVOLUTIONS LONG TERME (3-6 mois)
-
-### 4.1 Nouveaux Modules IA (🔵 FUTUR)
-
-**Objectif** : Ajouter modules IA supplémentaires  
-**Temps estimé** : 2-3 semaines par module
-
-**Modules proposés** :
-
-1. **Génération de Texte** (GPT-4, Claude)
-   - Génération articles, emails, résumés
-   - Templates personnalisables
-   - Export formats multiples
-
-2. **Analyse de Sentiment** (HuggingFace)
-   - Analyse texte/tweets/reviews
-   - Score sentiment (positif/négatif/neutre)
-   - Visualisation graphique
-
-3. **Traduction** (DeepL, Google Translate)
-   - Traduction multi-langues
-   - Détection langue automatique
-   - Glossaire personnalisé
-
-4. **Génération d'Images** (DALL-E, Midjourney)
-   - Génération images depuis prompt
-   - Variations d'images
-   - Galerie images générées
-
-5. **OCR** (Tesseract, Google Vision)
-   - Extraction texte depuis images
-   - Support PDF
-   - Export formats multiples
-
-**Architecture modulaire** :
-```python
-# app/modules/text_generation/
-├── __init__.py
-├── routes.py
-├── service.py
-├── models.py
-└── schemas.py
-```
-
----
-
-### 4.2 Système de Crédits (🔵 FUTUR)
-
-**Objectif** : Monétisation avec système de crédits  
-**Temps estimé** : 2-3 semaines
-
-**À implémenter** :
-
-```python
-# app/models/billing.py
-class CreditPack(SQLModel, table=True):
-    id: UUID
-    name: str  # "Starter", "Pro", "Enterprise"
-    credits: int
-    price: Decimal
-    
-class UserCredit(SQLModel, table=True):
-    id: UUID
-    user_id: UUID
-    credits_remaining: int
-    credits_used: int
-    
-class CreditTransaction(SQLModel, table=True):
-    id: UUID
-    user_id: UUID
-    amount: int  # Positif = achat, négatif = utilisation
-    type: str  # "purchase", "usage", "refund"
-    module: str  # "transcription", "generation", etc.
-    created_at: datetime
-```
-
-**Tarification** :
-- Transcription : 1 crédit / minute
-- Génération texte : 1 crédit / 1000 tokens
-- Traduction : 1 crédit / 1000 caractères
-- etc.
-
----
-
-### 4.3 Multi-Tenancy (🔵 FUTUR)
-
-**Objectif** : Support organisations avec équipes  
-**Temps estimé** : 1 mois
-
-**À implémenter** :
-
-```python
-# app/models/organization.py
-class Organization(SQLModel, table=True):
-    id: UUID
-    name: str
-    plan: str  # "free", "pro", "enterprise"
-    
-class OrganizationMember(SQLModel, table=True):
-    id: UUID
-    organization_id: UUID
-    user_id: UUID
-    role: str  # "owner", "admin", "member"
-    
-# Tous les models ajoutent:
-class Transcription(SQLModel, table=True):
-    # ...
-    organization_id: Optional[UUID]  # Nouveau champ
-```
-
----
-
-### 4.4 API Publique (🔵 FUTUR)
-
-**Objectif** : API publique pour intégrations tierces  
-**Temps estimé** : 3-4 semaines
-
-**À implémenter** :
-
-```python
-# app/api_keys.py
-class APIKey(SQLModel, table=True):
-    id: UUID
-    user_id: UUID
-    key: str  # Hash de la clé
-    name: str
-    permissions: List[str]  # ["transcription:read", "transcription:write"]
-    rate_limit: int  # Requêtes/jour
-    expires_at: Optional[datetime]
-    
-# Middleware
-async def verify_api_key(api_key: str = Header(...)):
-    # Vérifier clé API
-    # Vérifier permissions
-    # Vérifier rate limit
-```
-
-**Documentation** :
-- OpenAPI spec publique
-- SDK Python/JavaScript
-- Exemples d'intégration
-- Webhooks
-
----
-
-## 📊 RÉCAPITULATIF PRIORITÉS
-
-### Par Urgence
-
-| Phase | Priorité | Temps | Statut |
-|-------|----------|-------|--------|
-| **Phase 0 : Module Transcription** | ⭐ | 2-3 j | **À FAIRE EN PRIORITÉ** |
-| Backend Core | ⭐ | 6h | À faire |
-| API + Frontend | ⭐ | 6h | À faire |
-| Tests + Doc | ⭐ | 2-3h | À faire |
-| **Phase 1 : Critiques** | 🔴 | 2-3 sem | À faire |
-| Tests automatisés | 🔴 | 1 sem | À faire |
-| Config production | 🔴 | 2-3 j | À faire |
-| Admin test cleanup | 🔴 | 1 j | À faire |
-| Logs sensibles | 🔴 | 2 j | À faire |
-| **Phase 2 : Important** | 🟡 | 3-4 sem | À faire |
-| Refresh tokens | 🟡 | 3-4 j | À faire |
-| Cache Redis | 🟡 | 2-3 j | À faire |
-| Monitoring | 🟡 | 1 sem | À faire |
-| CI/CD complet | 🟡 | 1 sem | À faire |
-| Doc API | 🟡 | 2-3 j | À faire |
-| **Phase 3 : UX** | 🟢 | 2-3 sem | À faire |
-| Dashboard riche | 🟢 | 1 sem | À faire |
-| Notifications RT | 🟢 | 3-4 j | À faire |
-| Profil utilisateur | 🟢 | 2-3 j | À faire |
-| Pagination/filtres | 🟢 | 2 j | À faire |
-| **Phase 4 : Long terme** | 🔵 | 3-6 mois | Futur |
-| Nouveaux modules IA | 🔵 | Variable | Futur |
-| Système crédits | 🔵 | 2-3 sem | Futur |
-| Multi-tenancy | 🔵 | 1 mois | Futur |
-| API publique | 🔵 | 3-4 sem | Futur |
-
-### Par Impact
-
-**Impact Immédiat (Valeur Ajoutée)** :
-0. **Module Transcription YouTube** (Premier module IA fonctionnel) ⭐
-
-**Impact Critique (Bloquant Production)** :
-1. Tests automatisés (Coverage 0% → 85%)
-2. Configuration production (Sécurité)
-3. Admin test cleanup (Faille sécurité)
-4. Logs sensibles (RGPD)
-
-**Impact Important (Qualité Production)** :
-5. Refresh tokens (UX)
-6. Cache Redis (Performance)
-7. Monitoring (Observabilité)
-8. CI/CD complet (Fiabilité)
-
-**Impact Souhaitable (Amélioration)** :
-9. Dashboard riche (UX)
-10. Notifications temps réel (UX)
-11. Profil utilisateur (Fonctionnalité)
-12. Pagination/filtres (UX)
-
----
-
-## 🎯 OBJECTIFS PAR MILESTONE
-
-### Milestone 0 : Premier Module IA (2-3 jours) ⭐ NOUVEAU !
-**Objectif** : Module Transcription YouTube fonctionnel
-
-**Checklist** :
-- [ ] Model Transcription (SQLModel)
-- [ ] Migration Alembic
-- [ ] YouTubeService (YouTube Transcript API)
-- [ ] WhisperService (OpenAI Whisper API)
-- [ ] CorrectionService (regex)
-- [ ] Background processor (BackgroundTasks)
-- [ ] Routes API (POST, GET, LIST)
-- [ ] Rate limiting (5/hour)
-- [ ] Page frontend `/transcription`
-- [ ] Form + validation (Zod)
-- [ ] Polling status (React Query)
-- [ ] Progress bar + result display
-- [ ] Tests (≥85% coverage)
-- [ ] Documentation API
-
-**Grade cible** : S++ (95/100)  
-**Temps** : 12-14h (2 jours)  
-**Coût** : <$30/mois (100 vidéos × 10min)
-
----
-
-### Milestone 1 : Production-Ready (1 mois)
-**Objectif** : Déploiement production sécurisé
-
-**Checklist** :
-- [ ] **Module Transcription opérationnel** ⭐
-- [ ] Tests automatisés (≥85% coverage)
-- [ ] Configuration production validée
-- [ ] Admin test supprimé
-- [ ] Logs sensibles masqués
-- [ ] Refresh tokens implémentés
-- [ ] Monitoring actif
-- [ ] CI/CD complet
-- [ ] Documentation API complète
-
-**Grade cible** : S++ (98/100)
-
----
-
-### Milestone 2 : UX Améliorée (2 mois)
-**Objectif** : Expérience utilisateur optimale
-
-**Checklist** :
-- [ ] Dashboard avec stats (incluant transcriptions)
-- [ ] Notifications temps réel (WebSocket)
-- [ ] Profil utilisateur éditable
-- [ ] Pagination et filtres (transcriptions)
-- [ ] Cache Redis optimisé
-- [ ] Performance optimisée
-- [ ] Export formats multiples (PDF, DOCX, SRT)
-
-**Grade cible** : S++ (99/100)
-
----
-
-### Milestone 3 : Évolution (6 mois)
-**Objectif** : Plateforme multi-modules mature
-
-**Checklist** :
-- [ ] 3+ modules IA supplémentaires (Génération texte, Traduction, etc.)
-- [ ] Système de crédits
-- [ ] Multi-tenancy
-- [ ] API publique
-- [ ] SDK Python/JS
-- [ ] Webhooks
-
-**Grade cible** : S++ (100/100)
-
----
-
-## 📞 CONTACT & CONTRIBUTION
-
-Pour toute question ou suggestion sur cette roadmap :
-- **Issues** : https://github.com/benziane/SaaS-IA/issues
-- **Discussions** : https://github.com/benziane/SaaS-IA/discussions
-
----
-
-**Roadmap maintenue par** : Assistant IA  
-**Dernière mise à jour** : 2025-11-14 (03h50)  
-**Version** : 1.1.0 (Ajout Module Transcription YouTube)  
-**Statut** : ✅ À JOUR
-
----
-
-## 📝 CHANGELOG
-
-### Version 1.1.0 (2025-11-14 - 03h50)
-- ⭐ **AJOUT** : Phase 0 - Module Transcription YouTube (architecture MVP simplifiée V2)
-- ✅ **VALIDATION** : Architecture cohérente avec MVP existant (SQLModel async, BackgroundTasks)
-- 💰 **ÉCONOMIE** : Whisper API ($0.36/h) au lieu d'Assembly AI ($15/h) = -97%
-- ⚡ **RAPIDITÉ** : 12-14h au lieu de 30-44h = -68%
-- 🔒 **LÉGALITÉ** : YouTube Transcript API au lieu de yt-dlp
-- 📊 **MILESTONE 0** : Ajout milestone "Premier Module IA" (2-3 jours)
-
-### Version 1.0.0 (2025-11-14)
-- 🎉 Version initiale de la roadmap
-- 📋 Phases 1-4 définies
-- 🎯 Milestones 1-3 établis
-
+## CHANGELOG
+
+### v2.0.0 (2026-03-22)
+- Roadmap reecrite integralement pour refleter l'etat reel du projet
+- Phases 0-3 completees et documentees (securite, stabilisation, features core, production-ready)
+- Ajout Phase 4 : ameliorations immediates (SSE, multi-source, chat contextuel)
+- Ajout Phase 5 : renovations architecture (Celery, plugin registry, multi-tenancy)
+- Ajout Phase 6 : innovations differenciantes (pipeline builder, compare, API publique, RAG, collaboration)
+- Matrice priorite/impact et sprints recommandes
+- Documentation complete de la stack technique et des endpoints
+
+### v1.1.0 (2025-11-14)
+- Ajout Phase 0 : Module Transcription YouTube
+- Architecture MVP simplifiee V2 validee
+
+### v1.0.0 (2025-11-14)
+- Version initiale de la roadmap
+- Phases 1-4 definies
