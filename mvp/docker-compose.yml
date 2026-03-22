@@ -76,6 +76,52 @@ services:
     networks:
       - saas-ia-network
 
+  # Celery Worker
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: saas-ia-worker
+    environment:
+      - DATABASE_URL=postgresql://saas_ia_user:saas_ia_dev_password@postgres:5432/saas_ia
+      - REDIS_URL=redis://redis:6379
+      - ASSEMBLYAI_API_KEY=${ASSEMBLYAI_API_KEY:-MOCK}
+      - SECRET_KEY=${SECRET_KEY:-dev-secret-key-change-in-prod}
+      - ENVIRONMENT=development
+      - DEBUG=True
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - CLAUDE_API_KEY=${CLAUDE_API_KEY}
+      - GROQ_API_KEY=${GROQ_API_KEY}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./backend/app:/app/app
+    command: celery -A app.celery_app worker --loglevel=info --concurrency=2
+    networks:
+      - saas-ia-network
+
+  # Flower Monitoring
+  flower:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: saas-ia-flower
+    ports:
+      - "5555:5555"
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - SECRET_KEY=${SECRET_KEY:-dev-secret-key-change-in-prod}
+      - DATABASE_URL=postgresql://saas_ia_user:saas_ia_dev_password@postgres:5432/saas_ia
+    depends_on:
+      redis:
+        condition: service_healthy
+    command: celery -A app.celery_app flower --port=5555
+    networks:
+      - saas-ia-network
+
 volumes:
   postgres_data:
     driver: local

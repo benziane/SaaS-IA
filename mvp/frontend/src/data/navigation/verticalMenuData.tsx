@@ -64,6 +64,11 @@ const verticalMenuData = (): VerticalMenuDataType[] => [
     href: '/profile',
     icon: 'tabler:user-circle',
   },
+  {
+    label: 'Billing',
+    href: '/billing',
+    icon: 'tabler:credit-card',
+  },
 
   // Future Modules (commented for now)
   // {

@@ -133,11 +133,11 @@ SaaS-IA est une plateforme modulaire d'intelligence artificielle. La vision est 
 
 ---
 
-## PHASE 5 : RENOVATIONS ARCHITECTURE [A FAIRE]
+## PHASE 5 : RENOVATIONS ARCHITECTURE [EN COURS]
 
 > Refactoring structurel pour passer a l'echelle.
 
-### 5.1 Event-Driven Architecture avec Celery
+### 5.1 Event-Driven Architecture avec Celery [FAIT]
 
 **Effort** : 1-2 semaines | **Impact** : Haut | **Priorite** : P1
 
@@ -164,7 +164,7 @@ Les transcriptions tournent dans `BackgroundTasks` FastAPI (liees au processus w
 - Page /modules : cards modules (nom, version, status, deps)
 - Ajout d'un module = creer un dossier avec manifest.json + routes.py, zero config
 
-### 5.3 Multi-tenancy et systeme de quotas
+### 5.3 Multi-tenancy et systeme de quotas [FAIT]
 
 **Effort** : 2-3 semaines | **Impact** : Tres haut | **Priorite** : P2
 
@@ -298,7 +298,7 @@ Transformer SaaS-IA en outil collaboratif :
 
 **Sprint 2** : 4.3 + 5.2 -- Chat contextuel + Plugin registry. Transforme la plateforme d'un outil mono-feature en architecture extensible.
 
-**Sprint 3** : 5.1 + 5.3 -- Celery workers + Quotas/plans. Prepare la mise en production reelle et la monetisation.
+**Sprint 3** : 5.1 + 5.3 -- Celery workers + Quotas/plans. Prepare la mise en production reelle et la monetisation. **[FAIT]**
 
 **Sprint 4+** : 6.1, 6.2, 6.4 -- Pipeline builder, Compare, Knowledge base. Differenciateurs qui positionnent SaaS-IA comme plateforme.
 
@@ -373,6 +373,12 @@ Transformer SaaS-IA en outil collaboratif :
 | GET | /health | Health check |
 | GET | /metrics | Prometheus (dev ou token) |
 
+### Billing (`/api/billing`)
+| Methode | Endpoint | Description |
+|---------|----------|-------------|
+| GET | /plans | Plans disponibles |
+| GET | /quota | Quota et usage de l'utilisateur courant |
+
 ---
 
 ## PAGES FRONTEND
@@ -385,10 +391,17 @@ Transformer SaaS-IA en outil collaboratif :
 | /transcription | Gestion transcriptions (create, list, export) | FAIT |
 | /transcription/debug | Interface debug temps reel (dev/admin) | FAIT |
 | /profile | Profil utilisateur et changement mot de passe | FAIT |
+| /billing | Plan, usage quotas et plans disponibles | FAIT |
 
 ---
 
 ## CHANGELOG
+
+### v2.3.0 (2026-03-22)
+- Sprint 3 : Celery workers (taches persistantes, retry backoff, Flower monitoring)
+- Sprint 3 : Multi-tenancy et quotas (plans Free/Pro/Enterprise, verification automatique)
+- 7 nouveaux fichiers backend, 5 fichiers frontend, 24 nouveaux tests
+- Documentation technique : docs/SPRINT3_CELERY_BILLING.md
 
 ### v2.0.0 (2026-03-22)
 - Roadmap reecrite integralement pour refleter l'etat reel du projet

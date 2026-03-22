@@ -19,6 +19,8 @@ import structlog
 from app.auth import get_current_user
 from app.database import get_session
 from app.models.user import User
+from app.modules.billing.service import BillingService
+from app.modules.billing.middleware import require_ai_call_quota
 from app.models.transcription import Transcription, TranscriptionStatus
 from app.models.conversation import Conversation, Message, MessageRole
 from app.modules.conversation.schemas import (
@@ -352,7 +354,7 @@ async def send_message(
     request: Request,
     conversation_id: UUID,
     body: MessageCreate,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_ai_call_quota),
     session: AsyncSession = Depends(get_session),
 ):
     """
@@ -380,6 +382,9 @@ async def send_message(
         content=body.content,
     )
     session.add(user_message)
+
+    # Consume AI call quota
+    await BillingService.consume_quota(current_user.id, "ai_call", 1, session)
 
     # Touch conversation updated_at.
     conversation.updated_at = datetime.utcnow()

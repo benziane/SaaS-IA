@@ -1,0 +1,9 @@
+{
+  "name": "billing",
+  "version": "1.0.0",
+  "description": "Multi-tenancy billing with plans and usage quotas",
+  "prefix": "/api/billing",
+  "tags": ["billing"],
+  "enabled": true,
+  "dependencies": []
+}

@@ -14,6 +14,8 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from app.database import get_session
 from app.auth import get_current_user
 from app.models.user import User, Role
+from app.modules.billing.service import BillingService
+from app.modules.billing.middleware import require_transcription_quota
 from app.models.transcription import TranscriptionStatus
 from app.schemas.transcription import TranscriptionCreate, TranscriptionRead, PaginatedResponse
 from app.modules.transcription.service import TranscriptionService
@@ -39,6 +41,17 @@ MAX_UPLOAD_SIZE_BYTES = 500 * 1024 * 1024  # 500 MB
 router = APIRouter()
 
 
+def _celery_available() -> bool:
+    """Check if Celery workers are available."""
+    try:
+        from app.celery_app import celery_app
+        # Ping with a short timeout to check if any worker is reachable
+        result = celery_app.control.ping(timeout=1.0)
+        return bool(result)
+    except Exception:
+        return False
+
+
 def _require_debug_access(user: User) -> None:
     """Raise 403 unless the environment is development or the user is admin."""
     if settings.ENVIRONMENT == "development":
@@ -62,7 +75,7 @@ async def create_transcription(
     request: Request,
     data: TranscriptionCreate,
     background_tasks: BackgroundTasks,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_transcription_quota),
     session: AsyncSession = Depends(get_session),
     service: TranscriptionService = Depends(get_transcription_service)
 ):
@@ -85,8 +98,17 @@ async def create_transcription(
         source_type=data.source_type
     )
 
-    # Process in background (non-blocking)
-    background_tasks.add_task(service.process_transcription, job.id)
+    # Consume transcription quota
+    await BillingService.consume_quota(current_user.id, "transcription", 1, session)
+
+    # Process via Celery if available, otherwise fallback to BackgroundTasks
+    if _celery_available():
+        from app.modules.transcription.tasks import process_transcription_task
+        process_transcription_task.delay(
+            str(job.id), data.video_url, data.language or "auto", data.source_type
+        )
+    else:
+        background_tasks.add_task(service.process_transcription, job.id)
 
     return job
 
@@ -98,7 +120,7 @@ async def upload_transcription(
     background_tasks: BackgroundTasks,
     file: UploadFile = File(..., description="Audio/video file to transcribe"),
     language: Optional[str] = Form("auto", description="Language code (e.g., 'en', 'fr', 'auto')"),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_transcription_quota),
     session: AsyncSession = Depends(get_session),
     service: TranscriptionService = Depends(get_transcription_service)
 ):
@@ -178,8 +200,15 @@ async def upload_transcription(
         original_filename=file.filename
     )
 
-    # Process in background
-    background_tasks.add_task(service.process_upload_transcription, job.id, temp_path, language)
+    # Consume transcription quota
+    await BillingService.consume_quota(current_user.id, "transcription", 1, session)
+
+    # Process via Celery if available, otherwise fallback to BackgroundTasks
+    if _celery_available():
+        from app.modules.transcription.tasks import process_upload_task
+        process_upload_task.delay(str(job.id), temp_path, language)
+    else:
+        background_tasks.add_task(service.process_upload_transcription, job.id, temp_path, language)
 
     return job
 
