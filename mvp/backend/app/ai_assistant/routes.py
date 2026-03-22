@@ -1,6 +1,9 @@
 """AI Assistant API Routes - Grade S++"""
 
-from fastapi import APIRouter, Depends, HTTPException, status, Body
+import json
+
+from fastapi import APIRouter, Depends, HTTPException, Request, status, Body
+from fastapi.responses import StreamingResponse
 from typing import List, Dict, Optional
 import structlog
 
@@ -112,6 +115,113 @@ async def process_text(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Text processing failed: {str(e)}"
         )
+
+
+@router.post("/stream")
+async def stream_text(
+    request_body: TextProcessingRequest,
+    request: Request,
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Stream text processing results via Server-Sent Events.
+
+    Accepts the same input as /process-text but returns a streaming response.
+    Uses the AI Router pipeline (classification, model selection, prompt
+    selection) and streams tokens as they arrive from the selected provider.
+
+    SSE event format:
+        data: {"token": "chunk_text", "provider": "gemini"}
+        data: {"done": true, "provider": "gemini", "tokens_streamed": 123}
+        data: {"error": "message"}
+
+    Args:
+        request_body: Text processing request (same schema as /process-text)
+        request: FastAPI request object (used for disconnect detection)
+        current_user: Authenticated user
+
+    Returns:
+        StreamingResponse: SSE stream with media_type text/event-stream
+    """
+    logger.info(
+        "stream_request_received",
+        user_id=str(current_user.id),
+        task=request_body.task,
+        text_length=len(request_body.text)
+    )
+
+    async def event_generator():
+        tokens_streamed = 0
+        provider_name = "unknown"
+
+        try:
+            is_first = True
+            async for chunk in AIAssistantService.stream_text(
+                text=request_body.text,
+                task=request_body.task,
+                target_language=request_body.language,
+                strategy=SelectionStrategy.BALANCED
+            ):
+                # Check for client disconnect
+                if await request.is_disconnected():
+                    logger.info(
+                        "stream_client_disconnected",
+                        user_id=str(current_user.id),
+                        tokens_streamed=tokens_streamed
+                    )
+                    return
+
+                if is_first and "provider" in chunk:
+                    # First yield is metadata
+                    provider_name = chunk["provider"]
+                    is_first = False
+                    continue
+
+                if "token" in chunk:
+                    tokens_streamed += 1
+                    event_data = json.dumps(
+                        {"token": chunk["token"], "provider": provider_name},
+                        ensure_ascii=False
+                    )
+                    yield f"data: {event_data}\n\n"
+
+            # Final event
+            done_data = json.dumps({
+                "done": True,
+                "provider": provider_name,
+                "tokens_streamed": tokens_streamed
+            })
+            yield f"data: {done_data}\n\n"
+
+            logger.info(
+                "stream_complete",
+                user_id=str(current_user.id),
+                provider=provider_name,
+                tokens_streamed=tokens_streamed
+            )
+
+        except Exception as e:
+            logger.error(
+                "stream_error",
+                user_id=str(current_user.id),
+                error=str(e),
+                error_type=type(e).__name__
+            )
+            error_data = json.dumps(
+                {"error": str(e)},
+                ensure_ascii=False
+            )
+            yield f"data: {error_data}\n\n"
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        }
+    )
 
 
 @router.get("/health")

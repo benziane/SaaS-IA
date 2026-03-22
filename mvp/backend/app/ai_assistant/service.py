@@ -1,7 +1,7 @@
 """AI Assistant Service Layer - Grade S++"""
 
 import structlog
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, AsyncGenerator
 from datetime import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -632,6 +632,100 @@ Contenu restructuré :"""
             strategy=model_selection["strategy_used"],
             total_time_ms=result["total_processing_time_ms"]
         )
-        
+
         return result
+
+    @classmethod
+    async def stream_text(
+        cls,
+        text: str,
+        task: str,
+        target_language: Optional[str] = None,
+        strategy: SelectionStrategy = SelectionStrategy.BALANCED
+    ) -> AsyncGenerator[Dict[str, Any], None]:
+        """
+        Stream text processing using the AI Router pipeline.
+
+        Performs classification, model selection, and prompt selection (same as
+        process_text_smart), then streams token chunks from the selected
+        provider's stream_chat() method.
+
+        Args:
+            text: Text to process
+            task: Processing task name
+            target_language: Language code (french, english, arabic)
+            strategy: Model selection strategy
+
+        Yields:
+            dict: First yield contains provider metadata:
+                  {"provider": "groq", "model": "...", "classification": {...}}
+                  Subsequent yields contain token chunks:
+                  {"token": "chunk_text"}
+        """
+        # 1. Classification (0 cost, <50ms)
+        classification = ContentClassifier.classify(
+            text=text,
+            language=target_language or "french"
+        )
+
+        logger.info(
+            "stream_content_classified",
+            domain=classification["primary_domain"],
+            confidence=classification["confidence"],
+            sensitivity=classification["sensitivity"]["level"]
+        )
+
+        # 2. Model selection (0 cost)
+        model_selection = ModelSelector.select_model(
+            classification=classification,
+            strategy=strategy
+        )
+
+        provider_name = model_selection["model"]
+
+        logger.info(
+            "stream_model_selected",
+            model=provider_name,
+            strategy=model_selection["strategy_used"],
+            reason=model_selection["reason"]
+        )
+
+        # 3. Prompt selection (0 cost)
+        prompt_config = PromptSelector.select_prompt(
+            classification=classification,
+            task=task,
+            model=provider_name
+        )
+
+        # 4. Build prompt (reuse the prompts from process_text)
+        service = cls()
+        provider = service.get_provider(provider_name)
+
+        # Build the prompt the same way process_text does
+        language = target_language
+        prompts = {
+            "correct_spelling": f"Corrige UNIQUEMENT les fautes d'orthographe dans ce texte {f'en {language}' if language else ''}. Retourne SEULEMENT le texte corrige, sans commentaire.\n\nTexte:\n{text}",
+            "add_punctuation": f"Ajoute la ponctuation manquante dans ce texte {f'en {language}' if language else ''}. Ne change PAS le contenu.\n\nTexte:\n{text}",
+            "format_paragraphs": f"Formate ce texte {f'en {language}' if language else ''} en paragraphes coherents. Ne change PAS le contenu.\n\nTexte:\n{text}",
+            "improve_quality": f"Ameliore cette transcription {f'en langue {language}' if language else ''}. Corrige orthographe, ponctuation, majuscules. Retourne UNIQUEMENT le texte ameliore.\n\nTexte:\n{text}",
+            "translate": f"Traduis ce texte vers {language if language else 'anglais'}. Retourne SEULEMENT la traduction.\n\nTexte:\n{text}",
+            "format_text": f"Restructure cette transcription brute {f'en langue {language}' if language else ''} en contenu professionnel. Retourne UNIQUEMENT le contenu restructure.\n\nTexte:\n{text}"
+        }
+
+        prompt = prompts.get(task, prompts["improve_quality"])
+
+        # Yield metadata first
+        yield {
+            "provider": provider_name,
+            "model": provider.model_name,
+            "classification": {
+                "primary_domain": classification["primary_domain"],
+                "confidence": classification["confidence"],
+                "sensitivity_level": classification["sensitivity"]["level"]
+            }
+        }
+
+        # 5. Stream tokens from the provider
+        async for chunk in provider.stream_chat(prompt):
+            yield {"token": chunk}
 

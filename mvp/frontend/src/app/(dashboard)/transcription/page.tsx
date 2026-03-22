@@ -1,6 +1,7 @@
 /**
  * Transcription Page
- * YouTube transcription management with result display, export, and language selection
+ * Multi-source transcription management with YouTube/URL input, file upload,
+ * result display, export, and language selection.
  */
 
 'use client';
@@ -28,40 +29,52 @@ import {
   Paper,
   Select,
   Stack,
+  Tab,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
+  Tabs,
   TextField,
   Tooltip,
   Typography,
 } from '@mui/material';
 import {
+  AudioFile,
+  AutoFixHigh,
   Close,
+  CloudUpload,
   ContentCopy,
   Delete,
   Download,
   ExpandMore,
+  InsertLink,
+  Mic,
   Refresh,
+  Stop,
   Subtitles,
   Visibility,
 } from '@mui/icons-material';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 
 import {
   useCreateTranscription,
   useDeleteTranscription,
   useTranscriptions,
+  useUploadTranscription,
 } from '@/features/transcription/hooks';
+import { useSSE } from '@/hooks/useSSE';
+import { StreamingText } from '@/components/ui/StreamingText';
+import AudioRecorder from '@/components/ui/AudioRecorder';
 import {
   LANGUAGE_OPTIONS,
   transcriptionCreateSchema,
   type TranscriptionCreateSchema,
 } from '@/features/transcription/schemas';
-import type { Transcription } from '@/features/transcription/types';
+import type { Transcription, TranscriptionSourceType } from '@/features/transcription/types';
 import { TranscriptionStatus } from '@/features/transcription/types';
 
 /* ========================================================================
@@ -76,6 +89,24 @@ const LANGUAGE_LABEL_MAP: Record<string, string> = {
   es: 'Spanish',
   de: 'German',
 };
+
+const ACCEPTED_FILE_TYPES = [
+  'audio/mpeg',
+  'audio/wav',
+  'audio/mp4',
+  'audio/x-m4a',
+  'audio/ogg',
+  'audio/webm',
+  'audio/flac',
+  'video/mp4',
+  'video/webm',
+];
+
+const ACCEPTED_EXTENSIONS = '.mp3,.wav,.mp4,.m4a,.ogg,.webm,.flac';
+
+const MAX_FILE_SIZE_BYTES = 500 * 1024 * 1024; // 500 MB
+
+const ACCEPTED_FORMATS_DISPLAY = 'MP3, WAV, MP4, M4A, OGG, WEBM, FLAC';
 
 /* ========================================================================
    HELPER FUNCTIONS
@@ -166,6 +197,43 @@ function extractVideoId(url: string): string {
   return match?.[1] ?? 'transcription';
 }
 
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function getSourceIcon(sourceType: TranscriptionSourceType | undefined): JSX.Element {
+  switch (sourceType) {
+    case 'upload':
+      return <AudioFile fontSize="small" sx={{ color: 'info.main' }} />;
+    case 'url':
+      return <InsertLink fontSize="small" sx={{ color: 'warning.main' }} />;
+    case 'youtube':
+    default:
+      return <Subtitles fontSize="small" sx={{ color: 'error.main' }} />;
+  }
+}
+
+function getSourceLabel(sourceType: TranscriptionSourceType | undefined): string {
+  switch (sourceType) {
+    case 'upload':
+      return 'Upload';
+    case 'url':
+      return 'URL';
+    case 'youtube':
+    default:
+      return 'YouTube';
+  }
+}
+
+function getSourceDisplay(transcription: Transcription): string {
+  if (transcription.source_type === 'upload' && transcription.original_filename) {
+    return transcription.original_filename;
+  }
+  return transcription.video_url;
+}
+
 /* ========================================================================
    SUB-COMPONENTS
    ======================================================================== */
@@ -244,6 +312,53 @@ interface TranscriptionDetailProps {
 }
 
 function TranscriptionDetail({ transcription, onClose }: TranscriptionDetailProps): JSX.Element {
+  const { startStream, stopStream, isStreaming } = useSSE();
+  const [improvedText, setImprovedText] = useState('');
+  const [streamDone, setStreamDone] = useState(false);
+  const [streamError, setStreamError] = useState<string | null>(null);
+  const [streamProvider, setStreamProvider] = useState<string | undefined>(undefined);
+  const [streamTokenCount, setStreamTokenCount] = useState<number | undefined>(undefined);
+  const [copiedImproved, setCopiedImproved] = useState(false);
+  const accumulatedTextRef = useRef('');
+
+  const handleImproveWithAI = (): void => {
+    // Reset state for a new stream
+    setImprovedText('');
+    setStreamDone(false);
+    setStreamError(null);
+    setStreamProvider(undefined);
+    setStreamTokenCount(undefined);
+    accumulatedTextRef.current = '';
+
+    startStream(
+      '/api/ai-assistant/stream',
+      { text: transcription.text ?? '' },
+      {
+        onToken: (token: string) => {
+          accumulatedTextRef.current += token;
+          setImprovedText(accumulatedTextRef.current);
+        },
+        onDone: (info) => {
+          setStreamDone(true);
+          setStreamProvider(info.provider);
+          setStreamTokenCount(info.tokens_streamed);
+        },
+        onError: (error: string) => {
+          setStreamError(error);
+        },
+      }
+    );
+  };
+
+  const handleCopyImproved = async (): Promise<void> => {
+    await navigator.clipboard.writeText(improvedText);
+    setCopiedImproved(true);
+    setTimeout(() => setCopiedImproved(false), 2000);
+  };
+
+  const showImprovedSection = isStreaming || streamDone || !!streamError;
+  const showOriginalText = !streamDone;
+
   return (
     <Card sx={{ mt: 3 }}>
       <CardContent>
@@ -331,38 +446,392 @@ function TranscriptionDetail({ transcription, onClose }: TranscriptionDetailProp
           <Box>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
               <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                Transcription Text
+                {streamDone ? 'Original Transcription' : 'Transcription Text'}
               </Typography>
-              <ExportButtons transcription={transcription} />
+              <Stack direction="row" spacing={1} alignItems="center">
+                <ExportButtons transcription={transcription} />
+                {transcription.status === TranscriptionStatus.COMPLETED && !isStreaming && (
+                  <Tooltip title="Improve transcription text using AI">
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      color="secondary"
+                      startIcon={<AutoFixHigh />}
+                      onClick={handleImproveWithAI}
+                    >
+                      Improve with AI
+                    </Button>
+                  </Tooltip>
+                )}
+                {isStreaming && (
+                  <Tooltip title="Stop AI streaming">
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      color="warning"
+                      startIcon={<Stop />}
+                      onClick={stopStream}
+                    >
+                      Stop
+                    </Button>
+                  </Tooltip>
+                )}
+              </Stack>
             </Box>
-            <Paper
-              variant="outlined"
-              sx={{
-                p: 2,
-                maxHeight: 400,
-                overflow: 'auto',
-                bgcolor: 'action.hover',
-                fontFamily: 'inherit',
-              }}
-            >
-              <Typography
-                variant="body2"
+
+            {showOriginalText && (
+              <Paper
+                variant="outlined"
                 sx={{
-                  whiteSpace: 'pre-wrap',
-                  wordBreak: 'break-word',
-                  lineHeight: 1.7,
+                  p: 2,
+                  maxHeight: 400,
+                  overflow: 'auto',
+                  bgcolor: 'action.hover',
+                  fontFamily: 'inherit',
                 }}
               >
-                {transcription.text}
+                <Typography
+                  variant="body2"
+                  sx={{
+                    whiteSpace: 'pre-wrap',
+                    wordBreak: 'break-word',
+                    lineHeight: 1.7,
+                  }}
+                >
+                  {transcription.text}
+                </Typography>
+              </Paper>
+            )}
+            {showOriginalText && (
+              <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                {transcription.text.split(/\s+/).length} words
               </Typography>
-            </Paper>
-            <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-              {transcription.text.split(/\s+/).length} words
-            </Typography>
+            )}
+
+            {/* AI-Improved Text Section */}
+            {showImprovedSection && (
+              <Box sx={{ mt: 3 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                    AI-Improved Text
+                  </Typography>
+                  {streamDone && (
+                    <Tooltip title={copiedImproved ? 'Copied!' : 'Copy improved text to clipboard'}>
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        startIcon={<ContentCopy />}
+                        onClick={() => void handleCopyImproved()}
+                      >
+                        {copiedImproved ? 'Copied' : 'Copy improved text'}
+                      </Button>
+                    </Tooltip>
+                  )}
+                </Box>
+
+                {streamError && (
+                  <Alert severity="error" sx={{ mb: 2 }}>
+                    {streamError}
+                  </Alert>
+                )}
+
+                <StreamingText
+                  text={improvedText}
+                  isStreaming={isStreaming}
+                  provider={streamProvider}
+                  tokenCount={streamTokenCount}
+                />
+              </Box>
+            )}
           </Box>
         )}
       </CardContent>
     </Card>
+  );
+}
+
+/* ========================================================================
+   FILE UPLOAD TAB COMPONENT
+   ======================================================================== */
+
+interface FileUploadFormProps {
+  onUploadComplete: () => void;
+}
+
+function FileUploadForm({ onUploadComplete }: FileUploadFormProps): JSX.Element {
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploadLanguage, setUploadLanguage] = useState<string>('auto');
+  const [uploadProgress, setUploadProgress] = useState<number>(0);
+  const [dragOver, setDragOver] = useState(false);
+  const [fileError, setFileError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const uploadMutation = useUploadTranscription((progress) => {
+    setUploadProgress(progress);
+  });
+
+  const validateFile = (file: File): string | null => {
+    if (file.size > MAX_FILE_SIZE_BYTES) {
+      return `File size exceeds the 500 MB limit. Selected file: ${formatFileSize(file.size)}`;
+    }
+    const isAcceptedType = ACCEPTED_FILE_TYPES.some((type) => file.type === type);
+    const hasAcceptedExtension = ACCEPTED_EXTENSIONS.split(',').some((ext) =>
+      file.name.toLowerCase().endsWith(ext)
+    );
+    if (!isAcceptedType && !hasAcceptedExtension) {
+      return `Unsupported file format. Accepted formats: ${ACCEPTED_FORMATS_DISPLAY}`;
+    }
+    return null;
+  };
+
+  const handleFileSelect = (file: File): void => {
+    const error = validateFile(file);
+    if (error) {
+      setFileError(error);
+      setSelectedFile(null);
+      return;
+    }
+    setFileError(null);
+    setSelectedFile(file);
+    setUploadProgress(0);
+  };
+
+  const handleDrop = (event: React.DragEvent<HTMLDivElement>): void => {
+    event.preventDefault();
+    setDragOver(false);
+    const file = event.dataTransfer.files[0];
+    if (file) {
+      handleFileSelect(file);
+    }
+  };
+
+  const handleDragOver = (event: React.DragEvent<HTMLDivElement>): void => {
+    event.preventDefault();
+    setDragOver(true);
+  };
+
+  const handleDragLeave = (): void => {
+    setDragOver(false);
+  };
+
+  const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>): void => {
+    const file = event.target.files?.[0];
+    if (file) {
+      handleFileSelect(file);
+    }
+  };
+
+  const handleUploadSubmit = async (): Promise<void> => {
+    if (!selectedFile) return;
+    setUploadProgress(0);
+    await uploadMutation.mutateAsync({
+      file: selectedFile,
+      language: uploadLanguage === 'auto' ? undefined : uploadLanguage,
+    });
+    setSelectedFile(null);
+    setUploadProgress(0);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+    onUploadComplete();
+  };
+
+  const handleClearFile = (): void => {
+    setSelectedFile(null);
+    setFileError(null);
+    setUploadProgress(0);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  return (
+    <Box>
+      {/* Drop zone */}
+      <Box
+        onDrop={handleDrop}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onClick={() => fileInputRef.current?.click()}
+        sx={{
+          border: '2px dashed',
+          borderColor: dragOver ? 'primary.main' : fileError ? 'error.main' : 'divider',
+          borderRadius: 2,
+          p: 4,
+          textAlign: 'center',
+          cursor: 'pointer',
+          transition: 'all 0.2s ease',
+          bgcolor: dragOver ? 'action.hover' : 'transparent',
+          '&:hover': {
+            borderColor: 'primary.main',
+            bgcolor: 'action.hover',
+          },
+        }}
+      >
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept={ACCEPTED_EXTENSIONS}
+          onChange={handleInputChange}
+          style={{ display: 'none' }}
+          aria-label="Select audio or video file"
+        />
+        <CloudUpload sx={{ fontSize: 48, color: 'text.disabled', mb: 1 }} />
+        <Typography variant="body1" sx={{ fontWeight: 500 }}>
+          Drag and drop a file here, or click to browse
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+          Accepted formats: {ACCEPTED_FORMATS_DISPLAY}
+        </Typography>
+        <Typography variant="caption" color="text.secondary">
+          Maximum file size: 500 MB
+        </Typography>
+      </Box>
+
+      {/* File error */}
+      {fileError && (
+        <Alert severity="error" sx={{ mt: 2 }}>
+          {fileError}
+        </Alert>
+      )}
+
+      {/* File preview */}
+      {selectedFile && (
+        <Paper variant="outlined" sx={{ mt: 2, p: 2 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Stack direction="row" spacing={2} alignItems="center">
+              <AudioFile color="primary" />
+              <Box>
+                <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                  {selectedFile.name}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  {formatFileSize(selectedFile.size)} -- {selectedFile.type || 'Unknown type'}
+                </Typography>
+              </Box>
+            </Stack>
+            <IconButton
+              size="small"
+              onClick={handleClearFile}
+              aria-label="Remove selected file"
+              disabled={uploadMutation.isPending}
+            >
+              <Close fontSize="small" />
+            </IconButton>
+          </Box>
+        </Paper>
+      )}
+
+      {/* Upload progress */}
+      {uploadMutation.isPending && (
+        <Box sx={{ mt: 2 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+            <Typography variant="body2" color="text.secondary">
+              Uploading...
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              {uploadProgress}%
+            </Typography>
+          </Box>
+          <LinearProgress variant="determinate" value={uploadProgress} sx={{ height: 6, borderRadius: 3 }} />
+        </Box>
+      )}
+
+      {/* Language selector and submit */}
+      <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start', mt: 2 }}>
+        <FormControl sx={{ minWidth: 160 }}>
+          <InputLabel id="upload-language-select-label">Language</InputLabel>
+          <Select
+            labelId="upload-language-select-label"
+            label="Language"
+            value={uploadLanguage}
+            onChange={(e) => setUploadLanguage(e.target.value)}
+            aria-label="Select transcription language"
+          >
+            {LANGUAGE_OPTIONS.map((opt) => (
+              <MenuItem key={opt.value} value={opt.value}>
+                {opt.label}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+        <Button
+          variant="contained"
+          size="large"
+          disabled={!selectedFile || uploadMutation.isPending}
+          onClick={() => void handleUploadSubmit()}
+          startIcon={<CloudUpload />}
+          sx={{ minWidth: 130, height: 56 }}
+          aria-label="Upload and transcribe file"
+        >
+          {uploadMutation.isPending ? 'Uploading...' : 'Upload'}
+        </Button>
+      </Box>
+    </Box>
+  );
+}
+
+/* ========================================================================
+   RECORD AUDIO TAB COMPONENT
+   ======================================================================== */
+
+interface RecordAudioTabProps {
+  onRecordingUploaded: () => void;
+}
+
+function RecordAudioTab({ onRecordingUploaded }: RecordAudioTabProps): JSX.Element {
+  const [recordLanguage, setRecordLanguage] = useState<string>('auto');
+
+  const uploadMutation = useUploadTranscription();
+
+  const handleRecordingComplete = useCallback(
+    async (file: File): Promise<void> => {
+      await uploadMutation.mutateAsync({
+        file,
+        language: recordLanguage === 'auto' ? undefined : recordLanguage,
+      });
+      onRecordingUploaded();
+    },
+    [recordLanguage, uploadMutation, onRecordingUploaded]
+  );
+
+  return (
+    <Stack spacing={3}>
+      <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
+        <FormControl sx={{ minWidth: 160 }}>
+          <InputLabel id="record-language-select-label">Language</InputLabel>
+          <Select
+            labelId="record-language-select-label"
+            label="Language"
+            value={recordLanguage}
+            onChange={(e) => setRecordLanguage(e.target.value)}
+            aria-label="Select recording language"
+            disabled={uploadMutation.isPending}
+          >
+            {LANGUAGE_OPTIONS.map((opt) => (
+              <MenuItem key={opt.value} value={opt.value}>
+                {opt.label}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      </Box>
+
+      <AudioRecorder
+        onRecordingComplete={(file) => void handleRecordingComplete(file)}
+        maxDurationSeconds={600}
+        disabled={uploadMutation.isPending}
+      />
+
+      {uploadMutation.isPending && (
+        <Box sx={{ mt: 1 }}>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+            Uploading recording for transcription...
+          </Typography>
+          <LinearProgress />
+        </Box>
+      )}
+    </Stack>
   );
 }
 
@@ -373,6 +842,7 @@ function TranscriptionDetail({ transcription, onClose }: TranscriptionDetailProp
 export default function TranscriptionPage(): JSX.Element {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [deleteDialogId, setDeleteDialogId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<number>(0);
 
   /* Queries & Mutations */
   const { data, isLoading, refetch } = useTranscriptions();
@@ -416,6 +886,10 @@ export default function TranscriptionPage(): JSX.Element {
     void refetch();
   }, [refetch]);
 
+  const handleUploadComplete = useCallback((): void => {
+    void refetch();
+  }, [refetch]);
+
   /* Derived state */
   const selectedTranscription = useMemo(() => {
     if (!selectedId || !data?.items) return null;
@@ -432,10 +906,10 @@ export default function TranscriptionPage(): JSX.Element {
       <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Box>
           <Typography variant="h4" component="h1" gutterBottom sx={{ fontWeight: 600 }}>
-            YouTube Transcriptions
+            Transcriptions
           </Typography>
           <Typography variant="body1" color="text.secondary">
-            Transcribe YouTube videos using AI
+            Transcribe audio and video from YouTube, URL, file upload, or microphone recording
           </Typography>
         </Box>
         <Tooltip title="Refresh list">
@@ -445,67 +919,113 @@ export default function TranscriptionPage(): JSX.Element {
         </Tooltip>
       </Box>
 
-      {/* Create Form */}
+      {/* Create Form with Tabs */}
       <Card sx={{ mb: 4 }}>
         <CardContent>
           <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
             New Transcription
           </Typography>
-          <form onSubmit={handleSubmit(onSubmit)}>
-            <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
-              <Controller
-                name="video_url"
-                control={control}
-                render={({ field }) => (
-                  <TextField
-                    {...field}
-                    fullWidth
-                    label="YouTube Video URL"
-                    placeholder="https://www.youtube.com/watch?v=..."
-                    error={!!errors.video_url}
-                    helperText={errors.video_url?.message}
-                    inputProps={{
-                      'aria-label': 'YouTube video URL',
-                      'aria-required': 'true',
-                      'aria-invalid': !!errors.video_url,
-                    }}
+
+          <Tabs
+            value={activeTab}
+            onChange={(_, newValue: number) => setActiveTab(newValue)}
+            sx={{ mb: 3, borderBottom: 1, borderColor: 'divider' }}
+            aria-label="Transcription source type"
+          >
+            <Tab label="YouTube / URL" id="tab-url" aria-controls="tabpanel-url" />
+            <Tab label="Upload File" id="tab-upload" aria-controls="tabpanel-upload" />
+            <Tab label="Record Audio" id="tab-record" aria-controls="tabpanel-record" icon={<Mic />} iconPosition="start" />
+          </Tabs>
+
+          {/* Tab 1: YouTube / URL */}
+          <Box
+            role="tabpanel"
+            hidden={activeTab !== 0}
+            id="tabpanel-url"
+            aria-labelledby="tab-url"
+          >
+            {activeTab === 0 && (
+              <form onSubmit={handleSubmit(onSubmit)}>
+                <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
+                  <Controller
+                    name="video_url"
+                    control={control}
+                    render={({ field }) => (
+                      <TextField
+                        {...field}
+                        fullWidth
+                        label="YouTube Video URL"
+                        placeholder="https://www.youtube.com/watch?v=..."
+                        error={!!errors.video_url}
+                        helperText={errors.video_url?.message}
+                        inputProps={{
+                          'aria-label': 'YouTube video URL',
+                          'aria-required': 'true',
+                          'aria-invalid': !!errors.video_url,
+                        }}
+                      />
+                    )}
                   />
-                )}
-              />
-              <Controller
-                name="language"
-                control={control}
-                render={({ field }) => (
-                  <FormControl sx={{ minWidth: 160 }}>
-                    <InputLabel id="language-select-label">Language</InputLabel>
-                    <Select
-                      {...field}
-                      labelId="language-select-label"
-                      label="Language"
-                      value={field.value ?? 'auto'}
-                      aria-label="Select transcription language"
-                    >
-                      {LANGUAGE_OPTIONS.map(opt => (
-                        <MenuItem key={opt.value} value={opt.value}>
-                          {opt.label}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                )}
-              />
-              <Button
-                type="submit"
-                variant="contained"
-                size="large"
-                disabled={isSubmitting || createMutation.isPending}
-                sx={{ minWidth: 130, height: 56 }}
-                aria-label="Start transcription"
-              >
-                {isSubmitting || createMutation.isPending ? 'Starting...' : 'Transcribe'}
-              </Button>
-            </Box>
-          </form>
+                  <Controller
+                    name="language"
+                    control={control}
+                    render={({ field }) => (
+                      <FormControl sx={{ minWidth: 160 }}>
+                        <InputLabel id="language-select-label">Language</InputLabel>
+                        <Select
+                          {...field}
+                          labelId="language-select-label"
+                          label="Language"
+                          value={field.value ?? 'auto'}
+                          aria-label="Select transcription language"
+                        >
+                          {LANGUAGE_OPTIONS.map(opt => (
+                            <MenuItem key={opt.value} value={opt.value}>
+                              {opt.label}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                    )}
+                  />
+                  <Button
+                    type="submit"
+                    variant="contained"
+                    size="large"
+                    disabled={isSubmitting || createMutation.isPending}
+                    sx={{ minWidth: 130, height: 56 }}
+                    aria-label="Start transcription"
+                  >
+                    {isSubmitting || createMutation.isPending ? 'Starting...' : 'Transcribe'}
+                  </Button>
+                </Box>
+              </form>
+            )}
+          </Box>
+
+          {/* Tab 2: Upload File */}
+          <Box
+            role="tabpanel"
+            hidden={activeTab !== 1}
+            id="tabpanel-upload"
+            aria-labelledby="tab-upload"
+          >
+            {activeTab === 1 && (
+              <FileUploadForm onUploadComplete={handleUploadComplete} />
+            )}
+          </Box>
+
+          {/* Tab 3: Record Audio */}
+          <Box
+            role="tabpanel"
+            hidden={activeTab !== 2}
+            id="tabpanel-record"
+            aria-labelledby="tab-record"
+          >
+            {activeTab === 2 && (
+              <RecordAudioTab onRecordingUploaded={handleUploadComplete} />
+            )}
+          </Box>
         </CardContent>
       </Card>
 
@@ -530,7 +1050,7 @@ export default function TranscriptionPage(): JSX.Element {
                 No transcriptions yet
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                Paste a YouTube URL above and click Transcribe to get started.
+                Use the form above to transcribe a YouTube video, upload an audio file, or record audio directly.
               </Typography>
             </Box>
           ) : (
@@ -538,7 +1058,7 @@ export default function TranscriptionPage(): JSX.Element {
               <Table aria-label="Transcriptions table">
                 <TableHead>
                   <TableRow>
-                    <TableCell>Video URL</TableCell>
+                    <TableCell>Source</TableCell>
                     <TableCell>Status</TableCell>
                     <TableCell>Language</TableCell>
                     <TableCell>Date</TableCell>
@@ -560,17 +1080,22 @@ export default function TranscriptionPage(): JSX.Element {
                           )
                         }
                       >
-                        <Typography
-                          variant="body2"
-                          sx={{
-                            maxWidth: 320,
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap',
-                          }}
-                        >
-                          {transcription.video_url}
-                        </Typography>
+                        <Stack direction="row" spacing={1} alignItems="center">
+                          <Tooltip title={getSourceLabel(transcription.source_type)}>
+                            {getSourceIcon(transcription.source_type)}
+                          </Tooltip>
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              maxWidth: 300,
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            {getSourceDisplay(transcription)}
+                          </Typography>
+                        </Stack>
                       </TableCell>
                       <TableCell>
                         <Chip

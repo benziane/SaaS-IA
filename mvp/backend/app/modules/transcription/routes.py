@@ -2,10 +2,12 @@
 Transcription API routes
 """
 
+import os
+import tempfile
 from typing import List, Optional
-from uuid import UUID
+from uuid import UUID, uuid4
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status, Query, Request, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, status, Query, Request, UploadFile, WebSocket, WebSocketDisconnect
 from fastapi.responses import FileResponse
 from sqlmodel.ext.asyncio.session import AsyncSession
 
@@ -19,6 +21,19 @@ from app.modules.transcription.websocket import get_debug_manager
 from app.transcription.audio_cache import get_audio_cache
 from app.config import settings
 from app.rate_limit import limiter, get_rate_limit
+
+# Allowed file types for upload transcription
+ALLOWED_EXTENSIONS = {".mp3", ".wav", ".mp4", ".m4a", ".ogg", ".webm", ".flac"}
+ALLOWED_MIME_TYPES = {
+    "audio/mpeg", "audio/mp3",
+    "audio/wav", "audio/x-wav", "audio/wave",
+    "video/mp4", "audio/mp4",
+    "audio/m4a", "audio/x-m4a",
+    "audio/ogg", "audio/vorbis",
+    "video/webm", "audio/webm",
+    "audio/flac", "audio/x-flac",
+}
+MAX_UPLOAD_SIZE_BYTES = 500 * 1024 * 1024  # 500 MB
 
 # Router
 router = APIRouter()
@@ -52,25 +67,120 @@ async def create_transcription(
     service: TranscriptionService = Depends(get_transcription_service)
 ):
     """
-    Create a new transcription job
-    
-    The transcription will be processed in the background.
-    You can check the status using GET /api/transcription/{job_id}
-    
+    Create a new transcription job.
+
+    Accepts source_type: "youtube" (default) or "url" (non-YouTube sites
+    supported by yt-dlp).  The transcription will be processed in the
+    background.  Check status via GET /api/transcription/{job_id}.
+
     Rate limit: 10 requests/minute (API cost control)
     """
-    
+
     # Create job
     job = await service.create_job(
         video_url=data.video_url,
         user_id=current_user.id,
         language=data.language,
-        session=session
+        session=session,
+        source_type=data.source_type
     )
-    
+
     # Process in background (non-blocking)
     background_tasks.add_task(service.process_transcription, job.id)
-    
+
+    return job
+
+
+@router.post("/upload", response_model=TranscriptionRead, status_code=status.HTTP_201_CREATED)
+@limiter.limit("5/minute")
+async def upload_transcription(
+    request: Request,
+    background_tasks: BackgroundTasks,
+    file: UploadFile = File(..., description="Audio/video file to transcribe"),
+    language: Optional[str] = Form("auto", description="Language code (e.g., 'en', 'fr', 'auto')"),
+    current_user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+    service: TranscriptionService = Depends(get_transcription_service)
+):
+    """
+    Upload an audio/video file for transcription.
+
+    Supported formats: MP3, WAV, MP4, M4A, OGG, WEBM, FLAC.
+    Maximum file size: 500 MB.
+
+    The transcription is processed in the background.
+    Check status via GET /api/transcription/{job_id}.
+
+    Rate limit: 5 requests/minute
+    """
+
+    # Validate filename and extension
+    if not file.filename:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Uploaded file must have a filename."
+        )
+
+    _, ext = os.path.splitext(file.filename)
+    ext = ext.lower()
+    if ext not in ALLOWED_EXTENSIONS:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Unsupported file extension '{ext}'. Allowed: {', '.join(sorted(ALLOWED_EXTENSIONS))}"
+        )
+
+    # Validate MIME type
+    content_type = (file.content_type or "").lower()
+    if content_type and content_type not in ALLOWED_MIME_TYPES:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Unsupported MIME type '{content_type}'. Allowed types: audio/mpeg, audio/wav, video/mp4, audio/m4a, audio/ogg, video/webm, audio/flac"
+        )
+
+    # Read file and validate size
+    file_content = await file.read()
+    if len(file_content) > MAX_UPLOAD_SIZE_BYTES:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail=f"File too large. Maximum size is {MAX_UPLOAD_SIZE_BYTES // (1024 * 1024)} MB."
+        )
+
+    if len(file_content) == 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Uploaded file is empty."
+        )
+
+    # Save to temporary location in the audio cache directory
+    audio_cache = get_audio_cache()
+    upload_dir = os.path.join(audio_cache._cache_dir, "uploads")
+    os.makedirs(upload_dir, exist_ok=True)
+
+    safe_filename = f"{uuid4()}{ext}"
+    temp_path = os.path.join(upload_dir, safe_filename)
+
+    try:
+        with open(temp_path, "wb") as f:
+            f.write(file_content)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to save uploaded file: {str(e)}"
+        )
+
+    # Create transcription job
+    job = await service.create_job(
+        video_url=f"upload://{file.filename}",
+        user_id=current_user.id,
+        language=language,
+        session=session,
+        source_type="upload",
+        original_filename=file.filename
+    )
+
+    # Process in background
+    background_tasks.add_task(service.process_upload_transcription, job.id, temp_path, language)
+
     return job
 
 

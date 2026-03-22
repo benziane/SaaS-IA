@@ -32,6 +32,7 @@ RATE_LIMITS = {
 
     # Transcription endpoints (moderate - API cost control)
     "transcription_create": "10/minute",
+    "transcription_upload": "5/minute",
     "transcription_get": "30/minute",
     "transcription_list": "20/minute",
     "transcription_delete": "10/minute",

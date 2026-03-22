@@ -13,6 +13,7 @@ import type {
   TranscriptionFilters,
   TranscriptionListResponse,
   TranscriptionStats,
+  TranscriptionUploadRequest,
 } from './types';
 
 /* ========================================================================
@@ -22,6 +23,7 @@ import type {
 const TRANSCRIPTION_ENDPOINTS = {
   LIST: '/api/transcription',
   CREATE: '/api/transcription',
+  UPLOAD: '/api/transcription/upload',
   STATS: '/api/transcription/stats',
   GET: (id: string) => `/api/transcription/${id}`,
   DELETE: (id: string) => `/api/transcription/${id}`,
@@ -99,6 +101,35 @@ export async function getStats(): Promise<TranscriptionStats> {
 }
 
 /**
+ * Upload a file for transcription
+ */
+export async function uploadTranscription(
+  data: TranscriptionUploadRequest,
+  onUploadProgress?: (progress: number) => void
+): Promise<Transcription> {
+  const formData = new FormData();
+  formData.append('file', data.file);
+  if (data.language) {
+    formData.append('language', data.language);
+  }
+
+  const response: AxiosResponse<Transcription> = await apiClient.post(
+    TRANSCRIPTION_ENDPOINTS.UPLOAD,
+    formData,
+    {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      onUploadProgress: (progressEvent) => {
+        if (onUploadProgress && progressEvent.total) {
+          const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          onUploadProgress(percent);
+        }
+      },
+    }
+  );
+  return response.data;
+}
+
+/**
  * Delete a transcription
  */
 export async function deleteTranscription(id: string): Promise<void> {
@@ -112,6 +143,7 @@ export async function deleteTranscription(id: string): Promise<void> {
 export const transcriptionApi = {
   listTranscriptions,
   createTranscription,
+  uploadTranscription,
   getTranscription,
   getStats,
   deleteTranscription,

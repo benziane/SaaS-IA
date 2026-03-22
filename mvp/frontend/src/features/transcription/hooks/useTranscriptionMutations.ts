@@ -10,7 +10,7 @@ import { extractErrorMessage } from '@/lib/apiClient';
 import { queryKeys } from '@/lib/queryClient';
 
 import { transcriptionApi } from '../api';
-import type { Transcription, TranscriptionCreateRequest } from '../types';
+import type { Transcription, TranscriptionCreateRequest, TranscriptionUploadRequest } from '../types';
 
 /* ========================================================================
    USE CREATE TRANSCRIPTION
@@ -38,6 +38,40 @@ export function useCreateTranscription(): UseMutationResult<
     },
     onError: (error: Error) => {
       toast.error('Failed to start transcription', {
+        description: extractErrorMessage(error),
+      });
+    },
+  });
+}
+
+/* ========================================================================
+   USE UPLOAD TRANSCRIPTION
+   ======================================================================== */
+
+/**
+ * Upload file transcription mutation
+ */
+export function useUploadTranscription(
+  onUploadProgress?: (progress: number) => void
+): UseMutationResult<
+  Transcription,
+  Error,
+  TranscriptionUploadRequest
+> {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: TranscriptionUploadRequest) =>
+      transcriptionApi.uploadTranscription(data, onUploadProgress),
+    onSuccess: (created) => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.transcriptions.lists() });
+
+      toast.success('File upload started', {
+        description: `Processing: ${created.original_filename ?? 'uploaded file'}`,
+      });
+    },
+    onError: (error: Error) => {
+      toast.error('Failed to upload file', {
         description: extractErrorMessage(error),
       });
     },
@@ -81,6 +115,7 @@ export function useDeleteTranscription(): UseMutationResult<void, Error, string>
 
 export default {
   useCreateTranscription,
+  useUploadTranscription,
   useDeleteTranscription,
 };
 

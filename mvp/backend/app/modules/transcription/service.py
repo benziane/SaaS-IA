@@ -48,15 +48,19 @@ class TranscriptionService:
         video_url: str,
         user_id: UUID,
         language: Optional[str],
-        session: AsyncSession
+        session: AsyncSession,
+        source_type: str = "youtube",
+        original_filename: Optional[str] = None
     ) -> Transcription:
         """Create a new transcription job"""
-        
+
         job = Transcription(
             video_url=video_url,
             user_id=user_id,
             language=language or "auto",
-            status=TranscriptionStatus.PENDING
+            status=TranscriptionStatus.PENDING,
+            source_type=source_type,
+            original_filename=original_filename
         )
         
         session.add(job)
@@ -148,6 +152,107 @@ class TranscriptionService:
                     retry_count=job.retry_count
                 )
     
+    async def process_upload_transcription(self, job_id: UUID, file_path: str, language: Optional[str] = None):
+        """
+        Process a file upload transcription job (runs in background).
+
+        Sends a local audio file to AssemblyAI (or mock), updates
+        the job record, and cleans up the temporary file afterwards.
+        """
+        import os
+
+        async with get_session_context() as session:
+            job = await session.get(Transcription, job_id)
+
+            if not job:
+                logger.error("upload_transcription_job_not_found", job_id=str(job_id))
+                return
+
+            try:
+                job.status = TranscriptionStatus.PROCESSING
+                job.updated_at = datetime.utcnow()
+                await session.commit()
+
+                logger.info(
+                    "upload_transcription_processing_started",
+                    job_id=str(job.id),
+                    file_path=file_path,
+                    mock_mode=self.mock_mode
+                )
+
+                if self.mock_mode:
+                    result = await self._mock_transcribe(file_path)
+                else:
+                    result = await self._real_transcribe_file(file_path, language)
+
+                job.status = TranscriptionStatus.COMPLETED
+                job.text = result["text"]
+                job.confidence = result.get("confidence", 0.95)
+                job.duration_seconds = result.get("duration_seconds", 0)
+                job.completed_at = datetime.utcnow()
+                job.updated_at = datetime.utcnow()
+
+                await session.commit()
+
+                transcription_jobs_total.labels(status="completed").inc()
+
+                logger.info(
+                    "upload_transcription_completed",
+                    job_id=str(job.id),
+                    text_length=len(result["text"]),
+                    confidence=result.get("confidence"),
+                    mock_mode=self.mock_mode
+                )
+
+            except Exception as e:
+                job.status = TranscriptionStatus.FAILED
+                job.error = str(e)[:1000]
+                job.retry_count += 1
+                job.updated_at = datetime.utcnow()
+
+                await session.commit()
+
+                transcription_jobs_total.labels(status="failed").inc()
+
+                logger.error(
+                    "upload_transcription_failed",
+                    job_id=str(job.id),
+                    error=str(e),
+                    retry_count=job.retry_count
+                )
+            finally:
+                # Clean up the temporary uploaded file
+                try:
+                    if os.path.exists(file_path):
+                        os.remove(file_path)
+                        logger.info("upload_temp_file_cleaned", file_path=file_path)
+                except Exception as e:
+                    logger.warning("upload_temp_file_cleanup_failed", file_path=file_path, error=str(e))
+
+    async def _real_transcribe_file(self, file_path: str, language: Optional[str] = None) -> dict:
+        """
+        Transcribe a local audio file using AssemblyAI.
+
+        Unlike _real_transcribe which downloads from YouTube first, this method
+        sends a local file directly to AssemblyAI for transcription.
+        """
+        from app.transcription import AssemblyAIService
+
+        logger.info("real_file_transcription_started", file_path=file_path, language=language)
+
+        # AssemblyAI accepts local file paths directly
+        result = await asyncio.to_thread(
+            AssemblyAIService.transcribe_audio,
+            file_path,
+            language if language and language != "auto" else None
+        )
+
+        return {
+            "text": result["text"],
+            "confidence": result.get("confidence"),
+            "duration_seconds": result.get("audio_duration"),
+        }
+
     async def _mock_transcribe(self, video_url: str) -> dict:
         """
         MOCK transcription for testing without API key

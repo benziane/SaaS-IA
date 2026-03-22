@@ -32,18 +32,42 @@ class PaginatedResponse(BaseModel, Generic[T]):
 
 class TranscriptionCreate(BaseModel):
     """Schema for creating a transcription job"""
-    video_url: str = Field(..., max_length=2048, description="YouTube video URL")
+    source_type: str = Field("youtube", description="Source type: 'youtube', 'upload', or 'url'")
+    video_url: str = Field(..., max_length=2048, description="YouTube or media URL")
     language: Optional[str] = Field("auto", max_length=10, description="Language code (e.g., 'en', 'fr', 'auto')")
+
+    @field_validator("source_type")
+    @classmethod
+    def validate_source_type(cls, v: str) -> str:
+        """Validate that source_type is one of the allowed values."""
+        allowed = {"youtube", "upload", "url"}
+        v = v.strip().lower()
+        if v not in allowed:
+            raise ValueError(f"source_type must be one of: {', '.join(sorted(allowed))}")
+        return v
 
     @field_validator("video_url")
     @classmethod
-    def validate_youtube_url(cls, v: str) -> str:
-        """Validate that the URL is a legitimate YouTube video URL."""
+    def validate_video_url(cls, v: str, info) -> str:
+        """Validate the URL based on source_type."""
         v = v.strip()
         if not v:
             raise ValueError("video_url must not be empty")
         if len(v) > 2048:
             raise ValueError("video_url must not exceed 2048 characters")
+
+        # For upload source_type, video_url is set internally; skip URL validation
+        source_type = info.data.get("source_type", "youtube")
+        if source_type == "upload":
+            return v
+
+        # For "url" source_type, accept any http/https URL
+        if source_type == "url":
+            if not v.startswith(("http://", "https://")):
+                raise ValueError("video_url must be a valid HTTP or HTTPS URL")
+            return v
+
+        # Default: youtube validation
         if not any(pattern.match(v) for pattern in _YOUTUBE_URL_PATTERNS):
             raise ValueError(
                 "video_url must be a valid YouTube URL "
@@ -55,7 +79,8 @@ class TranscriptionCreate(BaseModel):
         json_schema_extra = {
             "example": {
                 "video_url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-                "language": "auto"
+                "language": "auto",
+                "source_type": "youtube"
             }
         }
 
@@ -75,6 +100,8 @@ class TranscriptionRead(BaseModel):
     user_id: UUID
     video_url: str
     language: Optional[str]
+    source_type: Optional[str] = "youtube"
+    original_filename: Optional[str] = None
     status: TranscriptionStatus
     text: Optional[str]
     confidence: Optional[float]

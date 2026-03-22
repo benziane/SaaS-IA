@@ -18,9 +18,13 @@ export enum TranscriptionStatus {
    TRANSCRIPTION
    ======================================================================== */
 
+export type TranscriptionSourceType = 'youtube' | 'upload' | 'url';
+
 export interface Transcription {
   id: string;
   video_url: string;
+  source_type: TranscriptionSourceType;
+  original_filename: string | null;
   language: string | null;
   status: TranscriptionStatus;
   text: string | null;
@@ -40,6 +44,11 @@ export interface Transcription {
 
 export interface TranscriptionCreateRequest {
   video_url: string;
+  language?: string;
+}
+
+export interface TranscriptionUploadRequest {
+  file: File;
   language?: string;
 }
 
