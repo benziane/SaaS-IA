@@ -53,6 +53,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   
   // Initialisation côté client uniquement (après hydration)
   useEffect(() => {
+    console.log('[AuthContext] Initializing...');
     setMounted(true);
     
     try {
@@ -60,7 +61,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const storedToken = localStorage.getItem('auth_token');
       const storedUser = localStorage.getItem('auth_user');
       
+      console.log('[AuthContext] localStorage:', { 
+        hasToken: !!storedToken, 
+        hasUser: !!storedUser 
+      });
+      
       if (storedToken && storedUser) {
+        console.log('[AuthContext] Found token + user in localStorage');
         setToken(storedToken);
         setUser(JSON.parse(storedUser));
         setIsLoading(false);
@@ -72,6 +79,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       for (const cookie of cookies) {
         const [name, value] = cookie.trim().split('=');
         if (name === 'auth_token') {
+          console.log('[AuthContext] Found token in cookie, fetching user...');
           setToken(value);
           // Fetch user avec ce token
           fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8004'}/api/auth/me`, {
@@ -80,17 +88,24 @@ export function AuthProvider({ children }: AuthProviderProps) {
             .then(res => res.ok ? res.json() : null)
             .then(userData => {
               if (userData) {
+                console.log('[AuthContext] User fetched:', userData.email);
                 setUser(userData);
                 localStorage.setItem('auth_user', JSON.stringify(userData));
               }
             })
-            .catch(() => {})
-            .finally(() => setIsLoading(false));
+            .catch((err) => {
+              console.error('[AuthContext] Fetch user error:', err);
+            })
+            .finally(() => {
+              console.log('[AuthContext] Init complete (from cookie)');
+              setIsLoading(false);
+            });
           return;
         }
       }
       
       // Pas de token trouvé
+      console.log('[AuthContext] No token found, user not authenticated');
       setIsLoading(false);
     } catch (error) {
       console.error('[AuthContext] Init error:', error);

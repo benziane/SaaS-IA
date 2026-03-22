@@ -14,6 +14,7 @@ from app.config import settings
 from app.database import init_db
 from app.auth import router as auth_router
 from app.modules.transcription.routes import router as transcription_router
+from app.ai_assistant.routes import router as ai_assistant_router
 from app.rate_limit import limiter, rate_limit_exceeded_handler
 
 # Initialize structured logger
@@ -25,7 +26,23 @@ async def lifespan(app: FastAPI):
     """Application lifespan events"""
     # Startup
     logger.info("application_startup", app_name=settings.APP_NAME, environment=settings.ENVIRONMENT)
-    
+
+    # Security checks for critical configuration
+    _weak_default = "change-me-in-production-use-strong-random-key"
+    if not settings.SECRET_KEY or settings.SECRET_KEY == _weak_default:
+        logger.critical(
+            "insecure_secret_key",
+            msg="SECRET_KEY is missing or still set to the weak default. "
+                "Set a strong random SECRET_KEY in your .env file before running in production.",
+        )
+
+    if not settings.DATABASE_URL:
+        logger.critical(
+            "missing_database_url",
+            msg="DATABASE_URL is not configured. "
+                "Set DATABASE_URL in your .env file.",
+        )
+
     # Initialize database
     await init_db()
     logger.info("database_initialized")
@@ -70,6 +87,12 @@ app.include_router(
     transcription_router,
     prefix="/api/transcription",
     tags=["Transcription"]
+)
+
+app.include_router(
+    ai_assistant_router,
+    prefix="/api/ai-assistant",
+    tags=["AI Assistant"]
 )
 
 

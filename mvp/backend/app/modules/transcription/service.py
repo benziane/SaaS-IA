@@ -178,25 +178,169 @@ class TranscriptionService:
     
     async def _real_transcribe(self, video_url: str) -> dict:
         """
-        Real transcription using Assembly AI
+        Real transcription using Assembly AI + AI Router
         
-        This method is called when a real API key is configured
+        This method is called when a real API key is configured.
+        Uses AI Router for intelligent model selection and content restructuring.
         """
+        from app.transcription import YouTubeService, AssemblyAIService
+        from app.transcription.debug_logger import start_debug_session, end_debug_session
+        from app.transcription.audio_cache import get_audio_cache
+        from app.transcription.language_detector import LanguageDetector
+        from app.ai_assistant.service import AIAssistantService
+        from app.ai_assistant.classification.model_selector import SelectionStrategy
+        from app.database import get_session_context
+        import shutil
+        import uuid
         
-        logger.info("real_transcription_started", video_url=video_url)
+        # Start debug session (with WebSocket enabled)
+        job_id = str(uuid.uuid4())
+        debug = start_debug_session(job_id, video_url, websocket_enabled=True)
+        audio_cache = get_audio_cache()
         
-        # Use Assembly AI transcriber
-        transcriber = self.aai.Transcriber()
+        logger.info("real_transcription_started", video_url=video_url, job_id=job_id)
         
-        # Transcribe (this is blocking, but we're in a background task)
-        transcript = await asyncio.to_thread(transcriber.transcribe, video_url)
-        
-        # Extract results
-        return {
-            "text": transcript.text,
-            "confidence": transcript.confidence if hasattr(transcript, 'confidence') else None,
-            "duration_seconds": transcript.audio_duration if hasattr(transcript, 'audio_duration') else None
-        }
+        try:
+            # Validate YouTube URL
+            video_id = YouTubeService.extract_video_id(video_url)
+            is_valid = video_id is not None
+            debug.log_youtube_validation(is_valid, video_id)
+            
+            if not is_valid:
+                raise ValueError(f"Invalid YouTube URL: {video_url}")
+            
+            # Download audio from YouTube
+            audio_file, metadata = await asyncio.to_thread(
+                YouTubeService.download_audio,
+                video_url
+            )
+            
+            # Log download complete with job_id for audio download link
+            import os
+            file_size = os.path.getsize(audio_file)
+            debug.log_youtube_download_complete(audio_file, file_size, metadata, job_id)
+            
+            try:
+                # Cache audio file for debug (30 minutes TTL)
+                cached_audio_path = audio_cache.store_audio(
+                    job_id,
+                    audio_file,
+                    metadata,
+                    ttl_minutes=30
+                )
+                logger.info("audio_cached_for_debug", job_id=job_id, cached_path=cached_audio_path)
+                
+                # Detect language from metadata
+                detected_language = LanguageDetector.detect_language_from_metadata(metadata)
+                
+                # Transcribe using AssemblyAI (blocking call in thread)
+                result = await asyncio.to_thread(
+                    AssemblyAIService.transcribe_audio,
+                    audio_file,
+                    detected_language
+                )
+                
+                # Extract raw transcription
+                raw_text = result["text"]
+                confidence = result.get("confidence")
+                
+                # 🆕 USE AI ROUTER for intelligent content improvement
+                try:
+                    # Log AI Router start
+                    debug.log_ai_router_start(len(raw_text), detected_language)
+                    
+                    async with get_session_context() as db_session:
+                        logger.info(
+                            "ai_router_start",
+                            job_id=job_id,
+                            text_length=len(raw_text),
+                            language=detected_language
+                        )
+                        
+                        # Use AI Router with COST_OPTIMIZED strategy
+                        improved_result = await AIAssistantService.process_text_smart(
+                            db=db_session,
+                            text=raw_text,
+                            task="improve_quality",
+                            language=detected_language,
+                            metadata={
+                                "source": "youtube_transcription",
+                                "job_id": job_id,
+                                "confidence": confidence,
+                                "video_title": metadata.get("title")
+                            },
+                            strategy=SelectionStrategy.COST_OPTIMIZED
+                        )
+                        
+                        improved_text = improved_result["processed_text"]
+                        classification = improved_result.get("classification", {})
+                        model_selection = improved_result.get("model_selection", {})
+                        
+                        # Log AI Router success
+                        debug.log_ai_router_complete(
+                            raw_length=len(raw_text),
+                            improved_length=len(improved_text),
+                            domain=classification.get("primary_domain", "unknown"),
+                            sensitivity=classification.get("sensitivity", {}).get("level", "low"),
+                            model_used=model_selection.get("model", "unknown"),
+                            strategy=model_selection.get("strategy_used", "unknown"),
+                            confidence=classification.get("confidence", 0.0)
+                        )
+                        
+                        logger.info(
+                            "ai_router_success",
+                            job_id=job_id,
+                            raw_length=len(raw_text),
+                            improved_length=len(improved_text),
+                            domain=classification.get("primary_domain"),
+                            sensitivity=classification.get("sensitivity", {}).get("level"),
+                            model_used=model_selection.get("model"),
+                            strategy=model_selection.get("strategy_used")
+                        )
+                except Exception as e:
+                    # Log AI Router failure
+                    debug.log_ai_router_failed(str(e))
+                    
+                    logger.warning(
+                        "ai_router_failed",
+                        job_id=job_id,
+                        error=str(e),
+                        fallback="using_raw_text"
+                    )
+                    improved_text = raw_text  # Fallback
+                
+                # Extract results
+                final_result = {
+                    "text": improved_text,  # Use AI-improved text
+                    "raw_text": raw_text,  # Keep original for comparison
+                    "confidence": confidence,
+                    "duration_seconds": result.get("audio_duration"),
+                    "job_id": job_id,
+                    "audio_available": True,
+                    "ai_improved": improved_text != raw_text
+                }
+                
+                # End debug session
+                end_debug_session()
+                
+                return final_result
+                
+            finally:
+                # Cleanup: Delete temporary audio file (original download, not cache)
+                try:
+                    import os
+                    temp_dir = os.path.dirname(audio_file)
+                    shutil.rmtree(temp_dir)
+                    logger.info("temp_audio_cleanup", temp_dir=temp_dir)
+                    debug.log_cleanup(temp_dir, True)
+                except Exception as e:
+                    logger.warning("temp_audio_cleanup_failed", error=str(e))
+                    debug.log_cleanup(temp_dir, False)
+                    
+        except Exception as e:
+            debug.log_error("TRANSCRIPTION_ERROR", e)
+            end_debug_session()
+            raise
     
     async def get_job(self, job_id: UUID, session: AsyncSession) -> Optional[Transcription]:
         """Get a transcription job by ID"""

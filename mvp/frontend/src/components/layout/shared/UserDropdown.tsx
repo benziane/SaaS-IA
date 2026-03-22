@@ -24,6 +24,7 @@ import CustomAvatar from '@core/components/mui/Avatar'
 
 // Hook Imports
 import { useSettings } from '@core/hooks/useSettings'
+import { useAuth } from '@/contexts/AuthContext'
 
 // Styled component for badge content
 const BadgeContentSpan = styled('span')({
@@ -44,8 +45,13 @@ const UserDropdown = () => {
 
   // Hooks
   const router = useRouter()
+  const { user, logout } = useAuth()
 
   const { settings } = useSettings()
+
+  // Derive display values from auth context with fallbacks
+  const displayName = user?.email?.split('@')[0] || 'User'
+  const displayEmail = user?.email || 'Not signed in'
 
   const handleDropdownOpen = () => {
     !open ? setOpen(true) : setOpen(false)
@@ -64,8 +70,7 @@ const UserDropdown = () => {
   }
 
   const handleUserLogout = async () => {
-    // Redirect to login page
-    router.push('/login')
+    logout()
   }
 
   return (
@@ -79,7 +84,7 @@ const UserDropdown = () => {
       >
         <CustomAvatar
           ref={anchorRef}
-          alt='John Doe'
+          alt={displayName}
           src='/images/avatars/1.png'
           onClick={handleDropdownOpen}
           className='cursor-pointer'
@@ -104,11 +109,11 @@ const UserDropdown = () => {
               <ClickAwayListener onClickAway={e => handleDropdownClose(e as MouseEvent | TouchEvent)}>
                 <MenuList>
                   <div className='flex items-center plb-2 pli-5 gap-2' tabIndex={-1}>
-                    <CustomAvatar size={40} alt='John Doe' src='/images/avatars/1.png' />
+                    <CustomAvatar size={40} alt={displayName} src='/images/avatars/1.png' />
                     <div className='flex items-start flex-col'>
-                      <Typography variant='h6'>John Doe</Typography>
+                      <Typography variant='h6'>{displayName}</Typography>
                       <Typography variant='body2' color='text.disabled'>
-                        admin@sneat.com
+                        {displayEmail}
                       </Typography>
                     </div>
                   </div>

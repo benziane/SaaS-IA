@@ -15,18 +15,23 @@ class Settings(BaseSettings):
     DEBUG: bool = True
     
     # Database
-    DATABASE_URL: str = "postgresql://aiuser:aipassword@db:5432/ai_saas"
-    
+    DATABASE_URL: str = ""
+
     # Redis
-    REDIS_URL: str = "redis://redis:6379"
-    
+    REDIS_URL: str = ""
+
     # JWT Authentication
-    SECRET_KEY: str = "change-me-in-production-use-strong-random-key"
+    SECRET_KEY: str
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     
     # AI APIs
     ASSEMBLYAI_API_KEY: str = "MOCK"
+    
+    # AI Providers (inspired by WeLAB)
+    GEMINI_API_KEY: str = ""
+    CLAUDE_API_KEY: str = ""
+    GROQ_API_KEY: str = ""
     
     # CORS
     CORS_ORIGINS: str = "http://localhost:3002,http://localhost:8004"

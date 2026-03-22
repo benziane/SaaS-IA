@@ -10,7 +10,7 @@ import { z } from 'zod';
    ======================================================================== */
 
 const YOUTUBE_URL_REGEX =
-  /^(https?:\/\/)?(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)[\w-]{11}(&.*)?$/;
+  /^(https?:\/\/)?(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)[\w-]{11}([?&].*)?$/;
 
 /* ========================================================================
    TRANSCRIPTION CREATE SCHEMA

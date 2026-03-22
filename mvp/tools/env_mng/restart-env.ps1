@@ -1,14 +1,13 @@
 #Requires -Version 5.1
 # ============================================
-# SaaS-IA Environment Restart Script
+# SaaS-IA Environment Start Script
 # Version: 1.0.0
 # ============================================
 
 param(
-    [switch]$KeepDB = $false,
     [switch]$SkipBrowser = $false,
-    [ValidateSet("full", "quick", "clean")]
-    [string]$Mode = "full"
+    [switch]$BackendOnly = $false,
+    [switch]$FrontendOnly = $false
 )
 
 $ErrorActionPreference = "Continue"
@@ -62,6 +61,17 @@ function Start-Docker {
     return $false
 }
 
+function Test-Port {
+    param([int]$Port)
+    
+    try {
+        $connection = Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction SilentlyContinue
+        return $connection -ne $null
+    } catch {
+        return $false
+    }
+}
+
 function Stop-ProcessOnPort {
     param([int]$Port, [string]$ServiceName = "Service")
     
@@ -87,6 +97,9 @@ function Stop-ProcessOnPort {
             
             # Vérifier que le port est bien libéré
             Start-Sleep -Milliseconds 500
+            if (-not (Test-Port -Port $Port)) {
+                return $true
+            }
         }
         
         return $true
@@ -106,215 +119,120 @@ $startTime = Get-Date
 
 Log ""
 Log "===========================================================" "Cyan"
-Log "         SAAS-IA COMPLETE RESTART                         " "Cyan"
+Log "         SAAS-IA ENVIRONMENT - START                      " "Cyan"
 Log "===========================================================" "Cyan"
 Log ""
-Log "Mode: $Mode | KeepDB: $KeepDB" "Cyan"
-Log ""
+
+# Cleanup ports before starting
+Step "CLEANUP PORTS              "
+Stop-ProcessOnPort -Port 3002 -ServiceName "Frontend"
+Stop-ProcessOnPort -Port 8004 -ServiceName "Backend"
+Log "[OK] Ports cleaned" "Green"
 
 # Check Docker
 if (-not (Test-Docker)) {
     if (-not (Start-Docker)) {
         Log ""
         Log "ERROR: Docker is required but not available." "Red"
+        Log "Please start Docker Desktop manually and try again." "Yellow"
+        Log ""
+        pause
         exit 1
     }
 } else {
     Log "[OK] Docker is running" "Green"
 }
 
-# ============================================
-# STOP ALL SERVICES
-# ============================================
-
-Step "STOPPING PROCESSES        "
-
-# Force cleanup ports first
-Stop-ProcessOnPort -Port 3002 -ServiceName "Frontend"
-Stop-ProcessOnPort -Port 8004 -ServiceName "Backend"
-
-# Stop Frontend (Node.js on port 3002)
-Get-Process node -ErrorAction SilentlyContinue | Where-Object {
-    $_.Path -like "*SaaS-IA*"
-} | Stop-Process -Force -ErrorAction SilentlyContinue
-
-Log "  [OK] Stopped Node.js processes (Frontend)" "Cyan"
-
-# Stop Backend (Python)
-Get-Process python,uvicorn -ErrorAction SilentlyContinue | Where-Object {
-    $_.Path -like "*SaaS-IA*"
-} | Stop-Process -Force -ErrorAction SilentlyContinue
-
-Log "  [OK] Stopped Python processes (Backend)" "Cyan"
-
-# Stop Docker containers
-Push-Location $BACKEND
-docker-compose down --remove-orphans 2>&1 | Out-Null
-Pop-Location
-
-Log "  [OK] Stopped Docker containers" "Cyan"
-Log "[OK] All processes stopped" "Green"
-
-# ============================================
-# CLEAN (if not quick mode)
-# ============================================
-
-if ($Mode -ne "quick") {
+# Start Backend (Docker Compose)
+if (-not $FrontendOnly) {
+    Step "STARTING BACKEND (DOCKER)  "
     
-    # Clean Backend
-    Step "CLEANING BACKEND          "
+    Push-Location $BACKEND
     
-    if (Test-Path $BACKEND) {
-        Push-Location $BACKEND
+    # Check if already running
+    if (Test-Port 8004) {
+        Log "[WARN] Backend already running on port 8004" "Yellow"
+        Log "Run stop-env.bat first to restart" "Cyan"
+    } else {
+        Log "Starting Docker Compose services..." "Cyan"
+        docker-compose up -d 2>&1 | Out-Null
         
-        # Clean Python cache
-        Get-ChildItem -Recurse -Directory -Filter "__pycache__" -ErrorAction SilentlyContinue | 
-            Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
-        
-        Get-ChildItem -Recurse -Filter "*.pyc" -ErrorAction SilentlyContinue | 
-            Remove-Item -Force -ErrorAction SilentlyContinue
-        
-        Get-ChildItem -Recurse -Directory -Filter ".pytest_cache" -ErrorAction SilentlyContinue | 
-            Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
-        
-        Get-ChildItem -Recurse -Directory -Filter ".mypy_cache" -ErrorAction SilentlyContinue | 
-            Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
-        
-        Get-ChildItem -Recurse -Filter ".coverage*" -ErrorAction SilentlyContinue | 
-            Remove-Item -Force -ErrorAction SilentlyContinue
-        
-        # Clean Alembic cache
-        if (Test-Path "alembic\__pycache__") {
-            Remove-Item "alembic\__pycache__" -Recurse -Force -ErrorAction SilentlyContinue
-        }
-        
-        Pop-Location
-        Log "[OK] Backend cleaned" "Green"
-    }
-    
-    # Clean Frontend
-    Step "CLEANING FRONTEND         "
-    
-    if (Test-Path $FRONTEND) {
-        Push-Location $FRONTEND
-        
-        ".next",".vite","node_modules\.cache","dist","build","coverage",".eslintcache" | ForEach-Object {
-            if (Test-Path $_) {
-                Remove-Item $_ -Recurse -Force -ErrorAction SilentlyContinue
+        if ($LASTEXITCODE -eq 0) {
+            Log "Waiting for services to be ready..." "Cyan"
+            Start-Sleep 8
+            
+            # Verify containers (simple check)
+            try {
+                $psOutput = docker-compose ps 2>&1 | Out-String
+                if ($psOutput -match "Up" -or $psOutput -match "running") {
+                    Log "[OK] Backend:    http://localhost:8004" "Green"
+                    Log "[OK] API Docs:   http://localhost:8004/docs" "Green"
+                    Log "[OK] PostgreSQL: localhost:5435" "Green"
+                    Log "[OK] Redis:      localhost:6382" "Green"
+                } else {
+                    Log "[WARN] Docker containers started but verification unclear" "Yellow"
+                    Log "[INFO] Check manually: docker-compose ps" "Cyan"
+                }
+            } catch {
+                Log "[WARN] Could not verify containers status" "Yellow"
             }
+        } else {
+            Log "[ERROR] Failed to start Docker Compose" "Red"
+            Pop-Location
+            pause
+            exit 1
         }
-        
-        Pop-Location
-        Log "[OK] Frontend cleaned" "Green"
     }
     
-    # Clean Docker
-    Step "CLEANING DOCKER           "
-    
-    docker container prune -f 2>&1 | Out-Null
-    docker network prune -f 2>&1 | Out-Null
-    
-    if (-not $KeepDB) {
-        docker volume prune -f 2>&1 | Out-Null
-        Log "[OK] Docker cleaned (including volumes)" "Green"
-    } else {
-        Log "[OK] Docker cleaned (volumes preserved)" "Green"
-    }
-    
-    docker builder prune -f 2>&1 | Out-Null
-}
-
-# ============================================
-# EXIT IF CLEAN MODE
-# ============================================
-
-if ($Mode -eq "clean") {
-    $elapsed = ((Get-Date) - $startTime).TotalSeconds
-    
-    Log ""
-    Log "===========================================================" "Green"
-    Log "         [OK] SAAS-IA ENVIRONMENT CLEANED                 " "Green"
-    Log "===========================================================" "Green"
-    Log ""
-    Log "[TIME] Completed in $([math]::Round($elapsed, 1))s" "Green"
-    Log ""
-    Log "To start services: run start-env.bat" "Cyan"
-    Log ""
-    exit 0
-}
-
-# ============================================
-# START SERVICES
-# ============================================
-
-# Start Docker services
-Step "STARTING DOCKER           "
-
-Push-Location $BACKEND
-
-Log "Starting Docker Compose services..." "Cyan"
-docker-compose up -d 2>&1 | Out-Null
-
-if ($LASTEXITCODE -eq 0) {
-    Start-Sleep 8
-    
-    # Check Docker services
-    $containers = docker ps --filter "name=saas-ia" --format "{{.Names}}: {{.Status}}"
-    
-    if ($containers) {
-        $containers | ForEach-Object { 
-            Log "  [OK] $_" "Green" 
-        }
-    } else {
-        Log "  [WARN] No containers found" "Yellow"
-    }
-    
-    Log "[OK] Docker services ready (PostgreSQL:5435, Redis:6382)" "Green"
-} else {
-    Log "[ERROR] Failed to start Docker Compose" "Red"
     Pop-Location
-    exit 1
 }
-
-Pop-Location
 
 # Start Frontend
-Step "STARTING FRONTEND         "
-
-Push-Location $FRONTEND
-
-# Check if node_modules exists
-if (-not (Test-Path "node_modules")) {
-    Log "Installing npm packages (first time only)..." "Yellow"
-    $installOutput = npm install 2>&1
+if (-not $BackendOnly) {
+    Step "STARTING FRONTEND         "
     
-    if ($LASTEXITCODE -ne 0) {
-        Log "[ERROR] npm install failed!" "Red"
-        Write-Host $installOutput -ForegroundColor Red
-        Pop-Location
-        exit 1
+    Push-Location $FRONTEND
+    
+    # Check if already running
+    if (Test-Port 3002) {
+        Log "[WARN] Frontend already running on port 3002" "Yellow"
+        Log "Run stop-env.bat first to restart" "Cyan"
+    } else {
+        # Check if node_modules exists (simple check like WeLAB)
+        if (-not (Test-Path "node_modules")) {
+            Log "Installing npm packages (first time only)..." "Yellow"
+            $result = npm install 2>&1
+            
+            if ($LASTEXITCODE -ne 0) {
+                Log "[ERROR] npm install failed!" "Red"
+                Write-Host $result -ForegroundColor Red
+                Pop-Location
+                pause
+                exit 1
+            }
+            
+            Log "[OK] npm packages installed" "Green"
+        } else {
+            Log "[OK] npm packages exist (skipped)" "Green"
+        }
+        
+        # Start Frontend on port 3002 (SaaS-IA dedicated port)
+        Log "Starting frontend on port 3002..." "Cyan"
+        Start-Process "pwsh.exe" -ArgumentList "-NoExit","-Command","cd '$FRONTEND'; npm run dev" -WorkingDirectory $FRONTEND
+        
+        Start-Sleep 3
+        Log "[OK] Frontend:   http://localhost:3002" "Green"
+        
+        # Open browser
+        if (-not $SkipBrowser) {
+            Log "Opening browser..." "Cyan"
+            Start-Sleep 2
+            Start-Process "http://localhost:3002"
+        }
     }
     
-    Log "[OK] npm packages installed" "Green"
-} else {
-    Log "[OK] npm packages exist (skipped)" "Green"
+    Pop-Location
 }
-
-# Start Frontend on port 3002 (Vite default)
-Log "Starting frontend on port 3002..." "Cyan"
-Start-Process "pwsh.exe" -ArgumentList "-NoExit","-Command","cd '$FRONTEND'; npm run dev" -WorkingDirectory $FRONTEND
-
-Pop-Location
-
-# Open browser
-if (-not $SkipBrowser) {
-    Log "[BROWSER] Opening browser..." "Cyan"
-    Start-Sleep 3
-    Start-Process "http://localhost:3002"
-}
-
-# Wait for services
-Start-Sleep 3
 
 # Summary
 $elapsed = ((Get-Date) - $startTime).TotalSeconds
@@ -324,30 +242,46 @@ Log "===========================================================" "Green"
 Log "         [SUCCESS] SAAS-IA ENVIRONMENT READY!             " "Green"
 Log "===========================================================" "Green"
 Log ""
-Log "Services:" "Cyan"
-Log "  Docker:     PostgreSQL:5435, Redis:6382" "White"
-Log "  Backend:    http://localhost:8004" "White"
-Log "  API Docs:   http://localhost:8004/docs" "White"
-Log "  Frontend:   http://localhost:3002" "White"
+
+if (-not $FrontendOnly) {
+    Log "Backend Services:" "Cyan"
+    Log "  PostgreSQL: localhost:5435" "White"
+    Log "  Redis:      localhost:6382" "White"
+    Log "  Backend:    http://localhost:8004" "White"
+    Log "  API Docs:   http://localhost:8004/docs" "White"
+}
+
+if (-not $BackendOnly) {
+    Log ""
+    Log "Frontend:" "Cyan"
+    Log "  App:        http://localhost:3002" "White"
+}
+
 Log ""
 Log "Logs:" "Cyan"
-Log "  Backend:   docker-compose logs -f saas-ia-backend" "White"
-Log "  Frontend:  Check PowerShell window with vite" "White"
+if (-not $FrontendOnly) {
+    Log "  Backend:   docker-compose logs -f saas-ia-backend" "White"
+}
+if (-not $BackendOnly) {
+    Log "  Frontend:  Check PowerShell window with vite" "White"
+}
+
 Log ""
-Log "[TIME] Restarted in $([math]::Round($elapsed, 1))s" "Green"
+Log "[TIME] Started in $([math]::Round($elapsed, 1))s" "Green"
 Log ""
 Log "[TIP] Use stop-env.bat to stop all services" "Yellow"
 Log ""
 
 # Attach to backend logs (like WeLAB)
-Log ""
-Log "===========================================================" "Cyan"
-Log "  BACKEND LOGS (Press Ctrl+C to exit, services continue)" "Cyan"
-Log "===========================================================" "Cyan"
-Log ""
-Start-Sleep 2
-
-Push-Location $BACKEND
-docker-compose logs -f saas-ia-backend
-Pop-Location
-
+if (-not $FrontendOnly -and -not $BackendOnly) {
+    Log ""
+    Log "===========================================================" "Cyan"
+    Log "  BACKEND LOGS (Press Ctrl+C to exit, services continue)" "Cyan"
+    Log "===========================================================" "Cyan"
+    Log ""
+    Start-Sleep 2
+    
+    Push-Location $BACKEND
+    docker-compose logs -f saas-ia-backend
+    Pop-Location
+}

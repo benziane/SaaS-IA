@@ -9,7 +9,10 @@
 import type { ChildrenType } from '@core/types';
 
 // Layout Imports
-import LayoutWrapper from '@layouts/LayoutWrapper';
+import VerticalLayout from '@layouts/VerticalLayout';
+import Navigation from '@components/layout/vertical/Navigation';
+import Navbar from '@components/layout/vertical/Navbar';
+import Footer from '@components/layout/vertical/Footer';
 
 // Guard Imports (REFONTE)
 import { AuthGuard } from '@/components/guards';
@@ -21,9 +24,13 @@ import { AuthGuard } from '@/components/guards';
 export default function DashboardLayout({ children }: ChildrenType) {
   return (
     <AuthGuard>
-      <LayoutWrapper verticalLayout={true}>
+      <VerticalLayout
+        navigation={<Navigation />}
+        navbar={<Navbar />}
+        footer={<Footer />}
+      >
         {children}
-      </LayoutWrapper>
+      </VerticalLayout>
     </AuthGuard>
   );
 }

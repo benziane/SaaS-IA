@@ -1599,6 +1599,7 @@ celery -A app.celery_app worker --loglevel=info
 
 # Frontend
 cd frontend
+
 npm run dev
 ```
 

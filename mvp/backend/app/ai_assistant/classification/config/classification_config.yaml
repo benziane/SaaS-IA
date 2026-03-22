@@ -1,0 +1,431 @@
+# AI Classification Configuration - Grade S++
+# Version: 2.0
+# Last updated: 2025-11-15
+
+version: "2.0"
+
+# ============================================================================
+# DOMAINS CONFIGURATION
+# ============================================================================
+# Each domain has:
+# - weight: Importance multiplier (higher = more sensitive to detection)
+# - keywords: Language-specific keyword lists
+
+domains:
+  religious:
+    weight: 1.5  # Higher weight for sensitive content
+    keywords:
+      french:
+        - allah
+        - prophète
+        - hadith
+        - coran
+        - islam
+        - musulman
+        - prière
+        - adoration
+        - paradis
+        - enfer
+        - dhikr
+        - astaghfirullah
+        - paix soit sur lui
+        - salla allahou alayhi wa sallam
+        - sourate
+        - verset
+        - révélation
+        - messager
+        - croyant
+        - foi
+        - ange
+        - jour dernier
+        - jugement
+      arabic:
+        - الله
+        - النبي
+        - الحديث
+        - القرآن
+        - الإسلام
+        - المسلم
+        - الصلاة
+        - العبادة
+        - الجنة
+        - النار
+      english:
+        - allah
+        - prophet
+        - hadith
+        - quran
+        - islam
+        - muslim
+        - prayer
+        - worship
+        - paradise
+        - hell
+        - faith
+        - believer
+  
+  scientific:
+    weight: 1.0
+    keywords:
+      french:
+        - équation
+        - modèle
+        - protocole
+        - expérience
+        - hypothèse
+        - théorie
+        - recherche
+        - analyse
+        - données
+        - résultat
+        - observation
+        - méthode scientifique
+        - étude
+        - variable
+        - corrélation
+        - statistique
+        - échantillon
+        - mesure
+      english:
+        - equation
+        - model
+        - protocol
+        - experiment
+        - hypothesis
+        - theory
+        - research
+        - analysis
+        - data
+        - result
+        - observation
+        - scientific method
+  
+  technical:
+    weight: 1.0
+    keywords:
+      french:
+        - serveur
+        - api
+        - framework
+        - docker
+        - kubernetes
+        - json
+        - xml
+        - base de données
+        - algorithme
+        - code
+        - fonction
+        - variable
+        - backend
+        - frontend
+        - microservice
+        - endpoint
+        - requête
+        - réponse
+        - cache
+        - redis
+        - postgresql
+        - mongodb
+        - sql
+        - nosql
+      english:
+        - server
+        - api
+        - framework
+        - docker
+        - kubernetes
+        - json
+        - xml
+        - database
+        - algorithm
+        - code
+        - function
+        - variable
+        - backend
+        - frontend
+        - microservice
+        - endpoint
+        - request
+        - response
+  
+  administrative:
+    weight: 1.0
+    keywords:
+      french:
+        - procédure
+        - formulaire
+        - dossier
+        - déclaration
+        - registre
+        - règlement
+        - administration
+        - service
+        - demande
+        - document officiel
+        - attestation
+        - certificat
+        - autorisation
+        - conformité
+      english:
+        - procedure
+        - form
+        - file
+        - declaration
+        - registry
+        - regulation
+        - administration
+        - service
+        - request
+        - official document
+  
+  narrative:
+    weight: 0.8
+    keywords:
+      french:
+        - histoire
+        - récit
+        - personnage
+        - chapitre
+        - scène
+        - dialogue
+        - narrateur
+        - intrigue
+        - dénouement
+        - témoignage
+      english:
+        - story
+        - narrative
+        - character
+        - chapter
+        - scene
+        - dialogue
+        - narrator
+        - plot
+  
+  medical:
+    weight: 1.3
+    keywords:
+      french:
+        - patient
+        - diagnostic
+        - traitement
+        - symptôme
+        - maladie
+        - médecin
+        - hôpital
+        - clinique
+        - ordonnance
+        - médicament
+        - thérapie
+        - chirurgie
+        - santé
+      english:
+        - patient
+        - diagnosis
+        - treatment
+        - symptom
+        - disease
+        - doctor
+        - hospital
+        - clinic
+        - prescription
+        - medication
+  
+  legal:
+    weight: 1.2
+    keywords:
+      french:
+        - loi
+        - article
+        - code
+        - tribunal
+        - juge
+        - avocat
+        - contrat
+        - clause
+        - jurisprudence
+        - décret
+        - arrêté
+        - ordonnance
+        - jugement
+      english:
+        - law
+        - article
+        - code
+        - court
+        - judge
+        - lawyer
+        - contract
+        - clause
+        - case law
+  
+  financial:
+    weight: 1.1
+    keywords:
+      french:
+        - investissement
+        - action
+        - obligation
+        - portefeuille
+        - rendement
+        - risque
+        - bourse
+        - marché
+        - dividende
+        - taux
+        - crédit
+        - dette
+      english:
+        - investment
+        - stock
+        - bond
+        - portfolio
+        - return
+        - risk
+        - market
+        - dividend
+        - rate
+        - credit
+        - debt
+
+# ============================================================================
+# TONE PATTERNS
+# ============================================================================
+# Regex patterns to detect text tone
+
+tone_patterns:
+  academic:
+    - '\b(selon|d''après|conformément à|en référence à)\b'
+    - '\b(étude|recherche|analyse|conclusion)\b'
+    - '\b(notamment|en effet|par conséquent|ainsi|donc)\b'
+    - '\b(hypothèse|théorie|modèle|résultat)\b'
+  
+  formal:
+    - '\b(veuillez|nous vous prions|conformément|en vertu de)\b'
+    - '\b(article|loi|règlement|décret)\b'
+    - '\b(monsieur|madame|cher|chère)\b'
+  
+  popular:
+    - '\b(tu|toi|ton|ta|tes)\b'
+    - '[!]{2,}'
+    - '\b(super|génial|cool|sympa|top)\b'
+    - '\b(salut|coucou|hey)\b'
+  
+  conversational:
+    - '\b(je pense|à mon avis|selon moi)\b'
+    - '\b(tu vois|tu sais|tu comprends)\b'
+    - '\?+'
+
+# ============================================================================
+# MODEL SELECTION STRATEGIES
+# ============================================================================
+# Define which models to use for each domain based on strategy
+
+model_selection:
+  strategies:
+    conservative:
+      religious: [groq, gpt-4, claude-3-opus]
+      scientific: [gpt-4, claude-3, gemini-pro]
+      technical: [gpt-4, claude-3, gemini-pro]
+      medical: [gpt-4, claude-3-opus]
+      legal: [gpt-4, claude-3]
+      financial: [gpt-4, claude-3]
+      administrative: [gemini-pro, gpt-4]
+      narrative: [gemini-pro, claude-3]
+      general: [gemini-pro, gemini-flash]
+    
+    balanced:
+      religious: [groq, gemini-pro]
+      scientific: [gemini-pro, gpt-4]
+      technical: [gemini-pro, gpt-4]
+      medical: [gemini-pro, gpt-4]
+      legal: [gemini-pro, gpt-4]
+      financial: [gemini-pro, gpt-4]
+      administrative: [gemini-pro, gemini-flash]
+      narrative: [gemini-flash, gemini-pro]
+      general: [gemini-flash, groq]
+    
+    cost_optimized:
+      religious: [groq, gemini-flash]
+      scientific: [gemini-flash, groq]
+      technical: [gemini-flash, groq]
+      medical: [gemini-flash, groq]
+      legal: [gemini-flash, groq]
+      financial: [gemini-flash, groq]
+      administrative: [gemini-flash, groq]
+      narrative: [gemini-flash, groq]
+      general: [gemini-flash, groq]
+
+# ============================================================================
+# CONFIDENCE THRESHOLDS
+# ============================================================================
+# Thresholds for classification confidence levels
+
+confidence_thresholds:
+  high: 0.7      # High confidence: use primary strategy
+  medium: 0.4    # Medium confidence: consider conservative
+  low: 0.2       # Low confidence: force conservative
+
+# ============================================================================
+# SENSITIVITY DETECTION
+# ============================================================================
+# Keywords that trigger sensitivity flags
+
+sensitivity_keywords:
+  high:
+    - mort
+    - décès
+    - deuil
+    - souffrance
+    - tragédie
+    - maladie grave
+    - cancer
+    - suicide
+    - violence
+    - guerre
+  
+  medium:
+    - santé
+    - famille
+    - émotion
+    - stress
+    - anxiété
+    - dépression
+    - conflit
+
+# ============================================================================
+# PROMPT PROFILE MAPPING
+# ============================================================================
+# Map domains to prompt profiles
+
+prompt_profiles:
+  domain_mapping:
+    religious: strict
+    scientific: strict
+    medical: strict
+    legal: strict
+    technical: technical
+    financial: standard
+    administrative: standard
+    narrative: creative
+    general: standard
+
+# ============================================================================
+# PERFORMANCE SETTINGS
+# ============================================================================
+
+performance:
+  max_text_length: 50000  # Maximum text length to analyze (chars)
+  cache_ttl: 3600         # Config cache TTL in seconds
+  min_keywords_match: 2   # Minimum keywords to consider a domain
+
+# ============================================================================
+# LOGGING SETTINGS
+# ============================================================================
+
+logging:
+  log_classifications: true
+  log_model_selections: true
+  log_performance_metrics: true
+  detailed_keywords: false  # Log all matched keywords (verbose)
+

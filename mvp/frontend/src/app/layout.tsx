@@ -84,9 +84,48 @@ export default async function RootLayout({ children }: RootLayoutProps): Promise
   return (
     <html lang="en" dir={direction} suppressHydrationWarning>
       <head>
+        {/* Boxicons for theme switcher and icons */}
+        <link rel="stylesheet" href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" />
+        
+        {/* Theme initialization script - prevents flash */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  var cookieName = 'saas-ia-mui-template-settings';
+                  var cookies = document.cookie.split(';');
+                  var settingsCookie = null;
+                  
+                  for (var i = 0; i < cookies.length; i++) {
+                    var cookie = cookies[i].trim();
+                    if (cookie.startsWith(cookieName + '=')) {
+                      settingsCookie = JSON.parse(decodeURIComponent(cookie.substring(cookieName.length + 1)));
+                      break;
+                    }
+                  }
+                  
+                  var mode = settingsCookie?.mode || '${mode}';
+                  var systemMode = '${systemMode}';
+                  
+                  if (mode === 'system') {
+                    var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    mode = prefersDark ? 'dark' : 'light';
+                  }
+                  
+                  document.documentElement.setAttribute('data-mui-color-scheme', mode);
+                  document.documentElement.style.colorScheme = mode;
+                } catch (e) {
+                  console.error('Theme init error:', e);
+                }
+              })();
+            `,
+          }}
+        />
+        
         {/* Security Headers are in next.config.ts */}
       </head>
-      <body>
+      <body suppressHydrationWarning>
         <Providers 
           direction={direction}
           mode={mode}

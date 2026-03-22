@@ -23,8 +23,19 @@ const verticalMenuData = (): VerticalMenuDataType[] => [
   },
   {
     label: 'Transcription',
-    href: '/transcription',
     icon: 'tabler:microphone',
+    children: [
+      {
+        label: 'Transcription',
+        href: '/transcription',
+        icon: 'tabler:player-record',
+      },
+      {
+        label: 'Debug & Test',
+        href: '/transcription/debug',
+        icon: 'tabler:bug',
+      },
+    ],
   },
   
   // Future Modules (commented for now)
