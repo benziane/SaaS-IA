@@ -120,16 +120,16 @@ SaaS-IA est une plateforme modulaire d'intelligence artificielle. La vision est 
 - **Record Audio** : composant `AudioRecorder.tsx` (MediaRecorder API, timer, preview audio, auto-upload)
 - Icones source dans la liste (YouTube, Upload, Link) avec tooltip
 
-### 4.3 Chat contextuel post-transcription
+### 4.3 Chat contextuel post-transcription [FAIT]
 
-**Effort** : 5-7 jours | **Impact** : Haut | **Priorite** : P1
+**Effort** : 5-7 jours | **Impact** : Haut
 
-`conversation_history` existe dans l'interface provider mais n'est pas exploite. Ajouter un chat interactif apres transcription :
-
-- Le texte transcrit devient le contexte systeme de la conversation
-- L'utilisateur peut poser des questions : "Resume en 3 points", "Traduis en anglais", "Quels sont les arguments ?"
-- Historique de conversation persiste en base (table `conversations`)
-- Interface chat dans un panneau lateral sur la page transcription
+- Models Conversation + Message (SQLModel, UUID, timestamps)
+- 5 endpoints API : CRUD conversations + POST messages avec SSE streaming
+- Page /chat : panneau conversations + zone de chat avec streaming
+- Composants ChatPanel, ChatInput, ConversationList
+- Auto-creation conversation avec contexte transcription via query param
+- Bouton "Chat about this" sur transcriptions completees
 
 ---
 
@@ -152,24 +152,17 @@ Les transcriptions tournent dans `BackgroundTasks` FastAPI (liees au processus w
 
 **Critere de migration** : >100 transcriptions/jour ou duree moyenne >10 minutes.
 
-### 5.2 Plugin Registry auto-discoverable
+### 5.2 Plugin Registry auto-discoverable [FAIT]
 
-**Effort** : 1-2 semaines | **Impact** : Moyen | **Priorite** : P1
+**Effort** : 1-2 semaines | **Impact** : Moyen
 
-Les modules sont codes en dur dans `main.py` (include_router). Creer un systeme de plugins :
-
-```
-mvp/backend/app/modules/
-  __registry__.py          # Auto-scan et register des modules
-  transcription/
-    manifest.json          # {name, version, routes, dependencies, enabled}
-  summarization/
-    manifest.json
-  translation/
-    manifest.json
-```
-
-Chaque module declare un `manifest.json`. Le registry scanne au demarrage et monte les routes automatiquement. Permet d'activer/desactiver des modules par configuration sans toucher au code.
+- ModuleRegistry : scan modules/, chargement manifest.json, import dynamique via importlib
+- Manifests pour transcription et conversation modules
+- Validation schema manifest, gestion erreurs gracieuse (module ignore si erreur)
+- Support DISABLED_MODULES env var pour desactiver des modules
+- GET /api/modules : liste des modules enregistres
+- Page /modules : cards modules (nom, version, status, deps)
+- Ajout d'un module = creer un dossier avec manifest.json + routes.py, zero config
 
 ### 5.3 Multi-tenancy et systeme de quotas
 
