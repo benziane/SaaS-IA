@@ -35,6 +35,11 @@ const verticalMenuData = (): VerticalMenuDataType[] => [
         href: '/transcription/debug',
         icon: 'tabler:bug',
       },
+      {
+        label: 'YouTube Studio',
+        href: '/youtube',
+        icon: 'tabler:brand-youtube',
+      },
     ],
   },
   {

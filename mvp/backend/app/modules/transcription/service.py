@@ -566,6 +566,116 @@ class TranscriptionService:
             "recent_transcriptions": recent_transcriptions,
         }
 
+    @staticmethod
+    async def smart_transcribe(
+        video_url: str,
+        language: str = "auto",
+        prefer_provider: str = "auto",
+    ) -> dict:
+        """
+        Smart transcription routing:
+        1. youtube-transcript-api (instant, free) for YouTube with subtitles
+        2. faster-whisper (local, free) as fallback
+        3. AssemblyAI (paid, premium) for diarization or premium quality
+        """
+        from app.transcription.youtube_transcript import (
+            extract_video_id,
+            get_youtube_transcript,
+        )
+
+        # Strategy 1: Try YouTube subtitles first (instant, free)
+        if prefer_provider in ("auto", "youtube_subtitles"):
+            video_id = extract_video_id(video_url)
+            if video_id:
+                transcript = await get_youtube_transcript(video_url, language)
+                if transcript:
+                    return transcript
+
+        # Strategy 2: Download audio + transcribe locally with Whisper
+        if prefer_provider in ("auto", "whisper"):
+            try:
+                from app.transcription.whisper_service import transcribe_with_whisper
+                from app.transcription.youtube_service import YouTubeService
+
+                # Download audio
+                audio_path = await YouTubeService.download_audio(video_url)
+                if audio_path:
+                    result = await transcribe_with_whisper(audio_path, language)
+                    if result:
+                        return result
+            except Exception:
+                pass
+
+        # Strategy 3: Fall back to AssemblyAI (paid, high quality)
+        try:
+            from app.transcription.assemblyai_service import AssemblyAIService
+
+            result = await AssemblyAIService.transcribe(video_url, language)
+            if result:
+                result["provider"] = "assemblyai"
+                return result
+        except Exception:
+            pass
+
+        return {"text": "", "error": "All transcription providers failed", "provider": "none"}
+
+    @staticmethod
+    async def transcribe_playlist(
+        playlist_url: str,
+        language: str = "auto",
+        max_videos: int = 20,
+        user_id=None,
+        session=None,
+    ) -> dict:
+        """
+        Transcribe all videos in a YouTube playlist.
+        Returns list of transcription results.
+        """
+        from app.transcription.youtube_transcript import get_playlist_videos, get_youtube_metadata
+
+        videos = await get_playlist_videos(playlist_url, max_videos)
+        if not videos:
+            return {"success": False, "error": "No videos found in playlist", "results": []}
+
+        results = []
+        for video in videos:
+            try:
+                # Get metadata
+                metadata = await get_youtube_metadata(video["url"])
+
+                # Smart transcribe
+                transcript = await TranscriptionService.smart_transcribe(
+                    video["url"], language
+                )
+
+                results.append({
+                    "video_id": video["video_id"],
+                    "title": video.get("title", "") or (metadata.get("title", "") if metadata else ""),
+                    "url": video["url"],
+                    "transcript": transcript.get("text", ""),
+                    "provider": transcript.get("provider", "unknown"),
+                    "duration": transcript.get("duration_seconds", 0),
+                    "language": transcript.get("language", ""),
+                    "success": bool(transcript.get("text")),
+                    "metadata": metadata,
+                })
+
+            except Exception as e:
+                results.append({
+                    "video_id": video["video_id"],
+                    "title": video.get("title", ""),
+                    "url": video["url"],
+                    "success": False,
+                    "error": str(e)[:500],
+                })
+
+        return {
+            "success": True,
+            "total": len(videos),
+            "transcribed": sum(1 for r in results if r.get("success")),
+            "results": results,
+        }
+
     async def delete_job(self, job_id: UUID, session: AsyncSession) -> bool:
         """Delete a transcription job"""
         

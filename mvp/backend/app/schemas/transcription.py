@@ -148,3 +148,114 @@ class TranscriptionWithSpeakers(TranscriptionRead):
     speakers: list[SpeakerUtterance] = []
     speaker_count: Optional[int] = None
 
+
+# ========================================================================
+# YouTube Enhanced Transcription Schemas
+# ========================================================================
+
+
+class YouTubeMetadata(BaseModel):
+    """YouTube video metadata."""
+    video_id: str = ""
+    title: str = ""
+    description: str = ""
+    uploader: str = ""
+    channel_url: str = ""
+    duration_seconds: int = 0
+    view_count: int = 0
+    like_count: int = 0
+    upload_date: str = ""
+    thumbnail: str = ""
+    tags: list[str] = []
+    categories: list[str] = []
+    chapters: list[dict] = []
+    language: str = ""
+    is_live: bool = False
+
+
+class TranscriptSegment(BaseModel):
+    """A segment of transcription with timestamp."""
+    text: str
+    start: float
+    end: float = 0
+    duration: float = 0
+    confidence: Optional[float] = None
+
+
+class SmartTranscribeRequest(BaseModel):
+    """Request for smart transcription."""
+    video_url: str = Field(..., min_length=1, max_length=2000)
+    language: str = Field(default="auto", max_length=10)
+    prefer_provider: str = Field(default="auto", max_length=30)
+
+
+class SmartTranscribeResponse(BaseModel):
+    """Response from smart transcription."""
+    text: str = ""
+    segments: list[TranscriptSegment] = []
+    language: str = ""
+    duration_seconds: int = 0
+    confidence: float = 0
+    provider: str = ""
+    is_manual: bool = False
+    error: Optional[str] = None
+
+
+class PlaylistTranscribeRequest(BaseModel):
+    """Request for playlist bulk transcription."""
+    playlist_url: str = Field(..., min_length=1, max_length=2000)
+    language: str = Field(default="auto", max_length=10)
+    max_videos: int = Field(default=20, ge=1, le=100)
+
+
+class VideoTranscriptResult(BaseModel):
+    """Result for a single video in bulk transcription."""
+    video_id: str = ""
+    title: str = ""
+    url: str = ""
+    transcript: str = ""
+    provider: str = ""
+    duration: int = 0
+    language: str = ""
+    success: bool = False
+    error: Optional[str] = None
+    metadata: Optional[YouTubeMetadata] = None
+
+
+class PlaylistTranscribeResponse(BaseModel):
+    """Response from playlist bulk transcription."""
+    success: bool = True
+    total: int = 0
+    transcribed: int = 0
+    results: list[VideoTranscriptResult] = []
+    error: Optional[str] = None
+
+
+class MetadataRequest(BaseModel):
+    """Request for YouTube metadata extraction."""
+    video_url: str = Field(..., min_length=1, max_length=2000)
+
+
+class VideoDownloadRequest(BaseModel):
+    """Request for video download."""
+    video_url: str = Field(..., min_length=1, max_length=2000)
+    format_type: str = Field(default="best[height<=720]", max_length=100)
+
+
+class ChapterSummary(BaseModel):
+    """A chapter with its summary."""
+    title: str = ""
+    start_time: float = 0
+    end_time: float = 0
+    text: str = ""
+    summary: str = ""
+
+
+class AutoChapterResponse(BaseModel):
+    """Response from auto-chaptering."""
+    video_id: str = ""
+    title: str = ""
+    chapters: list[ChapterSummary] = []
+    full_summary: str = ""
+    provider: str = ""
+

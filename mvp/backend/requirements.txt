@@ -32,6 +32,8 @@ python-multipart==0.0.22
 # AI Services
 assemblyai==0.58.0
 yt-dlp>=2026.3.17
+youtube-transcript-api>=0.6.0
+faster-whisper>=1.0.0
 
 # AI Providers
 google-generativeai==0.8.6

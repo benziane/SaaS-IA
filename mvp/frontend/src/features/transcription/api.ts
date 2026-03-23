@@ -8,12 +8,16 @@ import type { AxiosResponse } from 'axios';
 import apiClient from '@/lib/apiClient';
 
 import type {
+  AutoChapterResponse,
+  PlaylistTranscribeResponse,
+  SmartTranscribeResponse,
   Transcription,
   TranscriptionCreateRequest,
   TranscriptionFilters,
   TranscriptionListResponse,
   TranscriptionStats,
   TranscriptionUploadRequest,
+  YouTubeMetadata,
 } from './types';
 
 /* ========================================================================
@@ -25,6 +29,10 @@ const TRANSCRIPTION_ENDPOINTS = {
   CREATE: '/api/transcription',
   UPLOAD: '/api/transcription/upload',
   STATS: '/api/transcription/stats',
+  SMART_TRANSCRIBE: '/api/transcription/smart-transcribe',
+  METADATA: '/api/transcription/metadata',
+  PLAYLIST: '/api/transcription/playlist',
+  AUTO_CHAPTER: '/api/transcription/auto-chapter',
   GET: (id: string) => `/api/transcription/${id}`,
   DELETE: (id: string) => `/api/transcription/${id}`,
 } as const;
@@ -137,6 +145,62 @@ export async function deleteTranscription(id: string): Promise<void> {
 }
 
 /* ========================================================================
+   YOUTUBE ENHANCED API FUNCTIONS
+   ======================================================================== */
+
+/**
+ * Smart transcribe a YouTube video using the best available provider
+ */
+export async function smartTranscribe(
+  videoUrl: string,
+  language: string = 'auto',
+  preferProvider: string = 'auto'
+): Promise<SmartTranscribeResponse> {
+  const response = await apiClient.post(TRANSCRIPTION_ENDPOINTS.SMART_TRANSCRIBE, {
+    video_url: videoUrl,
+    language,
+    prefer_provider: preferProvider,
+  });
+  return response.data;
+}
+
+/**
+ * Extract metadata from a YouTube video
+ */
+export async function getMetadata(videoUrl: string): Promise<YouTubeMetadata> {
+  const response = await apiClient.post(TRANSCRIPTION_ENDPOINTS.METADATA, {
+    video_url: videoUrl,
+  });
+  return response.data;
+}
+
+/**
+ * Transcribe all videos in a YouTube playlist
+ */
+export async function transcribePlaylist(
+  playlistUrl: string,
+  language: string = 'auto',
+  maxVideos: number = 20
+): Promise<PlaylistTranscribeResponse> {
+  const response = await apiClient.post(TRANSCRIPTION_ENDPOINTS.PLAYLIST, {
+    playlist_url: playlistUrl,
+    language,
+    max_videos: maxVideos,
+  });
+  return response.data;
+}
+
+/**
+ * Auto-chapter a YouTube video with AI summaries
+ */
+export async function autoChapter(videoUrl: string): Promise<AutoChapterResponse> {
+  const response = await apiClient.post(TRANSCRIPTION_ENDPOINTS.AUTO_CHAPTER, {
+    video_url: videoUrl,
+  });
+  return response.data;
+}
+
+/* ========================================================================
    EXPORTS
    ======================================================================== */
 
@@ -147,6 +211,10 @@ export const transcriptionApi = {
   getTranscription,
   getStats,
   deleteTranscription,
+  smartTranscribe,
+  getMetadata,
+  transcribePlaylist,
+  autoChapter,
 } as const;
 
 export default transcriptionApi;

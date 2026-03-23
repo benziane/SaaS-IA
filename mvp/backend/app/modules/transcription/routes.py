@@ -18,6 +18,13 @@ from app.modules.billing.service import BillingService
 from app.modules.billing.middleware import require_transcription_quota
 from app.models.transcription import TranscriptionStatus
 from app.schemas.transcription import TranscriptionCreate, TranscriptionRead, PaginatedResponse, TranscriptionWithSpeakers, SpeakerUtterance
+from app.schemas.transcription import (
+    SmartTranscribeRequest, SmartTranscribeResponse, TranscriptSegment,
+    PlaylistTranscribeRequest, PlaylistTranscribeResponse, VideoTranscriptResult,
+    MetadataRequest, YouTubeMetadata,
+    AutoChapterResponse, ChapterSummary,
+    VideoDownloadRequest,
+)
 from app.modules.transcription.service import TranscriptionService
 from app.modules.transcription.websocket import get_debug_manager
 from app.transcription.audio_cache import get_audio_cache
@@ -773,4 +780,228 @@ async def run_backend_test(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Test execution failed: {str(e)}"
         )
+
+
+# --- YouTube Enhanced Endpoints ---
+
+@router.post("/smart-transcribe")
+@limiter.limit("10/minute")
+async def smart_transcribe(
+    request: Request,
+    body: SmartTranscribeRequest,
+    current_user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+):
+    """
+    Smart transcription with provider routing.
+
+    Tries providers in order:
+    1. YouTube subtitles (instant, free)
+    2. faster-whisper (local, free)
+    3. AssemblyAI (paid, premium)
+
+    Rate limit: 10 requests/minute
+    """
+    result = await TranscriptionService.smart_transcribe(
+        video_url=body.video_url,
+        language=body.language,
+        prefer_provider=body.prefer_provider,
+    )
+
+    segments = [
+        TranscriptSegment(
+            text=s.get("text", ""),
+            start=s.get("start", 0),
+            end=s.get("end", 0),
+            duration=s.get("duration", 0),
+            confidence=s.get("confidence"),
+        )
+        for s in result.get("segments", [])
+    ]
+
+    return SmartTranscribeResponse(
+        text=result.get("text", ""),
+        segments=segments,
+        language=result.get("language", ""),
+        duration_seconds=result.get("duration_seconds", 0),
+        confidence=result.get("confidence", 0),
+        provider=result.get("provider", ""),
+        is_manual=result.get("is_manual", False),
+        error=result.get("error"),
+    )
+
+
+@router.post("/metadata")
+@limiter.limit("20/minute")
+async def get_metadata(
+    request: Request,
+    body: MetadataRequest,
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Extract YouTube video metadata.
+
+    Returns title, description, tags, chapters, thumbnail, etc.
+
+    Rate limit: 20 requests/minute
+    """
+    from app.transcription.youtube_transcript import get_youtube_metadata
+
+    metadata = await get_youtube_metadata(body.video_url)
+    if not metadata:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Could not extract metadata from URL"
+        )
+
+    return YouTubeMetadata(**metadata)
+
+
+@router.post("/playlist")
+@limiter.limit("3/minute")
+async def transcribe_playlist(
+    request: Request,
+    body: PlaylistTranscribeRequest,
+    current_user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+):
+    """
+    Transcribe all videos in a YouTube playlist.
+
+    Uses smart provider routing for each video.
+    Max 100 videos per request.
+
+    Rate limit: 3 requests/minute
+    """
+    result = await TranscriptionService.transcribe_playlist(
+        playlist_url=body.playlist_url,
+        language=body.language,
+        max_videos=body.max_videos,
+        user_id=current_user.id,
+        session=session,
+    )
+
+    video_results = [
+        VideoTranscriptResult(
+            video_id=r.get("video_id", ""),
+            title=r.get("title", ""),
+            url=r.get("url", ""),
+            transcript=r.get("transcript", "")[:500],  # Truncate for list view
+            provider=r.get("provider", ""),
+            duration=r.get("duration", 0),
+            language=r.get("language", ""),
+            success=r.get("success", False),
+            error=r.get("error"),
+            metadata=YouTubeMetadata(**r["metadata"]) if r.get("metadata") else None,
+        )
+        for r in result.get("results", [])
+    ]
+
+    return PlaylistTranscribeResponse(
+        success=result.get("success", False),
+        total=result.get("total", 0),
+        transcribed=result.get("transcribed", 0),
+        results=video_results,
+        error=result.get("error"),
+    )
+
+
+@router.post("/auto-chapter")
+@limiter.limit("5/minute")
+async def auto_chapter(
+    request: Request,
+    body: MetadataRequest,
+    current_user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+):
+    """
+    Auto-chaptering: combine YouTube chapters with transcription
+    to generate per-chapter summaries.
+
+    Rate limit: 5 requests/minute
+    """
+    from app.transcription.youtube_transcript import get_youtube_metadata, get_youtube_transcript
+
+    # Get metadata with chapters
+    metadata = await get_youtube_metadata(body.video_url)
+    if not metadata:
+        raise HTTPException(status_code=400, detail="Could not extract video metadata")
+
+    # Get transcript
+    transcript = await TranscriptionService.smart_transcribe(body.video_url)
+    if not transcript.get("text"):
+        raise HTTPException(status_code=400, detail="Could not transcribe video")
+
+    chapters = metadata.get("chapters", [])
+    segments = transcript.get("segments", [])
+
+    if not chapters:
+        # No YouTube chapters - create artificial chapters every 5 minutes
+        duration = transcript.get("duration_seconds", 0)
+        chapter_len = 300  # 5 minutes
+        chapters = []
+        for i in range(0, max(duration, 1), chapter_len):
+            chapters.append({
+                "title": f"Part {len(chapters) + 1}",
+                "start_time": i,
+                "end_time": min(i + chapter_len, duration),
+            })
+
+    # Map transcript segments to chapters
+    chapter_summaries = []
+    for ch in chapters:
+        start = ch.get("start_time", 0)
+        end = ch.get("end_time", 0)
+
+        # Get text for this chapter's time range
+        chapter_text_parts = []
+        for seg in segments:
+            seg_start = seg.get("start", 0)
+            if start <= seg_start < end:
+                chapter_text_parts.append(seg.get("text", ""))
+
+        chapter_text = " ".join(chapter_text_parts)
+
+        # Generate summary using AI
+        summary = ""
+        if chapter_text.strip():
+            try:
+                from app.ai_assistant.service import AIAssistantService
+                result = await AIAssistantService.process_text_with_provider(
+                    text=f"Summarize this section titled '{ch.get('title', '')}' in 2-3 sentences:\n\n{chapter_text[:3000]}",
+                    task="summarize",
+                    provider_name="gemini",
+                )
+                summary = result.get("processed_text", "")
+            except Exception:
+                summary = chapter_text[:200] + "..."
+
+        chapter_summaries.append(ChapterSummary(
+            title=ch.get("title", ""),
+            start_time=start,
+            end_time=end,
+            text=chapter_text[:2000],
+            summary=summary,
+        ))
+
+    # Generate overall summary
+    full_summary = ""
+    try:
+        from app.ai_assistant.service import AIAssistantService
+        result = await AIAssistantService.process_text_with_provider(
+            text=f"Summarize this video titled '{metadata.get('title', '')}' in 3-5 bullet points:\n\n{transcript.get('text', '')[:5000]}",
+            task="summarize",
+            provider_name="gemini",
+        )
+        full_summary = result.get("processed_text", "")
+    except Exception:
+        full_summary = transcript.get("text", "")[:500]
+
+    return AutoChapterResponse(
+        video_id=metadata.get("video_id", ""),
+        title=metadata.get("title", ""),
+        chapters=chapter_summaries,
+        full_summary=full_summary,
+        provider=transcript.get("provider", ""),
+    )
 
