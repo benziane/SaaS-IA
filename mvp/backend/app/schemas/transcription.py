@@ -108,10 +108,11 @@ class TranscriptionRead(BaseModel):
     duration_seconds: Optional[int]
     error: Optional[str]
     retry_count: int
+    speaker_count: Optional[int] = None
     created_at: datetime
     updated_at: datetime
     completed_at: Optional[datetime]
-    
+
     class Config:
         from_attributes = True
         json_schema_extra = {
@@ -131,4 +132,19 @@ class TranscriptionRead(BaseModel):
                 "completed_at": "2025-11-13T21:03:00Z"
             }
         }
+
+
+class SpeakerUtterance(BaseModel):
+    """A single speaker utterance."""
+    speaker: str
+    text: str
+    start: int  # milliseconds
+    end: int  # milliseconds
+    confidence: Optional[float] = None
+
+
+class TranscriptionWithSpeakers(TranscriptionRead):
+    """Transcription response with speaker diarization data."""
+    speakers: list[SpeakerUtterance] = []
+    speaker_count: Optional[int] = None
 

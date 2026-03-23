@@ -57,6 +57,16 @@ const verticalMenuData = (): VerticalMenuDataType[] => [
     href: '/knowledge',
     icon: 'tabler:books',
   },
+  {
+    label: 'AI Agents',
+    href: '/agents',
+    icon: 'tabler:robot',
+  },
+  {
+    label: 'Sentiment',
+    href: '/sentiment',
+    icon: 'tabler:mood-happy',
+  },
 
   // Platform Section
   {

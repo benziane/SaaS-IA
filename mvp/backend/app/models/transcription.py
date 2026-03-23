@@ -39,6 +39,10 @@ class Transcription(SQLModel, table=True):
     confidence: Optional[float] = Field(default=None)
     duration_seconds: Optional[int] = Field(default=None)
     
+    # Speaker diarization
+    speakers_json: Optional[str] = Field(default=None)
+    speaker_count: Optional[int] = Field(default=None)
+
     # Error handling
     error: Optional[str] = Field(default=None, max_length=1000)
     retry_count: int = Field(default=0)

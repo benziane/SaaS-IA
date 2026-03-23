@@ -1,0 +1,9 @@
+{
+  "name": "agents",
+  "version": "1.0.0",
+  "description": "Autonomous AI agents that decompose and execute multi-step tasks",
+  "prefix": "/api/agents",
+  "tags": ["agents"],
+  "enabled": true,
+  "dependencies": []
+}

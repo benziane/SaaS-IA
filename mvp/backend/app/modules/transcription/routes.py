@@ -17,7 +17,7 @@ from app.models.user import User, Role
 from app.modules.billing.service import BillingService
 from app.modules.billing.middleware import require_transcription_quota
 from app.models.transcription import TranscriptionStatus
-from app.schemas.transcription import TranscriptionCreate, TranscriptionRead, PaginatedResponse
+from app.schemas.transcription import TranscriptionCreate, TranscriptionRead, PaginatedResponse, TranscriptionWithSpeakers, SpeakerUtterance
 from app.modules.transcription.service import TranscriptionService
 from app.modules.transcription.websocket import get_debug_manager
 from app.transcription.audio_cache import get_audio_cache
@@ -266,6 +266,67 @@ async def get_transcription(
         )
     
     return job
+
+
+@router.get("/{job_id}/speakers", response_model=TranscriptionWithSpeakers)
+@limiter.limit("20/minute")
+async def get_transcription_speakers(
+    request: Request,
+    job_id: UUID,
+    current_user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+    service: TranscriptionService = Depends(get_transcription_service)
+):
+    """
+    Get transcription with speaker diarization data.
+
+    Returns the transcription with speaker-labeled utterances.
+
+    Rate limit: 20 requests/minute
+    """
+    job = await service.get_job(job_id, session)
+
+    if not job:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Transcription job not found"
+        )
+
+    if job.user_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied"
+        )
+
+    # Parse speakers from JSON
+    speakers = []
+    if job.speakers_json:
+        import json
+        try:
+            speakers_data = json.loads(job.speakers_json)
+            speakers = [SpeakerUtterance(**s) for s in speakers_data]
+        except (json.JSONDecodeError, Exception):
+            pass
+
+    return TranscriptionWithSpeakers(
+        id=job.id,
+        user_id=job.user_id,
+        video_url=job.video_url,
+        language=job.language,
+        source_type=job.source_type,
+        original_filename=job.original_filename,
+        status=job.status,
+        text=job.text,
+        confidence=job.confidence,
+        duration_seconds=job.duration_seconds,
+        error=job.error,
+        retry_count=job.retry_count,
+        created_at=job.created_at,
+        updated_at=job.updated_at,
+        completed_at=job.completed_at,
+        speakers=speakers,
+        speaker_count=job.speaker_count,
+    )
 
 
 @router.get("/", response_model=PaginatedResponse[TranscriptionRead])

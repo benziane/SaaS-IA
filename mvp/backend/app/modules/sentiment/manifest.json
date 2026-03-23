@@ -1,0 +1,9 @@
+{
+  "name": "sentiment",
+  "version": "1.0.0",
+  "description": "Sentiment and emotion analysis for text and transcriptions",
+  "prefix": "/api/sentiment",
+  "tags": ["sentiment"],
+  "enabled": true,
+  "dependencies": []
+}

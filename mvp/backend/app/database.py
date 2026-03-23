@@ -44,6 +44,7 @@ async def init_db() -> None:
         from app.models.knowledge import Document, DocumentChunk  # noqa: F401
         from app.models.api_key import APIKey  # noqa: F401
         from app.models.workspace import Workspace, WorkspaceMember, SharedItem, Comment  # noqa: F401
+        from app.models.agent import AgentRun, AgentStep  # noqa: F401
 
         # Create all tables
         await conn.run_sync(SQLModel.metadata.create_all)
