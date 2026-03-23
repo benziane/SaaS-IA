@@ -36,7 +36,7 @@ bcrypt = "4.0.1"  # Pin bcrypt to compatible version with passlib
 python-multipart = "^0.0.6"
 
 # AI Services
-assemblyai = "^0.17.0"
+assemblyai = "^0.58.0"
 yt-dlp = "^2025.11.12"
 
 # AI Providers (from WeLAB)
