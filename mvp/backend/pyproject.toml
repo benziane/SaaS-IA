@@ -37,7 +37,7 @@ python-multipart = "^0.0.6"
 
 # AI Services
 assemblyai = "^0.17.0"
-yt-dlp = "^2025.11.12"
+yt-dlp = "^2026.3.17"
 
 # AI Providers (from WeLAB)
 google-generativeai = "^0.8.3"
