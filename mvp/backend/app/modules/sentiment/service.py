@@ -60,6 +60,7 @@ Respond ONLY with the JSON array."""
                 text=prompt,
                 task="sentiment_analysis",
                 provider_name="gemini",
+                module="sentiment",
             )
 
             response_text = result.get("processed_text", "[]")

@@ -20,6 +20,8 @@ AVAILABLE_ACTIONS = {
     "compare_models": "Compare AI model responses for a prompt",
     "generate_text": "Generate or process text with AI",
     "extract_info": "Extract specific information from text",
+    "analyze_sentiment": "Analyze sentiment and emotions in text",
+    "create_pipeline": "Create an AI processing pipeline",
 }
 
 
@@ -113,6 +115,13 @@ def _heuristic_plan(instruction: str) -> list[dict]:
             "action": "ask_knowledge",
             "description": "Answer using RAG",
             "input": {"question": instruction},
+        })
+
+    if any(w in instruction_lower for w in ["sentiment", "emotion", "mood", "feeling", "tone", "positif", "negatif"]):
+        steps.append({
+            "action": "analyze_sentiment",
+            "description": "Analyze sentiment and emotions",
+            "input": {},
         })
 
     if any(w in instruction_lower for w in ["compar", "versus", "vs", "differ"]):

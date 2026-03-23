@@ -267,6 +267,8 @@ class KnowledgeService:
                 text=prompt,
                 task="rag_answer",
                 provider_name="gemini",
+                user_id=user_id,
+                module="knowledge",
             )
             answer = result.get("processed_text", "Unable to generate answer.")
             provider = result.get("provider", "gemini")

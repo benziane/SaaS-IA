@@ -88,6 +88,11 @@ const verticalMenuData = (): VerticalMenuDataType[] => [
     href: '/workspaces',
     icon: 'tabler:users-group',
   },
+  {
+    label: 'Cost Tracker',
+    href: '/costs',
+    icon: 'tabler:chart-dots',
+  },
 
   // Account Section
   {

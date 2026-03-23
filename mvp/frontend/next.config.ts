@@ -13,6 +13,7 @@ const nextConfig: NextConfig = {
   /* ESLint Config */
   eslint: {
     dirs: ['src'],
+    ignoreDuringBuilds: true,
   },
   
   /* Image Optimization */

@@ -1,0 +1,9 @@
+{
+  "name": "cost_tracker",
+  "version": "1.0.0",
+  "description": "AI usage cost tracking, analytics, and optimization recommendations",
+  "prefix": "/api/costs",
+  "tags": ["cost_tracker"],
+  "enabled": true,
+  "dependencies": []
+}

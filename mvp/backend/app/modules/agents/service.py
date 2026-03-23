@@ -76,9 +76,12 @@ class AgentService:
                 await session.commit()
 
                 try:
+                    step_input = step_data.get("input", {})
+                    step_input["_user_id"] = str(user_id)
+
                     result = await execute_step(
                         action=step_data.get("action", "generate_text"),
-                        input_data=step_data.get("input", {}),
+                        input_data=step_input,
                         previous_output=previous_output,
                     )
 
@@ -91,6 +94,24 @@ class AgentService:
 
                     if result.get("error"):
                         step.error = result["error"][:1000]
+
+                    # Track cost for this step
+                    try:
+                        from app.modules.cost_tracker.tracker import track_ai_usage
+                        await track_ai_usage(
+                            user_id=user_id,
+                            provider=result.get("provider", "unknown"),
+                            model="agent",
+                            module="agents",
+                            action=step.action,
+                            input_tokens=0,
+                            output_tokens=len(result.get("output", "")),
+                            latency_ms=int((step.completed_at - step.started_at).total_seconds() * 1000) if step.completed_at and step.started_at else 0,
+                            success=step.status == AgentStatus.COMPLETED,
+                            session=session,
+                        )
+                    except Exception:
+                        pass
 
                 except Exception as e:
                     step.status = AgentStatus.FAILED

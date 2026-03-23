@@ -22,7 +22,7 @@ class CompareService:
     """Service for multi-model comparison."""
 
     @staticmethod
-    async def _call_provider(provider_name: str, prompt: str) -> dict:
+    async def _call_provider(provider_name: str, prompt: str, user_id: UUID = None) -> dict:
         """Call a single AI provider and return result with timing."""
         from app.ai_assistant.service import AIAssistantService
 
@@ -32,6 +32,8 @@ class CompareService:
                 text=prompt,
                 task="general",
                 provider_name=provider_name,
+                user_id=user_id,
+                module="compare",
             )
             elapsed_ms = int((time.monotonic() - start) * 1000)
 
@@ -71,7 +73,7 @@ class CompareService:
         """
         # Execute all providers in parallel
         tasks = [
-            CompareService._call_provider(provider, prompt)
+            CompareService._call_provider(provider, prompt, user_id=user_id)
             for provider in providers
         ]
         results = await asyncio.gather(*tasks)

@@ -1,8 +1,10 @@
 """AI Assistant Service Layer - Grade S++"""
 
+import time
 import structlog
 from typing import Optional, Dict, Any, AsyncGenerator
 from datetime import datetime
+from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.ai_assistant.providers.base import BaseAIProvider
@@ -445,11 +447,16 @@ Contenu restructuré :"""
         }
         
         prompt = prompts.get(task, prompts["improve_quality"])
-        
+
         # Process with AI
+        start_time = time.monotonic()
+        success = True
+        error_msg = None
+        processed_text = ""
+
         try:
             processed_text = await provider.complete(prompt)
-            
+
             ai_provider_requests_total.labels(
                 provider=provider_name, success="true"
             ).inc()
@@ -471,6 +478,8 @@ Contenu restructuré :"""
             }
 
         except Exception as e:
+            success = False
+            error_msg = str(e)
             ai_provider_requests_total.labels(
                 provider=provider_name, success="false"
             ).inc()
@@ -482,6 +491,27 @@ Contenu restructuré :"""
                 error=str(e)
             )
             raise
+
+        finally:
+            elapsed_ms = int((time.monotonic() - start_time) * 1000)
+            est_input_tokens = max(len(prompt) // 4, 1)
+            est_output_tokens = max(len(processed_text) // 4, 1) if processed_text else 0
+            try:
+                from app.modules.cost_tracker.tracker import track_ai_usage
+                await track_ai_usage(
+                    user_id=UUID("00000000-0000-0000-0000-000000000000"),
+                    provider=provider_name,
+                    model=provider.model_name,
+                    module="text_processing",
+                    action=task,
+                    input_tokens=est_input_tokens,
+                    output_tokens=est_output_tokens,
+                    latency_ms=elapsed_ms,
+                    success=success,
+                    error=error_msg,
+                )
+            except Exception:
+                pass
     
     @staticmethod
     async def process_text_smart(
@@ -640,6 +670,8 @@ Contenu restructuré :"""
         text: str,
         task: str = "general",
         provider_name: str = "gemini",
+        user_id: Optional[UUID] = None,
+        module: str = "general",
     ) -> dict:
         """Process text using a specific provider (for comparison mode)."""
         from app.ai_assistant.providers.gemini import GeminiProvider
@@ -659,7 +691,39 @@ Contenu restructuré :"""
         provider = provider_class()
         prompt = f"Task: {task}\n\n{text}"
 
-        result = await provider.complete(prompt)
+        start_time = time.monotonic()
+        success = True
+        error_msg = None
+        result = ""
+
+        try:
+            result = await provider.complete(prompt)
+        except Exception as e:
+            success = False
+            error_msg = str(e)
+            raise
+        finally:
+            elapsed_ms = int((time.monotonic() - start_time) * 1000)
+            # Estimate tokens (~4 chars per token)
+            est_input_tokens = max(len(prompt) // 4, 1)
+            est_output_tokens = max(len(result) // 4, 1) if result else 0
+            try:
+                from app.modules.cost_tracker.tracker import track_ai_usage
+                await track_ai_usage(
+                    user_id=user_id or UUID("00000000-0000-0000-0000-000000000000"),
+                    provider=provider_name,
+                    model=provider.model_name,
+                    module=module,
+                    action=task,
+                    input_tokens=est_input_tokens,
+                    output_tokens=est_output_tokens,
+                    latency_ms=elapsed_ms,
+                    success=success,
+                    error=error_msg,
+                )
+            except Exception:
+                pass  # Never block main flow
+
         return {
             "processed_text": result,
             "model": provider.model_name,
@@ -757,6 +821,38 @@ Contenu restructuré :"""
         }
 
         # 5. Stream tokens from the provider
-        async for chunk in provider.stream_chat(prompt):
-            yield {"token": chunk}
+        start_time = time.monotonic()
+        collected_output = []
+        stream_success = True
+        stream_error = None
+
+        try:
+            async for chunk in provider.stream_chat(prompt):
+                collected_output.append(chunk)
+                yield {"token": chunk}
+        except Exception as e:
+            stream_success = False
+            stream_error = str(e)
+            raise
+        finally:
+            elapsed_ms = int((time.monotonic() - start_time) * 1000)
+            full_output = "".join(collected_output)
+            est_input_tokens = max(len(prompt) // 4, 1)
+            est_output_tokens = max(len(full_output) // 4, 1) if full_output else 0
+            try:
+                from app.modules.cost_tracker.tracker import track_ai_usage
+                await track_ai_usage(
+                    user_id=UUID("00000000-0000-0000-0000-000000000000"),
+                    provider=provider_name,
+                    model=provider.model_name,
+                    module="stream_processing",
+                    action=task,
+                    input_tokens=est_input_tokens,
+                    output_tokens=est_output_tokens,
+                    latency_ms=elapsed_ms,
+                    success=stream_success,
+                    error=stream_error,
+                )
+            except Exception:
+                pass
 

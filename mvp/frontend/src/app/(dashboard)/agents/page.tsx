@@ -9,7 +9,6 @@ import {
   CardContent,
   Chip,
   CircularProgress,
-  Grid,
   LinearProgress,
   List,
   ListItem,
@@ -39,6 +38,8 @@ const ACTION_LABELS: Record<string, string> = {
   compare_models: 'Model Comparison',
   generate_text: 'Text Generation',
   extract_info: 'Info Extraction',
+  analyze_sentiment: 'Sentiment Analysis',
+  create_pipeline: 'Pipeline Creation',
 };
 
 function RunCard({ run }: { run: AgentRun }) {
@@ -64,17 +65,48 @@ function RunCard({ run }: { run: AgentRun }) {
 
         {run.steps.length > 0 && (
           <List dense sx={{ mt: 1 }}>
-            {run.steps.map((step) => (
-              <ListItem key={step.id} sx={{ py: 0 }}>
-                <ListItemText
-                  primary={`${step.step_index + 1}. ${ACTION_LABELS[step.action] || step.action}`}
-                  secondary={step.description}
-                  primaryTypographyProps={{ variant: 'body2' }}
-                  secondaryTypographyProps={{ variant: 'caption' }}
-                />
-                <Chip label={step.status} size="small" color={STATUS_COLORS[step.status] || 'default'} variant="outlined" />
-              </ListItem>
-            ))}
+            {run.steps.map((step) => {
+              let stepOutput = '';
+              if (step.output_json) {
+                try {
+                  const parsed = typeof step.output_json === 'string' ? JSON.parse(step.output_json) : step.output_json;
+                  stepOutput = parsed?.output || '';
+                } catch {
+                  stepOutput = '';
+                }
+              }
+              return (
+                <ListItem key={step.id} sx={{ py: 0, flexDirection: 'column', alignItems: 'stretch' }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <ListItemText
+                      primary={`${step.step_index + 1}. ${ACTION_LABELS[step.action] || step.action}`}
+                      secondary={step.description}
+                      primaryTypographyProps={{ variant: 'body2' }}
+                      secondaryTypographyProps={{ variant: 'caption' }}
+                    />
+                    <Chip label={step.status} size="small" color={STATUS_COLORS[step.status] || 'default'} variant="outlined" />
+                  </Box>
+                  {stepOutput && (
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        mt: 0.5,
+                        mb: 1,
+                        p: 1,
+                        bgcolor: 'action.hover',
+                        borderRadius: 1,
+                        whiteSpace: 'pre-wrap',
+                        maxHeight: 120,
+                        overflow: 'auto',
+                        display: 'block',
+                      }}
+                    >
+                      {stepOutput.length > 300 ? stepOutput.substring(0, 300) + '...' : stepOutput}
+                    </Typography>
+                  )}
+                </ListItem>
+              );
+            })}
           </List>
         )}
 
@@ -114,6 +146,24 @@ export default function AgentsPage() {
             placeholder="Describe what you want the agent to do..."
             sx={{ mb: 2 }}
           />
+          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2 }}>
+            <Typography variant="caption" color="text.secondary" sx={{ width: '100%' }}>Try:</Typography>
+            {[
+              'Summarize my latest transcription',
+              'Search knowledge base for meeting notes',
+              'Analyze sentiment of a text about customer feedback',
+              'Compare AI models on: explain quantum computing',
+            ].map((suggestion) => (
+              <Chip
+                key={suggestion}
+                label={suggestion}
+                size="small"
+                variant="outlined"
+                onClick={() => setInstruction(suggestion)}
+                sx={{ cursor: 'pointer' }}
+              />
+            ))}
+          </Box>
           <Button
             variant="contained"
             onClick={handleRun}

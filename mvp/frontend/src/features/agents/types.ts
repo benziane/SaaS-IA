@@ -7,6 +7,7 @@ export interface AgentStep {
   error: string | null;
   started_at: string | null;
   completed_at: string | null;
+  output_json?: string;
 }
 
 export interface AgentRun {

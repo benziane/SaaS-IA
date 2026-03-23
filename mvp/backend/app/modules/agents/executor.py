@@ -22,6 +22,8 @@ async def execute_step(action: str, input_data: dict, previous_output: Optional[
         "compare_models": _exec_compare,
         "generate_text": _exec_generate,
         "extract_info": _exec_extract,
+        "analyze_sentiment": _exec_sentiment,
+        "create_pipeline": _exec_generate,  # Fallback to generate for now
     }
 
     handler = handlers.get(action, _exec_generate)
@@ -57,6 +59,8 @@ async def _exec_summarize(input_data: dict, previous: Optional[str]) -> dict:
             text=f"Summarize the following text in {max_length} words or less:\n\n{text[:8000]}",
             task="summarize",
             provider_name=input_data.get("provider", "gemini"),
+            user_id=input_data.get("_user_id"),
+            module="agents",
         )
         return {"output": result.get("processed_text", ""), "action": "summarize"}
     except Exception as e:
@@ -76,6 +80,8 @@ async def _exec_translate(input_data: dict, previous: Optional[str]) -> dict:
             text=f"Translate the following text to {target}:\n\n{text[:8000]}",
             task="translate",
             provider_name=input_data.get("provider", "gemini"),
+            user_id=input_data.get("_user_id"),
+            module="agents",
         )
         return {"output": result.get("processed_text", ""), "action": "translate", "target_language": target}
     except Exception as e:
@@ -88,11 +94,34 @@ async def _exec_search(input_data: dict, previous: Optional[str]) -> dict:
     if not query:
         return {"output": "", "error": "No query for search", "action": "search_knowledge"}
 
-    return {
-        "output": f"[Knowledge search for: {query}. Use /api/knowledge/search endpoint.]",
-        "action": "search_knowledge",
-        "query": query,
-    }
+    try:
+        from app.modules.knowledge.service import KnowledgeService
+        from app.database import get_session_context
+        from uuid import UUID as UUIDType
+
+        user_id = input_data.get("_user_id")
+        if not user_id:
+            return {"output": f"Search query: {query}", "action": "search_knowledge", "note": "No user context for search"}
+
+        uid = UUIDType(user_id) if isinstance(user_id, str) else user_id
+        async with get_session_context() as session:
+            results = await KnowledgeService.search(
+                query=query,
+                user_id=uid,
+                limit=input_data.get("limit", 5),
+                session=session,
+            )
+
+        if results:
+            output_text = "\n\n".join(
+                f"[{r.get('filename', 'doc')}] {r.get('content', '')[:500]}"
+                for r in results
+            )
+            return {"output": output_text, "action": "search_knowledge", "results_count": len(results)}
+        return {"output": "No results found.", "action": "search_knowledge", "results_count": 0}
+
+    except Exception as e:
+        return {"output": "", "error": str(e)[:500], "action": "search_knowledge"}
 
 
 async def _exec_ask(input_data: dict, previous: Optional[str]) -> dict:
@@ -101,11 +130,54 @@ async def _exec_ask(input_data: dict, previous: Optional[str]) -> dict:
     if not question:
         return {"output": "", "error": "No question provided", "action": "ask_knowledge"}
 
-    return {
-        "output": f"[RAG query: {question}. Use /api/knowledge/ask endpoint.]",
-        "action": "ask_knowledge",
-        "question": question,
-    }
+    try:
+        from app.modules.knowledge.service import KnowledgeService
+        from app.database import get_session_context
+        from uuid import UUID as UUIDType
+
+        user_id = input_data.get("_user_id")
+        if not user_id:
+            return await _exec_generate({"prompt": question}, previous)
+
+        uid = UUIDType(user_id) if isinstance(user_id, str) else user_id
+        async with get_session_context() as session:
+            result = await KnowledgeService.rag_query(
+                question=question,
+                user_id=uid,
+                session=session,
+            )
+
+        answer = result.get("answer", "") if result else ""
+        sources = result.get("sources", []) if result else []
+        return {
+            "output": answer,
+            "action": "ask_knowledge",
+            "sources_count": len(sources),
+        }
+
+    except Exception as e:
+        return {"output": "", "error": str(e)[:500], "action": "ask_knowledge"}
+
+
+async def _exec_sentiment(input_data: dict, previous: Optional[str]) -> dict:
+    """Execute sentiment analysis."""
+    text = input_data.get("text", previous or "")
+    if not text:
+        return {"output": "", "error": "No text for sentiment analysis", "action": "analyze_sentiment"}
+
+    try:
+        from app.modules.sentiment.service import SentimentService
+        result = await SentimentService.analyze_text(text[:10000])
+
+        summary = f"Overall: {result['overall_sentiment']} (score: {result['overall_score']}). "
+        summary += f"Positive: {result['positive_percent']}%, Negative: {result['negative_percent']}%, Neutral: {result['neutral_percent']}%."
+        if result.get('emotion_summary'):
+            top_emotions = sorted(result['emotion_summary'].items(), key=lambda x: x[1], reverse=True)[:3]
+            summary += f" Top emotions: {', '.join(f'{e}({c})' for e, c in top_emotions)}."
+
+        return {"output": summary, "action": "analyze_sentiment", "details": result}
+    except Exception as e:
+        return {"output": "", "error": str(e)[:500], "action": "analyze_sentiment"}
 
 
 async def _exec_compare(input_data: dict, previous: Optional[str]) -> dict:
@@ -152,6 +224,8 @@ async def _exec_generate(input_data: dict, previous: Optional[str]) -> dict:
             text=prompt[:8000],
             task="general",
             provider_name=input_data.get("provider", "gemini"),
+            user_id=input_data.get("_user_id"),
+            module="agents",
         )
         return {"output": result.get("processed_text", ""), "action": "generate_text"}
     except Exception as e:
@@ -171,6 +245,8 @@ async def _exec_extract(input_data: dict, previous: Optional[str]) -> dict:
             text=f"Extract {what} from the following text:\n\n{text[:8000]}",
             task="extract",
             provider_name="gemini",
+            user_id=input_data.get("_user_id"),
+            module="agents",
         )
         return {"output": result.get("processed_text", ""), "action": "extract_info"}
     except Exception as e:
