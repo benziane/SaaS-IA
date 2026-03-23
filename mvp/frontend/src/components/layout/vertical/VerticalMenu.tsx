@@ -6,9 +6,13 @@ import PerfectScrollbar from 'react-perfect-scrollbar'
 
 // Type Imports
 import type { VerticalMenuContextProps } from '@menu/components/vertical-menu/Menu'
+import type { VerticalMenuDataType } from '@/types/menuTypes'
 
 // Component Imports
-import { Menu, MenuItem } from '@menu/vertical-menu'
+import { Menu, MenuItem, MenuSection, SubMenu } from '@menu/vertical-menu'
+
+// Data Imports
+import verticalMenuData from '@/data/navigation/verticalMenuData'
 
 // Hook Imports
 import useVerticalNav from '@menu/hooks/useVerticalNav'
@@ -31,9 +35,59 @@ type Props = {
 
 const RenderExpandIcon = ({ open, transitionDuration }: RenderExpandIconProps) => (
   <StyledVerticalNavExpandIcon open={open} transitionDuration={transitionDuration}>
-    <i className='bx-chevron-right' />
+    <i className='tabler-chevron-right' />
   </StyledVerticalNavExpandIcon>
 )
+
+/**
+ * Convert icon string (e.g. 'tabler:smart-home') to a React element
+ */
+const renderIcon = (iconStr?: string) => {
+  if (!iconStr) return undefined
+
+  // Convert 'tabler:smart-home' to 'tabler-smart-home'
+  const className = iconStr.replace(':', '-')
+
+  return <i className={className} />
+}
+
+/**
+ * Recursively render menu items from navigation data
+ */
+const renderMenuItems = (items: VerticalMenuDataType[]) => {
+  return items.map((item, index) => {
+    // Section header
+    if ('isSection' in item && item.isSection) {
+      return (
+        <MenuSection key={`section-${index}`} label={item.label}>
+          {item.children ? renderMenuItems(item.children) : null}
+        </MenuSection>
+      )
+    }
+
+    // SubMenu (has children)
+    if ('children' in item && item.children) {
+      return (
+        <SubMenu key={`submenu-${index}`} label={item.label} icon={renderIcon(item.icon)}>
+          {renderMenuItems(item.children)}
+        </SubMenu>
+      )
+    }
+
+    // Regular menu item
+    return (
+      <MenuItem
+        key={`item-${index}`}
+        href={item.href}
+        icon={renderIcon(item.icon)}
+        target={item.target}
+        disabled={item.disabled}
+      >
+        {item.label}
+      </MenuItem>
+    )
+  })
+}
 
 const VerticalMenu = ({ scrollMenu }: Props) => {
   // Hooks
@@ -42,6 +96,7 @@ const VerticalMenu = ({ scrollMenu }: Props) => {
 
   // Vars
   const { transitionDuration, isBreakpointReached } = verticalNavOptions
+  const menuData = verticalMenuData()
 
   const ScrollWrapper = isBreakpointReached ? 'div' : PerfectScrollbar
 
@@ -59,31 +114,16 @@ const VerticalMenu = ({ scrollMenu }: Props) => {
             onScrollY: container => scrollMenu(container, true)
           })}
     >
-      {/* Incase you also want to scroll NavHeader to scroll with Vertical Menu, remove NavHeader from above and paste it below this comment */}
       {/* Vertical Menu */}
       <Menu
         popoutMenuOffset={{ mainAxis: 27 }}
         menuItemStyles={menuItemStyles(verticalNavOptions, theme)}
         renderExpandIcon={({ open }) => <RenderExpandIcon open={open} transitionDuration={transitionDuration} />}
-        renderExpandedMenuItemIcon={{ icon: <i className='bx-bxs-circle' /> }}
+        renderExpandedMenuItemIcon={{ icon: <i className='tabler-circle-filled' style={{ fontSize: 6 }} /> }}
         menuSectionStyles={menuSectionStyles(verticalNavOptions, theme)}
       >
-        <MenuItem href='/home' icon={<i className='bx-home' />}>
-          Home
-        </MenuItem>
-        <MenuItem href='/about' icon={<i className='bx-info-circle' />}>
-          About
-        </MenuItem>
+        {renderMenuItems(menuData)}
       </Menu>
-      {/* <Menu
-        popoutMenuOffset={{ mainAxis: 27 }}
-        menuItemStyles={menuItemStyles(verticalNavOptions, theme)}
-        renderExpandIcon={({ open }) => <RenderExpandIcon open={open} transitionDuration={transitionDuration} />}
-        renderExpandedMenuItemIcon={{ icon: <i className='bx-bxs-circle' /> }}
-        menuSectionStyles={menuSectionStyles(verticalNavOptions, theme)}
-      >
-        <GenerateVerticalMenu menuData={menuData(dictionary)} />
-      </Menu> */}
     </ScrollWrapper>
   )
 }

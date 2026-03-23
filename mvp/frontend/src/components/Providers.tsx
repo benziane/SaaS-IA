@@ -30,6 +30,9 @@ import ThemeProvider from '@components/theme';
 // Toast Imports (MVP)
 import { Toaster } from 'sonner';
 
+// Command Palette (MVP)
+import CommandPalette from '@/components/ui/CommandPalette';
+
 // Lib Imports
 import { queryClient } from '@/lib/queryClient';
 
@@ -75,7 +78,10 @@ export function Providers({
                 closeButton
                 duration={6000}
               />
-              
+
+              {/* Command Palette - Ctrl+K (MVP) */}
+              <CommandPalette />
+
               {/* React Query Devtools - Development Only (MVP) */}
               {process.env.NODE_ENV === 'development' && (
                 <ReactQueryDevtools initialIsOpen={false} buttonPosition="bottom-right" />
