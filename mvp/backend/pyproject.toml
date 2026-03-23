@@ -67,7 +67,7 @@ pytest-cov = "^4.1.0"
 httpx = "^0.25.0"
 
 # Linting & Formatting
-ruff = "^0.1.9"
+ruff = "^0.15.7"
 mypy = "^1.8.0"
 black = "^23.12.0"
 
