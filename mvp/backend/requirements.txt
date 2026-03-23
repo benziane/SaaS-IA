@@ -33,7 +33,7 @@ assemblyai==0.17.0
 yt-dlp>=2025.11.12
 
 # AI Providers (from WeLAB)
-google-generativeai==0.8.3
+google-generativeai==0.8.6
 anthropic==0.39.0
 openai==1.54.5  # For Groq (OpenAI-compatible API)
 
