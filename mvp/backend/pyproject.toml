@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "saas-ia-mvp"
-version = "1.0.0"
+version = "2.6.0"
 description = "SaaS IA MVP - Plateforme modulaire d'intelligence artificielle"
 authors = ["SaaS-IA Team"]
 readme = "README.md"
@@ -9,70 +9,70 @@ packages = [{include = "app"}]
 [tool.poetry.dependencies]
 python = "^3.11"
 # FastAPI & Server
-fastapi = "^0.109.0"
-uvicorn = {extras = ["standard"], version = "^0.27.0"}
+fastapi = "^0.135.1"
+uvicorn = {extras = ["standard"], version = "^0.42.0"}
 
 # Database
-sqlmodel = "^0.0.14"
+sqlmodel = "^0.0.37"
 psycopg2-binary = "^2.9.9"
-asyncpg = "^0.29.0"
-aiosqlite = "^0.19.0"
-alembic = "^1.13.0"
+asyncpg = "^0.31.0"
+aiosqlite = "^0.22.1"
+alembic = "^1.18.4"
 
 # Cache & Queue
-redis = "^5.0.1"
-celery = {extras = ["redis"], version = "^5.3.6"}
+redis = "^5.2.1"
+celery = {extras = ["redis"], version = "^5.6.2"}
 flower = "^2.0.1"
 
+# Payments
+stripe = "^8.0.0"
+
 # Validation & Settings
-pydantic = {extras = ["email"], version = "^2.5.0"}
-pydantic-settings = "^2.1.0"
+pydantic = {extras = ["email"], version = "^2.12.5"}
+pydantic-settings = "^2.13.1"
 email-validator = "^2.1.0"
 
 # Auth
 python-jose = {extras = ["cryptography"], version = "^3.3.0"}
 passlib = {extras = ["bcrypt"], version = "^1.7.4"}
-bcrypt = "4.0.1"  # Pin bcrypt to compatible version with passlib
-python-multipart = "^0.0.6"
+bcrypt = "4.2.1"  # Pin bcrypt to compatible version with passlib
+python-multipart = "^0.0.22"
 
 # AI Services
-assemblyai = "^0.17.0"
-yt-dlp = "^2025.11.12"
+assemblyai = "^0.58.0"
+yt-dlp = "^2026.3.17"
 
-# AI Providers (from WeLAB)
-google-generativeai = "^0.8.3"
-anthropic = "^0.39.0"
-openai = "^1.54.5"  # For Groq (OpenAI-compatible API)
+# AI Providers
+google-generativeai = "^0.8.6"
+anthropic = "^0.86.0"
+openai = "^1.54.5"  # Pinned v1.x for Groq compatibility
 
 # Utils
-python-dotenv = "^1.0.0"
-structlog = "^24.1.0"
-python-dateutil = "^2.8.0"
+python-dotenv = "^1.2.2"
+structlog = "^25.5.0"
+python-dateutil = "^2.9.0"
 
 # Monitoring & Observability
-prometheus-client = "^0.19.0"
-pyyaml = "^6.0.1"
+prometheus-client = "^0.24.1"
+pyyaml = "^6.0.3"
 
 # Rate Limiting
 slowapi = "^0.1.9"
 
-# Payments
-stripe = "^8.0.0"
-
 [tool.poetry.group.dev.dependencies]
 # Testing
-pytest = "^7.4.0"
-pytest-asyncio = "^0.21.0"
-pytest-cov = "^4.1.0"
-httpx = "^0.25.0"
+pytest = "^8.3.4"
+pytest-asyncio = "^0.25.0"
+pytest-cov = "^7.1.0"
+httpx = "^0.28.1"
 
 # Linting & Formatting
-ruff = "^0.1.9"
-mypy = "^1.8.0"
-black = "^23.12.0"
+ruff = "^0.15.7"
+mypy = "^1.19.1"
+black = "^26.3.1"
 
 # Security
-bandit = "^1.7.5"
+bandit = "^1.9.4"
 
 [tool.ruff]
 line-length = 120
@@ -126,4 +126,3 @@ exclude_lines = [
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
-
