@@ -24,6 +24,7 @@ from app.modules.knowledge.schemas import (
 from app.modules.knowledge.service import KnowledgeService
 from app.modules.billing.service import BillingService
 from app.modules.billing.middleware import require_ai_call_quota
+from app.cache import cache_get, cache_set
 from app.rate_limit import limiter
 
 router = APIRouter()
@@ -158,6 +159,12 @@ async def search_documents(
 
     Rate limit: 20 requests/minute
     """
+    import hashlib
+    cache_key = f"search:{current_user.id}:{hashlib.md5(body.query.encode()).hexdigest()}"
+    cached = await cache_get(cache_key)
+    if cached is not None:
+        return SearchResponse(**cached)
+
     results = await KnowledgeService.search(
         user_id=current_user.id,
         query=body.query,
@@ -165,11 +172,14 @@ async def search_documents(
         limit=body.limit,
     )
 
-    return SearchResponse(
+    # Cache for 2 minutes
+    response = SearchResponse(
         query=body.query,
         results=[SearchResult(**r) for r in results],
         total=len(results),
     )
+    await cache_set(cache_key, response.model_dump(), ttl_seconds=120)
+    return response
 
 
 @router.post("/ask", response_model=AskResponse)

@@ -11,6 +11,7 @@ from app.models.user import User
 from app.modules.billing.schemas import CheckoutRequest, CheckoutResponse, PlanRead, PortalResponse, QuotaRead
 from app.modules.billing.service import BillingService
 from app.modules.billing.stripe_service import StripeService
+from app.cache import cache_get, cache_set, cache_delete
 from app.rate_limit import limiter
 
 router = APIRouter()
@@ -27,8 +28,18 @@ async def list_plans(
 
     Rate limit: 30 requests/minute
     """
+    # Try cache first
+    cached = await cache_get("plans:active")
+    if cached is not None:
+        return cached
+
     plans = await BillingService.get_or_create_plans(session)
-    return [p for p in plans if p.is_active]
+    result = [p for p in plans if p.is_active]
+
+    # Cache for 5 minutes
+    await cache_set("plans:active", [PlanRead.model_validate(p).model_dump() for p in result], ttl_seconds=300)
+
+    return result
 
 
 @router.get("/quota", response_model=QuotaRead)
@@ -43,6 +54,12 @@ async def get_my_quota(
 
     Rate limit: 30 requests/minute
     """
+    # Try cache first (short TTL because quotas change frequently)
+    cache_key = f"quota:{current_user.id}"
+    cached = await cache_get(cache_key)
+    if cached is not None:
+        return QuotaRead(**cached)
+
     quota, plan = await BillingService.get_user_quota(current_user.id, session)
 
     # Calculate max usage across all resource types as overall percent
@@ -55,7 +72,7 @@ async def get_my_quota(
         pcts.append(quota.ai_calls_used / plan.max_ai_calls_month)
     usage_percent = round(max(pcts) * 100, 1) if pcts else 0.0
 
-    return QuotaRead(
+    result = QuotaRead(
         plan=PlanRead.model_validate(plan),
         transcriptions_used=quota.transcriptions_used,
         transcriptions_limit=plan.max_transcriptions_month,
@@ -67,6 +84,11 @@ async def get_my_quota(
         period_end=quota.period_end,
         usage_percent=usage_percent,
     )
+
+    # Cache for 30 seconds
+    await cache_set(cache_key, result.model_dump(), ttl_seconds=30)
+
+    return result
 
 
 @router.post("/checkout", response_model=CheckoutResponse)
