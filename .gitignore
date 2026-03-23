@@ -186,4 +186,8 @@ checkpoints/
 credentials.json
 secrets.json
 
+# Production files with secrets
+mvp/fichiers_prod/
+prod/
+
 sneat-mui-nextjs-admin-template-v3.0.0/

@@ -1,0 +1,285 @@
+"""
+Seed data script for SaaS-IA.
+
+Creates demo data for development and testing:
+- Admin user + demo user
+- Default billing plans (Free, Pro, Enterprise)
+- Sample transcriptions
+- Sample pipeline
+- Sample workspace
+
+Usage:
+    cd mvp/backend
+    python -m scripts.seed_data
+
+Or from Docker:
+    docker exec saas-ia-backend python -m scripts.seed_data
+"""
+
+import asyncio
+import os
+import sys
+from datetime import date, datetime
+from uuid import uuid4
+
+# Add the backend directory to the path
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+
+async def seed():
+    """Seed the database with demo data."""
+    from app.config import settings
+    from app.database import init_db, get_session_context
+    from app.auth import get_password_hash
+    from app.models.user import User, Role
+    from app.models.transcription import Transcription, TranscriptionStatus
+    from app.models.billing import Plan, PlanName, UserQuota
+    from app.models.pipeline import Pipeline, PipelineStatus
+    from app.models.workspace import Workspace, WorkspaceMember, WorkspaceRole
+    from sqlmodel import select
+    import json
+
+    print(f"Seeding database: {settings.DATABASE_URL[:50]}...")
+    print()
+
+    # Initialize tables
+    await init_db()
+
+    async with get_session_context() as session:
+        # ---------------------------------------------------------------
+        # 1. Users
+        # ---------------------------------------------------------------
+        print("[1/6] Creating users...")
+
+        # Check if admin already exists
+        result = await session.execute(select(User).where(User.email == "admin@saas-ia.com"))
+        admin = result.scalar_one_or_none()
+
+        if not admin:
+            admin = User(
+                email="admin@saas-ia.com",
+                hashed_password=get_password_hash("Admin123!"),
+                full_name="Admin SaaS-IA",
+                role=Role.ADMIN,
+                is_active=True,
+            )
+            session.add(admin)
+            print("  + admin@saas-ia.com (password: Admin123!)")
+        else:
+            print("  = admin@saas-ia.com already exists")
+
+        result = await session.execute(select(User).where(User.email == "demo@saas-ia.com"))
+        demo_user = result.scalar_one_or_none()
+
+        if not demo_user:
+            demo_user = User(
+                email="demo@saas-ia.com",
+                hashed_password=get_password_hash("Demo123!"),
+                full_name="Demo User",
+                role=Role.USER,
+                is_active=True,
+            )
+            session.add(demo_user)
+            print("  + demo@saas-ia.com (password: Demo123!)")
+        else:
+            print("  = demo@saas-ia.com already exists")
+
+        await session.flush()
+
+        # ---------------------------------------------------------------
+        # 2. Billing Plans
+        # ---------------------------------------------------------------
+        print("[2/6] Creating billing plans...")
+
+        result = await session.execute(select(Plan))
+        existing_plans = list(result.scalars().all())
+
+        if not existing_plans:
+            plans = [
+                Plan(
+                    name=PlanName.FREE,
+                    display_name="Free",
+                    max_transcriptions_month=10,
+                    max_audio_minutes_month=60,
+                    max_ai_calls_month=50,
+                    price_cents=0,
+                ),
+                Plan(
+                    name=PlanName.PRO,
+                    display_name="Pro",
+                    max_transcriptions_month=100,
+                    max_audio_minutes_month=600,
+                    max_ai_calls_month=500,
+                    price_cents=1900,
+                ),
+                Plan(
+                    name=PlanName.ENTERPRISE,
+                    display_name="Enterprise",
+                    max_transcriptions_month=999999,
+                    max_audio_minutes_month=999999,
+                    max_ai_calls_month=999999,
+                    price_cents=0,
+                ),
+            ]
+            for plan in plans:
+                session.add(plan)
+            await session.flush()
+            print("  + Free, Pro, Enterprise plans created")
+            free_plan = plans[0]
+        else:
+            print(f"  = {len(existing_plans)} plans already exist")
+            free_plan = next((p for p in existing_plans if p.name == PlanName.FREE), existing_plans[0])
+
+        # ---------------------------------------------------------------
+        # 3. User Quotas
+        # ---------------------------------------------------------------
+        print("[3/6] Creating user quotas...")
+
+        for user in [admin, demo_user]:
+            result = await session.execute(
+                select(UserQuota).where(UserQuota.user_id == user.id)
+            )
+            if not result.scalar_one_or_none():
+                from dateutil.relativedelta import relativedelta
+                period_start = date.today().replace(day=1)
+                period_end = (period_start + relativedelta(months=1)) - relativedelta(days=1)
+                quota = UserQuota(
+                    user_id=user.id,
+                    plan_id=free_plan.id,
+                    period_start=period_start,
+                    period_end=period_end,
+                )
+                session.add(quota)
+                print(f"  + Quota for {user.email}")
+            else:
+                print(f"  = Quota for {user.email} already exists")
+
+        await session.flush()
+
+        # ---------------------------------------------------------------
+        # 4. Sample Transcriptions
+        # ---------------------------------------------------------------
+        print("[4/6] Creating sample transcriptions...")
+
+        result = await session.execute(
+            select(Transcription).where(Transcription.user_id == demo_user.id)
+        )
+        if not result.scalars().first():
+            samples = [
+                Transcription(
+                    user_id=demo_user.id,
+                    video_url="https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+                    language="en",
+                    source_type="youtube",
+                    status=TranscriptionStatus.COMPLETED,
+                    text="This is a sample completed transcription for demo purposes. "
+                         "It contains example text that would normally come from AssemblyAI.",
+                    confidence=0.95,
+                    duration_seconds=212,
+                    completed_at=datetime.utcnow(),
+                ),
+                Transcription(
+                    user_id=demo_user.id,
+                    video_url="https://www.youtube.com/watch?v=jNQXAC9IVRw",
+                    language="en",
+                    source_type="youtube",
+                    status=TranscriptionStatus.COMPLETED,
+                    text="Another sample transcription. This demonstrates the multi-source "
+                         "capability of the platform.",
+                    confidence=0.92,
+                    duration_seconds=19,
+                    completed_at=datetime.utcnow(),
+                ),
+                Transcription(
+                    user_id=demo_user.id,
+                    video_url="upload://presentation.mp3",
+                    language="fr",
+                    source_type="upload",
+                    original_filename="presentation.mp3",
+                    status=TranscriptionStatus.PENDING,
+                ),
+            ]
+            for t in samples:
+                session.add(t)
+            print("  + 3 sample transcriptions (2 completed, 1 pending)")
+        else:
+            print("  = Transcriptions already exist for demo user")
+
+        # ---------------------------------------------------------------
+        # 5. Sample Pipeline
+        # ---------------------------------------------------------------
+        print("[5/6] Creating sample pipeline...")
+
+        result = await session.execute(
+            select(Pipeline).where(Pipeline.user_id == demo_user.id)
+        )
+        if not result.scalars().first():
+            pipeline = Pipeline(
+                user_id=demo_user.id,
+                name="YouTube to Summary (FR)",
+                description="Transcribe a YouTube video and generate a French summary",
+                steps_json=json.dumps([
+                    {"id": "step1", "type": "transcription", "config": {"language": "auto"}, "position": 0},
+                    {"id": "step2", "type": "summarize", "config": {"provider": "gemini"}, "position": 1},
+                    {"id": "step3", "type": "translate", "config": {"target_language": "fr", "provider": "gemini"}, "position": 2},
+                ]),
+                status=PipelineStatus.ACTIVE,
+            )
+            session.add(pipeline)
+            print("  + 1 sample pipeline (3 steps)")
+        else:
+            print("  = Pipeline already exists for demo user")
+
+        # ---------------------------------------------------------------
+        # 6. Sample Workspace
+        # ---------------------------------------------------------------
+        print("[6/6] Creating sample workspace...")
+
+        result = await session.execute(
+            select(Workspace).where(Workspace.owner_id == admin.id)
+        )
+        if not result.scalars().first():
+            workspace = Workspace(
+                name="SaaS-IA Team",
+                description="Default team workspace for collaboration",
+                owner_id=admin.id,
+            )
+            session.add(workspace)
+            await session.flush()
+
+            # Add admin as owner
+            owner_member = WorkspaceMember(
+                workspace_id=workspace.id,
+                user_id=admin.id,
+                role=WorkspaceRole.OWNER,
+            )
+            session.add(owner_member)
+
+            # Add demo user as editor
+            editor_member = WorkspaceMember(
+                workspace_id=workspace.id,
+                user_id=demo_user.id,
+                role=WorkspaceRole.EDITOR,
+            )
+            session.add(editor_member)
+            print("  + 1 workspace with 2 members (admin=owner, demo=editor)")
+        else:
+            print("  = Workspace already exists")
+
+        # ---------------------------------------------------------------
+        # Commit
+        # ---------------------------------------------------------------
+        await session.commit()
+
+    print()
+    print("Seed complete!")
+    print()
+    print("Login credentials:")
+    print("  Admin: admin@saas-ia.com / Admin123!")
+    print("  Demo:  demo@saas-ia.com / Demo123!")
+    print()
+    print("Access the app at http://localhost:3002")
+
+
+if __name__ == "__main__":
+    asyncio.run(seed())
