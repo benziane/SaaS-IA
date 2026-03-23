@@ -24,6 +24,8 @@ from app.schemas.transcription import (
     MetadataRequest, YouTubeMetadata,
     AutoChapterResponse, ChapterSummary,
     VideoDownloadRequest,
+    LiveStreamCaptureRequest, LiveStreamStatusResponse, LiveStreamCaptureResponse,
+    VideoFrameAnalysis, VideoAnalyzeRequest, VideoAnalyzeResponse,
 )
 from app.modules.transcription.service import TranscriptionService
 from app.modules.transcription.websocket import get_debug_manager
@@ -1003,5 +1005,157 @@ async def auto_chapter(
         chapters=chapter_summaries,
         full_summary=full_summary,
         provider=transcript.get("provider", ""),
+    )
+
+
+@router.post("/stream/status")
+@limiter.limit("20/minute")
+async def check_stream_status(
+    request: Request,
+    body: LiveStreamCaptureRequest,
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Check if a URL is a live stream and return its status.
+
+    Rate limit: 20 requests/minute
+    """
+    from app.transcription.livestream_service import LiveStreamService
+
+    result = await LiveStreamService.check_stream_status(body.stream_url)
+
+    return LiveStreamStatusResponse(
+        is_live=result.get("is_live", False),
+        was_live=result.get("was_live", False),
+        title=result.get("title", ""),
+        uploader=result.get("uploader", ""),
+        concurrent_viewers=result.get("concurrent_viewers"),
+        url=result.get("url", body.stream_url),
+        error=result.get("error"),
+    )
+
+
+@router.post("/stream/capture")
+@limiter.limit("2/minute")
+async def capture_live_stream(
+    request: Request,
+    body: LiveStreamCaptureRequest,
+    current_user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+):
+    """
+    Capture a segment of a live stream and optionally transcribe it.
+
+    Records for the specified duration (max 30 minutes),
+    then transcribes using faster-whisper.
+
+    Rate limit: 2 requests/minute
+    """
+    from app.transcription.livestream_service import LiveStreamService
+
+    capture = await LiveStreamService.capture_stream(
+        stream_url=body.stream_url,
+        duration_seconds=body.duration_seconds,
+    )
+
+    if not capture or not capture.get("success"):
+        return LiveStreamCaptureResponse(
+            success=False,
+            url=body.stream_url,
+            error=capture.get("error", "Capture failed") if capture else "Capture failed",
+        )
+
+    # Auto-transcribe the captured audio
+    transcript_text = ""
+    provider = ""
+    file_path = capture.get("file_path", "")
+
+    if file_path:
+        try:
+            from app.transcription.whisper_service import transcribe_with_whisper
+
+            result = await transcribe_with_whisper(file_path)
+            if result:
+                transcript_text = result.get("text", "")
+                provider = result.get("provider", "whisper")
+        except Exception:
+            pass
+
+    return LiveStreamCaptureResponse(
+        success=True,
+        file_path=file_path,
+        title=capture.get("title", ""),
+        duration_seconds=capture.get("duration_seconds", 0),
+        file_size=capture.get("file_size", 0),
+        capture_method=capture.get("capture_method", ""),
+        url=body.stream_url,
+        transcript=transcript_text if transcript_text else None,
+        provider=provider if provider else None,
+    )
+
+
+@router.post("/video/analyze")
+@limiter.limit("3/minute")
+async def analyze_video(
+    request: Request,
+    body: VideoAnalyzeRequest,
+    current_user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+):
+    """
+    Download a video, extract frames, and analyze each with Vision AI.
+
+    Uses yt-dlp for download, moviepy for frame extraction,
+    and Gemini Vision for analysis.
+
+    Rate limit: 3 requests/minute
+    """
+    from app.transcription.youtube_transcript import download_video, extract_video_id
+    from app.transcription.video_tools import VideoToolsService
+
+    # Download video
+    video_data = await download_video(body.video_url)
+    if not video_data or not video_data.get("file_path"):
+        raise HTTPException(status_code=400, detail="Could not download video")
+
+    # Analyze frames
+    analyses = await VideoToolsService.analyze_video_frames(
+        video_path=video_data["file_path"],
+        interval_seconds=body.interval_seconds,
+        max_frames=body.max_frames,
+        prompt=body.prompt,
+    )
+
+    frames = [
+        VideoFrameAnalysis(
+            timestamp=a.get("timestamp", 0),
+            description=a.get("description", ""),
+        )
+        for a in analyses
+    ]
+
+    # Generate summary from all frame descriptions
+    summary = ""
+    if frames:
+        all_descriptions = "\n".join(
+            f"[{f.timestamp}s] {f.description}" for f in frames
+        )
+        try:
+            from app.ai_assistant.service import AIAssistantService
+            result = await AIAssistantService.process_text_with_provider(
+                text=f"Based on these video frame descriptions, provide a concise summary of the video content:\n\n{all_descriptions[:5000]}",
+                task="summarize",
+                provider_name="gemini",
+            )
+            summary = result.get("processed_text", "")
+        except Exception:
+            summary = all_descriptions[:500]
+
+    return VideoAnalyzeResponse(
+        video_id=extract_video_id(body.video_url) or "",
+        title=video_data.get("title", ""),
+        frames_analyzed=len(frames),
+        analyses=frames,
+        summary=summary,
     )
 

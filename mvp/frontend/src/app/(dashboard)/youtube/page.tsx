@@ -22,8 +22,8 @@ import {
 } from '@mui/material';
 import { useMutation } from '@tanstack/react-query';
 
-import { autoChapter, getMetadata, smartTranscribe, transcribePlaylist } from '@/features/transcription/api';
-import type { AutoChapterResponse, PlaylistTranscribeResponse, SmartTranscribeResponse, YouTubeMetadata } from '@/features/transcription/types';
+import { autoChapter, getMetadata, smartTranscribe, transcribePlaylist, checkStreamStatus, captureStream, analyzeVideo } from '@/features/transcription/api';
+import type { AutoChapterResponse, LiveStreamCapture, LiveStreamStatus, PlaylistTranscribeResponse, SmartTranscribeResponse, VideoAnalyzeResponse, YouTubeMetadata } from '@/features/transcription/types';
 
 function formatDuration(seconds: number): string {
   const h = Math.floor(seconds / 3600);
@@ -122,14 +122,23 @@ export default function YouTubePage() {
   const chapterMutation = useMutation<AutoChapterResponse, Error, void>({
     mutationFn: () => autoChapter(url),
   });
+  const streamStatusMutation = useMutation<LiveStreamStatus, Error, void>({
+    mutationFn: () => checkStreamStatus(url),
+  });
+  const captureMutation = useMutation<LiveStreamCapture, Error, void>({
+    mutationFn: () => captureStream(url, 300),
+  });
+  const videoAnalyzeMutation = useMutation<VideoAnalyzeResponse, Error, void>({
+    mutationFn: () => analyzeVideo(url),
+  });
 
-  const isLoading = smartMutation.isPending || metadataMutation.isPending || playlistMutation.isPending || chapterMutation.isPending;
+  const isLoading = smartMutation.isPending || metadataMutation.isPending || playlistMutation.isPending || chapterMutation.isPending || captureMutation.isPending || videoAnalyzeMutation.isPending;
 
   return (
     <Box sx={{ p: 3 }}>
       <Typography variant="h4" sx={{ mb: 1 }}>YouTube Studio</Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-        Smart transcription, metadata extraction, playlist processing, and auto-chaptering
+        Smart transcription, metadata extraction, playlist processing, auto-chaptering, live stream capture, and video analysis
       </Typography>
 
       <Card sx={{ mb: 3 }}>
@@ -155,6 +164,8 @@ export default function YouTubePage() {
             <Tab label="Metadata" />
             <Tab label="Playlist Bulk" />
             <Tab label="Auto-Chapter" />
+            <Tab label="Live Stream" />
+            <Tab label="Video Analysis" />
           </Tabs>
 
           {tab === 0 && (
@@ -192,6 +203,33 @@ export default function YouTubePage() {
               </Typography>
               <Button variant="contained" color="warning" onClick={() => chapterMutation.mutate()} disabled={!url.trim() || isLoading}>
                 {chapterMutation.isPending ? <><CircularProgress size={20} sx={{ mr: 1 }} color="inherit" />Analyzing...</> : 'Auto-Chapter'}
+              </Button>
+            </Box>
+          )}
+
+          {tab === 4 && (
+            <Box>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                Capture a segment of a live stream (YouTube Live, Twitch) and auto-transcribe it
+              </Typography>
+              <Box sx={{ display: 'flex', gap: 2 }}>
+                <Button variant="outlined" onClick={() => streamStatusMutation.mutate()} disabled={!url.trim() || isLoading}>
+                  {streamStatusMutation.isPending ? 'Checking...' : 'Check Status'}
+                </Button>
+                <Button variant="contained" color="error" onClick={() => captureMutation.mutate()} disabled={!url.trim() || isLoading}>
+                  {captureMutation.isPending ? <><CircularProgress size={20} sx={{ mr: 1 }} color="inherit" />Recording 5 min...</> : 'Capture Stream (5 min)'}
+                </Button>
+              </Box>
+            </Box>
+          )}
+
+          {tab === 5 && (
+            <Box>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                Download video, extract frames, and analyze each with AI Vision
+              </Typography>
+              <Button variant="contained" color="info" onClick={() => videoAnalyzeMutation.mutate()} disabled={!url.trim() || isLoading}>
+                {videoAnalyzeMutation.isPending ? <><CircularProgress size={20} sx={{ mr: 1 }} color="inherit" />Analyzing...</> : 'Analyze Video Frames'}
               </Button>
             </Box>
           )}
@@ -281,11 +319,79 @@ export default function YouTubePage() {
         </Card>
       )}
 
+      {/* Stream Status */}
+      {streamStatusMutation.data && (
+        <Card sx={{ mb: 3 }}>
+          <CardContent>
+            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', mb: 1 }}>
+              <Typography variant="h6">Stream Status</Typography>
+              {streamStatusMutation.data.is_live ? (
+                <Chip label="LIVE" color="error" size="small" />
+              ) : (
+                <Chip label="OFFLINE" size="small" />
+              )}
+            </Box>
+            <Typography variant="body2">{streamStatusMutation.data.title}</Typography>
+            <Typography variant="caption" color="text.secondary">
+              {streamStatusMutation.data.uploader}
+              {streamStatusMutation.data.concurrent_viewers != null && ` | ${formatNumber(streamStatusMutation.data.concurrent_viewers)} viewers`}
+            </Typography>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Stream Capture Result */}
+      {captureMutation.data?.success && (
+        <Card sx={{ mb: 3 }}>
+          <CardContent>
+            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', mb: 2 }}>
+              <Typography variant="h6">Stream Captured</Typography>
+              <Chip label={captureMutation.data.capture_method} size="small" color="primary" />
+              <Chip label={formatDuration(captureMutation.data.duration_seconds)} size="small" variant="outlined" />
+            </Box>
+            {captureMutation.data.transcript && (
+              <Box sx={{ bgcolor: 'grey.50', p: 2, borderRadius: 1, maxHeight: 300, overflow: 'auto' }}>
+                <Typography variant="subtitle2" sx={{ mb: 1 }}>Auto-Transcription (Whisper)</Typography>
+                <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
+                  {captureMutation.data.transcript}
+                </Typography>
+              </Box>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Video Analysis Result */}
+      {videoAnalyzeMutation.data && (
+        <Card sx={{ mb: 3 }}>
+          <CardContent>
+            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', mb: 2 }}>
+              <Typography variant="h6">{videoAnalyzeMutation.data.title || 'Video Analysis'}</Typography>
+              <Chip label={`${videoAnalyzeMutation.data.frames_analyzed} frames`} size="small" color="info" />
+            </Box>
+            {videoAnalyzeMutation.data.summary && (
+              <Box sx={{ p: 2, bgcolor: 'info.50', borderRadius: 1, border: '1px solid', borderColor: 'info.200', mb: 2 }}>
+                <Typography variant="subtitle2" sx={{ mb: 1 }}>Video Summary</Typography>
+                <Typography variant="body2">{videoAnalyzeMutation.data.summary}</Typography>
+              </Box>
+            )}
+            {videoAnalyzeMutation.data.analyses.map((frame, i) => (
+              <Box key={i} sx={{ mb: 1.5, p: 1.5, border: '1px solid', borderColor: 'divider', borderRadius: 1 }}>
+                <Chip label={`${formatDuration(Math.round(frame.timestamp))}`} size="small" variant="outlined" sx={{ mr: 1 }} />
+                <Typography variant="body2" component="span">{frame.description}</Typography>
+              </Box>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
       {/* Errors */}
       {smartMutation.isError && <Alert severity="error" sx={{ mb: 2 }}>{smartMutation.error.message}</Alert>}
       {metadataMutation.isError && <Alert severity="error" sx={{ mb: 2 }}>{metadataMutation.error.message}</Alert>}
       {playlistMutation.isError && <Alert severity="error" sx={{ mb: 2 }}>{playlistMutation.error.message}</Alert>}
       {chapterMutation.isError && <Alert severity="error" sx={{ mb: 2 }}>{chapterMutation.error.message}</Alert>}
+      {captureMutation.isError && <Alert severity="error" sx={{ mb: 2 }}>{captureMutation.error.message}</Alert>}
+      {videoAnalyzeMutation.isError && <Alert severity="error" sx={{ mb: 2 }}>{videoAnalyzeMutation.error.message}</Alert>}
     </Box>
   );
 }

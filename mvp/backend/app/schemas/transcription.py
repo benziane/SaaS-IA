@@ -259,3 +259,60 @@ class AutoChapterResponse(BaseModel):
     full_summary: str = ""
     provider: str = ""
 
+
+class LiveStreamCaptureRequest(BaseModel):
+    """Request for live stream capture."""
+    stream_url: str = Field(..., min_length=1, max_length=2000)
+    duration_seconds: int = Field(default=300, ge=30, le=1800)
+
+
+class LiveStreamStatusResponse(BaseModel):
+    """Live stream status check response."""
+    is_live: bool = False
+    was_live: bool = False
+    title: str = ""
+    uploader: str = ""
+    concurrent_viewers: Optional[int] = None
+    url: str = ""
+    error: Optional[str] = None
+
+
+class LiveStreamCaptureResponse(BaseModel):
+    """Response from live stream capture."""
+    success: bool = False
+    file_path: Optional[str] = None
+    title: str = ""
+    duration_seconds: int = 0
+    file_size: int = 0
+    capture_method: str = ""
+    url: str = ""
+    transcript: Optional[str] = None
+    provider: Optional[str] = None
+    error: Optional[str] = None
+
+
+class VideoFrameAnalysis(BaseModel):
+    """A single frame analysis result."""
+    timestamp: float = 0
+    description: str = ""
+
+
+class VideoAnalyzeRequest(BaseModel):
+    """Request for video frame analysis."""
+    video_url: str = Field(..., min_length=1, max_length=2000)
+    interval_seconds: int = Field(default=60, ge=10, le=300)
+    max_frames: int = Field(default=10, ge=1, le=30)
+    prompt: str = Field(
+        default="Describe what is shown in this video frame: content, text, people, actions.",
+        max_length=500,
+    )
+
+
+class VideoAnalyzeResponse(BaseModel):
+    """Response from video analysis."""
+    video_id: str = ""
+    title: str = ""
+    frames_analyzed: int = 0
+    analyses: list[VideoFrameAnalysis] = []
+    summary: str = ""
+    error: Optional[str] = None

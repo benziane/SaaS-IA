@@ -9,6 +9,8 @@ import apiClient from '@/lib/apiClient';
 
 import type {
   AutoChapterResponse,
+  LiveStreamCapture,
+  LiveStreamStatus,
   PlaylistTranscribeResponse,
   SmartTranscribeResponse,
   Transcription,
@@ -17,6 +19,7 @@ import type {
   TranscriptionListResponse,
   TranscriptionStats,
   TranscriptionUploadRequest,
+  VideoAnalyzeResponse,
   YouTubeMetadata,
 } from './types';
 
@@ -33,6 +36,9 @@ const TRANSCRIPTION_ENDPOINTS = {
   METADATA: '/api/transcription/metadata',
   PLAYLIST: '/api/transcription/playlist',
   AUTO_CHAPTER: '/api/transcription/auto-chapter',
+  STREAM_STATUS: '/api/transcription/stream/status',
+  STREAM_CAPTURE: '/api/transcription/stream/capture',
+  VIDEO_ANALYZE: '/api/transcription/video/analyze',
   GET: (id: string) => `/api/transcription/${id}`,
   DELETE: (id: string) => `/api/transcription/${id}`,
 } as const;
@@ -200,6 +206,30 @@ export async function autoChapter(videoUrl: string): Promise<AutoChapterResponse
   return response.data;
 }
 
+/**
+ * Check the status of a live stream
+ */
+export async function checkStreamStatus(streamUrl: string): Promise<LiveStreamStatus> {
+  const response = await apiClient.post(TRANSCRIPTION_ENDPOINTS.STREAM_STATUS, { stream_url: streamUrl });
+  return response.data;
+}
+
+/**
+ * Capture a segment of a live stream
+ */
+export async function captureStream(streamUrl: string, durationSeconds: number = 300): Promise<LiveStreamCapture> {
+  const response = await apiClient.post(TRANSCRIPTION_ENDPOINTS.STREAM_CAPTURE, { stream_url: streamUrl, duration_seconds: durationSeconds });
+  return response.data;
+}
+
+/**
+ * Analyze video frames with AI Vision
+ */
+export async function analyzeVideo(videoUrl: string, intervalSeconds: number = 60, maxFrames: number = 10): Promise<VideoAnalyzeResponse> {
+  const response = await apiClient.post(TRANSCRIPTION_ENDPOINTS.VIDEO_ANALYZE, { video_url: videoUrl, interval_seconds: intervalSeconds, max_frames: maxFrames });
+  return response.data;
+}
+
 /* ========================================================================
    EXPORTS
    ======================================================================== */
@@ -215,6 +245,9 @@ export const transcriptionApi = {
   getMetadata,
   transcribePlaylist,
   autoChapter,
+  checkStreamStatus,
+  captureStream,
+  analyzeVideo,
 } as const;
 
 export default transcriptionApi;

@@ -188,3 +188,40 @@ export interface AutoChapterResponse {
   provider: string;
 }
 
+export interface LiveStreamStatus {
+  is_live: boolean;
+  was_live: boolean;
+  title: string;
+  uploader: string;
+  concurrent_viewers: number | null;
+  url: string;
+  error: string | null;
+}
+
+export interface LiveStreamCapture {
+  success: boolean;
+  file_path: string | null;
+  title: string;
+  duration_seconds: number;
+  file_size: number;
+  capture_method: string;
+  url: string;
+  transcript: string | null;
+  provider: string | null;
+  error: string | null;
+}
+
+export interface VideoFrameAnalysis {
+  timestamp: number;
+  description: string;
+}
+
+export interface VideoAnalyzeResponse {
+  video_id: string;
+  title: string;
+  frames_analyzed: number;
+  analyses: VideoFrameAnalysis[];
+  summary: string;
+  error: string | null;
+}
+
