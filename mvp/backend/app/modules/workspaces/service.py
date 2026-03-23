@@ -285,3 +285,74 @@ class WorkspaceService:
             )
         )
         return result.scalar_one()
+
+    @staticmethod
+    async def is_member(workspace_id: UUID, user_id: UUID, session: AsyncSession) -> bool:
+        """Check if a user is a member of a workspace."""
+        result = await session.execute(
+            select(WorkspaceMember).where(
+                WorkspaceMember.workspace_id == workspace_id,
+                WorkspaceMember.user_id == user_id,
+            )
+        )
+        return result.scalar_one_or_none() is not None
+
+    @staticmethod
+    async def get_shared_item_detail(
+        item_type: str,
+        item_id: UUID,
+        session: AsyncSession,
+    ) -> Optional[dict]:
+        """Fetch the actual content of a shared item."""
+        try:
+            if item_type == "transcription":
+                from app.models.transcription import Transcription
+                item = await session.get(Transcription, item_id)
+                if item:
+                    return {
+                        "type": "transcription",
+                        "title": item.original_filename or item.video_url or "Transcription",
+                        "content": item.text,
+                        "status": item.status.value if hasattr(item.status, 'value') else str(item.status),
+                        "created_at": str(item.created_at),
+                    }
+
+            elif item_type == "pipeline":
+                from app.models.pipeline import Pipeline
+                item = await session.get(Pipeline, item_id)
+                if item:
+                    return {
+                        "type": "pipeline",
+                        "title": item.name,
+                        "content": item.description,
+                        "status": item.status.value if hasattr(item.status, 'value') else str(item.status),
+                        "created_at": str(item.created_at),
+                    }
+
+            elif item_type == "document":
+                from app.models.knowledge import Document
+                item = await session.get(Document, item_id)
+                if item:
+                    return {
+                        "type": "document",
+                        "title": item.filename,
+                        "content": f"{item.total_chunks} chunks indexed",
+                        "status": item.status,
+                        "created_at": str(item.created_at),
+                    }
+
+            elif item_type == "conversation":
+                from app.models.conversation import Conversation
+                item = await session.get(Conversation, item_id)
+                if item:
+                    return {
+                        "type": "conversation",
+                        "title": item.title or "Conversation",
+                        "content": "",
+                        "created_at": str(item.created_at),
+                    }
+
+        except Exception:
+            pass
+
+        return None

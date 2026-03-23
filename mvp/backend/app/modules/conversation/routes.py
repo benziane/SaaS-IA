@@ -93,12 +93,14 @@ async def _fetch_messages(
     return list(result.scalars().all())
 
 
-def _build_chat_prompt(messages: list[Message]) -> str:
+def _build_chat_prompt(messages: list[Message], rag_context: str = "") -> str:
     """
     Build a single prompt string from conversation history.
 
     The prompt includes the full conversation so the AI can maintain context.
-    System messages are prepended as instructions.
+    System messages are prepended as instructions.  When RAG context is
+    available it is injected as an additional context block so the AI can
+    ground its answers in the user's documents.
     """
     parts: list[str] = []
 
@@ -109,6 +111,11 @@ def _build_chat_prompt(messages: list[Message]) -> str:
             parts.append(f"[User]\n{msg.content}\n")
         elif msg.role == MessageRole.ASSISTANT:
             parts.append(f"[Assistant]\n{msg.content}\n")
+
+    # Inject RAG context right before the assistant's turn so the model
+    # sees the relevant document snippets when generating its reply.
+    if rag_context:
+        parts.append(f"[Context]{rag_context}\n")
 
     parts.append("[Assistant]\n")
     return "\n".join(parts)
@@ -397,11 +404,36 @@ async def send_message(
     await session.commit()
     await session.refresh(user_message)
 
-    # 2. Fetch full conversation history for context.
+    # 2. RAG: Search Knowledge Base for relevant context
+    rag_context = ""
+    try:
+        from app.modules.knowledge.service import KnowledgeService
+
+        search_results = await KnowledgeService.search(
+            user_id=current_user.id,
+            query=body.content,
+            session=session,
+            limit=3,
+        )
+        if search_results:
+            rag_chunks = []
+            for r in search_results[:3]:
+                rag_chunks.append(
+                    f"[Source: {r.get('filename', 'unknown')}]\n{r.get('content', '')}"
+                )
+            if rag_chunks:
+                rag_context = (
+                    "\n\n---\nRelevant context from your documents:\n"
+                    + "\n\n".join(rag_chunks)
+                )
+    except Exception:
+        pass  # RAG is optional, don't break chat if KB search fails
+
+    # 3. Fetch full conversation history for context.
     messages = await _fetch_messages(conversation.id, session)
 
-    # 3. Build the prompt from history.
-    prompt = _build_chat_prompt(messages)
+    # 4. Build the prompt from history, injecting RAG context.
+    prompt = _build_chat_prompt(messages, rag_context=rag_context)
 
     logger.info(
         "chat_message_received",
@@ -409,9 +441,10 @@ async def send_message(
         conversation_id=str(conversation_id),
         message_length=len(body.content),
         history_length=len(messages),
+        has_rag_context=bool(rag_context),
     )
 
-    # 4. Stream AI response via SSE.
+    # 5. Stream AI response via SSE.
     async def event_generator():
         tokens_streamed = 0
         provider_name = "unknown"
@@ -466,7 +499,7 @@ async def send_message(
                 tokens_streamed=tokens_streamed,
             )
 
-            # 5. Persist the assistant response.
+            # 6. Persist the assistant response.
             assistant_text = "".join(collected_tokens)
             if assistant_text:
                 from app.database import get_session_context
@@ -491,6 +524,24 @@ async def send_message(
                         save_session.add(conv)
 
                     await save_session.commit()
+
+                    # Track AI cost for conversation
+                    try:
+                        from app.modules.cost_tracker.tracker import track_ai_usage
+                        await track_ai_usage(
+                            user_id=current_user.id,
+                            provider=provider_name,
+                            model=provider_name,
+                            module="conversation",
+                            action="chat_stream",
+                            input_tokens=0,
+                            output_tokens=tokens_streamed,
+                            latency_ms=0,
+                            success=True,
+                            session=save_session,
+                        )
+                    except Exception:
+                        pass  # Cost tracking should never break main flow
 
                 logger.info(
                     "assistant_message_saved",

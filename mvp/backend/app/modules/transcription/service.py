@@ -126,6 +126,36 @@ class TranscriptionService:
                 
                 transcription_jobs_total.labels(status="completed").inc()
 
+                # Auto-index completed transcription into Knowledge Base
+                try:
+                    from app.modules.knowledge.service import KnowledgeService
+                    if job.text and len(job.text.strip()) > 50:
+                        filename = f"transcription_{job.source_type}_{str(job.id)[:8]}.md"
+                        if job.original_filename:
+                            filename = f"transcription_{job.original_filename}"
+                        await KnowledgeService.index_text_content(
+                            user_id=job.user_id,
+                            filename=filename,
+                            content=job.text,
+                            content_type="text/plain",
+                            session=session,
+                        )
+                except Exception as e:
+                    logger.warning("auto_index_transcription_failed", error=str(e))
+
+                # Auto-analyze sentiment
+                try:
+                    from app.modules.sentiment.service import SentimentService
+                    if job.text and len(job.text.strip()) > 100:
+                        sentiment_result = await SentimentService.analyze_text(job.text[:5000])
+                        import json
+                        job.sentiment_json = json.dumps(sentiment_result, ensure_ascii=False)
+                        job.sentiment_score = sentiment_result.get("overall_score", 0.0)
+                        session.add(job)
+                        await session.commit()
+                except Exception as e:
+                    logger.warning("auto_sentiment_failed", error=str(e))
+
                 logger.info(
                     "transcription_completed",
                     job_id=str(job.id),
@@ -195,6 +225,36 @@ class TranscriptionService:
                 await session.commit()
 
                 transcription_jobs_total.labels(status="completed").inc()
+
+                # Auto-index completed transcription into Knowledge Base
+                try:
+                    from app.modules.knowledge.service import KnowledgeService
+                    if job.text and len(job.text.strip()) > 50:
+                        filename = f"transcription_{job.source_type}_{str(job.id)[:8]}.md"
+                        if job.original_filename:
+                            filename = f"transcription_{job.original_filename}"
+                        await KnowledgeService.index_text_content(
+                            user_id=job.user_id,
+                            filename=filename,
+                            content=job.text,
+                            content_type="text/plain",
+                            session=session,
+                        )
+                except Exception as e:
+                    logger.warning("auto_index_transcription_failed", error=str(e))
+
+                # Auto-analyze sentiment
+                try:
+                    from app.modules.sentiment.service import SentimentService
+                    if job.text and len(job.text.strip()) > 100:
+                        sentiment_result = await SentimentService.analyze_text(job.text[:5000])
+                        import json
+                        job.sentiment_json = json.dumps(sentiment_result, ensure_ascii=False)
+                        job.sentiment_score = sentiment_result.get("overall_score", 0.0)
+                        session.add(job)
+                        await session.commit()
+                except Exception as e:
+                    logger.warning("auto_sentiment_failed", error=str(e))
 
                 logger.info(
                     "upload_transcription_completed",

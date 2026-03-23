@@ -6,7 +6,9 @@ from datetime import datetime
 from typing import Optional
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
+
+ALLOWED_ITEM_TYPES = {"transcription", "pipeline", "document", "conversation", "comparison"}
 
 
 class WorkspaceCreate(BaseModel):
@@ -52,6 +54,16 @@ class InviteRequest(BaseModel):
 class ShareItemRequest(BaseModel):
     item_type: str = Field(..., max_length=50)
     item_id: UUID
+
+    @field_validator("item_type")
+    @classmethod
+    def validate_item_type(cls, v: str) -> str:
+        v = v.strip().lower()
+        if v not in ALLOWED_ITEM_TYPES:
+            raise ValueError(
+                f"item_type must be one of: {', '.join(sorted(ALLOWED_ITEM_TYPES))}"
+            )
+        return v
 
 
 class SharedItemRead(BaseModel):

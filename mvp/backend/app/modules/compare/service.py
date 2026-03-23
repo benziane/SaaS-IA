@@ -78,6 +78,26 @@ class CompareService:
         ]
         results = await asyncio.gather(*tasks)
 
+        # Track cost for each provider call
+        for r in results:
+            try:
+                from app.modules.cost_tracker.tracker import track_ai_usage
+                await track_ai_usage(
+                    user_id=user_id,
+                    provider=r.get("provider", "unknown"),
+                    model=r.get("model", "unknown"),
+                    module="compare",
+                    action="comparison",
+                    input_tokens=0,
+                    output_tokens=0,
+                    latency_ms=r.get("response_time_ms", 0),
+                    success=r.get("error") is None,
+                    error=r.get("error"),
+                    session=session,
+                )
+            except Exception:
+                pass  # Cost tracking should never break main flow
+
         # Persist comparison
         comparison = ComparisonResult(
             user_id=user_id,

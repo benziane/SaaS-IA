@@ -109,6 +109,7 @@ class TranscriptionRead(BaseModel):
     error: Optional[str]
     retry_count: int
     speaker_count: Optional[int] = None
+    sentiment_score: Optional[float] = None
     created_at: datetime
     updated_at: datetime
     completed_at: Optional[datetime]
@@ -127,6 +128,7 @@ class TranscriptionRead(BaseModel):
                 "duration_seconds": 180,
                 "error": None,
                 "retry_count": 0,
+                "sentiment_score": 0.65,
                 "created_at": "2025-11-13T21:00:00Z",
                 "updated_at": "2025-11-13T21:03:00Z",
                 "completed_at": "2025-11-13T21:03:00Z"

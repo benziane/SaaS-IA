@@ -254,6 +254,40 @@ async def add_comment(
     return comment
 
 
+@router.get("/items/{shared_item_id}/detail")
+@limiter.limit("20/minute")
+async def get_shared_item_detail(
+    request: Request,
+    shared_item_id: UUID,
+    current_user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+):
+    """Get the actual content of a shared item."""
+    from app.models.workspace import SharedItem
+
+    shared_item = await session.get(SharedItem, shared_item_id)
+    if not shared_item:
+        raise HTTPException(status_code=404, detail="Shared item not found")
+
+    # Verify user is member of the workspace
+    is_member = await WorkspaceService.is_member(
+        shared_item.workspace_id, current_user.id, session
+    )
+    if not is_member:
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    detail = await WorkspaceService.get_shared_item_detail(
+        item_type=shared_item.item_type,
+        item_id=shared_item.item_id,
+        session=session,
+    )
+
+    if not detail:
+        raise HTTPException(status_code=404, detail="Item content not found")
+
+    return detail
+
+
 @router.get("/items/{item_id}/comments", response_model=list[CommentRead])
 @limiter.limit("30/minute")
 async def list_comments(

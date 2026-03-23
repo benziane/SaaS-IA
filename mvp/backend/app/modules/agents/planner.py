@@ -18,11 +18,14 @@ AVAILABLE_ACTIONS = {
     "search_knowledge": "Search the knowledge base for relevant information",
     "ask_knowledge": "Ask a question using RAG on the knowledge base",
     "compare_models": "Compare AI model responses for a prompt",
+    "compare": "Compare AI model responses (pipeline step)",
     "generate_text": "Generate or process text with AI",
     "extract_info": "Extract specific information from text",
     "analyze_sentiment": "Analyze sentiment and emotions in text",
+    "sentiment": "Analyze sentiment and emotions (pipeline step)",
     "create_pipeline": "Create an AI processing pipeline",
     "crawl_web": "Crawl a web page and extract text and images",
+    "crawl_and_index": "Crawl a web page and auto-index content to the Knowledge Base",
     "analyze_image": "Analyze an image using AI Vision",
 }
 
@@ -127,11 +130,19 @@ def _heuristic_plan(instruction: str) -> list[dict]:
         })
 
     if any(w in instruction_lower for w in ["crawl", "scrape", "web", "website", "page", "site", "url"]):
-        steps.append({
-            "action": "crawl_web",
-            "description": "Crawl the web page",
-            "input": {},
-        })
+        # Prefer crawl_and_index when user also mentions indexing or knowledge base
+        if any(w in instruction_lower for w in ["index", "knowledge", "base", "kb", "save"]):
+            steps.append({
+                "action": "crawl_and_index",
+                "description": "Crawl the web page and index to Knowledge Base",
+                "input": {},
+            })
+        else:
+            steps.append({
+                "action": "crawl_web",
+                "description": "Crawl the web page",
+                "input": {},
+            })
 
     if any(w in instruction_lower for w in ["image", "photo", "picture", "screenshot", "visual"]):
         steps.append({

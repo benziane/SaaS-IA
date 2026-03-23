@@ -180,7 +180,7 @@ class PipelineService:
                 await session.commit()
 
                 step_result = await PipelineService._execute_step(
-                    step, previous_output
+                    step, previous_output, pipeline=pipeline
                 )
                 results.append(step_result)
                 previous_output = step_result.get("output", "")
@@ -214,7 +214,11 @@ class PipelineService:
         return execution
 
     @staticmethod
-    async def _execute_step(step: dict, previous_output: Optional[str]) -> dict:
+    async def _execute_step(
+        step: dict,
+        previous_output: Optional[str],
+        pipeline: Optional["Pipeline"] = None,
+    ) -> dict:
         """Execute a single pipeline step."""
         step_type = step.get("type", "unknown")
         config = step.get("config", {})
@@ -239,6 +243,120 @@ class PipelineService:
             return {"type": "web_crawl", "output": step_output}
         elif step_type == "export":
             return {"type": "export", "output": previous_output or "", "format": config.get("format", "txt")}
+
+        # ---- Sentiment analysis step ----
+        elif step_type == "sentiment":
+            text = config.get("text", previous_output or "")
+            if text:
+                from app.modules.sentiment.service import SentimentService
+                result = await SentimentService.analyze_text(text[:10000])
+                overall = result.get("overall_sentiment", "neutral")
+                score = result.get("overall_score", 0)
+                pos = result.get("positive_percent", 0)
+                neg = result.get("negative_percent", 0)
+                step_output = f"Sentiment: {overall} (score: {score})\nPositive: {pos}%\nNegative: {neg}%"
+
+                emotions = result.get("emotion_summary", {})
+                if emotions:
+                    step_output += "\nEmotions: " + ", ".join(
+                        f"{k}({v})" for k, v in emotions.items()
+                    )
+            else:
+                step_output = "No text to analyze"
+            return {"type": "sentiment", "output": step_output}
+
+        # ---- Knowledge Base search step ----
+        elif step_type == "search_knowledge":
+            query = config.get("query", previous_output or "")
+            if query and pipeline:
+                from app.modules.knowledge.service import KnowledgeService
+                from app.database import get_session_context
+                async with get_session_context() as kb_session:
+                    results = await KnowledgeService.search(
+                        user_id=pipeline.user_id,
+                        query=query[:500],
+                        session=kb_session,
+                        limit=config.get("limit", 5),
+                    )
+                if results:
+                    step_output = "\n\n".join(
+                        f"[{r.get('filename', '')}] {r.get('content', '')}"
+                        for r in results
+                    )
+                else:
+                    step_output = "No results found"
+            else:
+                step_output = "No query provided" if not query else "No pipeline context"
+            return {"type": "search_knowledge", "output": step_output}
+
+        # ---- RAG question step ----
+        elif step_type == "ask_knowledge":
+            question = config.get("question", previous_output or "")
+            if question and pipeline:
+                from app.modules.knowledge.service import KnowledgeService
+                from app.database import get_session_context
+                async with get_session_context() as kb_session:
+                    result = await KnowledgeService.rag_query(
+                        user_id=pipeline.user_id,
+                        question=question[:1000],
+                        session=kb_session,
+                    )
+                step_output = result.get("answer", "") if result else "No answer found"
+            else:
+                step_output = "No question provided" if not question else "No pipeline context"
+            return {"type": "ask_knowledge", "output": step_output}
+
+        # ---- AI model comparison step ----
+        elif step_type == "compare":
+            prompt = config.get("prompt", previous_output or "")
+            providers = config.get("providers", ["gemini", "groq"])
+            if prompt and pipeline:
+                from app.modules.compare.service import CompareService
+                from app.database import get_session_context
+                async with get_session_context() as cmp_session:
+                    _, results = await CompareService.run_comparison(
+                        user_id=pipeline.user_id,
+                        prompt=prompt[:5000],
+                        providers=providers,
+                        session=cmp_session,
+                    )
+                if results:
+                    step_output = "\n\n".join(
+                        f"[{r.get('provider', '?')}] ({r.get('response_time_ms', 0)}ms)\n{r.get('response', '')}"
+                        for r in results
+                    )
+                else:
+                    step_output = "Comparison failed"
+            else:
+                step_output = "No prompt for comparison" if not prompt else "No pipeline context"
+            return {"type": "compare", "output": step_output}
+
+        # ---- Crawl and auto-index to Knowledge Base step ----
+        elif step_type == "crawl_and_index":
+            url = config.get("url", previous_output or "")
+            if url and url.startswith("http") and pipeline:
+                from app.modules.web_crawler.service import WebCrawlerService
+                from app.database import get_session_context
+                async with get_session_context() as idx_session:
+                    result = await WebCrawlerService.index_to_knowledge_base(
+                        url=url,
+                        user_id=pipeline.user_id,
+                        crawl_subpages=config.get("crawl_subpages", False),
+                        max_pages=config.get("max_pages", 3),
+                        include_images=True,
+                        session=idx_session,
+                    )
+                if result.get("success"):
+                    step_output = f"Indexed {result.get('pages_crawled', 0)} pages, {result.get('chunks_indexed', 0)} chunks"
+                else:
+                    step_output = f"Indexing failed: {result.get('error', 'unknown')}"
+            else:
+                if not url or not url.startswith("http"):
+                    step_output = "No valid URL provided"
+                else:
+                    step_output = "No pipeline context"
+            return {"type": "crawl_and_index", "output": step_output}
+
         else:
             return {"type": step_type, "output": previous_output or "", "note": "Unknown step type"}
 

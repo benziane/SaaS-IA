@@ -316,6 +316,25 @@ class KnowledgeService:
             )
             answer = result.get("processed_text", "Unable to generate answer.")
             provider = result.get("provider", "gemini")
+
+            # Track AI cost for RAG query
+            try:
+                from app.modules.cost_tracker.tracker import track_ai_usage
+                await track_ai_usage(
+                    user_id=user_id,
+                    provider="gemini",
+                    model=result.get("model", "gemini-2.5-flash"),
+                    module="knowledge",
+                    action="rag_query",
+                    input_tokens=0,
+                    output_tokens=0,
+                    latency_ms=0,
+                    success=True,
+                    session=session,
+                )
+            except Exception:
+                pass  # Cost tracking should never break main flow
+
         except Exception as e:
             logger.error("rag_query_failed", error=str(e))
             answer = f"Error generating answer: {str(e)}"

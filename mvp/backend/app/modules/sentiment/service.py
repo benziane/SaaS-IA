@@ -73,6 +73,23 @@ Respond ONLY with the JSON array."""
             else:
                 analysis = []
 
+            # Track AI cost
+            try:
+                from app.modules.cost_tracker.tracker import track_ai_usage
+                await track_ai_usage(
+                    user_id=None,
+                    provider="gemini",
+                    model="gemini-2.5-flash",
+                    module="sentiment",
+                    action="analyze_text",
+                    input_tokens=0,
+                    output_tokens=0,
+                    latency_ms=0,
+                    success=True,
+                )
+            except Exception:
+                pass  # Cost tracking should never break main flow
+
         except Exception as e:
             logger.warning("sentiment_ai_failed", error=str(e))
             # Fallback: simple keyword-based analysis

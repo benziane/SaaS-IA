@@ -43,6 +43,10 @@ class Transcription(SQLModel, table=True):
     speakers_json: Optional[str] = Field(default=None)
     speaker_count: Optional[int] = Field(default=None)
 
+    # Sentiment analysis
+    sentiment_json: Optional[str] = Field(default=None)
+    sentiment_score: Optional[float] = Field(default=None)
+
     # Error handling
     error: Optional[str] = Field(default=None, max_length=1000)
     retry_count: int = Field(default=0)

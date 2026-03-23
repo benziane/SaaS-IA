@@ -169,6 +169,24 @@ class WebCrawlerService:
 
             analyzed_images.append(img_data)
 
+        # Track AI cost for vision analysis
+        if analyzed_images:
+            try:
+                from app.modules.cost_tracker.tracker import track_ai_usage
+                await track_ai_usage(
+                    user_id=user_id,
+                    provider="gemini",
+                    model="gemini-2.0-flash",
+                    module="web_crawler",
+                    action="vision_analysis",
+                    input_tokens=0,
+                    output_tokens=0,
+                    latency_ms=0,
+                    success=True,
+                )
+            except Exception:
+                pass  # Cost tracking should never break main flow
+
         return {
             "url": url,
             "title": scrape_result.get("title", ""),
