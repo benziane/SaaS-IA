@@ -52,7 +52,7 @@
     "zustand": "^5.0.2"
   },
   "devDependencies": {
-    "@axe-core/playwright": "^4.10.2",
+    "@axe-core/playwright": "^4.11.1",
     "@iconify/json": "^2.2.286",
     "@iconify/tools": "^4.1.1",
     "@iconify/types": "^2.0.0",
