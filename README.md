@@ -1,272 +1,105 @@
-# 🚀 SaaS-IA - Plateforme SaaS Multi-Modules IA
+# SaaS-IA - Plateforme SaaS d'Orchestration IA
 
-[![Enterprise Grade](https://img.shields.io/badge/Enterprise%20Grade-S%2B%20(94%25)-gold?style=for-the-badge&logo=star)](./mvp/ENTERPRISE_GRADE.md)
-
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
-[![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://www.python.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue.svg)](https://www.typescriptlang.org/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.104+-green.svg)](https://fastapi.tiangolo.com/)
-[![React](https://img.shields.io/badge/React-18+-blue.svg)](https://reactjs.org/)
 [![CI](https://github.com/benziane/SaaS-IA/workflows/CI/badge.svg)](https://github.com/benziane/SaaS-IA/actions)
+[![Python 3.11+](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://www.python.org/)
+[![TypeScript 5+](https://img.shields.io/badge/TypeScript-5.0+-blue.svg)](https://www.typescriptlang.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.109-green.svg)](https://fastapi.tiangolo.com/)
+[![Next.js 15](https://img.shields.io/badge/Next.js-15-black.svg)](https://nextjs.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 
-> Plateforme SaaS modulaire et évolutive intégrant des services d'Intelligence Artificielle  
-> **🏆 MVP Backend : Enterprise Grade S+ (94/100)** - Qualité exceptionnelle
+Plateforme modulaire d'intelligence artificielle permettant de transcrire, analyser, comparer et orchestrer des services IA via une interface unifiee.
 
-## 📋 Table des matières
+## Fonctionnalites
 
-- [À propos](#à-propos)
-- [Fonctionnalités](#fonctionnalités)
-- [Architecture](#architecture)
-- [Installation](#installation)
-- [Utilisation](#utilisation)
-- [Documentation](#documentation)
-- [Contribution](#contribution)
-- [Licence](#licence)
+| Module | Description |
+|--------|-------------|
+| **Transcription** | YouTube, upload fichier, enregistrement micro (AssemblyAI + yt-dlp) |
+| **Chat IA** | Chat contextuel avec historique, SSE streaming, contexte transcription |
+| **Compare** | Comparaison multi-modele en parallele (Gemini, Claude, Groq) avec votes |
+| **Pipelines** | Builder de pipelines IA : chainer transcription, resume, traduction, export |
+| **Knowledge Base** | Upload documents, chunking, recherche semantique, RAG (question/reponse) |
+| **Billing** | Plans Free/Pro/Enterprise, quotas, Stripe Checkout + webhooks |
+| **Workspaces** | Collaboration : workspaces partages, membres, items partages, commentaires |
+| **API Publique** | API v1 avec cles API (SHA-256), endpoints REST authentifies |
 
-## 🎯 À propos
+## Stack technique
 
-**SaaS-IA** est une plateforme SaaS moderne conçue pour héberger plusieurs modules d'Intelligence Artificielle. Le projet suit une architecture modulaire permettant d'ajouter facilement de nouveaux services IA.
+**Backend** : FastAPI 0.109, Python 3.11, SQLModel, PostgreSQL 16, Redis 7, Celery, Stripe
 
-### Modules disponibles
+**Frontend** : Next.js 15, React 18, TypeScript, Material-UI 6, TanStack Query 5
 
-#### 📹 v0 - Module de Transcription YouTube
-- Transcription automatique de vidéos YouTube
-- Support multilingue (détection automatique)
-- Correction linguistique avancée
-- Interface web moderne et intuitive
-- API REST complète
+**Infrastructure** : Docker Compose (backend, worker, flower, PostgreSQL, Redis), GitHub Actions CI/CD
 
-[Voir la documentation complète du module v0](./v0/README.md)
+**AI Providers** : Gemini Flash, Claude Sonnet, Groq Llama 70B (AI Router avec classification + selection)
 
-## ✨ Fonctionnalités
-
-### 🏗️ Architecture
-- ✅ Architecture modulaire et évolutive
-- ✅ Microservices avec Docker
-- ✅ API REST avec FastAPI
-- ✅ Frontend moderne avec React/Next.js
-- ✅ Base de données PostgreSQL
-- ✅ Cache Redis pour les performances
-
-### 🔒 Sécurité
-- ✅ Validation des entrées (Pydantic/Zod)
-- ✅ Gestion sécurisée des secrets
-- ✅ CORS configuré
-- ✅ Health checks
-
-### 📊 Observabilité
-- ✅ Logging structuré
-- ✅ Métriques Prometheus
-- ✅ Monitoring avec Grafana
-- ✅ Traces distribuées
-
-### 🧪 Qualité
-- ✅ Tests unitaires et d'intégration
-- ✅ CI/CD avec GitHub Actions
-- ✅ Analyse de code (CodeQL)
-- ✅ Scan de sécurité (Trivy)
-- ✅ Dependabot pour les dépendances
-
-## 🏗️ Architecture
-
-```
-SaaS-IA/
-├── v0/                      # Module de transcription YouTube
-│   ├── backend/            # API FastAPI
-│   ├── frontend/           # Application Next.js
-│   ├── docs/               # Documentation technique
-│   └── docker-compose.yml  # Orchestration Docker
-├── startup_docs/           # Documentation de démarrage
-│   ├── Analyse du projet Lab-SaaS - Claude/
-│   ├── Analyse du projet Lab-SaaS - Manus/
-│   └── starting/           # Guides d'architecture
-├── .github/                # Configuration GitHub
-│   ├── workflows/          # CI/CD
-│   └── ISSUE_TEMPLATE/     # Templates d'issues
-├── CONTRIBUTING.md         # Guide de contribution
-├── CODE_OF_CONDUCT.md      # Code de conduite
-└── LICENSE                 # Licence MIT
-```
-
-### Stack Technologique
-
-**Backend:**
-- Python 3.11+
-- FastAPI 0.104+
-- SQLModel (SQLAlchemy 2.0)
-- PostgreSQL 15+
-- Redis 7+
-- Pydantic pour la validation
-
-**Frontend:**
-- React 18+
-- Next.js 14+
-- TypeScript 5+
-- TailwindCSS 3+
-- TanStack Query (React Query)
-
-**Infrastructure:**
-- Docker & Docker Compose
-- GitHub Actions (CI/CD)
-- Prometheus & Grafana
-- Nginx (reverse proxy)
-
-## 🚀 Installation
-
-### Prérequis
-
-- Docker 24+ et Docker Compose
-- Git
-- (Optionnel) Node.js 18+ et Python 3.11+ pour le développement local
-
-### Installation rapide avec Docker
+## Quick Start
 
 ```bash
-# 1. Cloner le repository
+# Cloner
 git clone https://github.com/benziane/SaaS-IA.git
-cd SaaS-IA
+cd SaaS-IA/mvp
 
-# 2. Lancer le module v0
-cd v0
-docker-compose up -d
+# Backend
+cp backend/.env.example backend/.env
+# Editer .env avec vos cles API
+docker compose up -d
 
-# 3. Accéder aux services
-# Frontend: http://localhost:3000
-# API: http://localhost:8000
-# Docs API: http://localhost:8000/docs
+# Frontend
+cd frontend
+npm install
+npm run dev
 ```
 
-### Installation pour le développement
+Backend : http://localhost:8004 | Frontend : http://localhost:3002 | Flower : http://localhost:5555
 
-Voir les guides détaillés :
-- [Installation Backend](./v0/backend/README.md)
-- [Installation Frontend](./v0/frontend/README.md)
+## Documentation
 
-## 📖 Utilisation
+| Document | Description |
+|----------|-------------|
+| [ROADMAP.md](mvp/ROADMAP.md) | Roadmap complete avec statut de chaque feature |
+| [ARCHITECTURE.md](mvp/docs/ARCHITECTURE.md) | Architecture globale, diagrammes, flux de donnees |
+| [DEPLOYMENT.md](mvp/docs/DEPLOYMENT.md) | Guide de deploiement production |
+| [API_REFERENCE.md](mvp/docs/API_REFERENCE.md) | Reference API complete (45+ endpoints) |
+| [Sprint docs](mvp/docs/) | Documentation technique par sprint |
 
-### Module v0 - Transcription YouTube
-
-#### Via l'interface web
-
-1. Ouvrez http://localhost:3000
-2. Collez une URL YouTube
-3. Sélectionnez la langue (ou laissez sur "Auto")
-4. Cliquez sur "Lancer la transcription"
-5. Suivez la progression en temps réel
-
-#### Via l'API
+## Tests
 
 ```bash
-# Créer une transcription
-curl -X POST "http://localhost:8000/api/v1/transcriptions/" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "youtube_url": "https://www.youtube.com/watch?v=VIDEO_ID",
-    "language": "auto"
-  }'
-
-# Récupérer une transcription
-curl "http://localhost:8000/api/v1/transcriptions/1"
+cd mvp/backend
+pytest                           # 211 tests (179 unit + 32 integration)
+pytest tests/test_integration.py # Integration tests only
 ```
 
-[Voir la documentation complète de l'API](./v0/docs/API.md)
+## Structure
 
-## 📚 Documentation
+```
+mvp/
+├── backend/
+│   ├── app/
+│   │   ├── ai_assistant/       # AI Router + Providers
+│   │   ├── models/             # SQLModel (13 tables)
+│   │   ├── modules/            # 7 plugin modules auto-decouverts
+│   │   │   ├── transcription/
+│   │   │   ├── conversation/
+│   │   │   ├── billing/
+│   │   │   ├── compare/
+│   │   │   ├── pipelines/
+│   │   │   ├── knowledge/
+│   │   │   ├── api_keys/
+│   │   │   └── workspaces/
+│   │   ├── celery_app.py       # Celery workers
+│   │   └── main.py             # FastAPI app
+│   ├── alembic/                # 7 migrations
+│   └── tests/                  # 211 tests
+├── frontend/
+│   ├── src/
+│   │   ├── app/(dashboard)/    # 10 pages
+│   │   ├── features/           # 8 feature modules
+│   │   └── components/
+│   └── package.json
+└── docker-compose.yml          # 5 services
+```
 
-### Documentation générale
-- [Guide de contribution](./CONTRIBUTING.md)
-- [Code de conduite](./CODE_OF_CONDUCT.md)
-- [Licence](./LICENSE)
+## Licence
 
-### Documentation technique
-- [Architecture globale](./startup_docs/starting/ARCHITECTURE-SAAS-IA-SCALABLE-V2.md)
-- [Guide d'implémentation modulaire](./startup_docs/starting/GUIDE-IMPLEMENTATION-MODULAIRE.md)
-- [Templates de code](./startup_docs/starting/TEMPLATES-CODE-MODULES.md)
-
-### Documentation des modules
-- [Module v0 - Transcription YouTube](./v0/README.md)
-  - [API Documentation](./v0/docs/API.md)
-  - [Architecture](./v0/docs/ARCHITECTURE.md)
-  - [Spécifications](./v0/docs/specification_complete_saas_ia.md)
-
-## 🤝 Contribution
-
-Les contributions sont les bienvenues ! Veuillez consulter notre [Guide de contribution](./CONTRIBUTING.md) pour plus de détails.
-
-### Comment contribuer
-
-1. Fork le projet
-2. Créez une branche feature (`git checkout -b feature/amazing-feature`)
-3. Commitez vos changements (`git commit -m 'feat: add amazing feature'`)
-4. Pushez vers la branche (`git push origin feature/amazing-feature`)
-5. Ouvrez une Pull Request
-
-### Contributeurs
-
-Merci à tous les contributeurs qui ont participé à ce projet !
-
-## 🛣️ Roadmap
-
-### Version actuelle (v0.1.0)
-- ✅ Module de transcription YouTube
-- ✅ Interface web moderne
-- ✅ API REST complète
-- ✅ Docker Compose
-
-### Prochaines versions
-
-#### v0.2.0
-- 🔲 Authentification utilisateur (JWT)
-- 🔲 Dashboard utilisateur
-- 🔲 Gestion des quotas
-
-#### v1.0.0
-- 🔲 Module de résumé automatique
-- 🔲 Module d'analyse sémantique
-- 🔲 Module de traduction
-- 🔲 Export multi-formats (PDF, DOCX, SRT)
-
-#### v2.0.0
-- 🔲 Module de génération de contenu
-- 🔲 Module d'analyse d'images
-- 🔲 API webhooks
-- 🔲 Intégrations tierces
-
-[Voir la roadmap complète](https://github.com/benziane/SaaS-IA/projects)
-
-## 📊 Statistiques
-
-![GitHub stars](https://img.shields.io/github/stars/benziane/SaaS-IA?style=social)
-![GitHub forks](https://img.shields.io/github/forks/benziane/SaaS-IA?style=social)
-![GitHub issues](https://img.shields.io/github/issues/benziane/SaaS-IA)
-![GitHub pull requests](https://img.shields.io/github/issues-pr/benziane/SaaS-IA)
-
-## 📄 Licence
-
-Ce projet est sous licence MIT. Voir le fichier [LICENSE](./LICENSE) pour plus de détails.
-
-## 🙏 Remerciements
-
-- **OpenAI Whisper** pour le modèle de transcription
-- **FastAPI** pour le framework backend
-- **Next.js** pour le framework frontend
-- **yt-dlp** pour l'extraction YouTube
-- La communauté open source
-
-## 📧 Contact & Support
-
-- 🐛 [Signaler un bug](https://github.com/benziane/SaaS-IA/issues/new?template=bug_report.md)
-- ✨ [Proposer une fonctionnalité](https://github.com/benziane/SaaS-IA/issues/new?template=feature_request.md)
-- 💬 [Discussions](https://github.com/benziane/SaaS-IA/discussions)
-- 📖 [Documentation](./v0/docs/)
-
-## 🌟 Star History
-
-[![Star History Chart](https://api.star-history.com/svg?repos=benziane/SaaS-IA&type=Date)](https://star-history.com/#benziane/SaaS-IA&Date)
-
----
-
-**Développé avec ❤️ pour rendre l'IA accessible à tous**
-
-[⬆ Retour en haut](#-saas-ia---plateforme-saas-multi-modules-ia)
-
+MIT
