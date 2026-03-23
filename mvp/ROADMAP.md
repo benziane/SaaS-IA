@@ -259,7 +259,7 @@ Base de connaissances par utilisateur avec recherche semantique :
 - Embeddings via modele gratuit (Gemini embedding ou all-MiniLM-L6-v2)
 - Chunking intelligent (respect des paragraphes, overlap)
 
-### 6.5 Collaboration temps reel
+### 6.5 Collaboration temps reel [FAIT]
 
 **Effort** : 3-4 semaines | **Impact** : Haut | **Priorite** : P4
 
@@ -423,6 +423,29 @@ Transformer SaaS-IA en outil collaboratif :
 | POST | /process | Traitement IA |
 | GET | /jobs/{id} | Statut d'un job |
 
+### Workspaces (`/api/workspaces`)
+| Methode | Endpoint | Description |
+|---------|----------|-------------|
+| POST | / | Creer un workspace |
+| GET | / | Lister les workspaces |
+| GET | /{id} | Detail d'un workspace |
+| PUT | /{id} | Modifier un workspace |
+| DELETE | /{id} | Supprimer un workspace |
+| POST | /{id}/invite | Inviter un membre |
+| GET | /{id}/members | Lister les membres |
+| DELETE | /{id}/members/{user_id} | Retirer un membre |
+| POST | /{id}/share | Partager un item |
+| GET | /{id}/items | Lister les items partages |
+| POST | /items/{id}/comments | Ajouter un commentaire |
+| GET | /items/{id}/comments | Lister les commentaires |
+
+### Billing - Stripe (`/api/billing`)
+| Methode | Endpoint | Description |
+|---------|----------|-------------|
+| POST | /checkout | Creer une session Stripe Checkout |
+| POST | /portal | Ouvrir le portail de gestion Stripe |
+| POST | /webhook | Webhook Stripe (events) |
+
 ---
 
 ## PAGES FRONTEND
@@ -440,10 +463,17 @@ Transformer SaaS-IA en outil collaboratif :
 | /pipelines | Pipeline builder IA | FAIT |
 | /knowledge | Knowledge base: upload, recherche, RAG | FAIT |
 | /api-docs | Gestion cles API + documentation publique | FAIT |
+| /workspaces | Collaboration workspaces | FAIT |
 
 ---
 
 ## CHANGELOG
+
+### v2.6.0 (2026-03-22)
+- Stripe payment integration (checkout, billing portal, webhooks)
+- Feature 6.5 : Collaboration workspaces (CRUD, membres, partage, commentaires)
+- Alembic migrations versionnees (7 scripts, 13 tables)
+- Tests d'integration (32 tests httpx + SQLite async, 211 total)
 
 ### v2.5.0 (2026-03-22)
 - Sprint 5 : Knowledge Base RAG (upload documents, chunking, TF-IDF search, RAG queries)

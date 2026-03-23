@@ -3,6 +3,7 @@
 import {
   Alert,
   Box,
+  Button,
   Card,
   CardContent,
   Chip,
@@ -11,8 +12,9 @@ import {
   Skeleton,
   Typography,
 } from '@mui/material';
+import { useSearchParams } from 'next/navigation';
 
-import { usePlans, useQuota } from '@/features/billing/hooks/useBilling';
+import { useCheckout, usePlans, usePortal, useQuota } from '@/features/billing/hooks/useBilling';
 import type { Plan } from '@/features/billing/types';
 
 function formatPrice(cents: number): string {
@@ -53,7 +55,7 @@ function QuotaBar({
   );
 }
 
-function PlanCard({ plan, isCurrent }: { plan: Plan; isCurrent: boolean }) {
+function PlanCard({ plan, isCurrent, onUpgrade }: { plan: Plan; isCurrent: boolean; onUpgrade?: () => void }) {
   return (
     <Card
       variant={isCurrent ? 'elevation' : 'outlined'}
@@ -77,17 +79,31 @@ function PlanCard({ plan, isCurrent }: { plan: Plan; isCurrent: boolean }) {
         <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
           {plan.max_audio_minutes_month >= 999999 ? 'Unlimited' : plan.max_audio_minutes_month} audio minutes/month
         </Typography>
-        <Typography variant="body2" color="text.secondary">
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
           {plan.max_ai_calls_month >= 999999 ? 'Unlimited' : plan.max_ai_calls_month} AI calls/month
         </Typography>
+        {!isCurrent && plan.price_cents > 0 && onUpgrade && (
+          <Button variant="contained" fullWidth onClick={onUpgrade}>
+            Upgrade to {plan.display_name}
+          </Button>
+        )}
+        {isCurrent && plan.price_cents > 0 && (
+          <Typography variant="caption" color="success.main">Active subscription</Typography>
+        )}
       </CardContent>
     </Card>
   );
 }
 
 export default function BillingPage() {
+  const searchParams = useSearchParams();
+  const success = searchParams.get('success');
+  const canceled = searchParams.get('canceled');
+
   const { data: quota, isLoading: quotaLoading, error: quotaError } = useQuota();
   const { data: plans, isLoading: plansLoading } = usePlans();
+  const checkoutMutation = useCheckout();
+  const portalMutation = usePortal();
 
   if (quotaLoading || plansLoading) {
     return (
@@ -118,6 +134,17 @@ export default function BillingPage() {
       <Typography variant="h4" sx={{ mb: 3 }}>
         Billing & Usage
       </Typography>
+
+      {success && (
+        <Alert severity="success" sx={{ mb: 3 }}>
+          Payment successful! Your plan has been upgraded.
+        </Alert>
+      )}
+      {canceled && (
+        <Alert severity="info" sx={{ mb: 3 }}>
+          Checkout was canceled. No changes were made.
+        </Alert>
+      )}
 
       {/* Current Usage */}
       {quota && (
@@ -162,6 +189,17 @@ export default function BillingPage() {
             <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
               Billing period: {quota.period_start} to {quota.period_end}
             </Typography>
+            {quota.plan.price_cents > 0 && (
+              <Button
+                variant="outlined"
+                size="small"
+                sx={{ mt: 2 }}
+                onClick={() => portalMutation.mutate()}
+                disabled={portalMutation.isPending}
+              >
+                Manage Subscription
+              </Button>
+            )}
           </CardContent>
         </Card>
       )}
@@ -176,6 +214,7 @@ export default function BillingPage() {
             <PlanCard
               plan={plan}
               isCurrent={quota?.plan.id === plan.id}
+              onUpgrade={() => checkoutMutation.mutate(plan.name)}
             />
           </Grid>
         ))}

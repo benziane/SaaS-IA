@@ -8,8 +8,9 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from app.auth import get_current_user
 from app.database import get_session
 from app.models.user import User
-from app.modules.billing.schemas import PlanRead, QuotaRead
+from app.modules.billing.schemas import CheckoutRequest, CheckoutResponse, PlanRead, PortalResponse, QuotaRead
 from app.modules.billing.service import BillingService
+from app.modules.billing.stripe_service import StripeService
 from app.rate_limit import limiter
 
 router = APIRouter()
@@ -66,3 +67,82 @@ async def get_my_quota(
         period_end=quota.period_end,
         usage_percent=usage_percent,
     )
+
+
+@router.post("/checkout", response_model=CheckoutResponse)
+@limiter.limit("5/minute")
+async def create_checkout(
+    request: Request,
+    body: CheckoutRequest,
+    current_user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+):
+    """
+    Create a Stripe Checkout session to subscribe to a paid plan.
+
+    Rate limit: 5 requests/minute
+    """
+    try:
+        result = await StripeService.create_checkout_session(
+            user_id=current_user.id,
+            user_email=current_user.email,
+            plan_name=body.plan_name,
+            session=session,
+        )
+        return CheckoutResponse(**result)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
+
+
+@router.post("/portal", response_model=PortalResponse)
+@limiter.limit("5/minute")
+async def create_portal(
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+):
+    """
+    Create a Stripe billing portal session for managing subscription.
+
+    Rate limit: 5 requests/minute
+    """
+    try:
+        result = await StripeService.create_portal_session(
+            user_id=current_user.id,
+            session=session,
+        )
+        return PortalResponse(**result)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
+
+
+@router.post("/webhook")
+async def stripe_webhook(
+    request: Request,
+    session: AsyncSession = Depends(get_session),
+):
+    """
+    Stripe webhook endpoint.
+
+    Verifies webhook signature and processes events:
+    - checkout.session.completed: Upgrade plan
+    - customer.subscription.deleted: Downgrade to free
+    - invoice.payment_failed: Log warning
+    """
+    payload = await request.body()
+    signature = request.headers.get("stripe-signature", "")
+
+    try:
+        result = await StripeService.handle_webhook(payload, signature, session)
+        return result
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )

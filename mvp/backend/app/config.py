@@ -34,6 +34,11 @@ class Settings(BaseSettings):
     CLAUDE_API_KEY: str = ""
     GROQ_API_KEY: str = ""
     
+    # Stripe
+    STRIPE_SECRET_KEY: str = ""
+    STRIPE_WEBHOOK_SECRET: str = ""
+    STRIPE_PRICE_PRO_MONTHLY: str = ""
+
     # CORS
     CORS_ORIGINS: str = "http://localhost:3002,http://localhost:8004"
     

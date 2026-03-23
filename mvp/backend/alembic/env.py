@@ -19,6 +19,12 @@ from app.config import settings
 # Import all models for autogenerate
 from app.models.user import User  # noqa: F401
 from app.models.transcription import Transcription  # noqa: F401
+from app.models.conversation import Conversation, Message  # noqa: F401
+from app.models.billing import Plan, UserQuota  # noqa: F401
+from app.models.compare import ComparisonResult, ComparisonVote  # noqa: F401
+from app.models.pipeline import Pipeline, PipelineExecution  # noqa: F401
+from app.models.knowledge import Document, DocumentChunk  # noqa: F401
+from app.models.api_key import APIKey  # noqa: F401
 
 # Alembic Config object
 config = context.config

@@ -73,6 +73,11 @@ const verticalMenuData = (): VerticalMenuDataType[] => [
     href: '/api-docs',
     icon: 'tabler:key',
   },
+  {
+    label: 'Workspaces',
+    href: '/workspaces',
+    icon: 'tabler:users-group',
+  },
 
   // Account Section
   {

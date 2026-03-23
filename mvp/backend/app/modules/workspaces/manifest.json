@@ -1,0 +1,9 @@
+{
+  "name": "workspaces",
+  "version": "1.0.0",
+  "description": "Real-time collaboration workspaces with shared items and comments",
+  "prefix": "/api/workspaces",
+  "tags": ["workspaces"],
+  "enabled": true,
+  "dependencies": []
+}
