@@ -149,6 +149,50 @@ class KnowledgeService:
         return document
 
     @staticmethod
+    async def index_text_content(
+        user_id: UUID,
+        filename: str,
+        content: str,
+        content_type: str = "text/markdown",
+        session: AsyncSession = None,
+    ) -> Optional[dict]:
+        """Index raw text content into the knowledge base."""
+        if not content.strip():
+            return None
+
+        # Create document record
+        doc = Document(
+            user_id=user_id,
+            filename=filename[:255],
+            content_type=content_type,
+            total_chunks=0,
+            status=DocumentStatus.PROCESSING,
+        )
+        session.add(doc)
+        await session.flush()
+
+        # Chunk the content
+        chunks = KnowledgeService._chunk_text(content)
+
+        for i, chunk_text in enumerate(chunks):
+            chunk = DocumentChunk(
+                document_id=doc.id,
+                user_id=user_id,
+                content=chunk_text,
+                chunk_index=i,
+                metadata_json=json.dumps({"filename": filename[:255], "chunk_index": i}),
+            )
+            session.add(chunk)
+
+        doc.total_chunks = len(chunks)
+        doc.status = DocumentStatus.INDEXED
+        doc.updated_at = datetime.utcnow()
+        session.add(doc)
+        await session.commit()
+
+        return {"document_id": str(doc.id), "total_chunks": len(chunks)}
+
+    @staticmethod
     async def list_documents(
         user_id: UUID,
         session: AsyncSession,

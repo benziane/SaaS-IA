@@ -225,6 +225,18 @@ class PipelineService:
             return await PipelineService._step_translate(previous_output or "", config)
         elif step_type == "transcription":
             return {"type": "transcription", "output": previous_output or "", "note": "Transcription step requires external input"}
+        elif step_type == "web_crawl":
+            from app.modules.web_crawler.service import WebCrawlerService
+            url = config.get("url", previous_output or "")
+            if url:
+                result = await WebCrawlerService.scrape(url=url, extract_images=True)
+                if result.get("success"):
+                    step_output = result.get("markdown", "")
+                else:
+                    step_output = f"Crawl failed: {result.get('error', 'unknown')}"
+            else:
+                step_output = "No URL provided for web crawl"
+            return {"type": "web_crawl", "output": step_output}
         elif step_type == "export":
             return {"type": "export", "output": previous_output or "", "format": config.get("format", "txt")}
         else:

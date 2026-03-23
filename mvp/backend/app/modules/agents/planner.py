@@ -22,6 +22,8 @@ AVAILABLE_ACTIONS = {
     "extract_info": "Extract specific information from text",
     "analyze_sentiment": "Analyze sentiment and emotions in text",
     "create_pipeline": "Create an AI processing pipeline",
+    "crawl_web": "Crawl a web page and extract text and images",
+    "analyze_image": "Analyze an image using AI Vision",
 }
 
 
@@ -121,6 +123,20 @@ def _heuristic_plan(instruction: str) -> list[dict]:
         steps.append({
             "action": "analyze_sentiment",
             "description": "Analyze sentiment and emotions",
+            "input": {},
+        })
+
+    if any(w in instruction_lower for w in ["crawl", "scrape", "web", "website", "page", "site", "url"]):
+        steps.append({
+            "action": "crawl_web",
+            "description": "Crawl the web page",
+            "input": {},
+        })
+
+    if any(w in instruction_lower for w in ["image", "photo", "picture", "screenshot", "visual"]):
+        steps.append({
+            "action": "analyze_image",
+            "description": "Analyze the image with AI Vision",
             "input": {},
         })
 

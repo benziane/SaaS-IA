@@ -38,6 +38,9 @@ google-generativeai==0.8.6
 anthropic==0.86.0
 openai==1.54.5  # Pinned v1.x for Groq compatibility
 
+# Web Crawling
+crawl4ai>=0.4.0
+
 # Utils
 python-dotenv==1.2.2
 structlog==25.5.0

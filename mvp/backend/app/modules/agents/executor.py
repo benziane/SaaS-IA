@@ -11,6 +11,65 @@ import structlog
 logger = structlog.get_logger()
 
 
+async def _exec_crawl_web(input_data: dict, previous: Optional[str]) -> dict:
+    """Execute web crawling."""
+    url = input_data.get("url", previous or "")
+    if not url or not url.startswith("http"):
+        return {"output": "", "error": "No valid URL provided for crawling", "action": "crawl_web"}
+
+    try:
+        from app.modules.web_crawler.service import WebCrawlerService
+
+        result = await WebCrawlerService.scrape(
+            url=url,
+            extract_images=input_data.get("extract_images", True),
+            max_images=input_data.get("max_images", 10),
+        )
+
+        if result.get("success"):
+            markdown = result.get("markdown", "")
+            image_count = result.get("image_count", 0)
+            title = result.get("title", "")
+
+            output = f"# {title}\n\n{markdown[:6000]}"
+            if image_count > 0:
+                output += f"\n\n[{image_count} images found]"
+
+            return {
+                "output": output,
+                "action": "crawl_web",
+                "url": url,
+                "title": title,
+                "image_count": image_count,
+                "text_length": len(markdown),
+            }
+        return {"output": "", "error": result.get("error", "Crawl failed"), "action": "crawl_web"}
+
+    except Exception as e:
+        return {"output": "", "error": str(e)[:500], "action": "crawl_web"}
+
+
+async def _exec_analyze_image(input_data: dict, previous: Optional[str]) -> dict:
+    """Analyze an image URL with AI Vision."""
+    image_url = input_data.get("image_url", input_data.get("url", ""))
+    if not image_url:
+        return {"output": "", "error": "No image URL provided", "action": "analyze_image"}
+
+    try:
+        from app.modules.web_crawler.service import WebCrawlerService
+
+        prompt = input_data.get("prompt", "Describe this image in detail: what it shows, any text visible, colors, and context.")
+        description = await WebCrawlerService._analyze_image_url(
+            image_url=image_url,
+            prompt=prompt,
+        )
+
+        return {"output": description, "action": "analyze_image", "image_url": image_url}
+
+    except Exception as e:
+        return {"output": "", "error": str(e)[:500], "action": "analyze_image"}
+
+
 async def execute_step(action: str, input_data: dict, previous_output: Optional[str] = None) -> dict:
     """Execute a single agent step."""
     handlers = {
@@ -24,6 +83,8 @@ async def execute_step(action: str, input_data: dict, previous_output: Optional[
         "extract_info": _exec_extract,
         "analyze_sentiment": _exec_sentiment,
         "create_pipeline": _exec_generate,  # Fallback to generate for now
+        "crawl_web": _exec_crawl_web,
+        "analyze_image": _exec_analyze_image,
     }
 
     handler = handlers.get(action, _exec_generate)

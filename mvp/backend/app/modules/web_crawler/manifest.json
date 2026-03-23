@@ -1,0 +1,9 @@
+{
+  "name": "web_crawler",
+  "version": "1.0.0",
+  "description": "Web scraping with text and image extraction, AI vision analysis",
+  "prefix": "/api/crawler",
+  "tags": ["web_crawler"],
+  "enabled": true,
+  "dependencies": ["crawl4ai"]
+}

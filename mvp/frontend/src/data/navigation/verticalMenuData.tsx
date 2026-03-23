@@ -67,6 +67,11 @@ const verticalMenuData = (): VerticalMenuDataType[] => [
     href: '/sentiment',
     icon: 'tabler:mood-happy',
   },
+  {
+    label: 'Web Crawler',
+    href: '/crawler',
+    icon: 'tabler:world-download',
+  },
 
   // Platform Section
   {
