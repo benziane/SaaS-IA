@@ -2,7 +2,7 @@
 
 ## Projet
 
-Plateforme SaaS modulaire d'intelligence artificielle - 29 modules backend auto-decouverts, 35 pages frontend, ~210 endpoints API. Architecture enterprise S+++ (v4.0.0).
+Plateforme SaaS modulaire d'intelligence artificielle - 32 modules backend auto-decouverts, 38 pages frontend, ~250 endpoints API. Architecture enterprise S+++ (v4.0.0).
 
 ## Stack technique
 
@@ -85,7 +85,7 @@ Ce qui est interdit c'est de **supprimer un module entier ou remplacer une techn
 - Pour ajouter un embedding a un chunk, utiliser raw SQL : `UPDATE document_chunks SET embedding = :emb WHERE id = :cid`
 - Toujours garder le TF-IDF comme fallback - ne jamais le supprimer
 
-## Modules existants (29)
+## Modules existants (32)
 
 ### Core (12)
 transcription, conversation, knowledge (hybrid search: pgvector + TF-IDF), compare, pipelines, agents, sentiment, web_crawler, workspaces, billing, api_keys, cost_tracker
@@ -107,6 +107,9 @@ ai_monitoring (LLM observability, traces, provider comparison), unified_search (
 
 ### Ecosystem (4)
 social_publisher (multi-platform publishing, scheduling, analytics), integration_hub (10 connectors, webhooks, triggers), ai_chatbot_builder (RAG chatbots, embed widget, multi-channel), marketplace (listings, ratings, installs, 8 categories)
+
+### New - Content & Dev Tools (3)
+presentation_gen (AI slides, 5 templates, export HTML/MD/PDF), code_sandbox (secure execution, AI code gen/debug), ai_forms (conversational forms, AI generation, scoring)
 
 ## Integrations open-source (26 libs)
 
@@ -136,9 +139,9 @@ Toutes les integrations suivent la regle : **auto-detection + fallback gracieux*
 ## Interconnexions
 
 3 systemes d'orchestration connectent tous les modules :
-- **Agent Executor** : ~27 actions (appels directs aux services)
-- **Pipeline Steps** : 15 step types (chaining sequentiel)
-- **Workflow Actions** : 19 types (DAG avec branches paralleles)
+- **Agent Executor** : ~30 actions (appels directs aux services)
+- **Pipeline Steps** : 20 step types (chaining sequentiel)
+- **Workflow Actions** : 23 types (DAG avec branches paralleles)
 
 Quand on ajoute un nouveau module, penser a l'integrer dans les 3 systemes + le planner heuristique.
 

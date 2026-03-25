@@ -454,6 +454,12 @@ class WorkflowService:
             return await WorkflowService._node_send_webhook(previous_output, config)
         elif action == "upscale_image":
             return await WorkflowService._node_upscale_image(previous_output, config, user_id)
+        elif action == "generate_presentation":
+            return await WorkflowService._node_generate_presentation(previous_output, config, user_id)
+        elif action == "execute_code":
+            return await WorkflowService._node_execute_code(previous_output, config, user_id)
+        elif action == "generate_form":
+            return await WorkflowService._node_generate_form(previous_output, config, user_id)
         else:
             return await WorkflowService._node_generate(previous_output, config, user_id)
 
@@ -893,6 +899,100 @@ class WorkflowService:
             }
         except Exception as e:
             return {"output": "", "error": str(e)[:500], "action": "upscale_image"}
+
+    @staticmethod
+    async def _node_generate_presentation(text: str, config: dict, user_id: UUID) -> dict:
+        """Generate a presentation in the workflow."""
+        title = config.get("title", "Workflow Presentation")
+        if not text:
+            return {"output": "", "error": "No text for presentation", "action": "generate_presentation"}
+        try:
+            from app.modules.presentation_gen.service import PresentationGenService
+            from app.database import get_session_context
+            async with get_session_context() as pres_session:
+                svc = PresentationGenService(pres_session)
+                presentation = await svc.generate_presentation(
+                    user_id=user_id,
+                    title=title,
+                    topic=text[:2000],
+                    num_slides=config.get("num_slides", 10),
+                    style=config.get("style", "professional"),
+                    template=config.get("template", "default"),
+                    language=config.get("language", "fr"),
+                    source_text=text[:12000],
+                )
+            return {
+                "output": f"Presentation generated: {presentation.title} ({presentation.num_slides} slides)",
+                "action": "generate_presentation",
+                "presentation_id": str(presentation.id),
+            }
+        except Exception as e:
+            return {"output": "", "error": str(e)[:500], "action": "generate_presentation"}
+
+    @staticmethod
+    async def _node_execute_code(text: str, config: dict, user_id: UUID) -> dict:
+        """Execute Python code in a sandboxed environment."""
+        code = config.get("code", text or "")
+        if not code:
+            return {"output": "", "error": "No code to execute", "action": "execute_code"}
+        try:
+            from app.modules.code_sandbox.service import CodeSandboxService
+            from app.database import get_session_context
+            async with get_session_context() as cs_session:
+                sandbox = await CodeSandboxService.create_sandbox(
+                    user_id=user_id,
+                    data={"name": config.get("name", "Workflow Sandbox"), "language": "python"},
+                    session=cs_session,
+                )
+                cell = await CodeSandboxService.add_cell(
+                    user_id=user_id,
+                    sandbox_id=sandbox.id,
+                    data={"source": code[:50000], "cell_type": "code"},
+                    session=cs_session,
+                )
+                result = await CodeSandboxService.execute_cell(
+                    user_id=user_id,
+                    sandbox_id=sandbox.id,
+                    cell_id=cell["id"],
+                    session=cs_session,
+                )
+            if result and result.get("status") == "success":
+                output = result.get("output") or "Code executed successfully (no output)"
+                return {
+                    "output": output,
+                    "action": "execute_code",
+                    "execution_time_ms": result.get("execution_time_ms"),
+                }
+            error = result.get("error", "unknown") if result else "Execution failed"
+            return {"output": "", "error": error, "action": "execute_code"}
+        except Exception as e:
+            return {"output": "", "error": str(e)[:500], "action": "execute_code"}
+
+    @staticmethod
+    async def _node_generate_form(text: str, config: dict, user_id: UUID) -> dict:
+        """Generate an AI-powered form from a prompt."""
+        prompt = config.get("prompt", text or "")
+        if not prompt:
+            return {"output": "", "error": "No prompt for form generation", "action": "generate_form"}
+        try:
+            from app.modules.ai_forms.service import AIFormsService
+            from app.database import get_session_context
+            import json as _json
+            async with get_session_context() as form_session:
+                svc = AIFormsService(form_session)
+                form = await svc.generate_form(
+                    user_id=user_id,
+                    prompt=prompt[:5000],
+                    num_fields=config.get("num_fields", 5),
+                )
+            fields = _json.loads(form.fields_json) if form.fields_json else []
+            return {
+                "output": f"Form generated: {form.title} ({len(fields)} fields)",
+                "action": "generate_form",
+                "form_id": str(form.id),
+            }
+        except Exception as e:
+            return {"output": "", "error": str(e)[:500], "action": "generate_form"}
 
     @staticmethod
     async def list_runs(

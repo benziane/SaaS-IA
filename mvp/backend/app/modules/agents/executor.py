@@ -102,6 +102,9 @@ async def execute_step(action: str, input_data: dict, previous_output: Optional[
         "create_integration_webhook": _exec_create_integration_webhook,
         "deploy_chatbot": _exec_deploy_chatbot,
         "search_marketplace": _exec_search_marketplace,
+        "generate_presentation": _exec_generate_presentation,
+        "execute_code": _exec_execute_code,
+        "generate_form": _exec_generate_form,
     }
 
     handler = handlers.get(action, _exec_generate)
@@ -665,6 +668,165 @@ async def _exec_deploy_chatbot(input_data: dict, previous: Optional[str]) -> dic
         }
     except Exception as e:
         return {"output": "", "error": str(e)[:500], "action": "deploy_chatbot"}
+
+
+async def _exec_generate_presentation(input_data: dict, previous: Optional[str]) -> dict:
+    """Generate a presentation via PresentationGenService."""
+    title = input_data.get("title", "")
+    topic = input_data.get("topic", previous or "")
+    if not title and not topic:
+        return {"output": "", "error": "No title or topic provided for presentation", "action": "generate_presentation"}
+    if not title:
+        title = topic[:100]
+
+    try:
+        from app.modules.presentation_gen.service import PresentationGenService
+        from app.database import get_session_context
+        from uuid import UUID as UUIDType
+
+        user_id = input_data.get("_user_id")
+        if not user_id:
+            return {
+                "output": f"[Presentation '{title}' ready to generate. Use the Presentation Gen module to create.]",
+                "action": "generate_presentation",
+                "note": "No user context. Use the Presentation Gen module directly.",
+            }
+
+        uid = UUIDType(user_id) if isinstance(user_id, str) else user_id
+        async with get_session_context() as session:
+            service = PresentationGenService(session)
+            presentation = await service.generate_presentation(
+                user_id=uid,
+                title=title,
+                topic=topic,
+                num_slides=input_data.get("num_slides", 10),
+                style=input_data.get("style", "professional"),
+                template=input_data.get("template", "default"),
+                language=input_data.get("language", "fr"),
+            )
+
+        return {
+            "output": f"[Presentation '{presentation.title}' generated with {presentation.num_slides} slides. "
+                      f"ID: {presentation.id}. Status: {presentation.status}.]",
+            "action": "generate_presentation",
+            "presentation_id": str(presentation.id),
+            "num_slides": presentation.num_slides,
+            "status": str(presentation.status),
+        }
+    except Exception as e:
+        return {"output": "", "error": str(e)[:500], "action": "generate_presentation"}
+
+
+async def _exec_execute_code(input_data: dict, previous: Optional[str]) -> dict:
+    """Execute code in a secure sandbox."""
+    code = input_data.get("code", input_data.get("source", previous or ""))
+    if not code:
+        return {"output": "", "error": "No code provided for execution", "action": "execute_code"}
+
+    try:
+        from app.modules.code_sandbox.service import CodeSandboxService
+        from app.database import get_session_context
+        from uuid import UUID as UUIDType
+
+        user_id = input_data.get("_user_id")
+        if not user_id:
+            return {
+                "output": code,
+                "action": "execute_code",
+                "note": "No user context. Use the Code Sandbox module directly.",
+            }
+
+        uid = UUIDType(user_id) if isinstance(user_id, str) else user_id
+        async with get_session_context() as session:
+            # Create a temporary sandbox
+            sandbox = await CodeSandboxService.create_sandbox(
+                user_id=uid,
+                data={"name": "Agent execution", "language": input_data.get("language", "python")},
+                session=session,
+            )
+
+            # Add a cell with the code
+            cell = await CodeSandboxService.add_cell(
+                user_id=uid,
+                sandbox_id=sandbox.id,
+                data={"source": code},
+                session=session,
+            )
+
+            if not cell:
+                return {"output": "", "error": "Failed to create code cell", "action": "execute_code"}
+
+            # Execute the cell
+            result = await CodeSandboxService.execute_cell(
+                user_id=uid,
+                sandbox_id=sandbox.id,
+                cell_id=cell["id"],
+                session=session,
+            )
+
+        if not result:
+            return {"output": "", "error": "Execution returned no result", "action": "execute_code"}
+
+        output = result.get("output", "") or ""
+        error = result.get("error")
+        status = result.get("status", "unknown")
+
+        if error:
+            return {
+                "output": output,
+                "error": error,
+                "action": "execute_code",
+                "status": status,
+                "execution_time_ms": result.get("execution_time_ms"),
+            }
+
+        return {
+            "output": output,
+            "action": "execute_code",
+            "status": status,
+            "execution_time_ms": result.get("execution_time_ms"),
+        }
+    except Exception as e:
+        return {"output": "", "error": str(e)[:500], "action": "execute_code"}
+
+
+async def _exec_generate_form(input_data: dict, previous: Optional[str]) -> dict:
+    """Generate a form via AIFormsService."""
+    prompt = input_data.get("prompt", input_data.get("description", previous or ""))
+    if not prompt:
+        return {"output": "", "error": "No prompt provided for form generation", "action": "generate_form"}
+
+    try:
+        from app.modules.ai_forms.service import AIFormsService
+        from app.database import get_session_context
+        from uuid import UUID as UUIDType
+
+        user_id = input_data.get("_user_id")
+        if not user_id:
+            return {
+                "output": f"[Form ready to generate from prompt: '{prompt[:100]}'. Use the AI Forms module to create.]",
+                "action": "generate_form",
+                "note": "No user context. Use the AI Forms module directly.",
+            }
+
+        uid = UUIDType(user_id) if isinstance(user_id, str) else user_id
+        async with get_session_context() as session:
+            service = AIFormsService(session)
+            form = await service.generate_form(
+                user_id=uid,
+                prompt=prompt,
+                num_fields=input_data.get("num_fields", 5),
+            )
+
+        return {
+            "output": f"[Form '{form.title}' generated with {len(json.loads(form.fields_json))} fields. "
+                      f"ID: {form.id}. Status: {form.status}.]",
+            "action": "generate_form",
+            "form_id": str(form.id),
+            "status": form.status,
+        }
+    except Exception as e:
+        return {"output": "", "error": str(e)[:500], "action": "generate_form"}
 
 
 async def _exec_search_marketplace(input_data: dict, previous: Optional[str]) -> dict:

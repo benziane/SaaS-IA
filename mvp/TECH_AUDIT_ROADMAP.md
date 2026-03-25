@@ -84,12 +84,12 @@
 | | | **Flowise** | 30K | Visual LLM flow builder, RAG integre | [x] FAIT (v4.0.0) |
 | 28 | marketplace | Architecture manifest.json | - | Deja en place. Ajouter versioning `semver` + `jsonschema` pour validation | [x] FAIT (v4.0.0) |
 | | | **Stripe Connect** | - | Revenue sharing 70/30 natif | [x] FAIT (v4.0.0) |
-| 29 | presentation_gen | **Slidev** + **Marp** | 30K + 5K | Markdown -> slides, themes pro | [ ] A examiner |
-| | | `playwright` | - | Export PDF headless | [ ] A examiner |
-| 30 | code_sandbox | **Pyodide** | 15K | Python dans le browser (WebAssembly), zero cout serveur | [ ] A examiner |
-| | | **Monaco Editor** | 40K | Editeur code VS Code dans le browser | [ ] A examiner |
-| 31 | ai_forms | **conversational-form** | 10K | Formulaires conversationnels natifs | [ ] A examiner |
-| | | `react-hook-form` | 40K | Deja dans notre stack | [ ] A examiner |
+| 29 | presentation_gen | **Slidev** + **Marp** | 30K + 5K | Markdown -> slides, themes pro | [x] FAIT (v4.0.0) |
+| | | `playwright` | - | Export PDF headless | [x] FAIT (v4.0.0) |
+| 30 | code_sandbox | **Pyodide** | 15K | Python dans le browser (WebAssembly), zero cout serveur | [x] FAIT (v4.0.0) |
+| | | **Monaco Editor** | 40K | Editeur code VS Code dans le browser | [x] FAIT (v4.0.0) |
+| 31 | ai_forms | **conversational-form** | 10K | Formulaires conversationnels natifs | [x] FAIT (v4.0.0) |
+| | | `react-hook-form` | 40K | Deja dans notre stack | [x] FAIT (v4.0.0) |
 | 32 | ai_monitoring | **Langfuse** | 8K | Observabilite LLM open-source, self-hostable, traces + evals | [ ] A examiner |
 | | | `opentelemetry-api` | - | Tracing standardise | [ ] A examiner |
 

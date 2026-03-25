@@ -43,6 +43,9 @@ AVAILABLE_ACTIONS = {
     "create_integration_webhook": "Create a webhook connector to receive events from external services (Slack, GitHub, Stripe, etc.)",
     "deploy_chatbot": "Create and publish a custom AI chatbot with system prompt and optional RAG",
     "search_marketplace": "Search the marketplace for modules, templates, prompts, workflows, or datasets",
+    "generate_presentation": "Generate a slide deck / presentation from a title and topic",
+    "execute_code": "Execute code in a secure sandbox (Python)",
+    "generate_form": "Generate an AI-powered form from a natural language prompt",
 }
 
 
@@ -294,6 +297,27 @@ def _heuristic_plan(instruction: str) -> list[dict]:
         steps.append({
             "action": "search_marketplace",
             "description": "Search the marketplace for listings",
+            "input": {},
+        })
+
+    if any(w in instruction_lower for w in ["presentation", "slides", "pitch deck", "powerpoint", "diapositive"]):
+        steps.append({
+            "action": "generate_presentation",
+            "description": "Generate a slide deck / presentation",
+            "input": {},
+        })
+
+    if any(w in instruction_lower for w in ["execute code", "run code", "python", "sandbox", "script", "code"]):
+        steps.append({
+            "action": "execute_code",
+            "description": "Execute code in a secure sandbox",
+            "input": {},
+        })
+
+    if any(w in instruction_lower for w in ["form", "formulaire", "survey", "questionnaire", "sondage"]):
+        steps.append({
+            "action": "generate_form",
+            "description": "Generate an AI-powered form",
             "input": {},
         })
 

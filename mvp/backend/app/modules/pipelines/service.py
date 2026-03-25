@@ -642,6 +642,89 @@ class PipelineService:
                 step_output = "No image_id for upscaling" if not image_id else "No pipeline context"
             return {"type": "upscale_image", "output": step_output}
 
+        # ---- Generate presentation step ----
+        elif step_type == "generate_presentation":
+            text = config.get("text", previous_output or "")
+            title = config.get("title", "Pipeline Presentation")
+            if text and pipeline:
+                try:
+                    from app.modules.presentation_gen.service import PresentationGenService
+                    from app.database import get_session_context
+                    async with get_session_context() as pres_session:
+                        svc = PresentationGenService(pres_session)
+                        presentation = await svc.generate_presentation(
+                            user_id=pipeline.user_id,
+                            title=title,
+                            topic=text[:2000],
+                            num_slides=config.get("num_slides", 10),
+                            style=config.get("style", "professional"),
+                            template=config.get("template", "default"),
+                            language=config.get("language", "fr"),
+                            source_text=text[:12000],
+                        )
+                    step_output = f"Presentation generated: {presentation.title} ({presentation.num_slides} slides, id: {presentation.id})"
+                except Exception as e:
+                    step_output = f"Presentation generation failed: {str(e)[:500]}"
+            else:
+                step_output = "No text for presentation" if not text else "No pipeline context"
+            return {"type": "generate_presentation", "output": step_output}
+
+        # ---- Execute code step ----
+        elif step_type == "execute_code":
+            code = config.get("code", previous_output or "")
+            if code and pipeline:
+                try:
+                    from app.modules.code_sandbox.service import CodeSandboxService
+                    from app.database import get_session_context
+                    async with get_session_context() as cs_session:
+                        sandbox = await CodeSandboxService.create_sandbox(
+                            user_id=pipeline.user_id,
+                            data={"name": config.get("name", "Pipeline Sandbox"), "language": "python"},
+                            session=cs_session,
+                        )
+                        cell = await CodeSandboxService.add_cell(
+                            user_id=pipeline.user_id,
+                            sandbox_id=sandbox.id,
+                            data={"source": code[:50000], "cell_type": "code"},
+                            session=cs_session,
+                        )
+                        result = await CodeSandboxService.execute_cell(
+                            user_id=pipeline.user_id,
+                            sandbox_id=sandbox.id,
+                            cell_id=cell["id"],
+                            session=cs_session,
+                        )
+                    if result and result.get("status") == "success":
+                        step_output = result.get("output") or "Code executed successfully (no output)"
+                    else:
+                        step_output = f"Code error: {result.get('error', 'unknown')}" if result else "Execution failed"
+                except Exception as e:
+                    step_output = f"Code execution failed: {str(e)[:500]}"
+            else:
+                step_output = "No code to execute" if not code else "No pipeline context"
+            return {"type": "execute_code", "output": step_output}
+
+        # ---- Generate form step ----
+        elif step_type == "generate_form":
+            prompt = config.get("prompt", previous_output or "")
+            if prompt and pipeline:
+                try:
+                    from app.modules.ai_forms.service import AIFormsService
+                    from app.database import get_session_context
+                    async with get_session_context() as form_session:
+                        svc = AIFormsService(form_session)
+                        form = await svc.generate_form(
+                            user_id=pipeline.user_id,
+                            prompt=prompt[:5000],
+                            num_fields=config.get("num_fields", 5),
+                        )
+                    step_output = f"Form generated: {form.title} ({len(json.loads(form.fields_json))} fields, id: {form.id})"
+                except Exception as e:
+                    step_output = f"Form generation failed: {str(e)[:500]}"
+            else:
+                step_output = "No prompt for form generation" if not prompt else "No pipeline context"
+            return {"type": "generate_form", "output": step_output}
+
         else:
             return {"type": step_type, "output": previous_output or "", "note": "Unknown step type"}
 

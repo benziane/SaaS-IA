@@ -680,7 +680,7 @@ Audit et consolidation complete de toutes les connections entre les 22 modules d
 | `generate_clips` | video_gen | Delegation |
 | `fine_tune` | fine_tuning | Delegation |
 
-#### Pipeline Steps - 12 types
+#### Pipeline Steps - 20 types
 | Step Type | Module | Connexion |
 |-----------|--------|-----------|
 | `summarize` | ai_assistant | Appel direct |
@@ -699,7 +699,7 @@ Audit et consolidation complete de toutes les connections entre les 22 modules d
 | `text_to_speech` | voice_clone | **Appel direct** |
 | `security_scan` | security_guardian | **Appel direct** |
 
-#### Workflow Actions - 19 types
+#### Workflow Actions - 23 types
 | Action | Module | Connexion |
 |--------|--------|-----------|
 | `summarize` | ai_assistant | Appel direct |
@@ -1260,13 +1260,16 @@ CREATE INDEX ix_document_chunks_embedding_hnsw
 
 ## CHANGELOG
 
-### v4.0.0 (2026-03-25) - Ecosystem Modules + Enterprise S+++
+### v4.0.0 (2026-03-25) - Ecosystem Modules + Content & Dev Tools + Enterprise S+++
 
-#### New Modules (4)
+#### New Modules (7)
 - **social_publisher** : Multi-platform publishing hub (scheduling, analytics, multi-platform)
 - **integration_hub** : External connectors with webhooks (10 connectors, triggers)
 - **ai_chatbot_builder** : RAG chatbots with embed deployment (widget, multi-channel)
 - **marketplace** : Module/template/prompt marketplace (listings, ratings, installs, 8 categories)
+- **presentation_gen** : AI slides (5 templates, export HTML/MD/PDF)
+- **code_sandbox** : Secure execution (AI code gen/debug)
+- **ai_forms** : Conversational forms (AI generation, scoring)
 
 #### Enterprise Architecture (12 components)
 - 9 middleware layers (CORS, RequestID, ShutdownGuard, Sentry, RateLimit, Logging, Security, Compression, Prometheus)
@@ -1281,7 +1284,7 @@ CREATE INDEX ix_document_chunks_embedding_hnsw
 - Semaine 4+: cardiffnlp/RoBERTa, textstat, Jina Reader, ffmpeg-python, Real-ESRGAN, unsloth, lm-eval, LiveKit
 - Enterprise: OpenTelemetry (7 packages), sentry-sdk, brotli
 
-Total plateforme : **29 modules**, **35 pages**, **~210 endpoints**, **9 middleware layers**, **12 composants enterprise**
+Total plateforme : **32 modules**, **38 pages**, **~250 endpoints**, **9 middleware layers**, **12 composants enterprise**
 
 ### v3.10.0 (2026-03-25) - Open-Source Libs Semaine 4+ (8 integrations)
 - **cardiffnlp/RoBERTa** : sentiment local SOTA (~100ms vs 5s LLM), couts /10, lazy-loaded pipeline
