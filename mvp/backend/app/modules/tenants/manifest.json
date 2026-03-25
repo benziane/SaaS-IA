@@ -1,0 +1,9 @@
+{
+  "name": "tenants",
+  "version": "1.0.0",
+  "description": "Multi-tenant management with RLS, white-label branding, and tenant isolation",
+  "prefix": "/api/tenants",
+  "tags": ["tenants"],
+  "enabled": true,
+  "dependencies": []
+}

@@ -11,7 +11,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from app.auth import get_current_user
 from app.database import get_session
 from app.models.user import User
-from app.modules.skill_seekers.schemas import ScrapeJobCreate, ScrapeJobRead, PaginatedJobs
+from app.modules.skill_seekers.schemas import ScrapeJobCreate, ScrapeJobRead, PaginatedJobs, ScrapeJobStats
 from app.modules.skill_seekers.service import SkillSeekersService
 from app.rate_limit import limiter
 
@@ -89,6 +89,24 @@ async def list_jobs(
         skip=skip,
         limit=limit,
         has_more=(skip + limit) < total,
+    )
+
+
+# --------------------------------------------------------------------------
+# GET /jobs/stats - User statistics (BEFORE /{job_id} to avoid path conflict)
+# --------------------------------------------------------------------------
+
+@router.get("/jobs/stats", response_model=ScrapeJobStats)
+@limiter.limit("20/minute")
+async def get_stats(
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+):
+    """Get scrape job statistics for the current user."""
+    return await SkillSeekersService.get_user_stats(
+        user_id=current_user.id,
+        session=session,
     )
 
 

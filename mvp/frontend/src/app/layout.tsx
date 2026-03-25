@@ -29,6 +29,22 @@ export const metadata: Metadata = {
   authors: [{ name: 'SaaS-IA Team' }],
   creator: 'SaaS-IA',
   publisher: 'SaaS-IA',
+  manifest: '/manifest.json',
+  icons: {
+    icon: [
+      { url: '/icons/icon-192x192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/icons/icon-512x512.png', sizes: '512x512', type: 'image/png' },
+    ],
+    apple: [
+      { url: '/icons/icon-152x152.png', sizes: '152x152', type: 'image/png' },
+      { url: '/icons/icon-192x192.png', sizes: '192x192', type: 'image/png' },
+    ],
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'SaaS-IA',
+  },
   robots: {
     index: true,
     follow: true,
@@ -55,11 +71,9 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 5,
-  themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
-    { media: '(prefers-color-scheme: dark)', color: '#1a1a1a' },
-  ],
+  maximumScale: 1,
+  userScalable: false,
+  themeColor: '#2563eb',
 };
 
 /* ========================================================================
@@ -86,7 +100,7 @@ export default async function RootLayout({ children }: RootLayoutProps): Promise
       <head>
         {/* Boxicons for theme switcher and icons */}
         <link rel="stylesheet" href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" />
-        
+
         {/* Theme initialization script - prevents flash */}
         <script
           dangerouslySetInnerHTML={{

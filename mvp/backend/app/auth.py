@@ -374,8 +374,12 @@ async def login(
     await _reset_login_attempts(email)
 
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    token_data = {"sub": user.email}
+    # Include tenant_id in JWT if user belongs to a tenant
+    if getattr(user, "tenant_id", None) is not None:
+        token_data["tenant_id"] = str(user.tenant_id)
     access_token = create_access_token(
-        data={"sub": user.email},
+        data=token_data,
         expires_delta=access_token_expires
     )
     refresh_token = create_refresh_token(user_id=user.email)

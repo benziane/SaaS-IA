@@ -18,6 +18,7 @@ from app.config import settings
 
 # Import all models for autogenerate
 from app.models.user import User  # noqa: F401
+from app.models.tenant import Tenant  # noqa: F401
 from app.models.transcription import Transcription  # noqa: F401
 from app.models.conversation import Conversation, Message  # noqa: F401
 from app.models.billing import Plan, UserQuota  # noqa: F401

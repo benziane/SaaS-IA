@@ -74,6 +74,10 @@ app.add_middleware(SelectiveCompressionMiddleware)
 from app.middleware.security_headers import SecurityHeadersMiddleware
 app.add_middleware(SecurityHeadersMiddleware)
 
+# 5c. Tenant Context (extracts tenant_id from JWT/header, sets contextvars for RLS)
+from app.middleware.tenant_middleware import TenantMiddleware
+app.add_middleware(TenantMiddleware)
+
 # 5b. Sliding Window Rate Limiter (global, coexists with per-endpoint slowapi)
 from app.middleware.rate_limiter import RateLimitMiddleware
 app.add_middleware(RateLimitMiddleware)
@@ -100,7 +104,7 @@ app.add_middleware(
     allow_origins=settings.cors_origins_list,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    allow_headers=["Authorization", "Content-Type", "X-Request-ID", "Accept"],
+    allow_headers=["Authorization", "Content-Type", "X-Request-ID", "X-Tenant-ID", "Accept"],
 )
 
 # Import Celery request_id signals (auto-registers on import)
@@ -130,6 +134,12 @@ logger.info(
     count=len(registered),
     modules=[m["name"] for m in registered],
 )
+
+# WebSocket + Notifications routes
+from app.api.websocket_routes import router as ws_router
+from app.core.websocket_manager import manager as ws_manager
+app.state.ws_manager = ws_manager
+app.include_router(ws_router, tags=["WebSocket & Notifications"])
 
 # Enterprise health checks (Kubernetes-ready: /health/live, /health/ready, /health/startup)
 from app.api.health import router as health_router, mark_startup_complete

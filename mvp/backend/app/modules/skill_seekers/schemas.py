@@ -6,7 +6,10 @@ from datetime import datetime
 from typing import Optional
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
+
+# Valid targets supported by skill-seekers CLI
+VALID_TARGETS = {"claude", "openai", "gemini", "langchain", "llama-index", "markdown"}
 
 
 class ScrapeJobCreate(BaseModel):
@@ -14,6 +17,19 @@ class ScrapeJobCreate(BaseModel):
     repos: list[str] = Field(..., min_length=1, max_length=10, description="GitHub repos (owner/repo format)")
     targets: list[str] = Field(default=["claude"], max_length=5, description="Package targets")
     enhance: bool = Field(default=False, description="Run AI enhancement pass")
+
+    @field_validator("targets")
+    @classmethod
+    def validate_targets(cls, v: list[str]) -> list[str]:
+        if not v:
+            raise ValueError("At least one target is required")
+        invalid = [t for t in v if t not in VALID_TARGETS]
+        if invalid:
+            raise ValueError(
+                f"Invalid target(s): {invalid}. "
+                f"Valid targets: {sorted(VALID_TARGETS)}"
+            )
+        return v
 
     class Config:
         json_schema_extra = {
@@ -51,3 +67,14 @@ class PaginatedJobs(BaseModel):
     skip: int
     limit: int
     has_more: bool
+
+
+class ScrapeJobStats(BaseModel):
+    """Scrape job statistics for a user."""
+    total_jobs: int
+    completed: int
+    failed: int
+    pending: int
+    running: int
+    total_repos_scraped: int
+    recent_jobs: list[dict]

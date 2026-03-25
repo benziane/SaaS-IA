@@ -77,6 +77,11 @@ const verticalMenuData = (): VerticalMenuDataType[] => [
     href: '/crawler',
     icon: 'tabler:world-download',
   },
+  {
+    label: 'Skill Seekers',
+    href: '/skill-seekers',
+    icon: 'tabler:brand-github',
+  },
 
   // Platform Section
   {

@@ -21,9 +21,11 @@ import { ScrapeJobStatus } from '@/features/skill-seekers/types';
 
 const TARGET_OPTIONS = [
   { id: 'claude', label: 'Claude' },
-  { id: 'chatgpt', label: 'ChatGPT' },
+  { id: 'openai', label: 'OpenAI' },
   { id: 'gemini', label: 'Gemini' },
-  { id: 'raw', label: 'Raw Markdown' },
+  { id: 'langchain', label: 'LangChain' },
+  { id: 'llama-index', label: 'LlamaIndex' },
+  { id: 'markdown', label: 'Markdown' },
 ];
 
 const STATUS_COLORS: Record<string, 'default' | 'info' | 'success' | 'error' | 'warning'> = {

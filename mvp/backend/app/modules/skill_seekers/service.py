@@ -8,7 +8,8 @@ import os
 import re
 import shutil
 import tempfile
-from datetime import datetime
+from datetime import datetime, UTC
+from pathlib import Path
 from typing import Optional
 from uuid import UUID
 
@@ -27,6 +28,11 @@ REPO_NAME_PATTERN = re.compile(r"^[a-zA-Z0-9_\-\.]+/[a-zA-Z0-9_\-\.]+$")
 
 # Auto-detect CLI availability
 HAS_SKILL_SEEKERS = shutil.which("skill-seekers") is not None
+
+# Persistent output directory (survives restarts, isolated per user/job)
+SKILL_SEEKERS_DATA_DIR = Path(
+    os.environ.get("SKILL_SEEKERS_DATA_DIR", "")
+) if os.environ.get("SKILL_SEEKERS_DATA_DIR") else Path(tempfile.gettempdir()) / "skill_seekers_data"
 
 
 class SkillSeekersService:
@@ -180,8 +186,13 @@ class SkillSeekersService:
                     "--output", repo_dir,
                     stdout=asyncio.subprocess.PIPE,
                     stderr=asyncio.subprocess.PIPE,
+                    stdin=asyncio.subprocess.DEVNULL,
                 )
-                stdout, stderr = await proc.communicate()
+                try:
+                    stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=300)
+                except asyncio.TimeoutError:
+                    proc.kill()
+                    raise RuntimeError(f"skill-seekers create timed out for {repo} (300s limit)")
 
                 if proc.returncode != 0:
                     error_msg = stderr.decode("utf-8", errors="replace")[:500]
@@ -202,8 +213,14 @@ class SkillSeekersService:
                         "skill-seekers", "enhance", repo_dir,
                         stdout=asyncio.subprocess.PIPE,
                         stderr=asyncio.subprocess.PIPE,
+                        stdin=asyncio.subprocess.DEVNULL,
                     )
-                    stdout, stderr = await proc.communicate()
+                    try:
+                        stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=300)
+                    except asyncio.TimeoutError:
+                        proc.kill()
+                        logger.warning("skill_seekers_enhance_timeout", repo=repo)
+                        stdout, stderr = b"", b"timeout"
                     if proc.returncode != 0:
                         logger.warning(
                             "skill_seekers_enhance_failed",
@@ -229,8 +246,13 @@ class SkillSeekersService:
                         "--output", out_path,
                         stdout=asyncio.subprocess.PIPE,
                         stderr=asyncio.subprocess.PIPE,
+                        stdin=asyncio.subprocess.DEVNULL,
                     )
-                    stdout, stderr = await proc.communicate()
+                    try:
+                        stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=300)
+                    except asyncio.TimeoutError:
+                        proc.kill()
+                        raise RuntimeError(f"skill-seekers package timed out for {repo}/{target} (300s limit)")
 
                     if proc.returncode != 0:
                         error_msg = stderr.decode("utf-8", errors="replace")[:500]
@@ -395,6 +417,67 @@ class SkillSeekersService:
                 return filepath
 
         return None
+
+    @staticmethod
+    async def get_user_stats(user_id: UUID, session: AsyncSession) -> dict:
+        """Get scrape job statistics for a user."""
+        status_result = await session.execute(
+            select(
+                ScrapeJob.status,
+                func.count().label("cnt"),
+            )
+            .where(ScrapeJob.user_id == user_id)
+            .group_by(ScrapeJob.status)
+        )
+        status_counts: dict[str, int] = {}
+        for row in status_result.all():
+            status_counts[row.status] = row.cnt
+
+        completed = status_counts.get(ScrapeJobStatus.COMPLETED, 0)
+        failed = status_counts.get(ScrapeJobStatus.FAILED, 0)
+        pending = status_counts.get(ScrapeJobStatus.PENDING, 0)
+        running = status_counts.get(ScrapeJobStatus.RUNNING, 0)
+        total = completed + failed + pending + running
+
+        # Count total repos scraped across completed jobs
+        repos_result = await session.execute(
+            select(ScrapeJob.repos_json)
+            .where(ScrapeJob.user_id == user_id)
+            .where(ScrapeJob.status == ScrapeJobStatus.COMPLETED)
+        )
+        total_repos = 0
+        for row in repos_result.all():
+            try:
+                total_repos += len(json.loads(row[0]))
+            except Exception:
+                pass
+
+        # Recent jobs (last 5)
+        recent_result = await session.execute(
+            select(ScrapeJob)
+            .where(ScrapeJob.user_id == user_id)
+            .order_by(ScrapeJob.created_at.desc())
+            .limit(5)
+        )
+        recent_jobs = [
+            {
+                "id": str(job.id),
+                "repos": json.loads(job.repos_json) if job.repos_json else [],
+                "status": job.status.value if hasattr(job.status, "value") else job.status,
+                "created_at": job.created_at.isoformat(),
+            }
+            for job in recent_result.scalars().all()
+        ]
+
+        return {
+            "total_jobs": total,
+            "completed": completed,
+            "failed": failed,
+            "pending": pending,
+            "running": running,
+            "total_repos_scraped": total_repos,
+            "recent_jobs": recent_jobs,
+        }
 
     @staticmethod
     def job_to_read(job: ScrapeJob) -> dict:
