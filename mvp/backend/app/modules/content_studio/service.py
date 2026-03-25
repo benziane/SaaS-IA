@@ -3,6 +3,7 @@ Content Studio service - Multi-format AI content generation from any source.
 
 Transforms transcriptions, documents, URLs, or raw text into blog articles,
 Twitter threads, LinkedIn posts, newsletters, and more.
+Includes readability scoring via textstat when available.
 """
 
 import json
@@ -11,6 +12,12 @@ from typing import Optional
 from uuid import UUID
 
 import structlog
+
+try:
+    import textstat
+    HAS_TEXTSTAT = True
+except ImportError:
+    HAS_TEXTSTAT = False
 from sqlalchemy import func
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
@@ -250,8 +257,11 @@ class ContentStudioService:
 
                 content_obj.content = result.get("content", "")
                 content_obj.title = result.get("title", "")
+                metadata = result.get("metadata", {})
+                if result.get("readability"):
+                    metadata["readability"] = result["readability"]
                 content_obj.metadata_json = json.dumps(
-                    result.get("metadata", {}), ensure_ascii=False
+                    metadata, ensure_ascii=False
                 )
                 content_obj.word_count = len(content_obj.content.split())
                 content_obj.status = ContentStatus.GENERATED
@@ -339,10 +349,14 @@ Source content:
                 title = stripped.split(":", 1)[1].strip()
                 break
 
+        # Compute readability metrics on the generated content
+        readability = ContentStudioService._compute_readability(generated_text)
+
         return {
             "content": generated_text,
             "title": title,
             "provider": result.get("provider", provider or "gemini"),
+            "readability": readability,
             "metadata": {
                 "format": fmt.value,
                 "tone": tone,
@@ -496,6 +510,47 @@ Source content:
 
         logger.info("content_project_deleted", project_id=str(project_id))
         return True
+
+    @staticmethod
+    def _compute_readability(text: str) -> dict:
+        """
+        Compute readability metrics for generated content.
+
+        Uses textstat library when available for comprehensive scoring.
+        Falls back to basic word count and estimated reading time otherwise.
+        """
+        word_count = len(text.split())
+        reading_time_minutes = round(word_count / 200, 1)
+
+        if not HAS_TEXTSTAT:
+            return {
+                "word_count": word_count,
+                "reading_time_minutes": reading_time_minutes,
+                "source": "basic",
+            }
+
+        flesch_score = textstat.flesch_reading_ease(text)
+
+        # Determine difficulty level based on Flesch Reading Ease
+        if flesch_score >= 60:
+            difficulty_level = "easy"
+        elif flesch_score >= 30:
+            difficulty_level = "medium"
+        else:
+            difficulty_level = "hard"
+
+        return {
+            "flesch_reading_ease": round(flesch_score, 1),
+            "flesch_kincaid_grade": round(textstat.flesch_kincaid_grade(text), 1),
+            "gunning_fog": round(textstat.gunning_fog(text), 1),
+            "smog_index": round(textstat.smog_index(text), 1),
+            "automated_readability_index": round(textstat.automated_readability_index(text), 1),
+            "coleman_liau_index": round(textstat.coleman_liau_index(text), 1),
+            "word_count": word_count,
+            "reading_time_minutes": reading_time_minutes,
+            "difficulty_level": difficulty_level,
+            "source": "textstat",
+        }
 
     @staticmethod
     async def _fetch_transcription_text(

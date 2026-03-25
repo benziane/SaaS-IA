@@ -6,7 +6,8 @@ knowledge base RAG, and conversation history.
 """
 
 import json
-from datetime import datetime
+import os
+from datetime import datetime, timedelta
 from typing import Optional
 from uuid import UUID
 
@@ -15,6 +16,12 @@ from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.models.realtime_ai import RealtimeSession, SessionMode, SessionStatus
+
+try:
+    from livekit import api as livekit_api
+    HAS_LIVEKIT = True
+except ImportError:
+    HAS_LIVEKIT = False
 
 logger = structlog.get_logger()
 
@@ -39,11 +46,75 @@ REALTIME_CONFIG = {
         {"code": "ja", "name": "Japanese"},
         {"code": "zh", "name": "Chinese"},
     ],
+    "livekit_available": HAS_LIVEKIT,
+    "webrtc_enabled": HAS_LIVEKIT,
 }
 
 
 class RealtimeAIService:
     """Service for real-time AI interaction sessions."""
+
+    @staticmethod
+    def _create_livekit_room(session_id: str, user_id: str) -> Optional[dict]:
+        """Create a LiveKit room and generate an access token for the user."""
+        if not HAS_LIVEKIT:
+            return None
+
+        try:
+            livekit_url = os.getenv("LIVEKIT_URL", "ws://localhost:7880")
+            api_key = os.getenv("LIVEKIT_API_KEY", "devkey")
+            api_secret = os.getenv("LIVEKIT_API_SECRET", "devsecret")
+
+            token = livekit_api.AccessToken(api_key, api_secret)
+            token.identity = str(user_id)
+            token.add_grant(livekit_api.VideoGrant(
+                room_join=True,
+                room=session_id,
+                can_publish=True,
+                can_subscribe=True,
+            ))
+
+            expires_at = datetime.utcnow() + timedelta(hours=6)
+            jwt_token = token.to_jwt()
+
+            return {
+                "room_name": session_id,
+                "token": jwt_token,
+                "livekit_url": livekit_url,
+                "expires_at": expires_at.isoformat(),
+            }
+        except Exception as e:
+            logger.error("livekit_room_creation_failed", error=str(e))
+            return None
+
+    @staticmethod
+    def _create_livekit_agent_token(session_id: str) -> Optional[dict]:
+        """Create a LiveKit access token for the AI agent to join a room."""
+        if not HAS_LIVEKIT:
+            return None
+
+        try:
+            api_key = os.getenv("LIVEKIT_API_KEY", "devkey")
+            api_secret = os.getenv("LIVEKIT_API_SECRET", "devsecret")
+
+            token = livekit_api.AccessToken(api_key, api_secret)
+            token.identity = "ai-agent"
+            token.add_grant(livekit_api.VideoGrant(
+                room_join=True,
+                room=session_id,
+                can_publish=True,
+                can_subscribe=True,
+            ))
+
+            jwt_token = token.to_jwt()
+
+            return {
+                "token": jwt_token,
+                "identity": "ai-agent",
+            }
+        except Exception as e:
+            logger.error("livekit_agent_token_failed", error=str(e))
+            return None
 
     @staticmethod
     async def create_session(
@@ -67,7 +138,24 @@ class RealtimeAIService:
         await session.commit()
         await session.refresh(rt_session)
 
-        logger.info("realtime_session_created", session_id=str(rt_session.id), mode=mode)
+        # Attach LiveKit WebRTC room for voice/vision modes
+        livekit_info = None
+        if HAS_LIVEKIT and mode in ("voice", "voice_vision", "meeting"):
+            livekit_info = RealtimeAIService._create_livekit_room(
+                session_id=str(rt_session.id), user_id=str(user_id),
+            )
+            if livekit_info:
+                # Persist livekit info in session config
+                existing_config = json.loads(rt_session.config_json) if rt_session.config_json else {}
+                existing_config["livekit"] = livekit_info
+                rt_session.config_json = json.dumps(existing_config, ensure_ascii=False)
+                session.add(rt_session)
+                await session.commit()
+                await session.refresh(rt_session)
+                logger.info("livekit_room_attached", session_id=str(rt_session.id))
+
+        logger.info("realtime_session_created", session_id=str(rt_session.id), mode=mode,
+                     livekit=livekit_info is not None)
         return rt_session
 
     @staticmethod
@@ -268,4 +356,9 @@ class RealtimeAIService:
 
     @staticmethod
     def get_config() -> dict:
-        return REALTIME_CONFIG
+        config = {**REALTIME_CONFIG}
+        config["livekit_available"] = HAS_LIVEKIT
+        config["webrtc_enabled"] = HAS_LIVEKIT
+        if HAS_LIVEKIT:
+            config["livekit_url"] = os.getenv("LIVEKIT_URL", "ws://localhost:7880")
+        return config

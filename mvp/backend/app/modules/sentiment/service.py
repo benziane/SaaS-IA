@@ -2,6 +2,8 @@
 Sentiment analysis service.
 
 Uses AI to analyze sentiment and emotions in text.
+Supports RoBERTa (cardiffnlp/twitter-roberta-base-sentiment-latest) for fast
+overall sentiment, with LLM fallback for segment analysis and emotions.
 """
 
 import json
@@ -10,6 +12,13 @@ from typing import Optional
 from uuid import UUID
 
 import structlog
+
+try:
+    from transformers import pipeline as hf_pipeline
+    _sentiment_pipeline = None
+    HAS_TRANSFORMERS = True
+except ImportError:
+    HAS_TRANSFORMERS = False
 
 logger = structlog.get_logger()
 
@@ -132,6 +141,25 @@ Respond ONLY with the JSON array."""
                 emotion_counts[emotion] = emotion_counts.get(emotion, 0) + 1
 
         overall = "positive" if avg_score > 0.1 else ("negative" if avg_score < -0.1 else "neutral")
+        sentiment_method = "llm"
+
+        # Try RoBERTa for a fast, high-quality overall sentiment override
+        if HAS_TRANSFORMERS:
+            try:
+                roberta_result = SentimentService._analyze_with_roberta(text)
+                overall = roberta_result["sentiment"]
+                avg_score = roberta_result["score"]
+                sentiment_method = "roberta"
+                logger.info(
+                    "sentiment_roberta_used",
+                    sentiment=overall,
+                    confidence=roberta_result["confidence"],
+                )
+            except Exception as e:
+                logger.warning("sentiment_roberta_failed", error=str(e))
+                # Fall through to LLM-computed overall sentiment
+        else:
+            logger.info("sentiment_method_llm", reason="transformers_not_available")
 
         return {
             "overall_sentiment": overall,
@@ -141,6 +169,51 @@ Respond ONLY with the JSON array."""
             "positive_percent": round(positive / total * 100, 1) if total > 0 else 0.0,
             "negative_percent": round(negative / total * 100, 1) if total > 0 else 0.0,
             "neutral_percent": round(neutral / total * 100, 1) if total > 0 else 0.0,
+            "sentiment_method": sentiment_method,
+        }
+
+    @staticmethod
+    def _analyze_with_roberta(text: str) -> dict:
+        """
+        Fast sentiment analysis using cardiffnlp/twitter-roberta-base-sentiment-latest.
+
+        ~100ms per call vs ~5s for LLM. Only provides overall sentiment
+        (no segment-level analysis or emotions).
+        """
+        global _sentiment_pipeline
+        if _sentiment_pipeline is None:
+            _sentiment_pipeline = hf_pipeline(
+                "sentiment-analysis",
+                model="cardiffnlp/twitter-roberta-base-sentiment-latest",
+            )
+        # Model max token length is ~512 tokens; truncate input text to 512 chars
+        # as a safe approximation.
+        truncated = text[:512]
+        results = _sentiment_pipeline(truncated)
+        result = results[0]
+
+        label_map = {
+            "LABEL_0": "negative",
+            "LABEL_1": "neutral",
+            "LABEL_2": "positive",
+            # Some model revisions use text labels directly
+            "negative": "negative",
+            "neutral": "neutral",
+            "positive": "positive",
+        }
+        raw_label = result.get("label", "LABEL_1")
+        sentiment = label_map.get(raw_label, "neutral")
+        confidence = round(result.get("score", 0.0), 4)
+
+        # Map sentiment to a score on [-1, 1]
+        score_map = {"positive": confidence, "negative": -confidence, "neutral": 0.0}
+
+        return {
+            "sentiment": sentiment,
+            "confidence": confidence,
+            "label": raw_label,
+            "score": round(score_map.get(sentiment, 0.0), 4),
+            "method": "roberta",
         }
 
     @staticmethod

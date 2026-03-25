@@ -88,6 +88,11 @@ class ImageProjectRead(BaseModel):
         from_attributes = True
 
 
+class UpscaleRequest(BaseModel):
+    """Upscale an existing image using Real-ESRGAN."""
+    scale: int = Field(default=4, ge=2, le=4, description="Upscale factor (2-4)")
+
+
 class BulkGenerateRequest(BaseModel):
     """Generate multiple images for social media pack."""
     prompts: list[str] = Field(..., min_length=1, max_length=10)

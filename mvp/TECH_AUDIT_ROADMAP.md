@@ -53,16 +53,16 @@
 
 | # | Module | Lib/Repo | Stars | Impact | Action | Statut |
 |---|--------|----------|-------|--------|--------|--------|
-| 8 | sentiment | **cardiffnlp/twitter-roberta-base** (HF) | - | Modele SOTA gratuit sentiment, remplacerait les appels LLM couteux | `transformers` pipeline local | [ ] A examiner |
-| 9 | web_crawler | **Jina Reader API** | - | Fallback gratuit (1M tokens) : `https://r.jina.ai/URL` -> markdown | Simple HTTP call, zero setup | [ ] A examiner |
-| 15 | video_gen | **remotion** | 20K | Video programmatique en React (explainers, shorts, dynamique) | `npm install remotion` | [ ] A examiner |
-| 16 | video_gen | **ffmpeg-python** | 9K | Montage/decoupe/sous-titrage auto (remplacerait mock mode) | `pip install ffmpeg-python` | [ ] A examiner |
-| 17 | fine_tuning | **unsloth** | 20K | Training LoRA 2x plus rapide, 70% moins de VRAM | `pip install unsloth` | [ ] A examiner |
-| 18 | fine_tuning | **lm-evaluation-harness** | 15K | Benchmark standard pour evaluer modeles fine-tunes | `pip install lm-eval` | [ ] A examiner |
-| 19 | image_gen | **Real-ESRGAN** | 25K | Upscaling images generes (x4 resolution) | `pip install realesrgan` | [ ] A examiner |
-| 21 | content_studio | **textstat** | 3K | Scoring lisibilite (Flesch-Kincaid) pour optimiser SEO du contenu genere | `pip install textstat` | [ ] A examiner |
-| 23 | realtime_ai | **livekit** + **livekit-agents** | 10K + 1K | WebRTC open-source pour sessions audio/video temps reel | `pip install livekit-server-sdk` | [ ] A examiner |
-| 25 | workspaces | **yjs** | 15K | CRDT pour collaboration temps reel documents/annotations | `npm install yjs y-websocket` | [ ] A examiner |
+| 8 | sentiment | **cardiffnlp/twitter-roberta-base** (HF) | - | Modele SOTA gratuit sentiment, remplacerait les appels LLM couteux | `transformers` pipeline local | [x] FAIT (v3.10.0) |
+| 9 | web_crawler | **Jina Reader API** | - | Fallback gratuit (1M tokens) : `https://r.jina.ai/URL` -> markdown | Simple HTTP call, zero setup | [x] FAIT (v3.10.0) |
+| 15 | video_gen | **remotion** | 20K | Video programmatique en React (explainers, shorts, dynamique) | `npm install remotion` | [ ] A examiner (frontend) |
+| 16 | video_gen | **ffmpeg-python** | 9K | Montage/decoupe/sous-titrage auto (remplacerait mock mode) | `pip install ffmpeg-python` | [x] FAIT (v3.10.0) |
+| 17 | fine_tuning | **unsloth** | 20K | Training LoRA 2x plus rapide, 70% moins de VRAM | `pip install unsloth` | [x] FAIT (v3.10.0) |
+| 18 | fine_tuning | **lm-evaluation-harness** | 15K | Benchmark standard pour evaluer modeles fine-tunes | `pip install lm-eval` | [x] FAIT (v3.10.0) |
+| 19 | image_gen | **Real-ESRGAN** | 25K | Upscaling images generes (x4 resolution) | `pip install realesrgan` | [x] FAIT (v3.10.0) |
+| 21 | content_studio | **textstat** | 3K | Scoring lisibilite (Flesch-Kincaid) pour optimiser SEO du contenu genere | `pip install textstat` | [x] FAIT (v3.10.0) |
+| 23 | realtime_ai | **livekit** + **livekit-agents** | 10K + 1K | WebRTC open-source pour sessions audio/video temps reel | `pip install livekit-server-sdk` | [x] FAIT (v3.10.0) |
+| 25 | workspaces | **yjs** | 15K | CRDT pour collaboration temps reel documents/annotations | `npm install yjs y-websocket` | [ ] A examiner (frontend) |
 
 ---
 
@@ -186,6 +186,20 @@ Chaque astuce est une amelioration transversale a fort impact. A implementer dan
 |----------|------|--------|--------|--------|
 | Final | meilisearch pattern | unified_search (nouveau) | Recherche universelle cross-module + RAG | [x] FAIT (v3.8.0) |
 | Final | mem0 pattern | ai_memory (nouveau) | Memoire persistante + auto-extraction + context injection | [x] FAIT (v3.8.0) |
+
+### Vague 5 - SEMAINE 4+ (COMPLETEE)
+
+| Priorite | Libs | Module | Impact | Statut |
+|----------|------|--------|--------|--------|
+| S4 | cardiffnlp/RoBERTa (transformers) | sentiment | Couts sentiment /10, 100ms vs 5s | [x] FAIT (v3.10.0) |
+| S4 | textstat | content_studio | Scoring lisibilite SEO (6 metriques) | [x] FAIT (v3.10.0) |
+| S4 | Jina Reader API | web_crawler | Fallback scraping gratuit (1M tokens) | [x] FAIT (v3.10.0) |
+| S4 | ffmpeg-python | video_gen | Montage/decoupe/sous-titrage/concat reels | [x] FAIT (v3.10.0) |
+| S4 | Real-ESRGAN | image_gen | Upscaling x4 + endpoint POST /upscale | [x] FAIT (v3.10.0) |
+| S4 | unsloth + lm-eval | fine_tuning | LoRA training reel + benchmark evaluation | [x] FAIT (v3.10.0) |
+| S4 | livekit-server-sdk | realtime_ai | WebRTC rooms + tokens + agent tokens | [x] FAIT (v3.10.0) |
+| S4 | remotion | video_gen | Frontend-only, a examiner | [ ] A examiner |
+| S4 | yjs | workspaces | Frontend-only, a examiner | [ ] A examiner |
 
 ---
 

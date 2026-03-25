@@ -6,7 +6,9 @@ Falls back to placeholder generation in mock mode.
 """
 
 import json
+import tempfile
 from datetime import datetime
+from pathlib import Path
 from typing import Optional
 from uuid import UUID
 
@@ -18,6 +20,16 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from app.models.image_gen import GeneratedImage, ImageProject, ImageStatus
 
 logger = structlog.get_logger()
+
+# Real-ESRGAN auto-detection with graceful fallback
+try:
+    from realesrgan import RealESRGANer
+    from basicsr.archs.rrdbnet_arch import RRDBNet
+    HAS_REALESRGAN = True
+except ImportError:
+    HAS_REALESRGAN = False
+
+_upscaler = None  # Lazy singleton
 
 STYLE_PROMPTS = {
     "realistic": "photorealistic, high quality, detailed, 8k resolution",
@@ -187,6 +199,111 @@ class ImageGenService:
             .order_by(ImageProject.created_at.desc())
         )
         return list(result.scalars().all())
+
+    @staticmethod
+    def _get_upscaler():
+        """Lazy-load Real-ESRGAN upscaler singleton (~100MB model)."""
+        global _upscaler
+        if _upscaler is not None:
+            return _upscaler
+        if not HAS_REALESRGAN:
+            return None
+        model = RRDBNet(num_in_ch=3, num_out_ch=3, num_feat=64, num_block=23, num_grow_ch=32, scale=4)
+        _upscaler = RealESRGANer(
+            scale=4,
+            model_path="https://github.com/xinntao/Real-ESRGAN/releases/download/v0.1.0/RealESRGAN_x4plus.pth",
+            model=model,
+            tile=0,
+            tile_pad=10,
+            pre_pad=0,
+            half=False,
+        )
+        logger.info("realesrgan_loaded", model="RealESRGAN_x4plus")
+        return _upscaler
+
+    @staticmethod
+    async def upscale_image(
+        user_id: UUID, image_id: UUID, scale: int,
+        session: AsyncSession,
+    ) -> dict | GeneratedImage:
+        """Upscale an existing image using Real-ESRGAN.
+
+        Returns a new GeneratedImage record with the upscaled result,
+        or an error dict if Real-ESRGAN is not installed.
+        """
+        if not HAS_REALESRGAN:
+            logger.warning("realesrgan_not_available")
+            return {"error": "Real-ESRGAN not installed. Install with: pip install realesrgan basicsr"}
+
+        # Load source image from DB
+        source = await session.get(GeneratedImage, image_id)
+        if not source or source.user_id != user_id:
+            return {"error": "Image not found"}
+        if not source.image_url:
+            return {"error": "Source image has no URL"}
+
+        # Create upscaled image record
+        upscaled = GeneratedImage(
+            user_id=user_id,
+            prompt=f"[upscale x{scale}] {source.prompt}",
+            style=source.style,
+            provider="realesrgan",
+            width=source.width * scale,
+            height=source.height * scale,
+            source_type="upscale",
+            source_id=str(source.id),
+            status=ImageStatus.GENERATING,
+        )
+        session.add(upscaled)
+        await session.flush()
+
+        try:
+            import cv2
+            import numpy as np
+
+            upscaler = ImageGenService._get_upscaler()
+
+            # Load the source image (handle local paths and URLs)
+            img_path = source.image_url
+            if img_path.startswith(("http://", "https://")):
+                import urllib.request
+                tmp = tempfile.NamedTemporaryFile(suffix=".png", delete=False)
+                urllib.request.urlretrieve(img_path, tmp.name)
+                img_path = tmp.name
+
+            img = cv2.imread(img_path, cv2.IMREAD_UNCHANGED)
+            if img is None:
+                raise ValueError(f"Could not read image from {source.image_url}")
+
+            output, _ = upscaler.enhance(img, outscale=scale)
+
+            # Save upscaled image
+            out_dir = Path(tempfile.gettempdir()) / "upscaled"
+            out_dir.mkdir(exist_ok=True)
+            out_path = out_dir / f"{upscaled.id}.png"
+            cv2.imwrite(str(out_path), output)
+
+            upscaled.image_url = str(out_path)
+            upscaled.model = "RealESRGAN_x4plus"
+            upscaled.metadata_json = json.dumps({
+                "source_image_id": str(source.id),
+                "scale": scale,
+                "original_size": f"{source.width}x{source.height}",
+                "upscaled_size": f"{upscaled.width}x{upscaled.height}",
+            })
+            upscaled.status = ImageStatus.COMPLETED
+
+        except Exception as e:
+            upscaled.status = ImageStatus.FAILED
+            upscaled.error = str(e)[:1000]
+            logger.error("upscale_failed", error=str(e), image_id=str(image_id))
+
+        session.add(upscaled)
+        await session.commit()
+        await session.refresh(upscaled)
+
+        logger.info("image_upscaled", image_id=str(upscaled.id), source_id=str(source.id), scale=scale)
+        return upscaled
 
     @staticmethod
     async def _call_provider(

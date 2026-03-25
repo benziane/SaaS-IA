@@ -6,6 +6,8 @@ talking avatars, and explainer videos.
 """
 
 import json
+import os
+import tempfile
 from datetime import datetime
 from typing import Optional
 from uuid import UUID
@@ -15,6 +17,12 @@ from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.models.video_gen import GeneratedVideo, VideoProject, VideoStatus, VideoType
+
+try:
+    import ffmpeg
+    HAS_FFMPEG = True
+except ImportError:
+    HAS_FFMPEG = False
 
 logger = structlog.get_logger()
 
@@ -276,3 +284,129 @@ Respond with a JSON array: [{{"title": "...", "visual_prompt": "...", "reason": 
             "duration_s": duration_s,
             "description": f"Generated {video_type} video ({duration_s}s)",
         }
+
+    # ── ffmpeg-python processing methods ──────────────────────────
+
+    @staticmethod
+    async def _add_subtitles(video_path: str, srt_path: str, output_path: str) -> str:
+        """Burn subtitles onto a video using ffmpeg. Returns output path or original if unavailable."""
+        if not HAS_FFMPEG:
+            logger.warning("ffmpeg_not_available", method="_add_subtitles")
+            return video_path
+        try:
+            escaped_srt = srt_path.replace("\\", "/").replace(":", "\\:")
+            (
+                ffmpeg
+                .input(video_path)
+                .output(output_path, vf=f"subtitles={escaped_srt}")
+                .overwrite_output()
+                .run(quiet=True)
+            )
+            logger.info("subtitles_added", video=video_path, srt=srt_path, output=output_path)
+            return output_path
+        except Exception as e:
+            logger.error("add_subtitles_failed", error=str(e), video=video_path)
+            return video_path
+
+    @staticmethod
+    async def _extract_clip(video_path: str, start_s: float, duration_s: float, output_path: str) -> str:
+        """Extract a clip from a video using ffmpeg. Returns output path."""
+        if not HAS_FFMPEG:
+            logger.warning("ffmpeg_not_available", method="_extract_clip")
+            return video_path
+        try:
+            (
+                ffmpeg
+                .input(video_path, ss=start_s, t=duration_s)
+                .output(output_path, c="copy")
+                .overwrite_output()
+                .run(quiet=True)
+            )
+            logger.info("clip_extracted", video=video_path, start=start_s, duration=duration_s, output=output_path)
+            return output_path
+        except Exception as e:
+            logger.error("extract_clip_failed", error=str(e), video=video_path)
+            return video_path
+
+    @staticmethod
+    async def _concat_clips(clip_paths: list[str], output_path: str) -> str:
+        """Concatenate multiple clips into one video using ffmpeg concat demuxer."""
+        if not HAS_FFMPEG:
+            logger.warning("ffmpeg_not_available", method="_concat_clips")
+            return clip_paths[0] if clip_paths else ""
+        try:
+            # Write concat list file
+            concat_file = os.path.join(tempfile.gettempdir(), "ffmpeg_concat_list.txt")
+            with open(concat_file, "w") as f:
+                for path in clip_paths:
+                    safe = path.replace("\\", "/").replace("'", "'\\''")
+                    f.write(f"file '{safe}'\n")
+            (
+                ffmpeg
+                .input(concat_file, format="concat", safe=0)
+                .output(output_path, c="copy")
+                .overwrite_output()
+                .run(quiet=True)
+            )
+            os.remove(concat_file)
+            logger.info("clips_concatenated", count=len(clip_paths), output=output_path)
+            return output_path
+        except Exception as e:
+            logger.error("concat_clips_failed", error=str(e))
+            return clip_paths[0] if clip_paths else ""
+
+    @staticmethod
+    async def _add_audio_track(video_path: str, audio_path: str, output_path: str) -> str:
+        """Mix an audio track onto a video (e.g. TTS dubbing) using ffmpeg."""
+        if not HAS_FFMPEG:
+            logger.warning("ffmpeg_not_available", method="_add_audio_track")
+            return video_path
+        try:
+            video_in = ffmpeg.input(video_path)
+            audio_in = ffmpeg.input(audio_path)
+            (
+                ffmpeg
+                .output(video_in.video, audio_in.audio, output_path, vcodec="copy", acodec="aac", shortest=None)
+                .overwrite_output()
+                .run(quiet=True)
+            )
+            logger.info("audio_track_added", video=video_path, audio=audio_path, output=output_path)
+            return output_path
+        except Exception as e:
+            logger.error("add_audio_track_failed", error=str(e), video=video_path)
+            return video_path
+
+    @staticmethod
+    async def _get_video_info(video_path: str) -> dict:
+        """Get video metadata using ffmpeg.probe(). Returns duration, dimensions, codec, fps, file_size."""
+        if not HAS_FFMPEG:
+            logger.warning("ffmpeg_not_available", method="_get_video_info")
+            return {}
+        try:
+            probe = ffmpeg.probe(video_path)
+            video_stream = next(
+                (s for s in probe.get("streams", []) if s.get("codec_type") == "video"),
+                {},
+            )
+            format_info = probe.get("format", {})
+
+            fps_raw = video_stream.get("r_frame_rate", "0/1")
+            try:
+                num, den = fps_raw.split("/")
+                fps = round(int(num) / int(den), 2) if int(den) else 0.0
+            except (ValueError, ZeroDivisionError):
+                fps = 0.0
+
+            info = {
+                "duration": float(format_info.get("duration", 0)),
+                "width": int(video_stream.get("width", 0)),
+                "height": int(video_stream.get("height", 0)),
+                "codec": video_stream.get("codec_name", "unknown"),
+                "fps": fps,
+                "file_size": int(format_info.get("size", 0)),
+            }
+            logger.info("video_info_retrieved", path=video_path, info=info)
+            return info
+        except Exception as e:
+            logger.error("get_video_info_failed", error=str(e), path=video_path)
+            return {}

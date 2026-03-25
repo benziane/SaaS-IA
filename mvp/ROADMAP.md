@@ -1,7 +1,7 @@
 # ROADMAP - SaaS-IA Platform
 
 **Date de mise a jour** : 2026-03-25
-**Version actuelle** : MVP 3.9.0
+**Version actuelle** : MVP 3.10.0
 **Objectif** : Plateforme SaaS d'orchestration IA multi-modules, production-ready
 
 ---
@@ -1259,6 +1259,19 @@ CREATE INDEX ix_document_chunks_embedding_hnsw
 ---
 
 ## CHANGELOG
+
+### v3.10.0 (2026-03-25) - Open-Source Libs Semaine 4+ (8 integrations)
+- **cardiffnlp/RoBERTa** : sentiment local SOTA (~100ms vs 5s LLM), couts /10, lazy-loaded pipeline
+- **textstat** : scoring lisibilite dans content_studio (6 metriques Flesch/Gunning/SMOG + difficulty_level)
+- **Jina Reader API** : fallback scraping gratuit dans web_crawler (crawl4ai → Jina → error)
+- **ffmpeg-python** : 5 methodes video reelles (subtitles, extract_clip, concat, add_audio, get_info)
+- **Real-ESRGAN** : upscaling x4 dans image_gen + endpoint POST /images/{id}/upscale
+- **unsloth** : training LoRA reel dans fine_tuning (FastLanguageModel + SFTTrainer), fallback mock
+- **lm-evaluation-harness** : benchmark evaluation reelle (hellaswag, arc_easy), fallback mock
+- **livekit-server-sdk** : WebRTC rooms + access tokens dans realtime_ai (voice/meeting modes)
+- Tous suivent le pattern auto-detection + fallback gracieux (HAS_XXX flags)
+- Requirements : +transformers, +textstat, +ffmpeg-python, +realesrgan, +livekit-server-sdk
+- TECH_AUDIT_ROADMAP : Vague 5 complete (8/10, 2 frontend-only restants)
 
 ### v3.9.0 (2026-03-25) - Enterprise S+++ Architecture Upgrade
 - **Phase 5 finalisee** : 12 composants enterprise-grade, 21 fichiers, 9 couches middleware

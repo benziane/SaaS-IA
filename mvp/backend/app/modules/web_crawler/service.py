@@ -1,8 +1,9 @@
 """
-Web crawler service using crawl4ai.
+Web crawler service using crawl4ai with Jina Reader API fallback.
 
 Provides web scraping with text and image extraction,
 AI vision analysis, and knowledge base indexing.
+Scraping priority: crawl4ai (full browser) → Jina Reader (free API).
 """
 
 import base64
@@ -100,6 +101,7 @@ class WebCrawlerService:
                             "score": float(img.get("score", 0.0)),
                         })
 
+                logger.info("scrape_success", url=url, scraper="crawl4ai")
                 return {
                     "url": url,
                     "title": result.metadata.get("title", "") if result.metadata else "",
@@ -109,21 +111,83 @@ class WebCrawlerService:
                     "image_count": len(images),
                     "screenshot_base64": result.screenshot if screenshot else None,
                     "success": True,
+                    "scraper": "crawl4ai",
                 }
 
         except ImportError:
-            logger.warning("crawl4ai_not_installed")
-            return {
-                "url": url,
-                "success": False,
-                "error": "crawl4ai is not installed. Run: pip install crawl4ai",
-            }
+            logger.warning("crawl4ai_not_installed", msg="falling back to Jina Reader")
         except Exception as e:
-            logger.error("scrape_failed", url=url, error=str(e))
+            logger.warning("crawl4ai_failed", url=url, error=str(e), msg="falling back to Jina Reader")
+
+        # Fallback: Jina Reader API
+        try:
+            jina_result = await WebCrawlerService._scrape_with_jina(url)
+            if jina_result.get("success"):
+                logger.info("scrape_success", url=url, scraper="jina_reader")
+                return jina_result
+            else:
+                logger.error("jina_fallback_failed", url=url, error=jina_result.get("error"))
+                return {
+                    "url": url,
+                    "success": False,
+                    "error": f"All scrapers failed. Jina: {jina_result.get('error', 'unknown')}",
+                }
+        except Exception as e:
+            logger.error("all_scrapers_failed", url=url, error=str(e))
             return {
                 "url": url,
                 "success": False,
-                "error": str(e)[:500],
+                "error": f"All scrapers failed: {str(e)[:500]}",
+            }
+
+    @staticmethod
+    async def _scrape_with_jina(url: str) -> dict:
+        """
+        Scrape a URL using Jina Reader API (free tier, no API key).
+
+        Returns clean markdown content via https://r.jina.ai/{url}.
+        """
+        import httpx
+
+        try:
+            jina_url = f"https://r.jina.ai/{url}"
+            headers = {"Accept": "application/json"}
+
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                resp = await client.get(jina_url, headers=headers)
+                resp.raise_for_status()
+
+            data = resp.json().get("data", {}) if resp.headers.get("content-type", "").startswith("application/json") else {}
+
+            if data:
+                content = data.get("content", "")
+                title = data.get("title", "")
+            else:
+                # Fallback: plain text response
+                content = resp.text
+                title = ""
+
+            if not content or not content.strip():
+                return {"success": False, "error": "Jina returned empty content"}
+
+            return {
+                "url": url,
+                "title": title,
+                "markdown": content,
+                "text_length": len(content),
+                "images": [],
+                "image_count": 0,
+                "screenshot_base64": None,
+                "success": True,
+                "scraper": "jina_reader",
+            }
+
+        except Exception as e:
+            logger.error("jina_scrape_failed", url=url, error=str(e))
+            return {
+                "url": url,
+                "success": False,
+                "error": f"Jina Reader failed: {str(e)[:300]}",
             }
 
     @staticmethod

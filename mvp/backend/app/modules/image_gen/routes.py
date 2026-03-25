@@ -14,6 +14,7 @@ from app.models.user import User
 from app.modules.image_gen.schemas import (
     BulkGenerateRequest, EditImageRequest, GenerateImageRequest,
     ImageProjectCreate, ImageProjectRead, ImageRead, ThumbnailRequest,
+    UpscaleRequest,
 )
 from app.modules.image_gen.service import ImageGenService
 from app.rate_limit import limiter
@@ -92,6 +93,26 @@ async def delete_image(
     """Delete an image. Rate limit: 10/min"""
     if not await ImageGenService.delete_image(image_id, current_user.id, session):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Image not found")
+
+
+@router.post("/{image_id}/upscale", response_model=ImageRead)
+@limiter.limit("3/minute")
+async def upscale_image(
+    request: Request, image_id: UUID, body: UpscaleRequest,
+    current_user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+):
+    """Upscale an image using Real-ESRGAN (x2-x4). Rate limit: 3/min"""
+    result = await ImageGenService.upscale_image(
+        user_id=current_user.id, image_id=image_id,
+        scale=body.scale, session=session,
+    )
+    if isinstance(result, dict) and "error" in result:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=result["error"],
+        )
+    return result
 
 
 @router.post("/projects", response_model=ImageProjectRead, status_code=status.HTTP_201_CREATED)
