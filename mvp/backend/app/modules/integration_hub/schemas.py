@@ -38,6 +38,7 @@ class ConnectorRead(BaseModel):
     provider: str
     status: str
     webhook_url: Optional[str] = None
+    webhook_secret: Optional[str] = None
     events_received: int
     last_event_at: Optional[datetime]
     is_active: bool

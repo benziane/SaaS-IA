@@ -5,7 +5,7 @@ API Key service - Key generation, verification, and management.
 import hashlib
 import json
 import secrets
-from datetime import datetime
+from datetime import datetime, date
 from typing import Optional
 from uuid import UUID
 
@@ -16,6 +16,41 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from app.models.api_key import APIKey
 
 logger = structlog.get_logger()
+
+# ---------------------------------------------------------------------------
+# Daily rate-limit helpers (Redis-backed, fail-open)
+# ---------------------------------------------------------------------------
+
+async def _get_daily_usage(key_hash: str) -> Optional[int]:
+    """Return the current daily request count for the given key hash, or None if Redis unavailable."""
+    try:
+        from app.cache import _get_redis
+        redis_client = await _get_redis()
+        if redis_client is None:
+            return None
+        redis_key = f"saas_ia:apikey_daily:{key_hash}:{date.today().isoformat()}"
+        value = await redis_client.get(redis_key)
+        return int(value) if value is not None else 0
+    except Exception as exc:
+        logger.debug("apikey_daily_usage_read_error", error=str(exc))
+        return None
+
+
+async def _increment_daily_usage(key_hash: str) -> Optional[int]:
+    """Increment and return the new daily count. Sets a 25-hour TTL so the key auto-expires."""
+    try:
+        from app.cache import _get_redis
+        redis_client = await _get_redis()
+        if redis_client is None:
+            return None
+        redis_key = f"saas_ia:apikey_daily:{key_hash}:{date.today().isoformat()}"
+        new_count = await redis_client.incr(redis_key)
+        if new_count == 1:
+            await redis_client.expire(redis_key, 90000)  # 25 hours
+        return int(new_count)
+    except Exception as exc:
+        logger.debug("apikey_daily_usage_incr_error", error=str(exc))
+        return None
 
 
 class APIKeyService:
@@ -75,6 +110,7 @@ class APIKeyService:
         Verify an API key.
 
         Returns (user_id, permissions) if valid, None otherwise.
+        Raises HTTPException(429) when daily rate limit is exceeded.
         """
         key_hash = APIKeyService.hash_key(key)
 
@@ -92,6 +128,24 @@ class APIKeyService:
         # Check expiration
         if api_key.expires_at and api_key.expires_at < datetime.utcnow():
             return None
+
+        # --- HIGH-02: enforce daily rate limit via Redis ---
+        daily_limit = api_key.rate_limit_per_day or 1000
+        current_usage = await _get_daily_usage(key_hash)
+        if current_usage is not None and current_usage >= daily_limit:
+            from fastapi import HTTPException
+            raise HTTPException(
+                status_code=429,
+                detail="API key daily rate limit exceeded",
+                headers={
+                    "Retry-After": "3600",
+                    "X-RateLimit-Limit-Day": str(daily_limit),
+                    "X-RateLimit-Remaining-Day": "0",
+                },
+            )
+
+        # Increment daily counter (fail-open: if Redis is down we still allow)
+        await _increment_daily_usage(key_hash)
 
         # Update last used
         api_key.last_used_at = datetime.utcnow()

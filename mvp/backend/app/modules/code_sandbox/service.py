@@ -1,12 +1,18 @@
 """
 Code Sandbox service - secure code execution with AI-powered generation and debugging.
 
-Executes user code in a restricted subprocess with timeout, blocked imports,
-and no file system access. Provides AI code generation, explanation, and debugging.
+Executes user code in an isolated Docker container (preferred) or a restricted
+subprocess (fallback). Docker execution provides true sandboxing: no network,
+memory/CPU limits, read-only filesystem, non-root user.
+
+CRIT-02 FIX: Docker-based isolation prevents regex-bypass attacks that could
+escape the subprocess sandbox.
 """
 
 import asyncio
 import json
+import os
+import platform
 import re
 import sys
 import time
@@ -20,6 +26,14 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.models.code_sandbox import Sandbox, SandboxStatus
 
+# --- Docker auto-detection (optional dependency) ---
+try:
+    import docker
+    HAS_DOCKER = True
+except ImportError:
+    docker = None  # type: ignore[assignment]
+    HAS_DOCKER = False
+
 logger = structlog.get_logger()
 
 # Maximum execution time in seconds
@@ -27,6 +41,14 @@ MAX_EXECUTION_TIMEOUT = 30
 
 # Maximum output size in characters
 MAX_OUTPUT_SIZE = 100_000
+
+# Docker container image for sandboxed execution
+DOCKER_IMAGE = "python:3.13-slim"
+
+# Docker resource limits
+DOCKER_MEM_LIMIT = "256m"
+DOCKER_CPU_PERIOD = 100_000
+DOCKER_CPU_QUOTA = 50_000  # 50% of one CPU
 
 # Blocked modules that user code cannot import
 BLOCKED_MODULES = frozenset({
@@ -118,8 +140,191 @@ def _build_restricted_code(source: str) -> str:
     )
 
 
+def _build_subprocess_env() -> dict:
+    """Build a restricted environment for subprocess execution."""
+    env = {
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "PYTHONPATH": "",
+        "PYTHONNOUSERSITE": "1",
+        "PYTHONHASHSEED": "random",
+    }
+    # Preserve minimal PATH so Python can be found
+    if "PATH" in os.environ:
+        env["PATH"] = os.environ["PATH"]
+    # On Windows, SystemRoot is required for subprocess to work
+    if platform.system() == "Windows" and "SystemRoot" in os.environ:
+        env["SystemRoot"] = os.environ["SystemRoot"]
+    return env
+
+
+def _build_preexec_fn():
+    """Build a preexec_fn that sets resource limits on Linux/Unix systems."""
+    if platform.system() == "Windows":
+        return None
+
+    def _set_limits():
+        try:
+            import resource as res_mod
+            # Max memory: 256 MB
+            mem_limit = 256 * 1024 * 1024
+            res_mod.setrlimit(res_mod.RLIMIT_AS, (mem_limit, mem_limit))
+            # Max CPU time: 30 seconds
+            res_mod.setrlimit(res_mod.RLIMIT_CPU, (30, 30))
+            # No core dumps
+            res_mod.setrlimit(res_mod.RLIMIT_CORE, (0, 0))
+            # Max file size: 1 MB (prevent disk filling)
+            file_limit = 1 * 1024 * 1024
+            res_mod.setrlimit(res_mod.RLIMIT_FSIZE, (file_limit, file_limit))
+            # Max number of open files: 16
+            res_mod.setrlimit(res_mod.RLIMIT_NOFILE, (16, 16))
+            # Max number of processes: 0 (prevent fork bombs)
+            res_mod.setrlimit(res_mod.RLIMIT_NPROC, (0, 0))
+        except (ImportError, ValueError, OSError):
+            pass  # resource module not available or limits not supported
+
+    return _set_limits
+
+
+async def _execute_in_docker(source: str, language: str = "python", timeout: int = MAX_EXECUTION_TIMEOUT) -> dict:
+    """Execute code inside an isolated Docker container.
+
+    Provides true sandboxing:
+    - No network access (network_disabled=True)
+    - Memory capped at 256 MB
+    - CPU limited to 50% of one core
+    - Read-only filesystem
+    - Runs as 'nobody' (non-root)
+    - Container removed after execution
+    """
+    start = time.monotonic()
+
+    if not HAS_DOCKER:
+        return {
+            "output": None,
+            "error": "Docker is not available for sandboxed execution",
+            "execution_time_ms": 0.0,
+            "status": "error",
+        }
+
+    try:
+        client = docker.from_env()
+    except docker.errors.DockerException as e:
+        logger.error("docker_client_error", error=str(e))
+        return {
+            "output": None,
+            "error": f"Docker client error: {str(e)[:300]}",
+            "execution_time_ms": 0.0,
+            "status": "error",
+        }
+
+    container = None
+    try:
+        # Pass code via environment variable to avoid shell injection through stdin
+        container = client.containers.run(
+            image=DOCKER_IMAGE,
+            command=["python", "-I", "-c", source],
+            environment={
+                "PYTHONDONTWRITEBYTECODE": "1",
+                "PYTHONPATH": "",
+                "PYTHONNOUSERSITE": "1",
+            },
+            network_disabled=True,
+            mem_limit=DOCKER_MEM_LIMIT,
+            cpu_period=DOCKER_CPU_PERIOD,
+            cpu_quota=DOCKER_CPU_QUOTA,
+            read_only=True,
+            user="nobody",
+            stdin_open=False,
+            stdout=True,
+            stderr=True,
+            detach=True,
+            # tmpfs mount so Python can write to /tmp if needed (e.g. __pycache__)
+            tmpfs={"/tmp": "size=10m,noexec,nosuid"},
+            # Security: drop all capabilities, no new privileges
+            security_opt=["no-new-privileges:true"],
+            cap_drop=["ALL"],
+        )
+
+        # Wait for container to finish with timeout
+        wait_result = container.wait(timeout=timeout)
+        exit_code = wait_result.get("StatusCode", -1)
+
+        elapsed = (time.monotonic() - start) * 1000
+
+        # Capture logs (stdout + stderr)
+        raw_stdout = container.logs(stdout=True, stderr=False)
+        raw_stderr = container.logs(stdout=False, stderr=True)
+
+        output = raw_stdout.decode("utf-8", errors="replace")[:MAX_OUTPUT_SIZE] if raw_stdout else None
+        error = raw_stderr.decode("utf-8", errors="replace")[:MAX_OUTPUT_SIZE] if raw_stderr else None
+
+        if exit_code != 0:
+            return {
+                "output": output if output else None,
+                "error": error or f"Container exited with code {exit_code}",
+                "execution_time_ms": round(elapsed, 2),
+                "status": "error",
+            }
+
+        return {
+            "output": output if output else None,
+            "error": None,
+            "execution_time_ms": round(elapsed, 2),
+            "status": "success",
+        }
+
+    except docker.errors.ContainerError as e:
+        elapsed = (time.monotonic() - start) * 1000
+        logger.warning("docker_container_error", error=str(e)[:300])
+        return {
+            "output": None,
+            "error": f"Container execution error: {str(e)[:500]}",
+            "execution_time_ms": round(elapsed, 2),
+            "status": "error",
+        }
+    except docker.errors.ImageNotFound:
+        elapsed = (time.monotonic() - start) * 1000
+        logger.error("docker_image_not_found", image=DOCKER_IMAGE)
+        return {
+            "output": None,
+            "error": f"Docker image '{DOCKER_IMAGE}' not found. Pull it with: docker pull {DOCKER_IMAGE}",
+            "execution_time_ms": round(elapsed, 2),
+            "status": "error",
+        }
+    except Exception as e:
+        elapsed = (time.monotonic() - start) * 1000
+        # ConnectionError or ReadTimeout from docker wait() means timeout
+        error_name = type(e).__name__
+        if "Timeout" in error_name or "ReadTimeout" in error_name:
+            logger.warning("docker_execution_timeout", timeout=timeout)
+            return {
+                "output": None,
+                "error": f"Execution timed out after {timeout} seconds",
+                "execution_time_ms": round(elapsed, 2),
+                "status": "timeout",
+            }
+        logger.error("docker_execution_error", error=str(e), error_type=error_name)
+        return {
+            "output": None,
+            "error": f"Docker execution error: {str(e)[:500]}",
+            "execution_time_ms": round(elapsed, 2),
+            "status": "error",
+        }
+    finally:
+        # Always clean up the container
+        if container is not None:
+            try:
+                container.remove(force=True)
+            except Exception:
+                pass
+
+
 async def _execute_code_subprocess(source: str, timeout: int = MAX_EXECUTION_TIMEOUT) -> dict:
-    """Execute code in a restricted subprocess with timeout."""
+    """Execute code in a restricted subprocess with timeout.
+
+    This is the FALLBACK method when Docker is not available.
+    Enhanced with resource limits (Linux) and isolation flags.
+    """
     validation_error = _validate_code(source)
     if validation_error:
         return {
@@ -130,15 +335,19 @@ async def _execute_code_subprocess(source: str, timeout: int = MAX_EXECUTION_TIM
         }
 
     restricted_code = _build_restricted_code(source)
+    restricted_env = _build_subprocess_env()
+    preexec_fn = _build_preexec_fn()
 
     start = time.monotonic()
     try:
         proc = await asyncio.create_subprocess_exec(
-            sys.executable, "-c", restricted_code,
+            sys.executable, "-I", "-c", restricted_code,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
             # No stdin to prevent interactive input
             stdin=asyncio.subprocess.DEVNULL,
+            env=restricted_env,
+            preexec_fn=preexec_fn,
         )
 
         try:
@@ -352,8 +561,30 @@ class CodeSandboxService:
         session.add(sandbox)
         await session.flush()
 
-        # Execute in subprocess
-        result = await _execute_code_subprocess(target_cell["source"])
+        # Execute code: Docker (secure) if available, subprocess (fallback) otherwise
+        cell_language = target_cell.get("language", sandbox.language)
+        if HAS_DOCKER:
+            execution_method = "docker"
+            result = await _execute_in_docker(
+                target_cell["source"],
+                language=cell_language,
+            )
+            # If Docker fails at the infra level (daemon down, image missing),
+            # fall back to subprocess to avoid blocking the user
+            if result["status"] == "error" and result["error"] and (
+                "Docker client error" in result["error"]
+                or "Docker image" in result["error"]
+                or "Docker execution error" in result["error"]
+            ):
+                logger.warning(
+                    "docker_fallback_to_subprocess",
+                    reason=result["error"][:200],
+                )
+                execution_method = "subprocess (docker-fallback)"
+                result = await _execute_code_subprocess(target_cell["source"])
+        else:
+            execution_method = "subprocess"
+            result = await _execute_code_subprocess(target_cell["source"])
 
         # Update cell with result
         target_cell["output"] = result["output"]
@@ -372,6 +603,7 @@ class CodeSandboxService:
             cell_id=cell_id,
             status=result["status"],
             time_ms=result["execution_time_ms"],
+            execution_method=execution_method,
         )
 
         return {

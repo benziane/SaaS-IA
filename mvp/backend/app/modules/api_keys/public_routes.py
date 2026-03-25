@@ -16,7 +16,11 @@ async def verify_api_key(
     x_api_key: str = Header(..., alias="X-API-Key"),
     session: AsyncSession = Depends(get_session),
 ) -> tuple:
-    """Dependency to verify API key from header."""
+    """Dependency to verify API key from header.
+
+    Raises 401 for invalid/expired keys, 429 when the daily limit is exceeded.
+    """
+    # verify_key raises HTTPException(429) when daily limit is hit
     result = await APIKeyService.verify_key(x_api_key, session)
     if result is None:
         raise HTTPException(

@@ -17,13 +17,30 @@ Or from Docker:
 """
 
 import asyncio
+import logging
 import os
+import secrets
+import string
 import sys
 from datetime import date, datetime
 from uuid import uuid4
 
 # Add the backend directory to the path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+seed_logger = logging.getLogger("seed_data")
+
+
+def _generate_random_password(length: int = 16) -> str:
+    """Generate a secure random password with letters, digits, and punctuation."""
+    alphabet = string.ascii_letters + string.digits + "!@#$%&*"
+    while True:
+        pwd = "".join(secrets.choice(alphabet) for _ in range(length))
+        # Ensure at least one letter, one digit, one special char
+        if (any(c.isalpha() for c in pwd)
+                and any(c.isdigit() for c in pwd)
+                and any(c in "!@#$%&*" for c in pwd)):
+            return pwd
 
 
 async def seed():
@@ -39,7 +56,29 @@ async def seed():
     from sqlmodel import select
     import json
 
+    # --- MED-06: Refuse to seed in production with hardcoded credentials ---
+    environment = settings.ENVIRONMENT
+    if environment == "production":
+        print("WARNING: Running seed script in PRODUCTION environment.")
+        print("Seed passwords will be randomly generated (not hardcoded defaults).")
+        seed_logger.warning("seed_script_running_in_production")
+
+    seed_logger.warning(
+        "seed_data_executing: environment=%s - Seed data should only be used for development/testing.",
+        environment,
+    )
+
+    # Use env vars if set, otherwise generate random passwords in production
+    # or use defaults only in development
+    if environment == "production":
+        admin_password = os.environ.get("SEED_ADMIN_PASSWORD") or _generate_random_password()
+        demo_password = os.environ.get("SEED_DEMO_PASSWORD") or _generate_random_password()
+    else:
+        admin_password = os.environ.get("SEED_ADMIN_PASSWORD", "Admin123!")
+        demo_password = os.environ.get("SEED_DEMO_PASSWORD", "Demo123!")
+
     print(f"Seeding database: {settings.DATABASE_URL[:50]}...")
+    print(f"Environment: {environment}")
     print()
 
     # Initialize tables
@@ -58,15 +97,17 @@ async def seed():
         if not admin:
             admin = User(
                 email="admin@saas-ia.com",
-                hashed_password=get_password_hash("Admin123!"),
+                hashed_password=get_password_hash(admin_password),
                 full_name="Admin SaaS-IA",
                 role=Role.ADMIN,
                 is_active=True,
             )
             session.add(admin)
-            print("  + admin@saas-ia.com (password: Admin123!)")
+            print("  + admin@saas-ia.com created")
+            admin_created = True
         else:
             print("  = admin@saas-ia.com already exists")
+            admin_created = False
 
         result = await session.execute(select(User).where(User.email == "demo@saas-ia.com"))
         demo_user = result.scalar_one_or_none()
@@ -74,15 +115,17 @@ async def seed():
         if not demo_user:
             demo_user = User(
                 email="demo@saas-ia.com",
-                hashed_password=get_password_hash("Demo123!"),
+                hashed_password=get_password_hash(demo_password),
                 full_name="Demo User",
                 role=Role.USER,
                 is_active=True,
             )
             session.add(demo_user)
-            print("  + demo@saas-ia.com (password: Demo123!)")
+            print("  + demo@saas-ia.com created")
+            demo_created = True
         else:
             print("  = demo@saas-ia.com already exists")
+            demo_created = False
 
         await session.flush()
 
@@ -274,9 +317,19 @@ async def seed():
     print()
     print("Seed complete!")
     print()
-    print("Login credentials:")
-    print("  Admin: admin@saas-ia.com / Admin123!")
-    print("  Demo:  demo@saas-ia.com / Demo123!")
+    # Only show credentials in non-production environments and only for newly created users
+    if environment != "production":
+        print("Login credentials:")
+        if admin_created:
+            print(f"  Admin: admin@saas-ia.com / {admin_password}")
+        if demo_created:
+            print(f"  Demo:  demo@saas-ia.com / {demo_password}")
+        if not admin_created and not demo_created:
+            print("  (no new users created)")
+    else:
+        print("Production mode: credentials are NOT displayed.")
+        print("Use SEED_ADMIN_PASSWORD / SEED_DEMO_PASSWORD env vars to control passwords.")
+        seed_logger.warning("seed_completed_in_production")
     print()
     print("Access the app at http://localhost:3002")
 

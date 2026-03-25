@@ -23,7 +23,7 @@ database_url = settings.DATABASE_URL.replace("postgresql://", "postgresql+asyncp
 # Create async engine with connection pool tuning
 engine = create_async_engine(
     database_url,
-    echo=settings.DEBUG,
+    echo=settings.sql_echo_enabled,
     future=True,
     pool_size=20,
     max_overflow=10,

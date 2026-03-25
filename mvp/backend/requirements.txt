@@ -80,6 +80,9 @@ basicsr>=1.4.0
 # WebRTC Realtime (optional, falls back to text-based)
 livekit-server-sdk>=0.6.0
 
+# Code Sandbox isolation (optional - falls back to subprocess)
+docker>=7.0.0
+
 # AI Providers
 google-generativeai==0.8.6
 anthropic==0.86.0

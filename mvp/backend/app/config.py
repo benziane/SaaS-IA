@@ -2,18 +2,21 @@
 Configuration management using Pydantic Settings
 """
 
-from typing import List
+import hashlib
+from typing import List, Set
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
     """Application settings"""
-    
+
     # Application
     APP_NAME: str = "SaaS-IA MVP"
     ENVIRONMENT: str = "development"
-    DEBUG: bool = True
-    
+    DEBUG: bool = False
+    SQL_ECHO: bool = False
+
     # Database
     DATABASE_URL: str = ""
 
@@ -25,7 +28,13 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
-    
+
+    # Metrics (HIGH-01: separate token, never reuse SECRET_KEY)
+    METRICS_TOKEN: str = ""
+
+    # Trusted reverse-proxy IPs (HIGH-03: only trust X-Forwarded-For from these)
+    TRUSTED_PROXIES: str = ""
+
     # AI APIs
     ASSEMBLYAI_API_KEY: str = "MOCK"
     
@@ -52,9 +61,38 @@ class Settings(BaseSettings):
     )
     
     @property
+    def debug_enabled(self) -> bool:
+        """DEBUG is only effective when ENVIRONMENT is not 'production'."""
+        if self.ENVIRONMENT == "production":
+            return False
+        return self.DEBUG
+
+    @property
+    def sql_echo_enabled(self) -> bool:
+        """SQL_ECHO is only effective in development with an explicit flag."""
+        if self.ENVIRONMENT == "production":
+            return False
+        return self.SQL_ECHO
+
+    @property
     def cors_origins_list(self) -> List[str]:
         """Parse CORS origins string to list"""
         return [origin.strip() for origin in self.CORS_ORIGINS.split(",")]
+
+    @property
+    def metrics_token_resolved(self) -> str:
+        """Return METRICS_TOKEN, or a deterministic hash derived from SECRET_KEY (never the raw SECRET_KEY)."""
+        if self.METRICS_TOKEN:
+            return self.METRICS_TOKEN
+        return hashlib.sha256(f"metrics:{self.SECRET_KEY}".encode()).hexdigest()
+
+    @property
+    def trusted_proxies_set(self) -> Set[str]:
+        """Parse comma-separated TRUSTED_PROXIES into a set of IP strings."""
+        raw = (self.TRUSTED_PROXIES or "").strip()
+        if not raw:
+            return set()
+        return {ip.strip() for ip in raw.split(",") if ip.strip()}
 
 
 # Global settings instance

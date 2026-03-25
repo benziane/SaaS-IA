@@ -191,7 +191,8 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
         Priority:
         1. Authenticated user id (set on request.state by auth middleware)
-        2. First IP in X-Forwarded-For header (behind reverse proxy)
+        2. First IP in X-Forwarded-For header **only if** the direct client
+           IP is in the TRUSTED_PROXIES allowlist (HIGH-03 fix)
         3. Direct client IP
         """
         # Authenticated user
@@ -200,14 +201,19 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             if user_id:
                 return f"user:{user_id}"
 
-        # Proxy-forwarded IP
-        xff = request.headers.get("x-forwarded-for")
-        if xff:
-            return xff.split(",")[0].strip()
+        client_ip = request.client.host if request.client else None
+
+        # Only trust X-Forwarded-For when the direct peer is a known proxy
+        from app.config import settings
+        trusted_proxies = settings.trusted_proxies_set
+        if trusted_proxies and client_ip in trusted_proxies:
+            xff = request.headers.get("x-forwarded-for")
+            if xff:
+                return xff.split(",")[0].strip()
 
         # Direct client
-        if request.client and request.client.host:
-            return request.client.host
+        if client_ip:
+            return client_ip
 
         return "unknown"
 

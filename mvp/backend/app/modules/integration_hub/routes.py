@@ -2,12 +2,17 @@
 Integration Hub API routes - External integrations management and webhook reception.
 """
 
+import hashlib
+import hmac
 import json
 from typing import Optional
 from uuid import UUID
 
+import structlog
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlmodel.ext.asyncio.session import AsyncSession
+
+webhook_logger = structlog.get_logger()
 
 from app.auth import get_current_user
 from app.database import get_session
@@ -43,6 +48,7 @@ def _connector_to_read(connector, request: Optional[Request] = None) -> Connecto
         provider=connector.provider,
         status=connector.status,
         webhook_url=webhook_url,
+        webhook_secret=connector.webhook_secret if connector.type == "webhook" else None,
         events_received=connector.events_received,
         last_event_at=connector.last_event_at,
         is_active=connector.is_active,
@@ -214,6 +220,23 @@ async def test_connector(
 # Webhook receiver (public - no auth)
 # ──────────────────────────────────────────────────────────────
 
+def _verify_webhook_signature(body: bytes, secret: str, signature: Optional[str]) -> bool:
+    """
+    Validate an HMAC-SHA256 webhook signature.
+
+    The caller must send the header ``X-Webhook-Signature`` whose value is
+    ``sha256=<hex-digest>``.  The digest is computed over the raw request
+    body using the connector's ``webhook_secret`` as the HMAC key.
+    """
+    if not signature:
+        return False
+    # Accept both "sha256=<hex>" and plain "<hex>" formats
+    if signature.startswith("sha256="):
+        signature = signature[7:]
+    expected = hmac.new(secret.encode(), body, hashlib.sha256).hexdigest()
+    return hmac.compare_digest(expected, signature)
+
+
 @router.post("/webhook/{connector_id}")
 async def receive_webhook(
     connector_id: UUID,
@@ -221,18 +244,44 @@ async def receive_webhook(
     session: AsyncSession = Depends(get_session),
 ):
     """
-    Receive an incoming webhook event (public endpoint, no authentication).
+    Receive an incoming webhook event.
 
     External services (Stripe, GitHub, Slack, etc.) send events to this endpoint.
     The connector_id in the URL identifies which integration receives the event.
-    """
-    try:
-        payload = await request.json()
-    except Exception:
-        body = await request.body()
-        payload = {"raw": body.decode("utf-8", errors="replace")}
 
+    Requires ``X-Webhook-Signature: sha256=<hex>`` header for HMAC-SHA256
+    signature validation (MED-04).
+    """
+    # Read raw body once for both signature verification and payload parsing
+    raw_body = await request.body()
+
+    # --- MED-04: Validate webhook signature ---
     service = IntegrationHubService(session)
+    connector = await service.get_connector(connector_id)
+    if not connector or not connector.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Connector not found or disabled",
+        )
+
+    sig_header = request.headers.get("X-Webhook-Signature")
+    if not _verify_webhook_signature(raw_body, connector.webhook_secret, sig_header):
+        webhook_logger.warning(
+            "webhook_signature_invalid",
+            connector_id=str(connector_id),
+            has_signature=bool(sig_header),
+        )
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or missing webhook signature",
+        )
+    # --- End MED-04 ---
+
+    try:
+        payload = json.loads(raw_body)
+    except Exception:
+        payload = {"raw": raw_body.decode("utf-8", errors="replace")}
+
     event = await service.receive_webhook(connector_id, payload)
     if not event:
         raise HTTPException(
