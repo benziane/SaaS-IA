@@ -3,7 +3,7 @@
 # ──────────────────────────────────────────────────────────────
 
 # ── Stage 1: builder ─────────────────────────────────────────
-FROM python:3.13-slim AS builder
+FROM python:3.14-slim AS builder
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -31,7 +31,7 @@ RUN playwright install chromium --with-deps \
 
 
 # ── Stage 2: runtime ────────────────────────────────────────
-FROM python:3.13-slim AS runtime
+FROM python:3.14-slim AS runtime
 
 LABEL org.opencontainers.image.title="saas-ia-backend" \
       org.opencontainers.image.description="SaaS-IA AI Platform – FastAPI backend" \
