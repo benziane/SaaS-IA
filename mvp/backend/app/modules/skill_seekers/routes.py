@@ -201,3 +201,19 @@ async def check_status(request: Request):
         "installed": SkillSeekersService.is_installed(),
         "mock_mode": not SkillSeekersService.is_installed(),
     }
+
+
+# --------------------------------------------------------------------------
+# POST /cleanup - Clean up old completed/failed jobs (admin/maintenance)
+# --------------------------------------------------------------------------
+
+@router.post("/cleanup")
+@limiter.limit("2/minute")
+async def cleanup_old_jobs(
+    request: Request,
+    max_age_hours: int = 24,
+    current_user: User = Depends(get_current_user),
+):
+    """Remove completed/failed jobs older than max_age_hours and their output files."""
+    count = await SkillSeekersService.cleanup_old_jobs(max_age_hours=max_age_hours)
+    return {"cleaned": count, "max_age_hours": max_age_hours}

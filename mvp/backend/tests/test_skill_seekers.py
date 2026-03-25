@@ -12,6 +12,11 @@ from datetime import UTC, datetime
 from uuid import uuid4
 from unittest.mock import patch, AsyncMock, MagicMock
 
+# Import all models with FK dependencies so SQLite session creates all tables
+from app.models.tenant import Tenant  # noqa: F401
+from app.models.user import User  # noqa: F401
+from app.models.skill_seekers import ScrapeJob, ScrapeJobStatus  # noqa: F401
+
 
 # ---------------------------------------------------------------------------
 # Model tests
@@ -96,6 +101,27 @@ class TestScrapeJobSchemas:
 
         with pytest.raises(ValidationError):
             ScrapeJobCreate(repos=[])
+
+    def test_create_schema_invalid_target_rejected(self):
+        from app.modules.skill_seekers.schemas import ScrapeJobCreate
+        from pydantic import ValidationError
+
+        with pytest.raises(ValidationError, match="Invalid target"):
+            ScrapeJobCreate(repos=["owner/repo"], targets=["chatgpt"])
+
+    def test_create_schema_valid_targets(self):
+        from app.modules.skill_seekers.schemas import ScrapeJobCreate
+
+        for target in ["claude", "openai", "gemini", "langchain", "llama-index", "markdown"]:
+            data = ScrapeJobCreate(repos=["owner/repo"], targets=[target])
+            assert data.targets == [target]
+
+    def test_create_schema_empty_targets_rejected(self):
+        from app.modules.skill_seekers.schemas import ScrapeJobCreate
+        from pydantic import ValidationError
+
+        with pytest.raises(ValidationError, match="At least one target"):
+            ScrapeJobCreate(repos=["owner/repo"], targets=[])
 
     def test_read_schema(self):
         from app.modules.skill_seekers.schemas import ScrapeJobRead

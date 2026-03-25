@@ -61,6 +61,62 @@ class SkillSeekersService:
         return repo.replace("/", "_").replace(".", "-")
 
     @staticmethod
+    def _get_job_dir(user_id: UUID, job_id: UUID) -> Path:
+        """Return persistent output directory for a job, creating it if needed."""
+        job_dir = SKILL_SEEKERS_DATA_DIR / str(user_id) / str(job_id)
+        job_dir.mkdir(parents=True, exist_ok=True)
+        return job_dir
+
+    @staticmethod
+    async def recover_orphaned_jobs() -> int:
+        """Reset jobs stuck in RUNNING status to FAILED (e.g. after server restart)."""
+        async with get_session_context() as session:
+            result = await session.execute(
+                select(ScrapeJob).where(ScrapeJob.status == ScrapeJobStatus.RUNNING)
+            )
+            orphaned = list(result.scalars().all())
+            for job in orphaned:
+                job.status = ScrapeJobStatus.FAILED
+                job.error = "Job interrupted by server restart"
+                job.current_step = "failed (orphaned)"
+                job.updated_at = datetime.now(UTC)
+                session.add(job)
+            if orphaned:
+                await session.commit()
+                logger.warning("skill_seekers_orphaned_jobs_recovered", count=len(orphaned))
+            return len(orphaned)
+
+    @staticmethod
+    async def cleanup_old_jobs(max_age_hours: int = 24) -> int:
+        """Delete completed/failed jobs older than max_age_hours and their files."""
+        from datetime import timedelta
+        cutoff = datetime.now(UTC) - timedelta(hours=max_age_hours)
+        async with get_session_context() as session:
+            result = await session.execute(
+                select(ScrapeJob).where(
+                    ScrapeJob.status.in_([ScrapeJobStatus.COMPLETED, ScrapeJobStatus.FAILED]),
+                    ScrapeJob.updated_at < cutoff,
+                )
+            )
+            old_jobs = list(result.scalars().all())
+            for job in old_jobs:
+                # Clean up files
+                if job.output_files_json:
+                    try:
+                        files = json.loads(job.output_files_json)
+                        if files:
+                            parent_dir = os.path.dirname(files[0])
+                            if parent_dir and os.path.isdir(parent_dir):
+                                shutil.rmtree(parent_dir, ignore_errors=True)
+                    except Exception:
+                        pass
+                await session.delete(job)
+            if old_jobs:
+                await session.commit()
+                logger.info("skill_seekers_old_jobs_cleaned", count=len(old_jobs), max_age_hours=max_age_hours)
+            return len(old_jobs)
+
+    @staticmethod
     async def create_job(
         user_id: UUID,
         repos: list[str],
@@ -163,7 +219,7 @@ class SkillSeekersService:
         session: AsyncSession,
     ) -> list[str]:
         """Run the actual skill-seekers CLI commands."""
-        output_dir = tempfile.mkdtemp(prefix="skill_seekers_")
+        output_dir = str(self._get_job_dir(job.user_id, job.id))
         output_files: list[str] = []
         total_steps = len(repos) * (len(targets) + (1 if job.enhance else 0)) + len(repos)
         step = 0
@@ -279,7 +335,7 @@ class SkillSeekersService:
         session: AsyncSession,
     ) -> list[str]:
         """Simulate CLI execution for development/testing."""
-        output_dir = tempfile.mkdtemp(prefix="skill_seekers_mock_")
+        output_dir = str(self._get_job_dir(job.user_id, job.id))
         output_files: list[str] = []
         total_steps = len(repos) * len(targets)
         step = 0

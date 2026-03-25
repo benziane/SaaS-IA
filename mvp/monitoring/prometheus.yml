@@ -1,0 +1,17 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: "saas-ia-backend"
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["saas-ia-backend:8000"]
+    # Optional: bearer token auth for metrics endpoint
+    # authorization:
+    #   credentials: "${METRICS_TOKEN}"
+
+  - job_name: "flower"
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["saas-ia-flower:5555"]

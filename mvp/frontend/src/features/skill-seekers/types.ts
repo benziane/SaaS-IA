@@ -59,3 +59,13 @@ export interface SkillSeekersStatus {
   installed: boolean;
   mock_mode: boolean;
 }
+
+export interface ScrapeJobStats {
+  total_jobs: number;
+  completed: number;
+  failed: number;
+  pending: number;
+  running: number;
+  total_repos_scraped: number;
+  recent_jobs: { id: string; repos: string[]; status: ScrapeJobStatus; created_at: string }[];
+}

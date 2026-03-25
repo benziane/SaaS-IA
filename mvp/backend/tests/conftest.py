@@ -154,6 +154,13 @@ async def session():
     from sqlmodel import SQLModel
     from sqlmodel.ext.asyncio.session import AsyncSession
 
+    # Import all models so that SQLModel.metadata knows about every table
+    # and create_all can resolve foreign keys (e.g. users -> tenants).
+    import app.models.tenant  # noqa: F401
+    import app.models.user  # noqa: F401
+    import app.models.transcription  # noqa: F401
+    import app.models.conversation  # noqa: F401
+
     engine = create_async_engine(
         "sqlite+aiosqlite://",
         echo=False,

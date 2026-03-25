@@ -130,6 +130,15 @@ async def lifespan(app):
     await init_db()
     logger.info("database_initialized")
 
+    # Recover orphaned skill_seekers jobs (stuck in RUNNING after restart)
+    try:
+        from app.modules.skill_seekers.service import SkillSeekersService
+        recovered = await SkillSeekersService.recover_orphaned_jobs()
+        if recovered:
+            logger.info("skill_seekers_orphaned_recovered", count=recovered)
+    except Exception as exc:
+        logger.debug("skill_seekers_recovery_skipped", error=str(exc))
+
     # Install signal handlers for graceful shutdown
     loop = asyncio.get_running_loop()
 

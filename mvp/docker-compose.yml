@@ -1,5 +1,31 @@
 name: saas-ia
 
+x-backend-env: &backend-env
+  DATABASE_URL: postgresql+asyncpg://saas_ia_user:saas_ia_dev_password@postgres:5432/saas_ia
+  REDIS_URL: redis://redis:6379
+  SECRET_KEY: ${SECRET_KEY:-dev-secret-key-change-in-production}
+  ENVIRONMENT: ${ENVIRONMENT:-development}
+  DEBUG: ${DEBUG:-True}
+  # AI Providers
+  ASSEMBLYAI_API_KEY: ${ASSEMBLYAI_API_KEY:-MOCK}
+  GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+  CLAUDE_API_KEY: ${CLAUDE_API_KEY:-}
+  GROQ_API_KEY: ${GROQ_API_KEY:-}
+  # Payments
+  STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+  STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+  STRIPE_PRICE_PRO_MONTHLY: ${STRIPE_PRICE_PRO_MONTHLY:-}
+  # CORS
+  CORS_ORIGINS: http://localhost:3002,http://localhost:8004
+  # Enterprise Observability
+  SENTRY_DSN: ${SENTRY_DSN:-}
+  OTLP_ENDPOINT: ${OTLP_ENDPOINT:-}
+  METRICS_TOKEN: ${METRICS_TOKEN:-}
+  # LLM Observability (Langfuse)
+  LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY:-}
+  LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY:-}
+  LANGFUSE_HOST: ${LANGFUSE_HOST:-}
+
 services:
   # SaaS-IA Backend API
   saas-ia-backend:
@@ -10,19 +36,7 @@ services:
     ports:
       - "8004:8000"
     environment:
-      - DATABASE_URL=postgresql+asyncpg://saas_ia_user:saas_ia_dev_password@postgres:5432/saas_ia
-      - REDIS_URL=redis://redis:6379
-      - SECRET_KEY=${SECRET_KEY:-dev-secret-key-change-in-production}
-      - ENVIRONMENT=development
-      - DEBUG=True
-      - ASSEMBLYAI_API_KEY=${ASSEMBLYAI_API_KEY:-MOCK}
-      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
-      - CLAUDE_API_KEY=${CLAUDE_API_KEY:-}
-      - GROQ_API_KEY=${GROQ_API_KEY:-}
-      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY:-}
-      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET:-}
-      - STRIPE_PRICE_PRO_MONTHLY=${STRIPE_PRICE_PRO_MONTHLY:-}
-      - CORS_ORIGINS=http://localhost:3002,http://localhost:8004
+      <<: *backend-env
     volumes:
       - ./backend/app:/app/app
       - ./backend/scripts:/app/scripts
@@ -34,10 +48,14 @@ services:
       redis:
         condition: service_healthy
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    stop_grace_period: 45s
+    stop_signal: SIGTERM
+    restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health/live"]
       interval: 30s
       timeout: 10s
+      start_period: 60s
       retries: 3
     networks:
       - saas-ia-network
@@ -49,20 +67,22 @@ services:
       dockerfile: Dockerfile
     container_name: saas-ia-worker
     environment:
-      - DATABASE_URL=postgresql+asyncpg://saas_ia_user:saas_ia_dev_password@postgres:5432/saas_ia
-      - REDIS_URL=redis://redis:6379
-      - SECRET_KEY=${SECRET_KEY:-dev-secret-key-change-in-production}
-      - ENVIRONMENT=development
-      - ASSEMBLYAI_API_KEY=${ASSEMBLYAI_API_KEY:-MOCK}
-      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
-      - CLAUDE_API_KEY=${CLAUDE_API_KEY:-}
-      - GROQ_API_KEY=${GROQ_API_KEY:-}
+      <<: *backend-env
     volumes:
       - ./backend/app:/app/app
     depends_on:
-      - saas-ia-backend
+      saas-ia-backend:
+        condition: service_healthy
     command: celery -A app.celery_app worker --loglevel=info --concurrency=2
+    stop_grace_period: 120s
+    stop_signal: SIGTERM
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "celery -A app.celery_app inspect ping --timeout 10 || exit 1"]
+      interval: 30s
+      timeout: 15s
+      start_period: 30s
+      retries: 3
     networks:
       - saas-ia-network
 
@@ -75,19 +95,27 @@ services:
     ports:
       - "5555:5555"
     environment:
-      - REDIS_URL=redis://redis:6379
-      - SECRET_KEY=${SECRET_KEY:-dev-secret-key-change-in-production}
-      - DATABASE_URL=postgresql+asyncpg://saas_ia_user:saas_ia_dev_password@postgres:5432/saas_ia
+      <<: *backend-env
     depends_on:
-      - worker
+      worker:
+        condition: service_healthy
     command: celery -A app.celery_app flower --port=5555
+    stop_grace_period: 15s
+    stop_signal: SIGTERM
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5555/healthcheck"]
+      interval: 30s
+      timeout: 10s
+      start_period: 15s
+      retries: 3
     networks:
       - saas-ia-network
 
   # PostgreSQL Database
   postgres:
     image: postgres:16-alpine
+    container_name: saas-ia-postgres
     environment:
       POSTGRES_USER: saas_ia_user
       POSTGRES_PASSWORD: saas_ia_dev_password
@@ -101,15 +129,17 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    restart: unless-stopped
     networks:
       - saas-ia-network
 
   # Redis Cache
   redis:
     image: redis:7-alpine
+    container_name: saas-ia-redis
     ports:
       - "6382:6379"
-    command: redis-server --appendonly yes
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
     volumes:
       - redis_data:/data
     healthcheck:
@@ -117,6 +147,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    restart: unless-stopped
     networks:
       - saas-ia-network
 

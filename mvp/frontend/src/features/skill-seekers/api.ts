@@ -11,6 +11,7 @@ import type {
   PaginatedJobs,
   ScrapeJob,
   ScrapeJobCreateRequest,
+  ScrapeJobStats,
   SkillSeekersStatus,
 } from './types';
 
@@ -20,6 +21,7 @@ import type {
 
 const SKILL_SEEKERS_ENDPOINTS = {
   JOBS: '/api/skill-seekers/jobs',
+  STATS: '/api/skill-seekers/jobs/stats',
   STATUS: '/api/skill-seekers/status',
   JOB: (id: string) => `/api/skill-seekers/jobs/${id}`,
   DELETE: (id: string) => `/api/skill-seekers/jobs/${id}`,
@@ -81,6 +83,16 @@ export async function getStatus(): Promise<SkillSeekersStatus> {
 }
 
 /**
+ * Get scrape job stats for the current user
+ */
+export async function getStats(): Promise<ScrapeJobStats> {
+  const response: AxiosResponse<ScrapeJobStats> = await apiClient.get(
+    SKILL_SEEKERS_ENDPOINTS.STATS
+  );
+  return response.data;
+}
+
+/**
  * Get the download URL for an output file
  */
 export function getDownloadUrl(jobId: string, filename: string): string {
@@ -98,6 +110,7 @@ export const skillSeekersApi = {
   getJob,
   deleteJob,
   getStatus,
+  getStats,
   getDownloadUrl,
 } as const;
 

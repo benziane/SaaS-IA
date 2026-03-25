@@ -14,7 +14,7 @@ import RocketLaunchIcon from '@mui/icons-material/RocketLaunch';
 import TerminalIcon from '@mui/icons-material/Terminal';
 import RefreshIcon from '@mui/icons-material/Refresh';
 
-import { useSkillSeekersJobs, useSkillSeekersStatus } from '@/features/skill-seekers/hooks/useSkillSeekers';
+import { useSkillSeekersJobs, useSkillSeekersStatus, useSkillSeekersStats } from '@/features/skill-seekers/hooks/useSkillSeekers';
 import { useCreateScrapeJob, useDeleteScrapeJob } from '@/features/skill-seekers/hooks/useSkillSeekersMutations';
 import { getDownloadUrl } from '@/features/skill-seekers/api';
 import { ScrapeJobStatus } from '@/features/skill-seekers/types';
@@ -38,6 +38,7 @@ const STATUS_COLORS: Record<string, 'default' | 'info' | 'success' | 'error' | '
 export default function SkillSeekersPage() {
   const { data: statusData, isLoading: statusLoading } = useSkillSeekersStatus();
   const { data: jobsData, isLoading: jobsLoading, refetch } = useSkillSeekersJobs();
+  const { data: statsData } = useSkillSeekersStats();
   const createMutation = useCreateScrapeJob();
   const deleteMutation = useDeleteScrapeJob();
 
@@ -112,6 +113,31 @@ export default function SkillSeekersPage() {
           <strong>skill-seekers CLI not installed.</strong> Running in mock mode.
           Install it with: <code>pip install skill-seekers</code>
         </Alert>
+      )}
+
+      {/* Stats cards */}
+      {statsData && (
+        <Grid container spacing={2} sx={{ mb: 3 }}>
+          {[
+            { label: 'Total Jobs', value: statsData.total_jobs, color: 'primary.main' },
+            { label: 'Completed', value: statsData.completed, color: 'success.main' },
+            { label: 'Failed', value: statsData.failed, color: 'error.main' },
+            { label: 'Repos Scraped', value: statsData.total_repos_scraped, color: 'info.main' },
+          ].map((stat) => (
+            <Grid item xs={6} sm={3} key={stat.label}>
+              <Card>
+                <CardContent sx={{ textAlign: 'center', py: 2, '&:last-child': { pb: 2 } }}>
+                  <Typography variant="h4" sx={{ color: stat.color, fontWeight: 700 }}>
+                    {stat.value}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {stat.label}
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
       )}
 
       <Grid container spacing={3}>

@@ -2,8 +2,8 @@
 
 import { useQuery } from '@tanstack/react-query';
 
-import { listJobs, getJob, getStatus } from '../api';
-import type { PaginatedJobs, ScrapeJob, SkillSeekersStatus } from '../types';
+import { listJobs, getJob, getStatus, getStats } from '../api';
+import type { PaginatedJobs, ScrapeJob, ScrapeJobStats, SkillSeekersStatus } from '../types';
 import { ScrapeJobStatus } from '../types';
 
 /**
@@ -51,5 +51,16 @@ export function useSkillSeekersStatus() {
     queryKey: ['skill-seekers-status'],
     queryFn: getStatus,
     staleTime: 60_000,
+  });
+}
+
+/**
+ * Get scrape job statistics for the current user.
+ */
+export function useSkillSeekersStats() {
+  return useQuery<ScrapeJobStats>({
+    queryKey: ['skill-seekers-stats'],
+    queryFn: getStats,
+    staleTime: 30_000,
   });
 }
