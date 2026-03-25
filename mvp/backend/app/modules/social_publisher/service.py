@@ -9,7 +9,7 @@ Falls back to mock publishing when tweepy is not available.
 import hashlib
 import json
 import random
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Optional
 from uuid import UUID
 
@@ -101,7 +101,7 @@ class SocialPublisherService:
             return False
 
         account.is_active = False
-        account.updated_at = datetime.utcnow()
+        account.updated_at = datetime.now(UTC)
         session.add(account)
         await session.commit()
 
@@ -207,8 +207,8 @@ class SocialPublisherService:
 
         post.results_json = json.dumps(results, ensure_ascii=False)
         post.status = PostStatus.PUBLISHED if all_success else PostStatus.FAILED
-        post.published_at = datetime.utcnow() if all_success else None
-        post.updated_at = datetime.utcnow()
+        post.published_at = datetime.now(UTC) if all_success else None
+        post.updated_at = datetime.now(UTC)
         session.add(post)
         await session.commit()
         await session.refresh(post)
@@ -238,7 +238,7 @@ class SocialPublisherService:
 
         post.schedule_at = schedule_at
         post.status = PostStatus.SCHEDULED
-        post.updated_at = datetime.utcnow()
+        post.updated_at = datetime.now(UTC)
         session.add(post)
         await session.commit()
         await session.refresh(post)
@@ -466,7 +466,7 @@ class SocialPublisherService:
             "success": True,
             "platform": "twitter",
             "account": account.account_name,
-            "post_id": f"tw_{account.id}_{datetime.utcnow().timestamp():.0f}",
+            "post_id": f"tw_{account.id}_{datetime.now(UTC).timestamp():.0f}",
             "note": "tweepy available - production publish ready (credentials required)",
         }
 
@@ -487,7 +487,7 @@ class SocialPublisherService:
         return {
             "success": True,
             "platform": platform,
-            "post_id": f"mock_{platform}_{datetime.utcnow().timestamp():.0f}",
+            "post_id": f"mock_{platform}_{datetime.now(UTC).timestamp():.0f}",
             "content_preview": content[:100],
             "media_count": len(media_urls),
             "note": f"Mock publish to {platform} (connect real credentials for live posting)",

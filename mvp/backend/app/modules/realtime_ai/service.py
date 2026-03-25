@@ -7,7 +7,7 @@ knowledge base RAG, and conversation history.
 
 import json
 import os
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Optional
 from uuid import UUID
 
@@ -74,7 +74,7 @@ class RealtimeAIService:
                 can_subscribe=True,
             ))
 
-            expires_at = datetime.utcnow() + timedelta(hours=6)
+            expires_at = datetime.now(UTC) + timedelta(hours=6)
             jwt_token = token.to_jwt()
 
             return {
@@ -178,7 +178,7 @@ class RealtimeAIService:
             "role": "user",
             "content": content[:10000],
             "content_type": content_type,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "metadata": {},
         }
         messages.append(user_msg)
@@ -208,7 +208,7 @@ class RealtimeAIService:
             "role": "assistant",
             "content": ai_response,
             "content_type": "text",
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "metadata": {"provider": rt_session.provider},
         }
         messages.append(ai_msg)
@@ -284,7 +284,7 @@ class RealtimeAIService:
             return None
 
         rt_session.status = SessionStatus.ENDED
-        rt_session.ended_at = datetime.utcnow()
+        rt_session.ended_at = datetime.now(UTC)
 
         # Generate transcript
         messages = json.loads(rt_session.messages_json)

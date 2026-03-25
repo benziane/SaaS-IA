@@ -5,7 +5,7 @@ Provides CRUD operations for conversations and SSE-streamed chat responses.
 """
 
 import json
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Optional
 from uuid import UUID
 
@@ -394,7 +394,7 @@ async def send_message(
     await BillingService.consume_quota(current_user.id, "ai_call", 1, session)
 
     # Touch conversation updated_at.
-    conversation.updated_at = datetime.utcnow()
+    conversation.updated_at = datetime.now(UTC)
 
     # Auto-generate title from first user message if not set.
     if conversation.title is None:
@@ -520,7 +520,7 @@ async def send_message(
                     )
                     conv = conv_result.scalar_one_or_none()
                     if conv is not None:
-                        conv.updated_at = datetime.utcnow()
+                        conv.updated_at = datetime.now(UTC)
                         save_session.add(conv)
 
                     await save_session.commit()

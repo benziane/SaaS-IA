@@ -3,7 +3,7 @@
 import time
 import structlog
 from typing import Optional, Dict, Any, AsyncGenerator
-from datetime import datetime
+from datetime import UTC, datetime
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -587,7 +587,7 @@ Contenu restructuré :"""
             # - Modèle: groq (conservateur pour contenu religieux)
             # - Prompt: strict mode
         """
-        start_time = datetime.utcnow()
+        start_time = datetime.now(UTC)
         
         # 1. Classification du contenu (0€, <50ms)
         classification = ContentClassifier.classify(
@@ -652,7 +652,7 @@ Contenu restructuré :"""
         result["model_selection"] = model_selection
         result["prompt_config"] = prompt_config
         result["total_processing_time_ms"] = (
-            datetime.utcnow() - start_time
+            datetime.now(UTC) - start_time
         ).total_seconds() * 1000
         
         logger.info(

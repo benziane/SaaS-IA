@@ -49,6 +49,7 @@ async def test_xss_protection(client):
 
 async def test_api_cache_control(client):
     """API paths should have Cache-Control: no-store."""
+    # Use /api/modules (returns 401 without auth, but headers are still set)
     resp = await client.get("/api/modules")
     cache_control = resp.headers.get("Cache-Control", "")
     assert "no-store" in cache_control
@@ -97,15 +98,24 @@ async def test_request_id_unique_per_request(client):
 async def test_compression_applied_on_large_response(client):
     """Large responses should be gzip-compressed when the client accepts it.
 
-    The /api/modules endpoint returns JSON with all registered module
-    metadata which should exceed the compression threshold (500 bytes).
+    We use the /health/ready endpoint which returns JSON with dependency
+    details.  The test verifies the server handles Accept-Encoding: gzip
+    without errors; actual compression depends on response size.
     """
-    resp = await client.get(
-        "/api/modules",
-        headers={"Accept-Encoding": "gzip"},
-    )
-    # The response should either be compressed or, if the body is small,
-    # at least succeed.  We check that the server does not error.
+    pg_ok = {"status": "up", "latency_ms": 1.0}
+    redis_ok = {"status": "up", "latency_ms": 0.5}
+
+    from unittest.mock import AsyncMock, patch
+
+    with (
+        patch("app.api.health._check_postgres", new_callable=AsyncMock, return_value=pg_ok),
+        patch("app.api.health._check_redis", new_callable=AsyncMock, return_value=redis_ok),
+    ):
+        resp = await client.get(
+            "/health/ready",
+            headers={"Accept-Encoding": "gzip"},
+        )
+    # The response should succeed.
     assert resp.status_code == 200
 
     # If compression was applied, Content-Encoding will be present.
@@ -217,7 +227,7 @@ async def test_rate_limit_exceeded_returns_429():
 async def test_rate_limit_fail_open_without_redis(client):
     """Without Redis, the sliding-window middleware should fail open and
     allow requests through without rate-limit headers."""
-    resp = await client.get("/api/modules")
+    resp = await client.get("/health/live")
     assert resp.status_code == 200
     # Without Redis, headers should NOT be present (fail-open).
     # We simply verify the request succeeded.

@@ -9,7 +9,7 @@ Falls back gracefully to the existing sequential planner if not needed.
 """
 
 import json
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Optional
 from uuid import UUID
 
@@ -38,7 +38,7 @@ class AgentState:
             "output": output[:3000],
             "tool_used": tool_used,
             "iteration": self.iteration,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         })
         self.current_output = output
 

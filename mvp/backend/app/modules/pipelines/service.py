@@ -3,7 +3,7 @@ Pipeline service - Business logic for creating and executing AI pipelines.
 """
 
 import json
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Optional
 from uuid import UUID
 
@@ -111,7 +111,7 @@ class PipelineService:
         if "status" in updates and updates["status"]:
             pipeline.status = updates["status"]
 
-        pipeline.updated_at = datetime.utcnow()
+        pipeline.updated_at = datetime.now(UTC)
         session.add(pipeline)
         await session.commit()
         await session.refresh(pipeline)
@@ -163,7 +163,7 @@ class PipelineService:
             status=ExecutionStatus.RUNNING,
             current_step=0,
             total_steps=len(steps),
-            started_at=datetime.utcnow(),
+            started_at=datetime.now(UTC),
         )
         session.add(execution)
         await session.commit()
@@ -187,13 +187,13 @@ class PipelineService:
 
             execution.status = ExecutionStatus.COMPLETED
             execution.results_json = json.dumps(results, ensure_ascii=False)
-            execution.completed_at = datetime.utcnow()
+            execution.completed_at = datetime.now(UTC)
 
         except Exception as e:
             execution.status = ExecutionStatus.FAILED
             execution.error = str(e)[:2000]
             execution.results_json = json.dumps(results, ensure_ascii=False)
-            execution.completed_at = datetime.utcnow()
+            execution.completed_at = datetime.now(UTC)
             logger.error(
                 "pipeline_execution_failed",
                 execution_id=str(execution.id),

@@ -129,6 +129,5 @@ async def startup():
     return {
         "status": "started",
         "uptime_seconds": round(time.time() - _startup_time, 2),
-        "modules_count": len(_modules_loaded),
-        "modules": _modules_loaded,
+        "modules_loaded": len(_modules_loaded),
     }

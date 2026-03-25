@@ -7,7 +7,7 @@ configurable guardrail rules, and comprehensive audit logging.
 
 import json
 import re
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Optional
 from uuid import UUID
 
@@ -396,7 +396,7 @@ Respond ONLY with the JSON array.""",
             rule.action = updates["action"]
         if "severity" in updates and updates["severity"]:
             rule.severity = SeverityLevel(updates["severity"])
-        rule.updated_at = datetime.utcnow()
+        rule.updated_at = datetime.now(UTC)
         session.add(rule)
         await session.commit()
         await session.refresh(rule)

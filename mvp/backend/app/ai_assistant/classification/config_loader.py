@@ -9,7 +9,7 @@ import yaml
 from pathlib import Path
 from typing import Dict, Optional, List
 import structlog
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 logger = structlog.get_logger()
 
@@ -66,7 +66,7 @@ class ConfigLoader:
             
             # Update cache
             cls._config_cache = config
-            cls._cache_timestamp = datetime.utcnow()
+            cls._cache_timestamp = datetime.now(UTC)
             
             # Update cache TTL from config
             if "performance" in config and "cache_ttl" in config["performance"]:
@@ -112,7 +112,7 @@ class ConfigLoader:
         if cls._config_cache is None or cls._cache_timestamp is None:
             return False
         
-        age = datetime.utcnow() - cls._cache_timestamp
+        age = datetime.now(UTC) - cls._cache_timestamp
         return age < timedelta(seconds=cls._cache_ttl_seconds)
     
     @classmethod

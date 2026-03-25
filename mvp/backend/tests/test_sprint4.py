@@ -7,7 +7,7 @@ All tests run without external services.
 import json
 import os
 import pytest
-from datetime import datetime
+from datetime import UTC, datetime
 from uuid import uuid4
 
 
@@ -208,8 +208,8 @@ class TestPipelineSchemas:
             steps=[],
             status="draft",
             is_template=False,
-            created_at=datetime.utcnow(),
-            updated_at=datetime.utcnow(),
+            created_at=datetime.now(UTC),
+            updated_at=datetime.now(UTC),
         )
         assert read.status == "draft"
 
@@ -224,9 +224,9 @@ class TestPipelineSchemas:
             total_steps=3,
             results=[{"type": "summarize", "output": "test"}],
             error=None,
-            started_at=datetime.utcnow(),
-            completed_at=datetime.utcnow(),
-            created_at=datetime.utcnow(),
+            started_at=datetime.now(UTC),
+            completed_at=datetime.now(UTC),
+            created_at=datetime.now(UTC),
         )
         assert execution.current_step == 3
         assert len(execution.results) == 1

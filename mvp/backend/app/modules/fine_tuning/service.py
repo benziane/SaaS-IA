@@ -8,7 +8,7 @@ OpenAI, or Replicate APIs.
 """
 
 import json
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Optional
 from uuid import UUID
 
@@ -292,7 +292,7 @@ class FineTuningService:
         ds.samples_json = json.dumps(existing, ensure_ascii=False)
         ds.sample_count = len(existing)
         ds.status = "ready"
-        ds.updated_at = datetime.utcnow()
+        ds.updated_at = datetime.now(UTC)
         session.add(ds)
         await session.commit()
         await session.refresh(ds)
@@ -334,7 +334,7 @@ Respond with ONLY a JSON: {{"score": 85, "issues": ["issue1"], "suggestions": ["
         except Exception as e:
             logger.warning("quality_assessment_failed", error=str(e))
 
-        ds.updated_at = datetime.utcnow()
+        ds.updated_at = datetime.now(UTC)
         session.add(ds)
         await session.commit()
         await session.refresh(ds)
@@ -541,7 +541,7 @@ Respond with ONLY a JSON: {{"score": 85, "issues": ["issue1"], "suggestions": ["
             total_epochs=hp["epochs"],
             estimated_cost_usd=round(cost, 4),
             status=TrainingStatus.PREPARING,
-            started_at=datetime.utcnow(),
+            started_at=datetime.now(UTC),
         )
         session.add(job)
         await session.commit()
@@ -574,7 +574,7 @@ Respond with ONLY a JSON: {{"score": 85, "issues": ["issue1"], "suggestions": ["
                 "engine": "unsloth",
             }, ensure_ascii=False)
             job.actual_cost_usd = 0.0  # local training
-            job.completed_at = datetime.utcnow()
+            job.completed_at = datetime.now(UTC)
         else:
             # Fallback: simulate completion (MVP mock)
             job.status = TrainingStatus.COMPLETED
@@ -588,7 +588,7 @@ Respond with ONLY a JSON: {{"score": 85, "issues": ["issue1"], "suggestions": ["
                 "engine": "mock",
             }, ensure_ascii=False)
             job.actual_cost_usd = round(cost * 0.8, 4)
-            job.completed_at = datetime.utcnow()
+            job.completed_at = datetime.now(UTC)
 
         session.add(job)
         await session.commit()

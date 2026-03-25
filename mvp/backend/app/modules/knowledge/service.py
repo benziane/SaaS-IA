@@ -11,7 +11,7 @@ import json
 import math
 import re
 from collections import Counter
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Optional
 from uuid import UUID
 
@@ -148,7 +148,7 @@ class KnowledgeService:
 
             document.total_chunks = len(chunks)
             document.status = DocumentStatus.INDEXED
-            document.updated_at = datetime.utcnow()
+            document.updated_at = datetime.now(UTC)
 
             await session.commit()
             await session.refresh(document)
@@ -165,7 +165,7 @@ class KnowledgeService:
         except Exception as e:
             document.status = DocumentStatus.FAILED
             document.error = str(e)[:1000]
-            document.updated_at = datetime.utcnow()
+            document.updated_at = datetime.now(UTC)
             await session.commit()
             await session.refresh(document)
             logger.error("document_indexing_failed", error=str(e))
@@ -210,7 +210,7 @@ class KnowledgeService:
 
         doc.total_chunks = len(chunks)
         doc.status = DocumentStatus.INDEXED
-        doc.updated_at = datetime.utcnow()
+        doc.updated_at = datetime.now(UTC)
         session.add(doc)
         await session.commit()
 

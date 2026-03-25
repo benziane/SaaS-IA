@@ -4,7 +4,7 @@ AI Chatbot Builder service - Create, configure, and deploy custom chatbots with 
 
 import json
 import secrets
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Optional
 from uuid import UUID, uuid4
 
@@ -76,7 +76,7 @@ class ChatbotBuilderService:
         if "theme" in data and data["theme"] is not None:
             chatbot.theme = json.dumps(data["theme"])
 
-        chatbot.updated_at = datetime.utcnow()
+        chatbot.updated_at = datetime.now(UTC)
         self.session.add(chatbot)
         await self.session.commit()
         await self.session.refresh(chatbot)
@@ -93,7 +93,7 @@ class ChatbotBuilderService:
         chatbot.is_deleted = True
         chatbot.is_published = False
         chatbot.embed_token = None
-        chatbot.updated_at = datetime.utcnow()
+        chatbot.updated_at = datetime.now(UTC)
         self.session.add(chatbot)
         await self.session.commit()
 
@@ -110,7 +110,7 @@ class ChatbotBuilderService:
             chatbot.embed_token = secrets.token_urlsafe(32)
 
         chatbot.is_published = True
-        chatbot.updated_at = datetime.utcnow()
+        chatbot.updated_at = datetime.now(UTC)
         self.session.add(chatbot)
         await self.session.commit()
         await self.session.refresh(chatbot)
@@ -126,7 +126,7 @@ class ChatbotBuilderService:
 
         chatbot.is_published = False
         chatbot.embed_token = None
-        chatbot.updated_at = datetime.utcnow()
+        chatbot.updated_at = datetime.now(UTC)
         self.session.add(chatbot)
         await self.session.commit()
         await self.session.refresh(chatbot)
@@ -265,7 +265,7 @@ class ChatbotBuilderService:
             assistant_response = "I'm experiencing technical difficulties. Please try again later."
 
         # Store messages
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(UTC).isoformat()
         user_msg = {
             "id": str(uuid4()),
             "role": "user",
@@ -283,7 +283,7 @@ class ChatbotBuilderService:
         messages.append(assistant_msg)
 
         conversation.messages = json.dumps(messages)
-        conversation.updated_at = datetime.utcnow()
+        conversation.updated_at = datetime.now(UTC)
         self.session.add(conversation)
 
         # Update conversation count
@@ -335,7 +335,7 @@ class ChatbotBuilderService:
         channels.append(channel_config)
 
         chatbot.channels = json.dumps(channels)
-        chatbot.updated_at = datetime.utcnow()
+        chatbot.updated_at = datetime.now(UTC)
         self.session.add(chatbot)
         await self.session.commit()
         await self.session.refresh(chatbot)
@@ -353,7 +353,7 @@ class ChatbotBuilderService:
         channels = [c for c in channels if c.get("type") != channel_type]
 
         chatbot.channels = json.dumps(channels)
-        chatbot.updated_at = datetime.utcnow()
+        chatbot.updated_at = datetime.now(UTC)
         self.session.add(chatbot)
         await self.session.commit()
         await self.session.refresh(chatbot)

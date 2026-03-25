@@ -11,7 +11,7 @@ Usage:
 import asyncio
 import sys
 from pathlib import Path
-from datetime import datetime
+from datetime import UTC, datetime
 
 # Add backend to path
 sys.path.insert(0, str(Path(__file__).parent))
@@ -115,30 +115,30 @@ def test_case(
         print(f"    Metadata: {metadata}")
     
     # 1. Classification
-    start = datetime.utcnow()
+    start = datetime.now(UTC)
     classification = ContentClassifier.classify(text, language, metadata)
-    classification_time = (datetime.utcnow() - start).total_seconds() * 1000
+    classification_time = (datetime.now(UTC) - start).total_seconds() * 1000
     
     print_classification_details(classification)
     
     # 2. Model Selection
-    start = datetime.utcnow()
+    start = datetime.now(UTC)
     model_selection = ModelSelector.select_model(
         classification=classification,
         strategy=strategy
     )
-    model_time = (datetime.utcnow() - start).total_seconds() * 1000
+    model_time = (datetime.now(UTC) - start).total_seconds() * 1000
     
     print_model_selection_details(model_selection)
     
     # 3. Prompt Selection
-    start = datetime.utcnow()
+    start = datetime.now(UTC)
     prompt_config = PromptSelector.select_prompt(
         classification=classification,
         task="format_text",
         model=model_selection["model"]
     )
-    prompt_time = (datetime.utcnow() - start).total_seconds() * 1000
+    prompt_time = (datetime.now(UTC) - start).total_seconds() * 1000
     
     print_prompt_selection_details(prompt_config)
     

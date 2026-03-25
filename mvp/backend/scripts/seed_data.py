@@ -22,7 +22,7 @@ import os
 import secrets
 import string
 import sys
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 from uuid import uuid4
 
 # Add the backend directory to the path
@@ -219,7 +219,7 @@ async def seed():
                          "It contains example text that would normally come from AssemblyAI.",
                     confidence=0.95,
                     duration_seconds=212,
-                    completed_at=datetime.utcnow(),
+                    completed_at=datetime.now(UTC),
                 ),
                 Transcription(
                     user_id=demo_user.id,
@@ -231,7 +231,7 @@ async def seed():
                          "capability of the platform.",
                     confidence=0.92,
                     duration_seconds=19,
-                    completed_at=datetime.utcnow(),
+                    completed_at=datetime.now(UTC),
                 ),
                 Transcription(
                     user_id=demo_user.id,

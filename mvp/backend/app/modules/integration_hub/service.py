@@ -6,7 +6,7 @@ to platform modules via webhooks, triggers, and automated actions.
 """
 
 import json
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Optional
 from uuid import UUID
 
@@ -183,7 +183,7 @@ class IntegrationHubService:
 
         connector.is_active = False
         connector.status = "disabled"
-        connector.updated_at = datetime.utcnow()
+        connector.updated_at = datetime.now(UTC)
         self.session.add(connector)
         await self.session.commit()
 
@@ -263,7 +263,7 @@ class IntegrationHubService:
 
         # Update connector stats
         connector.events_received += 1
-        connector.last_event_at = datetime.utcnow()
+        connector.last_event_at = datetime.now(UTC)
         self.session.add(connector)
 
         await self.session.commit()
@@ -441,6 +441,6 @@ class IntegrationHubService:
 
         # Mark event as processed
         event.status = "processed"
-        event.processed_at = datetime.utcnow()
+        event.processed_at = datetime.now(UTC)
         self.session.add(event)
         await self.session.commit()

@@ -16,7 +16,7 @@ import platform
 import re
 import sys
 import time
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Optional
 from uuid import UUID, uuid4
 
@@ -449,7 +449,7 @@ class CodeSandboxService:
             return False
         sandbox.is_deleted = True
         sandbox.status = SandboxStatus.ARCHIVED
-        sandbox.updated_at = datetime.utcnow()
+        sandbox.updated_at = datetime.now(UTC)
         session.add(sandbox)
         await session.commit()
         logger.info("sandbox_deleted", sandbox_id=str(sandbox_id))
@@ -477,7 +477,7 @@ class CodeSandboxService:
         }
         cells.append(cell)
         sandbox.cells_json = json.dumps(cells, ensure_ascii=False)
-        sandbox.updated_at = datetime.utcnow()
+        sandbox.updated_at = datetime.now(UTC)
         session.add(sandbox)
         await session.commit()
         return cell
@@ -500,7 +500,7 @@ class CodeSandboxService:
                 cell["output"] = None
                 cell["error"] = None
                 sandbox.cells_json = json.dumps(cells, ensure_ascii=False)
-                sandbox.updated_at = datetime.utcnow()
+                sandbox.updated_at = datetime.now(UTC)
                 session.add(sandbox)
                 await session.commit()
                 return cell
@@ -522,7 +522,7 @@ class CodeSandboxService:
             return False  # cell not found
 
         sandbox.cells_json = json.dumps(new_cells, ensure_ascii=False)
-        sandbox.updated_at = datetime.utcnow()
+        sandbox.updated_at = datetime.now(UTC)
         session.add(sandbox)
         await session.commit()
         return True
@@ -593,7 +593,7 @@ class CodeSandboxService:
         target_cell["status"] = result["status"]
 
         sandbox.cells_json = json.dumps(cells, ensure_ascii=False)
-        sandbox.updated_at = datetime.utcnow()
+        sandbox.updated_at = datetime.now(UTC)
         session.add(sandbox)
         await session.commit()
 

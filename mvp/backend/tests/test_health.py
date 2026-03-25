@@ -80,8 +80,8 @@ async def test_startup_probe(client):
     body = resp.json()
     assert body["status"] == "started"
     assert "uptime_seconds" in body
-    assert "modules_count" in body
-    assert isinstance(body["modules"], list)
+    assert "modules_loaded" in body
+    assert isinstance(body["modules_loaded"], int)
 
 
 async def test_startup_probe_not_ready():

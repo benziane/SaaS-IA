@@ -4,7 +4,7 @@ AI Forms service - Create, manage, and analyze AI-powered forms.
 
 import json
 import secrets
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Optional
 from uuid import UUID
 
@@ -90,7 +90,7 @@ class AIFormsService:
                 ]
             form.fields_json = json.dumps(fields)
 
-        form.updated_at = datetime.utcnow()
+        form.updated_at = datetime.now(UTC)
         self.session.add(form)
         await self.session.commit()
         await self.session.refresh(form)
@@ -106,7 +106,7 @@ class AIFormsService:
 
         form.is_deleted = True
         form.status = "closed"
-        form.updated_at = datetime.utcnow()
+        form.updated_at = datetime.now(UTC)
         self.session.add(form)
         await self.session.commit()
 
@@ -125,7 +125,7 @@ class AIFormsService:
             form.share_token = secrets.token_urlsafe(32)
 
         form.status = "published"
-        form.updated_at = datetime.utcnow()
+        form.updated_at = datetime.now(UTC)
         self.session.add(form)
         await self.session.commit()
         await self.session.refresh(form)
@@ -140,7 +140,7 @@ class AIFormsService:
             return None
 
         form.status = "closed"
-        form.updated_at = datetime.utcnow()
+        form.updated_at = datetime.now(UTC)
         self.session.add(form)
         await self.session.commit()
         await self.session.refresh(form)
@@ -188,7 +188,7 @@ class AIFormsService:
 
         # Update responses count
         form.responses_count = (form.responses_count or 0) + 1
-        form.updated_at = datetime.utcnow()
+        form.updated_at = datetime.now(UTC)
         self.session.add(form)
 
         await self.session.commit()

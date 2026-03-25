@@ -7,7 +7,7 @@ persistence across restarts and automatic retry with exponential backoff.
 
 import asyncio
 import os
-from datetime import datetime
+from datetime import UTC, datetime
 
 import structlog
 
@@ -43,7 +43,7 @@ async def _process_transcription(job_id: str, video_url: str, language: str, sou
 
         try:
             job.status = TranscriptionStatus.PROCESSING
-            job.updated_at = datetime.utcnow()
+            job.updated_at = datetime.now(UTC)
             await session.commit()
 
             logger.info(
@@ -61,8 +61,8 @@ async def _process_transcription(job_id: str, video_url: str, language: str, sou
             job.text = result["text"]
             job.confidence = result.get("confidence", 0.95)
             job.duration_seconds = result.get("duration_seconds", 180)
-            job.completed_at = datetime.utcnow()
-            job.updated_at = datetime.utcnow()
+            job.completed_at = datetime.now(UTC)
+            job.updated_at = datetime.now(UTC)
             await session.commit()
 
             transcription_jobs_total.labels(status="completed").inc()
@@ -78,7 +78,7 @@ async def _process_transcription(job_id: str, video_url: str, language: str, sou
             job.status = TranscriptionStatus.FAILED
             job.error = str(e)[:1000]
             job.retry_count += 1
-            job.updated_at = datetime.utcnow()
+            job.updated_at = datetime.now(UTC)
             await session.commit()
 
             transcription_jobs_total.labels(status="failed").inc()
@@ -109,7 +109,7 @@ async def _process_upload(job_id: str, file_path: str, language: str):
 
         try:
             job.status = TranscriptionStatus.PROCESSING
-            job.updated_at = datetime.utcnow()
+            job.updated_at = datetime.now(UTC)
             await session.commit()
 
             logger.info(
@@ -127,8 +127,8 @@ async def _process_upload(job_id: str, file_path: str, language: str):
             job.text = result["text"]
             job.confidence = result.get("confidence", 0.95)
             job.duration_seconds = result.get("duration_seconds", 0)
-            job.completed_at = datetime.utcnow()
-            job.updated_at = datetime.utcnow()
+            job.completed_at = datetime.now(UTC)
+            job.updated_at = datetime.now(UTC)
             await session.commit()
 
             transcription_jobs_total.labels(status="completed").inc()
@@ -144,7 +144,7 @@ async def _process_upload(job_id: str, file_path: str, language: str):
             job.status = TranscriptionStatus.FAILED
             job.error = str(e)[:1000]
             job.retry_count += 1
-            job.updated_at = datetime.utcnow()
+            job.updated_at = datetime.now(UTC)
             await session.commit()
 
             transcription_jobs_total.labels(status="failed").inc()

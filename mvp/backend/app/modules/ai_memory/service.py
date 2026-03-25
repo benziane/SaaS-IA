@@ -9,7 +9,7 @@ Supports Mem0 for enhanced semantic recall (auto-detection + fallback to DB quer
 
 import json
 import os
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Optional
 from uuid import UUID
 
@@ -275,7 +275,7 @@ class AIMemoryService:
         if not mem or mem.user_id != user_id:
             return False
         mem.active = False
-        mem.updated_at = datetime.utcnow()
+        mem.updated_at = datetime.now(UTC)
         session.add(mem)
         await session.commit()
         return True
@@ -312,7 +312,7 @@ class AIMemoryService:
         # Update usage stats
         for mem in sorted_mems:
             mem.use_count += 1
-            mem.last_used_at = datetime.utcnow()
+            mem.last_used_at = datetime.now(UTC)
             session.add(mem)
         await session.commit()
 

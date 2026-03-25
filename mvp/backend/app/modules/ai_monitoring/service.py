@@ -10,7 +10,7 @@ Langfuse integration adds LLM-specific observability (traces, generations, score
 
 import os
 import json
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Any, Optional
 from uuid import UUID
 
@@ -77,7 +77,7 @@ class AIMonitoringService:
         user_id: UUID, session: AsyncSession, days: int = 7,
     ) -> dict:
         """Get comprehensive monitoring dashboard data."""
-        since = datetime.utcnow() - timedelta(days=days)
+        since = datetime.now(UTC) - timedelta(days=days)
 
         # Total calls
         total = (await session.execute(
@@ -187,7 +187,7 @@ class AIMonitoringService:
         user_id: UUID, session: AsyncSession, days: int = 30,
     ) -> list[dict]:
         """Compare providers by quality, speed, and cost."""
-        since = datetime.utcnow() - timedelta(days=days)
+        since = datetime.now(UTC) - timedelta(days=days)
 
         result = await session.execute(
             select(

@@ -3,7 +3,7 @@ Transcription service - Business logic for transcription jobs
 """
 
 import asyncio
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Optional, List
 from uuid import UUID
 
@@ -97,7 +97,7 @@ class TranscriptionService:
             try:
                 # Update status to processing
                 job.status = TranscriptionStatus.PROCESSING
-                job.updated_at = datetime.utcnow()
+                job.updated_at = datetime.now(UTC)
                 await session.commit()
                 
                 logger.info(
@@ -119,8 +119,8 @@ class TranscriptionService:
                 job.text = result["text"]
                 job.confidence = result.get("confidence", 0.95)
                 job.duration_seconds = result.get("duration_seconds", 180)
-                job.completed_at = datetime.utcnow()
-                job.updated_at = datetime.utcnow()
+                job.completed_at = datetime.now(UTC)
+                job.updated_at = datetime.now(UTC)
                 
                 await session.commit()
                 
@@ -169,7 +169,7 @@ class TranscriptionService:
                 job.status = TranscriptionStatus.FAILED
                 job.error = str(e)[:1000]  # Limit error message length
                 job.retry_count += 1
-                job.updated_at = datetime.utcnow()
+                job.updated_at = datetime.now(UTC)
                 
                 await session.commit()
                 
@@ -200,7 +200,7 @@ class TranscriptionService:
 
             try:
                 job.status = TranscriptionStatus.PROCESSING
-                job.updated_at = datetime.utcnow()
+                job.updated_at = datetime.now(UTC)
                 await session.commit()
 
                 logger.info(
@@ -219,8 +219,8 @@ class TranscriptionService:
                 job.text = result["text"]
                 job.confidence = result.get("confidence", 0.95)
                 job.duration_seconds = result.get("duration_seconds", 0)
-                job.completed_at = datetime.utcnow()
-                job.updated_at = datetime.utcnow()
+                job.completed_at = datetime.now(UTC)
+                job.updated_at = datetime.now(UTC)
 
                 await session.commit()
 
@@ -268,7 +268,7 @@ class TranscriptionService:
                 job.status = TranscriptionStatus.FAILED
                 job.error = str(e)[:1000]
                 job.retry_count += 1
-                job.updated_at = datetime.utcnow()
+                job.updated_at = datetime.now(UTC)
 
                 await session.commit()
 
@@ -340,7 +340,7 @@ class TranscriptionService:
         
         En mode MOCK, vous pouvez tester toutes les fonctionnalités de l'API sans consommer de crédits Assembly AI.
         
-        Timestamp : {datetime.utcnow().isoformat()}
+        Timestamp : {datetime.now(UTC).isoformat()}
         """.strip()
         
         return {

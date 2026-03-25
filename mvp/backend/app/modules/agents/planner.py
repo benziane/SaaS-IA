@@ -46,6 +46,7 @@ AVAILABLE_ACTIONS = {
     "generate_presentation": "Generate a slide deck / presentation from a title and topic",
     "execute_code": "Execute code in a secure sandbox (Python)",
     "generate_form": "Generate an AI-powered form from a natural language prompt",
+    "scrape_repos": "Scrape GitHub repositories and package them for AI consumption (Claude, ChatGPT, etc.)",
 }
 
 
@@ -318,6 +319,13 @@ def _heuristic_plan(instruction: str) -> list[dict]:
         steps.append({
             "action": "generate_form",
             "description": "Generate an AI-powered form",
+            "input": {},
+        })
+
+    if any(w in instruction_lower for w in ["scrape repo", "skill seeker", "package repo", "github repo", "repo for claude", "repo for ai"]):
+        steps.append({
+            "action": "scrape_repos",
+            "description": "Scrape GitHub repos and package for AI consumption",
             "input": {},
         })
 

@@ -9,7 +9,7 @@ avec amélioration AI, en arrière-plan, sans interface.
 import asyncio
 import sys
 import os
-from datetime import datetime
+from datetime import UTC, datetime
 
 # Add app to path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -27,7 +27,7 @@ class TranscriptionTester:
     
     def __init__(self, video_url: str):
         self.video_url = video_url
-        self.start_time = datetime.utcnow()
+        self.start_time = datetime.now(UTC)
         self.results = {}
     
     def print_header(self, title: str):
@@ -165,7 +165,7 @@ class TranscriptionTester:
                 print(f"   ⚠️  Cleanup failed: {str(e)}")
             
             # FINAL RESULTS
-            duration = (datetime.utcnow() - self.start_time).total_seconds()
+            duration = (datetime.now(UTC) - self.start_time).total_seconds()
             self.print_header("✅ TEST COMPLETE - RESULTS")
             
             print(f"⏱️  Total Duration: {duration:.2f}s")

@@ -7,7 +7,7 @@ inter-agent communication, and tool usage.
 
 import json
 import time
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Optional
 from uuid import UUID
 
@@ -151,7 +151,7 @@ class MultiAgentCrewService:
             crew.process_type = updates["process_type"]
         if "status" in updates and updates["status"]:
             crew.status = updates["status"]
-        crew.updated_at = datetime.utcnow()
+        crew.updated_at = datetime.now(UTC)
         session.add(crew)
         await session.commit()
         await session.refresh(crew)
@@ -190,7 +190,7 @@ class MultiAgentCrewService:
             status=CrewRunStatus.RUNNING,
             instruction=instruction[:5000],
             total_agents=len(agents),
-            started_at=datetime.utcnow(),
+            started_at=datetime.now(UTC),
         )
         session.add(run)
         await session.commit()
@@ -224,7 +224,7 @@ class MultiAgentCrewService:
                     "content": agent_result.get("output", ""),
                     "tool_used": agent_result.get("tool_used"),
                     "iteration": agent_result.get("iterations", 1),
-                    "timestamp": datetime.utcnow().isoformat(),
+                    "timestamp": datetime.now(UTC).isoformat(),
                 }
                 messages.append(msg)
                 context = agent_result.get("output", context)
@@ -242,7 +242,7 @@ class MultiAgentCrewService:
         run.messages_json = json.dumps(messages, ensure_ascii=False)
         run.duration_ms = elapsed_ms
         run.tokens_used = total_tokens
-        run.completed_at = datetime.utcnow()
+        run.completed_at = datetime.now(UTC)
         session.add(run)
 
         crew.run_count += 1

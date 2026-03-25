@@ -6,7 +6,7 @@ that orchestrate all platform modules.
 """
 
 import json
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Optional
 from uuid import UUID
 
@@ -231,7 +231,7 @@ class WorkflowService:
         if "schedule_cron" in updates:
             workflow.schedule_cron = updates["schedule_cron"]
 
-        workflow.updated_at = datetime.utcnow()
+        workflow.updated_at = datetime.now(UTC)
         session.add(workflow)
         await session.commit()
         await session.refresh(workflow)
@@ -284,7 +284,7 @@ class WorkflowService:
             trigger_type=workflow.trigger_type,
             trigger_data_json=json.dumps(input_data or {}, ensure_ascii=False),
             total_nodes=len(nodes),
-            started_at=datetime.utcnow(),
+            started_at=datetime.now(UTC),
         )
         session.add(run)
         await session.commit()
@@ -373,14 +373,14 @@ class WorkflowService:
 
         elapsed_ms = int((time.monotonic() - start_time) * 1000)
         run.results_json = json.dumps(results, ensure_ascii=False)
-        run.completed_at = datetime.utcnow()
+        run.completed_at = datetime.now(UTC)
         run.duration_ms = elapsed_ms
         run.current_node = len(executed)
         session.add(run)
 
         # Update workflow stats
         workflow.run_count += 1
-        workflow.last_run_at = datetime.utcnow()
+        workflow.last_run_at = datetime.now(UTC)
         session.add(workflow)
 
         await session.commit()
@@ -589,7 +589,7 @@ class WorkflowService:
         try:
             from app.modules.knowledge.service import KnowledgeService
             from app.database import get_session_context
-            filename = config.get("filename", f"workflow_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.md")
+            filename = config.get("filename", f"workflow_{datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}.md")
             async with get_session_context() as kb_session:
                 doc = await KnowledgeService.upload_document(
                     user_id=user_id,

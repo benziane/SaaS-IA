@@ -720,7 +720,7 @@ async def run_backend_test(
     import structlog
     import subprocess
     import json
-    from datetime import datetime
+    from datetime import UTC, datetime
     
     logger = structlog.get_logger()
     
@@ -728,7 +728,7 @@ async def run_backend_test(
         logger.info(
             "backend_test_start",
             user_id=str(current_user.id),
-            timestamp=datetime.utcnow().isoformat()
+            timestamp=datetime.now(UTC).isoformat()
         )
         
         # Run the test script
@@ -759,7 +759,7 @@ async def run_backend_test(
             "exit_code": exit_code,
             "output": output,
             "error": error if error else None,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "duration_seconds": None  # Could be parsed from output
         }
         

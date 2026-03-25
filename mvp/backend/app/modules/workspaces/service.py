@@ -2,7 +2,7 @@
 Workspace service - Business logic for collaboration.
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Optional
 from uuid import UUID
 
@@ -96,7 +96,7 @@ class WorkspaceService:
             workspace.name = updates["name"]
         if "description" in updates:
             workspace.description = updates["description"]
-        workspace.updated_at = datetime.utcnow()
+        workspace.updated_at = datetime.now(UTC)
         session.add(workspace)
         await session.commit()
         await session.refresh(workspace)

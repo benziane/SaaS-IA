@@ -6,7 +6,7 @@ Falls back to mock mode when API keys are not configured.
 """
 
 import json
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Optional
 from uuid import UUID
 
@@ -124,7 +124,7 @@ class VoiceCloneService:
             synthesis.error = str(e)[:1000]
             logger.error("tts_synthesis_failed", error=str(e))
 
-        synthesis.updated_at = datetime.utcnow()
+        synthesis.updated_at = datetime.now(UTC)
         session.add(synthesis)
         await session.commit()
         await session.refresh(synthesis)
@@ -240,7 +240,7 @@ class VoiceCloneService:
             synthesis.status = SynthesisStatus.FAILED
             synthesis.error = str(e)[:1000]
 
-        synthesis.updated_at = datetime.utcnow()
+        synthesis.updated_at = datetime.now(UTC)
         session.add(synthesis)
         await session.commit()
         await session.refresh(synthesis)

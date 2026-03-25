@@ -2,7 +2,7 @@
 Billing service - Business logic for plans and quotas.
 """
 
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 from dateutil.relativedelta import relativedelta
 from typing import Optional
 from uuid import UUID
@@ -158,7 +158,7 @@ class BillingService:
         elif resource_type == "ai_call":
             quota.ai_calls_used += amount
 
-        quota.updated_at = datetime.utcnow()
+        quota.updated_at = datetime.now(UTC)
         session.add(quota)
         await session.commit()
 
@@ -192,7 +192,7 @@ class BillingService:
             quota.ai_calls_used = 0
             quota.period_start = period_start
             quota.period_end = period_end
-            quota.updated_at = datetime.utcnow()
+            quota.updated_at = datetime.now(UTC)
             session.add(quota)
             count += 1
 

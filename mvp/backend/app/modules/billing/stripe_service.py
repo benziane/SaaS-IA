@@ -3,7 +3,7 @@ Stripe integration service for payment processing.
 """
 
 import json
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 from typing import Optional
 from uuid import UUID
 
@@ -192,7 +192,7 @@ class StripeService:
         quota, _ = await BillingService.get_user_quota(UUIDType(user_id), session)
         quota.plan_id = plan.id
         quota.stripe_subscription_id = subscription_id
-        quota.updated_at = datetime.utcnow()
+        quota.updated_at = datetime.now(UTC)
         session.add(quota)
         await session.commit()
 
@@ -230,7 +230,7 @@ class StripeService:
 
         quota.plan_id = free_plan.id
         quota.stripe_subscription_id = None
-        quota.updated_at = datetime.utcnow()
+        quota.updated_at = datetime.now(UTC)
         session.add(quota)
         await session.commit()
 

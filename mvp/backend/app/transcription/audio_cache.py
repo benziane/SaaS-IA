@@ -7,7 +7,7 @@ import os
 import shutil
 import tempfile
 from typing import Dict, Optional
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 import structlog
 
 from app.utils.sanitize import validate_no_path_traversal
@@ -67,7 +67,7 @@ class AudioCacheManager:
             shutil.copy2(audio_file_path, cached_path)
             
             # Store cache entry
-            expires_at = datetime.utcnow() + timedelta(minutes=ttl_minutes)
+            expires_at = datetime.now(UTC) + timedelta(minutes=ttl_minutes)
             self._cache[job_id] = {
                 "path": cached_path,
                 "filename": filename,
@@ -108,7 +108,7 @@ class AudioCacheManager:
         entry = self._cache[job_id]
 
         # Check if expired
-        if datetime.utcnow() > entry["expires_at"]:
+        if datetime.now(UTC) > entry["expires_at"]:
             logger.info("audio_cache_expired", job_id=job_id)
             self.delete_audio(job_id)
             return None
@@ -156,7 +156,7 @@ class AudioCacheManager:
     
     def cleanup_expired(self):
         """Cleanup all expired cache entries"""
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         expired_jobs = [
             job_id for job_id, entry in self._cache.items()
             if now > entry["expires_at"]

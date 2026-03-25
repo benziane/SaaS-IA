@@ -105,6 +105,7 @@ async def execute_step(action: str, input_data: dict, previous_output: Optional[
         "generate_presentation": _exec_generate_presentation,
         "execute_code": _exec_execute_code,
         "generate_form": _exec_generate_form,
+        "scrape_repos": _exec_scrape_repos,
     }
 
     handler = handlers.get(action, _exec_generate)
@@ -874,3 +875,56 @@ async def _exec_search_marketplace(input_data: dict, previous: Optional[str]) ->
         }
     except Exception as e:
         return {"output": "", "error": str(e)[:500], "action": "search_marketplace"}
+
+
+async def _exec_scrape_repos(input_data: dict, previous: Optional[str]) -> dict:
+    """Scrape GitHub repos and package for AI consumption via Skill Seekers."""
+    repos = input_data.get("repos", [])
+    if not repos and previous:
+        # Try to extract owner/repo patterns from previous output
+        import re
+        found = re.findall(r"[a-zA-Z0-9_\-\.]+/[a-zA-Z0-9_\-\.]+", previous)
+        repos = found[:5]
+    if not repos:
+        return {"output": "", "error": "No repos provided for scraping", "action": "scrape_repos"}
+
+    targets = input_data.get("targets", ["claude"])
+    enhance = input_data.get("enhance", False)
+
+    try:
+        from app.modules.skill_seekers.service import SkillSeekersService
+        from app.database import get_session_context
+        from uuid import UUID as UUIDType
+
+        user_id = input_data.get("_user_id")
+        if not user_id:
+            return {
+                "output": f"[Scrape job ready for {len(repos)} repo(s): {', '.join(repos)}. "
+                          f"Use the Skill Seekers module to launch.]",
+                "action": "scrape_repos",
+                "note": "No user context. Use the Skill Seekers module directly.",
+            }
+
+        uid = UUIDType(user_id) if isinstance(user_id, str) else user_id
+        async with get_session_context() as session:
+            service = SkillSeekersService()
+            job = await service.create_job(
+                user_id=uid,
+                repos=repos,
+                targets=targets,
+                enhance=enhance,
+                session=session,
+            )
+
+        return {
+            "output": f"[Scrape job created for {len(repos)} repo(s): {', '.join(repos)}. "
+                      f"Job ID: {job.id}. Targets: {', '.join(targets)}. "
+                      f"{'Enhancement enabled.' if enhance else ''} "
+                      f"Poll GET /api/skill-seekers/jobs/{job.id} for progress.]",
+            "action": "scrape_repos",
+            "job_id": str(job.id),
+            "repos": repos,
+            "targets": targets,
+        }
+    except Exception as e:
+        return {"output": "", "error": str(e)[:500], "action": "scrape_repos"}

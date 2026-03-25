@@ -97,6 +97,9 @@ meilisearch>=0.31.0
 # Web Crawling
 crawl4ai>=0.4.0
 
+# GitHub Repo Scraping & AI Packaging
+skill-seekers>=0.1.0
+
 # Utils
 python-dotenv==1.2.2
 structlog==25.5.0

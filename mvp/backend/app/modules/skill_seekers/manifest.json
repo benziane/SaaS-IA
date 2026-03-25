@@ -1,0 +1,9 @@
+{
+  "name": "skill_seekers",
+  "version": "1.0.0",
+  "description": "Skill Seekers CLI integration - scrape GitHub repos and package for Claude AI",
+  "prefix": "/api/skill-seekers",
+  "tags": ["skill_seekers"],
+  "enabled": true,
+  "dependencies": ["skill-seekers"]
+}

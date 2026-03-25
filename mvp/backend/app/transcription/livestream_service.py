@@ -8,7 +8,7 @@ Records a segment and returns the file path for transcription.
 import asyncio
 import os
 import tempfile
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Optional
 
 import structlog
@@ -37,7 +37,7 @@ class LiveStreamService:
         """
         duration_seconds = min(duration_seconds, 1800)  # Max 30 min
 
-        timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
         output_file = os.path.join(output_dir, f"livestream_{timestamp}.mp4")
 
         # Try yt-dlp first (works great for YouTube Live)

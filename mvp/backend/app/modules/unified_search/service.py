@@ -9,7 +9,7 @@ Uses Meilisearch if available, falls back to PostgreSQL full-text search.
 
 import json
 import os
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Optional
 from uuid import UUID
 
@@ -239,7 +239,7 @@ Answer:""",
             "type": meta.get("type", module),
             "url": meta.get("url", ""),
             "user_id": meta.get("user_id", ""),
-            "created_at": meta.get("created_at", datetime.utcnow().isoformat()),
+            "created_at": meta.get("created_at", datetime.now(UTC).isoformat()),
         }
         # Preserve any extra metadata keys
         for k, v in meta.items():

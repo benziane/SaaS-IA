@@ -3,7 +3,7 @@ JWT Authentication and user management
 """
 
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta, timezone
 from typing import Optional
 
 import structlog
@@ -97,7 +97,7 @@ async def _reset_login_attempts(email: str) -> None:
 router = APIRouter()
 
 # Password hashing
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto", bcrypt__rounds=12)
 
 # OAuth2 scheme
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
@@ -117,7 +117,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     """Create a JWT access token with type='access', jti and iat claims"""
     to_encode = data.copy()
 
-    now = datetime.utcnow()
+    now = datetime.now(UTC)
     if expires_delta:
         expire = now + expires_delta
     else:
@@ -136,7 +136,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
 
 def create_refresh_token(user_id: str) -> str:
     """Create a long-lived JWT refresh token with type='refresh', jti and iat claims"""
-    now = datetime.utcnow()
+    now = datetime.now(UTC)
     expire = now + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
 
     to_encode = {
@@ -442,7 +442,7 @@ async def refresh(
     # Blacklist the old refresh token so it cannot be reused
     if jti:
         old_exp = payload.get("exp", 0)
-        remaining = max(int(old_exp - datetime.utcnow().timestamp()), 1)
+        remaining = max(int(old_exp - datetime.now(UTC).timestamp()), 1)
         await blacklist_token(jti, remaining)
 
     # Issue new token pair (token rotation)
@@ -489,7 +489,7 @@ async def update_profile(
     Rate limit: 20 requests/minute
     """
     current_user.full_name = profile_data.full_name
-    current_user.updated_at = datetime.utcnow()
+    current_user.updated_at = datetime.now(UTC)
 
     session.add(current_user)
     await session.commit()
@@ -527,7 +527,7 @@ async def change_password(
 
     # Update password
     current_user.hashed_password = get_password_hash(password_data.new_password)
-    current_user.updated_at = datetime.utcnow()
+    current_user.updated_at = datetime.now(UTC)
 
     session.add(current_user)
     await session.commit()
@@ -568,7 +568,7 @@ async def logout(
         jti = payload.get("jti")
         exp = payload.get("exp", 0)
         if jti:
-            remaining = max(int(exp - datetime.utcnow().timestamp()), 1)
+            remaining = max(int(exp - datetime.now(UTC).timestamp()), 1)
             await blacklist_token(jti, remaining)
             logger.info("user_logged_out", user_id=str(current_user.id), jti=jti)
     except JWTError:

@@ -3,7 +3,7 @@ Agent service - Orchestrates planning and execution of autonomous agents.
 """
 
 import json
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Optional
 from uuid import UUID
 
@@ -69,7 +69,7 @@ class AgentService:
 
             for i, (step, step_data) in enumerate(zip(steps, plan)):
                 step.status = AgentStatus.EXECUTING
-                step.started_at = datetime.utcnow()
+                step.started_at = datetime.now(UTC)
                 run.current_step = i + 1
                 session.add(step)
                 session.add(run)
@@ -87,7 +87,7 @@ class AgentService:
 
                     step.output_json = json.dumps(result, ensure_ascii=False)
                     step.status = AgentStatus.COMPLETED
-                    step.completed_at = datetime.utcnow()
+                    step.completed_at = datetime.now(UTC)
 
                     previous_output = result.get("output", "")
                     results.append(result)
@@ -116,7 +116,7 @@ class AgentService:
                 except Exception as e:
                     step.status = AgentStatus.FAILED
                     step.error = str(e)[:1000]
-                    step.completed_at = datetime.utcnow()
+                    step.completed_at = datetime.now(UTC)
                     results.append({"error": str(e), "action": step.action})
                     logger.error("agent_step_failed", run_id=str(run.id), step=i, error=str(e))
 
@@ -126,12 +126,12 @@ class AgentService:
             # Finalize
             run.status = AgentStatus.COMPLETED
             run.results_json = json.dumps(results, ensure_ascii=False)
-            run.completed_at = datetime.utcnow()
+            run.completed_at = datetime.now(UTC)
 
         except Exception as e:
             run.status = AgentStatus.FAILED
             run.error = str(e)[:2000]
-            run.completed_at = datetime.utcnow()
+            run.completed_at = datetime.now(UTC)
             logger.error("agent_run_failed", run_id=str(run.id), error=str(e))
 
         session.add(run)
@@ -199,7 +199,7 @@ class AgentService:
             return False
 
         run.status = AgentStatus.CANCELLED
-        run.completed_at = datetime.utcnow()
+        run.completed_at = datetime.now(UTC)
         session.add(run)
         await session.commit()
         return True

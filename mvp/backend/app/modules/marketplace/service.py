@@ -3,7 +3,7 @@ Marketplace service - Business logic for the module/template marketplace.
 """
 
 import json
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Optional
 from uuid import UUID
 
@@ -141,7 +141,7 @@ class MarketplaceService:
         if "tags" in data and data["tags"] is not None:
             listing.tags_json = json.dumps(data["tags"], ensure_ascii=False)
 
-        listing.updated_at = datetime.utcnow()
+        listing.updated_at = datetime.now(UTC)
         self.session.add(listing)
         await self.session.commit()
         await self.session.refresh(listing)
@@ -156,7 +156,7 @@ class MarketplaceService:
             return None
 
         listing.is_published = True
-        listing.updated_at = datetime.utcnow()
+        listing.updated_at = datetime.now(UTC)
         self.session.add(listing)
         await self.session.commit()
         await self.session.refresh(listing)
@@ -173,7 +173,7 @@ class MarketplaceService:
             return None
 
         listing.is_published = False
-        listing.updated_at = datetime.utcnow()
+        listing.updated_at = datetime.now(UTC)
         self.session.add(listing)
         await self.session.commit()
         await self.session.refresh(listing)
@@ -191,7 +191,7 @@ class MarketplaceService:
 
         listing.is_deleted = True
         listing.is_published = False
-        listing.updated_at = datetime.utcnow()
+        listing.updated_at = datetime.now(UTC)
         self.session.add(listing)
         await self.session.commit()
 

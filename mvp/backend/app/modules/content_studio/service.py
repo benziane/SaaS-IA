@@ -7,7 +7,7 @@ Includes readability scoring via textstat when available.
 """
 
 import json
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Optional
 from uuid import UUID
 
@@ -427,7 +427,7 @@ Source content:
         if "scheduled_at" in updates:
             content.scheduled_at = updates["scheduled_at"]
 
-        content.updated_at = datetime.utcnow()
+        content.updated_at = datetime.now(UTC)
         session.add(content)
         await session.commit()
         await session.refresh(content)
@@ -479,7 +479,7 @@ Source content:
             content.status = ContentStatus.FAILED
             logger.error("content_regeneration_failed", error=str(e))
 
-        content.updated_at = datetime.utcnow()
+        content.updated_at = datetime.now(UTC)
         session.add(content)
         await session.commit()
         await session.refresh(content)

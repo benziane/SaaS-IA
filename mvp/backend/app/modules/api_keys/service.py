@@ -5,7 +5,7 @@ API Key service - Key generation, verification, and management.
 import hashlib
 import json
 import secrets
-from datetime import datetime, date
+from datetime import UTC, datetime, date
 from typing import Optional
 from uuid import UUID
 
@@ -126,7 +126,7 @@ class APIKeyService:
             return None
 
         # Check expiration
-        if api_key.expires_at and api_key.expires_at < datetime.utcnow():
+        if api_key.expires_at and api_key.expires_at < datetime.now(UTC):
             return None
 
         # --- HIGH-02: enforce daily rate limit via Redis ---
@@ -148,7 +148,7 @@ class APIKeyService:
         await _increment_daily_usage(key_hash)
 
         # Update last used
-        api_key.last_used_at = datetime.utcnow()
+        api_key.last_used_at = datetime.now(UTC)
         session.add(api_key)
         await session.commit()
 

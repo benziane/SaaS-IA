@@ -13,7 +13,7 @@ import ast
 import json
 import os
 import sys
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import List, Dict, Set, Any, Optional
 from collections import defaultdict
@@ -285,7 +285,7 @@ def scan_project(root_path: Path) -> Dict[str, Any]:
         "project": {
             "name": "SaaS-IA MVP",
             "version": "1.0.0",
-            "generated_at": datetime.utcnow().isoformat() + "Z",
+            "generated_at": datetime.now(UTC).isoformat() + "Z",
             "root_path": str(root_path)
         },
         "stats": {

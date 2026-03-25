@@ -8,7 +8,7 @@ Covers:
 """
 
 import pytest
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 from unittest.mock import patch, AsyncMock, MagicMock
 
@@ -87,14 +87,10 @@ async def test_protected_endpoint_with_token(client, auth_headers, test_user, ap
     assert resp.status_code == 200
 
 
-async def test_modules_endpoint_no_auth(client):
-    """GET /api/modules does not require authentication (public listing)."""
+async def test_modules_endpoint_requires_auth(client):
+    """GET /api/modules requires authentication (HIGH-05)."""
     resp = await client.get("/api/modules")
-    assert resp.status_code == 200
-
-    body = resp.json()
-    assert "count" in body
-    assert "modules" in body
+    assert resp.status_code == 401
 
 
 # --------------------------------------------------------------------------
@@ -144,7 +140,7 @@ def test_expired_token_rejected():
 
     expired_payload = {
         "sub": "user@example.com",
-        "exp": datetime.utcnow() - timedelta(hours=1),
+        "exp": datetime.now(UTC) - timedelta(hours=1),
         "type": "access",
     }
     token = jwt.encode(
@@ -171,7 +167,7 @@ def test_refresh_token_rejected_as_access():
 
     refresh_payload = {
         "sub": "user@example.com",
-        "exp": datetime.utcnow() + timedelta(days=7),
+        "exp": datetime.now(UTC) + timedelta(days=7),
         "type": "refresh",
     }
     token = jwt.encode(

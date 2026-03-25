@@ -7,7 +7,7 @@ All tests run without external services.
 import json
 import os
 import pytest
-from datetime import datetime
+from datetime import UTC, datetime
 from uuid import uuid4
 
 
@@ -111,8 +111,8 @@ class TestKnowledgeSchemas:
             total_chunks=5,
             status="indexed",
             error=None,
-            created_at=datetime.utcnow(),
-            updated_at=datetime.utcnow(),
+            created_at=datetime.now(UTC),
+            updated_at=datetime.now(UTC),
         )
         assert doc.total_chunks == 5
 
@@ -214,7 +214,7 @@ class TestAPIKeySchemas:
             rate_limit_per_day=1000,
             is_active=True,
             last_used_at=None,
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(UTC),
         )
         assert read.is_active is True
 

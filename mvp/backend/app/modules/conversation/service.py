@@ -2,7 +2,7 @@
 Conversation service - Business logic for contextual post-transcription chat
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Dict, List, Optional
 from uuid import UUID
 
@@ -127,7 +127,7 @@ class ConversationService:
         # Update conversation timestamp
         conversation = await session.get(Conversation, conversation_id)
         if conversation is not None:
-            conversation.updated_at = datetime.utcnow()
+            conversation.updated_at = datetime.now(UTC)
 
             # Auto-generate title from first user message if title is empty
             if conversation.title is None and role == "user":

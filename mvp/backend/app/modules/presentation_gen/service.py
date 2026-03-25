@@ -7,7 +7,7 @@ Uses optional marp-cli for PDF/PPTX rendering when available.
 """
 
 import json
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Optional
 from uuid import UUID
 
@@ -155,7 +155,7 @@ class PresentationGenService:
                 error=str(e),
             )
 
-        presentation.updated_at = datetime.utcnow()
+        presentation.updated_at = datetime.now(UTC)
         self.session.add(presentation)
         await self.session.commit()
         await self.session.refresh(presentation)
@@ -363,7 +363,7 @@ Return ONLY the JSON array, no other text."""
             slides[slide_idx]["layout"] = updates["layout"]
 
         presentation.slides_json = json.dumps(slides, ensure_ascii=False)
-        presentation.updated_at = datetime.utcnow()
+        presentation.updated_at = datetime.now(UTC)
         self.session.add(presentation)
         await self.session.commit()
         await self.session.refresh(presentation)
@@ -408,7 +408,7 @@ Return ONLY the JSON array, no other text."""
 
         presentation.slides_json = json.dumps(slides, ensure_ascii=False)
         presentation.num_slides = len(slides)
-        presentation.updated_at = datetime.utcnow()
+        presentation.updated_at = datetime.now(UTC)
         self.session.add(presentation)
         await self.session.commit()
         await self.session.refresh(presentation)
@@ -439,7 +439,7 @@ Return ONLY the JSON array, no other text."""
 
         presentation.slides_json = json.dumps(slides, ensure_ascii=False)
         presentation.num_slides = len(slides)
-        presentation.updated_at = datetime.utcnow()
+        presentation.updated_at = datetime.now(UTC)
         self.session.add(presentation)
         await self.session.commit()
         await self.session.refresh(presentation)

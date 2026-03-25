@@ -9,7 +9,7 @@ Zero external API cost. Fast (<50ms).
 
 import re
 from typing import Dict, List, Optional, Tuple
-from datetime import datetime
+from datetime import UTC, datetime
 import structlog
 
 from app.ai_assistant.classification.enums import (
@@ -85,7 +85,7 @@ class ContentClassifier:
                 "processing_time_ms": 23
             }
         """
-        start_time = datetime.utcnow()
+        start_time = datetime.now(UTC)
         
         # Validate input
         if not text or not text.strip():
@@ -125,7 +125,7 @@ class ContentClassifier:
         confidence = domain_scores.get(primary_domain, 0.0)
         
         # Processing time
-        processing_time = (datetime.utcnow() - start_time).total_seconds() * 1000
+        processing_time = (datetime.now(UTC) - start_time).total_seconds() * 1000
         
         result = {
             "domains": domain_scores,

@@ -5,7 +5,7 @@ Provides detailed logging of all transcription steps
 
 import json
 import structlog
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any, Dict, Optional
 
 logger = structlog.get_logger()
@@ -20,7 +20,7 @@ class TranscriptionDebugLogger:
     def __init__(self, job_id: str, video_url: str, websocket_enabled: bool = False):
         self.job_id = job_id
         self.video_url = video_url
-        self.start_time = datetime.utcnow()
+        self.start_time = datetime.now(UTC)
         self.steps = []
         self.websocket_enabled = websocket_enabled
         
@@ -41,7 +41,7 @@ class TranscriptionDebugLogger:
     ):
         """Log a transcription step with full details"""
         
-        step_time = datetime.utcnow()
+        step_time = datetime.now(UTC)
         duration = (step_time - self.start_time).total_seconds()
         
         step_info = {
@@ -414,7 +414,7 @@ class TranscriptionDebugLogger:
     
     def log_final_summary(self):
         """Log final summary of the transcription process"""
-        end_time = datetime.utcnow()
+        end_time = datetime.now(UTC)
         total_duration = (end_time - self.start_time).total_seconds()
         
         summary = {

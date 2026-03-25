@@ -7,7 +7,7 @@ All fixtures are designed to run WITHOUT external services
 
 import os
 import pytest
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 from unittest.mock import patch, AsyncMock, MagicMock
 
@@ -115,7 +115,7 @@ def auth_headers():
 
     secret = _TEST_ENV["SECRET_KEY"]
     algorithm = _TEST_ENV["ALGORITHM"]
-    expire = datetime.utcnow() + timedelta(minutes=30)
+    expire = datetime.now(UTC) + timedelta(minutes=30)
 
     payload = {
         "sub": "testuser@example.com",
@@ -136,8 +136,8 @@ def test_user():
     user.role = "user"
     user.is_active = True
     user.hashed_password = "$2b$12$mock_hashed_password_for_testing"
-    user.created_at = datetime.utcnow()
-    user.updated_at = datetime.utcnow()
+    user.created_at = datetime.now(UTC)
+    user.updated_at = datetime.now(UTC)
     return user
 
 
