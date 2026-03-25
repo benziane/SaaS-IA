@@ -143,12 +143,10 @@ class TestHealthEndpoints:
         assert data["status"] == "healthy"
 
     @pytest.mark.asyncio
-    async def test_modules_list(self, client):
+    async def test_modules_list_requires_auth(self, client):
+        """Since HIGH-05 fix, /api/modules requires authentication."""
         response = await client.get("/api/modules")
-        assert response.status_code == 200
-        data = response.json()
-        assert "count" in data
-        assert "modules" in data
+        assert response.status_code == 401
 
 
 # ---------------------------------------------------------------------------

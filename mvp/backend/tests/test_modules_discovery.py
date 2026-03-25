@@ -42,10 +42,10 @@ def _collect_manifest_paths() -> list[Path]:
 # --------------------------------------------------------------------------
 
 def test_all_modules_discovered():
-    """ModuleRegistry should find all 32 modules that have a manifest.json."""
+    """ModuleRegistry should find all 33 modules that have a manifest.json."""
     manifest_paths = _collect_manifest_paths()
-    assert len(manifest_paths) == 32, (
-        f"Expected 32 manifest.json files, found {len(manifest_paths)}. "
+    assert len(manifest_paths) == 33, (
+        f"Expected 33 manifest.json files, found {len(manifest_paths)}. "
         f"Modules: {[p.parent.name for p in manifest_paths]}"
     )
 
