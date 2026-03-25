@@ -49,12 +49,27 @@ Ce skill analyse le code sans le modifier. Il produit un rapport avec des recomm
 - [ ] Webhooks Stripe verifies avec signature (`STRIPE_WEBHOOK_SECRET`)
 - [ ] Dependances a jour (pas de CVE connues)
 
+## Integrations securite (en place)
+
+### Presidio (Microsoft) - PII Detection enterprise-grade
+- `security_guardian.service.SecurityGuardianService.scan_pii()`
+- 7+ types : email, phone, credit_card, ssn, ip_address, person, location
+- Auto-detection si installe, fallback regex patterns
+
+### NeMo-Guardrails (NVIDIA) - Prompt Injection
+- `security_guardian.service.SecurityGuardianService.check_injection()`
+- 10+ patterns (jailbreak, role-play, ignore instructions, etc.)
+- Auto-detection si installe, fallback regex patterns
+- Policies configurables : block, warn, log
+
 ## Fichiers critiques a auditer
 - `mvp/backend/app/auth.py` - Authentification JWT
 - `mvp/backend/app/config.py` - Configuration et secrets
 - `mvp/backend/app/modules/billing/` - Integration Stripe
 - `mvp/backend/app/modules/api_keys/` - Gestion des cles API
 - `mvp/backend/app/rate_limit.py` - Rate limiting
+- `mvp/backend/app/modules/security_guardian/` - PII + injection + audit
+- `mvp/backend/app/middleware/` - Middleware securite
 
 ## Format du rapport
 ```

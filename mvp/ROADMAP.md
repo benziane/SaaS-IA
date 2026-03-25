@@ -1,7 +1,7 @@
 # ROADMAP - SaaS-IA Platform
 
-**Date de mise a jour** : 2026-03-24
-**Version actuelle** : MVP 3.8.0
+**Date de mise a jour** : 2026-03-25
+**Version actuelle** : MVP 3.9.0
 **Objectif** : Plateforme SaaS d'orchestration IA multi-modules, production-ready
 
 ---
@@ -1259,6 +1259,23 @@ CREATE INDEX ix_document_chunks_embedding_hnsw
 ---
 
 ## CHANGELOG
+
+### v3.9.0 (2026-03-25) - Enterprise S+++ Architecture Upgrade
+- **Phase 5 finalisee** : 12 composants enterprise-grade, 21 fichiers, 9 couches middleware
+- **Security Headers** : 10 headers OWASP (HSTS, CSP, COOP, CORP, X-Frame-Options, Permissions-Policy)
+- **Request ID** : correlation bout-en-bout HTTP → structlog → Celery via contextvars
+- **Graceful Shutdown** : drain 30s, ShutdownGuardMiddleware (503), signal handling Windows-compatible
+- **Health Checks K8s** : 3 probes separees (live/ready/startup) avec checks PG+Redis paralleles
+- **DB Pooling** : pool_size=20, max_overflow=10, pool_pre_ping, retry backoff exponentiel, PoolMetrics
+- **Structured Logging** : JSON prod / console dev, filtrage donnees sensibles (13 patterns), timing, user_id
+- **Circuit Breaker** : AIProviderManager avec fallback, sliding failure window, 3 etats, zero-dep
+- **Rate Limiting** : sliding window Redis ZSET + burst allowance + headers X-RateLimit-* + fail-open
+- **Compression** : Gzip + Brotli optionnel, exclusion SSE/metrics, seuil 500 bytes
+- **OpenTelemetry** : traces FastAPI + asyncpg + Redis + httpx, trace_id dans structlog, degradation gracieuse
+- **Error Tracking** : Sentry/GlitchTip, filtre ConnectionReset/BrokenPipe, contexte request_id/user_id/module
+- **Dockerfile** : multi-stage (builder+runtime), tini PID 1, non-root, STOPSIGNAL SIGTERM, ~500MB
+- Requirements : +11 packages enterprise (opentelemetry-*, sentry-sdk, brotli)
+- Total plateforme : **25 modules**, **31 pages**, **~160 endpoints**, **9 middleware layers**
 
 ### v3.8.0 (2026-03-24) - Monitoring + Search + Memory + Pipeline Builder (Final)
 - **3 nouveaux modules backend** auto-decouverts :

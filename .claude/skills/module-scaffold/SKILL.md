@@ -115,9 +115,88 @@ async def test_list_<nom>(client: AsyncClient, auth_headers: dict):
 └── api.ts          # Fonctions d'appel API
 ```
 
+### Modele DB (`mvp/backend/app/models/<nom>.py`)
+```python
+"""<Nom> database models."""
+import uuid as uuid_pkg
+from datetime import datetime
+from sqlmodel import SQLModel, Field
+
+class <Nom>Base(SQLModel):
+    name: str = Field(max_length=200)
+    description: str | None = None
+    user_id: uuid_pkg.UUID = Field(index=True)
+
+class <Nom>(<Nom>Base, table=True):
+    __tablename__ = "<noms>"  # pluriel
+    id: uuid_pkg.UUID = Field(default_factory=uuid_pkg.uuid4, primary_key=True)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+```
+
+### Migration Alembic
+Generer apres creation du modele :
+```bash
+cd mvp/backend && alembic revision --autogenerate -m "add_<nom>_tables"
+```
+
+## Interconnexion obligatoire (3 systemes)
+
+Chaque nouveau module doit etre connecte aux 3 systemes d'orchestration :
+
+### 1. Agent Executor (`mvp/backend/app/modules/agents/executor.py`)
+```python
+elif action == "<nom>_action":
+    from app.modules.<nom>.service import <Nom>Service
+    svc = <Nom>Service(self.session)
+    result = await svc.process(params.get("input", ""), user_id)
+    return {"result": result}
+```
+
+### 2. Pipeline Steps (`mvp/backend/app/modules/pipelines/service.py`)
+```python
+elif step_type == "<nom>":
+    from app.modules.<nom>.service import <Nom>Service
+    svc = <Nom>Service(session)
+    result = await svc.process(step_input, user_id)
+    return {"output": result}
+```
+
+### 3. Workflow Actions (`mvp/backend/app/modules/ai_workflows/service.py`)
+```python
+elif action == "<nom>_process":
+    from app.modules.<nom>.service import <Nom>Service
+    svc = <Nom>Service(session)
+    result = await svc.process(params.get("input", ""), user_id)
+    return {"result": result}
+```
+
+### 4. Agent Planner (`mvp/backend/app/modules/agents/planner.py`)
+Ajouter le module dans les heuristiques du planner pour la planification automatique.
+
+## Pattern open-source (auto-detection + fallback)
+
+Si le module integre une lib open-source, toujours suivre ce pattern :
+```python
+try:
+    import some_lib
+    HAS_SOME_LIB = True
+except ImportError:
+    HAS_SOME_LIB = False
+
+async def process(self, input: str) -> dict:
+    if HAS_SOME_LIB:
+        return await self._process_with_lib(input)
+    return await self._process_fallback(input)
+```
+
 ## Checklist apres scaffolding
 - [ ] manifest.json valide (tous les champs requis)
 - [ ] Le module est auto-decouvert par ModuleRegistry
+- [ ] Modele DB + migration Alembic creee
+- [ ] Connecte aux 3 systemes (executor, pipeline, workflow)
+- [ ] Ajoute dans le planner heuristique
 - [ ] Les tests passent
 - [ ] La route frontend est ajoutee dans la navigation
 - [ ] Les types TypeScript correspondent aux schemas Pydantic
+- [ ] Open-source lib avec auto-detection + fallback (si applicable)

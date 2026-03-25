@@ -19,11 +19,31 @@ Le systeme utilise un **AI Router** dans `mvp/backend/app/ai_assistant/` qui:
 ## Providers configures
 | Provider | Cle config | Usage principal |
 |----------|-----------|-----------------|
-| Gemini | `GEMINI_API_KEY` | Flash - usage general |
+| Gemini | `GEMINI_API_KEY` | Flash 2.0 - usage general |
 | Claude | `CLAUDE_API_KEY` | Sonnet - raisonnement |
-| Groq | `GROQ_API_KEY` | Llama 70B - rapide |
-| OpenAI | (a configurer) | GPT - polyvalent |
+| Groq | `GROQ_API_KEY` | Llama 3.3 70B - rapide |
+| OpenAI | `OPENAI_API_KEY` | GPT - polyvalent, TTS, DALL-E |
 | AssemblyAI | `ASSEMBLYAI_API_KEY` | Transcription audio |
+| ElevenLabs | `ELEVENLABS_API_KEY` | Voice clone + TTS premium |
+
+## LiteLLM Proxy (integre)
+
+`mvp/backend/app/ai_assistant/litellm_proxy.py` fournit un proxy unifie :
+- **Routing intelligent** : selectionne le provider optimal (cout/qualite)
+- **Comptage tokens** : calcul auto via LiteLLM (remplace pricing manuel)
+- **Fallback chain** : Gemini → Groq → Claude → OpenAI
+- **Cost tracking** : integration auto avec `cost_tracker`
+
+```python
+from app.ai_assistant.litellm_proxy import LiteLLMProxy
+
+proxy = LiteLLMProxy()
+response = await proxy.completion(
+    messages=[{"role": "user", "content": prompt}],
+    model="gemini/gemini-2.0-flash",
+    fallbacks=["groq/llama-3.3-70b", "claude-3-sonnet"]
+)
+```
 
 ## Patterns obligatoires
 

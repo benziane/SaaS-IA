@@ -2,14 +2,15 @@
 
 ## Projet
 
-Plateforme SaaS modulaire d'intelligence artificielle - 22+ modules backend auto-decouverts, 20+ pages frontend, ~135 endpoints API.
+Plateforme SaaS modulaire d'intelligence artificielle - 25 modules backend auto-decouverts, 31 pages frontend, ~160 endpoints API. Architecture enterprise S+++ (v3.9.0).
 
 ## Stack technique
 
 - **Backend** : FastAPI 0.135, Python 3.13, SQLModel + Pydantic 2, PostgreSQL 16 (AsyncPG), Redis 7, Celery
 - **Frontend** : Next.js 15 (App Router), React 18, MUI 6, TanStack Query 5, Axios
-- **AI Providers** : Gemini 2.0 Flash, Claude Sonnet, Groq Llama 3.3 70B (via AIAssistantService)
-- **Infra** : Docker Compose, Prometheus, structlog, Alembic migrations
+- **AI Providers** : Gemini 2.0 Flash, Claude Sonnet, Groq Llama 3.3 70B (via AIAssistantService + LiteLLM proxy)
+- **Infra** : Docker Compose (multi-stage), Prometheus, OpenTelemetry, structlog (JSON prod), Sentry/GlitchTip, Alembic
+- **Enterprise** : 9 middleware layers, circuit breaker, sliding window rate limit, graceful shutdown, K8s health probes
 - **Ports** : Backend 8004, Frontend 3002, PostgreSQL 5435, Redis 6382, Flower 5555
 
 ## Architecture modulaire
