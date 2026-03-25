@@ -1,0 +1,850 @@
+{
+  "info": {
+    "_postman_id": "saas-ia-collection-001",
+    "name": "SaaS-IA API",
+    "description": "SaaS-IA Platform API Collection (v3.9.0)\n\nModular AI platform with 33 modules, ~280 endpoints.\n\n**Auth**: JWT Bearer (auto-login via pre-request script) or API Key for /v1.\n\nImport the companion environment file `SaaS-IA.postman_environment.json` and set `test_email` / `test_password`.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Auto-login: if token is empty or expired, fetch a new one",
+          "const token = pm.environment.get('token');",
+          "",
+          "function needsRefresh() {",
+          "  if (!token) return true;",
+          "  try {",
+          "    const payload = JSON.parse(atob(token.split('.')[1]));",
+          "    return payload.exp * 1000 < Date.now();",
+          "  } catch (e) {",
+          "    return true;",
+          "  }",
+          "}",
+          "",
+          "if (needsRefresh()) {",
+          "  const email = pm.environment.get('test_email');",
+          "  const password = pm.environment.get('test_password');",
+          "  if (!email || !password) {",
+          "    console.warn('SaaS-IA: test_email / test_password not set in environment');",
+          "    return;",
+          "  }",
+          "  pm.sendRequest({",
+          "    url: pm.environment.get('base_url') + '/api/auth/login',",
+          "    method: 'POST',",
+          "    header: { 'Content-Type': 'application/x-www-form-urlencoded' },",
+          "    body: {",
+          "      mode: 'urlencoded',",
+          "      urlencoded: [",
+          "        { key: 'username', value: email },",
+          "        { key: 'password', value: password }",
+          "      ]",
+          "    }",
+          "  }, function (err, res) {",
+          "    if (err) { console.error('Auto-login failed:', err); return; }",
+          "    if (res.code === 200) {",
+          "      const body = res.json();",
+          "      pm.environment.set('token', body.access_token);",
+          "      console.log('SaaS-IA: auto-login successful');",
+          "    } else {",
+          "      console.warn('SaaS-IA: login returned', res.code, res.text());",
+          "    }",
+          "  });",
+          "}"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8004"
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{test_email}}\",\n  \"password\": \"{{test_password}}\",\n  \"full_name\": \"Demo User\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "register"]
+            },
+            "description": "Register a new user. Rate limit: 5/min."
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const body = pm.response.json();",
+                  "  pm.environment.set('token', body.access_token);",
+                  "  pm.test('Token saved', () => pm.expect(body.access_token).to.be.a('string'));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/x-www-form-urlencoded" }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                { "key": "username", "value": "{{test_email}}" },
+                { "key": "password", "value": "{{test_password}}" }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "login"]
+            },
+            "description": "Login with OAuth2 form. Returns JWT access_token + refresh_token. Token auto-saved to environment."
+          }
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refresh_token\": \"{{refresh_token}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/refresh",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "refresh"]
+            },
+            "description": "Refresh an expired access token."
+          }
+        },
+        {
+          "name": "Get Current User",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/auth/me",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "me"]
+            },
+            "description": "Get the authenticated user profile."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Transcription",
+      "item": [
+        {
+          "name": "Create Transcription (YouTube URL)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"url\": \"https://www.youtube.com/watch?v=dQw4w9WgXcQ\",\n  \"language\": \"en\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/transcription/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "transcription", ""]
+            },
+            "description": "Submit a YouTube URL for transcription. Rate limit: 10/min."
+          }
+        },
+        {
+          "name": "Upload Audio File",
+          "request": {
+            "method": "POST",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "",
+                  "description": "Audio/video file (mp3, wav, mp4, m4a, ogg, webm, flac). Max 500 MB."
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/transcription/upload",
+              "host": ["{{base_url}}"],
+              "path": ["api", "transcription", "upload"]
+            },
+            "description": "Upload an audio/video file for transcription. Rate limit: 5/min."
+          }
+        },
+        {
+          "name": "List Transcriptions",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/transcription/?skip=0&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "transcription", ""],
+              "query": [
+                { "key": "skip", "value": "0" },
+                { "key": "limit", "value": "10" }
+              ]
+            },
+            "description": "List transcriptions with pagination. Rate limit: 20/min."
+          }
+        },
+        {
+          "name": "Get Transcription by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/transcription/:job_id",
+              "host": ["{{base_url}}"],
+              "path": ["api", "transcription", ":job_id"],
+              "variable": [
+                { "key": "job_id", "value": "" }
+              ]
+            },
+            "description": "Get a single transcription by ID. Rate limit: 30/min."
+          }
+        },
+        {
+          "name": "Auto-Chapter",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"url\": \"https://www.youtube.com/watch?v=dQw4w9WgXcQ\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/transcription/auto-chapter",
+              "host": ["{{base_url}}"],
+              "path": ["api", "transcription", "auto-chapter"]
+            },
+            "description": "Generate auto-chapters with AI summaries. Rate limit: 5/min."
+          }
+        },
+        {
+          "name": "Smart Transcribe",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"url\": \"https://www.youtube.com/watch?v=dQw4w9WgXcQ\",\n  \"language\": \"auto\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/transcription/smart-transcribe",
+              "host": ["{{base_url}}"],
+              "path": ["api", "transcription", "smart-transcribe"]
+            },
+            "description": "Smart transcription with automatic provider routing. Rate limit: 10/min."
+          }
+        },
+        {
+          "name": "Extract YouTube Metadata",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"url\": \"https://www.youtube.com/watch?v=dQw4w9WgXcQ\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/transcription/metadata",
+              "host": ["{{base_url}}"],
+              "path": ["api", "transcription", "metadata"]
+            },
+            "description": "Extract YouTube video metadata (title, channel, duration, views). Rate limit: 20/min."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Content Studio",
+      "item": [
+        {
+          "name": "Create Content Project",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Article sur l'IA en 2026\",\n  \"source_type\": \"text\",\n  \"source_text\": \"L'intelligence artificielle a transforme le monde du travail en 2026...\",\n  \"language\": \"fr\",\n  \"tone\": \"professional\",\n  \"target_audience\": \"tech leaders\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/content-studio/projects",
+              "host": ["{{base_url}}"],
+              "path": ["api", "content-studio", "projects"]
+            },
+            "description": "Create a content project from text, transcription, document, or URL. Rate limit: 10/min."
+          }
+        },
+        {
+          "name": "Generate Content",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"formats\": [\"blog_post\", \"tweet_thread\", \"linkedin_post\"]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/content-studio/projects/:project_id/generate",
+              "host": ["{{base_url}}"],
+              "path": ["api", "content-studio", "projects", ":project_id", "generate"],
+              "variable": [
+                { "key": "project_id", "value": "" }
+              ]
+            },
+            "description": "Generate content in multiple formats (10 available). Rate limit: 5/min."
+          }
+        },
+        {
+          "name": "List Content Formats",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/content-studio/formats",
+              "host": ["{{base_url}}"],
+              "path": ["api", "content-studio", "formats"]
+            },
+            "description": "List all available content formats (blog_post, tweet_thread, linkedin_post, newsletter, etc.)."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Knowledge Base",
+      "item": [
+        {
+          "name": "Upload Document",
+          "request": {
+            "method": "POST",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "",
+                  "description": "Document file (TXT, MD, CSV). Max 10 MB."
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/knowledge/upload",
+              "host": ["{{base_url}}"],
+              "path": ["api", "knowledge", "upload"]
+            },
+            "description": "Upload a document to the knowledge base. It is chunked and indexed for semantic search. Rate limit: 5/min."
+          }
+        },
+        {
+          "name": "Hybrid Search",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"comment fonctionne le machine learning\",\n  \"top_k\": 5\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/knowledge/search",
+              "host": ["{{base_url}}"],
+              "path": ["api", "knowledge", "search"]
+            },
+            "description": "Hybrid search (auto-detect: pgvector + TF-IDF fusion). Rate limit: 20/min."
+          }
+        },
+        {
+          "name": "Ask (RAG)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"question\": \"Quels sont les avantages du deep learning ?\",\n  \"top_k\": 3\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/knowledge/ask",
+              "host": ["{{base_url}}"],
+              "path": ["api", "knowledge", "ask"]
+            },
+            "description": "RAG query: search relevant chunks then generate an AI answer from them. Rate limit: 10/min."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Pipelines",
+      "item": [
+        {
+          "name": "Create Pipeline",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"YouTube to Summary\",\n  \"description\": \"Transcribe YouTube video and generate summary\",\n  \"steps\": [\n    {\"id\": \"step1\", \"type\": \"transcription\", \"config\": {\"language\": \"auto\"}, \"position\": 0},\n    {\"id\": \"step2\", \"type\": \"summarize\", \"config\": {\"max_length\": 500}, \"position\": 1}\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/pipelines/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "pipelines", ""]
+            },
+            "description": "Create a new pipeline with sequential steps. Rate limit: 10/min."
+          }
+        },
+        {
+          "name": "Execute Pipeline",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"input\": {\n    \"url\": \"https://www.youtube.com/watch?v=dQw4w9WgXcQ\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/pipelines/:pipeline_id/execute",
+              "host": ["{{base_url}}"],
+              "path": ["api", "pipelines", ":pipeline_id", "execute"],
+              "variable": [
+                { "key": "pipeline_id", "value": "" }
+              ]
+            },
+            "description": "Execute a pipeline with input data. Rate limit: 3/min."
+          }
+        },
+        {
+          "name": "Get Pipeline",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/pipelines/:pipeline_id",
+              "host": ["{{base_url}}"],
+              "path": ["api", "pipelines", ":pipeline_id"],
+              "variable": [
+                { "key": "pipeline_id", "value": "" }
+              ]
+            },
+            "description": "Get a pipeline by ID with its steps. Rate limit: 30/min."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Agents",
+      "item": [
+        {
+          "name": "Run Autonomous Agent",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"instruction\": \"Transcribe this YouTube video https://www.youtube.com/watch?v=dQw4w9WgXcQ, then summarize it and generate a blog post\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/agents/run",
+              "host": ["{{base_url}}"],
+              "path": ["api", "agents", "run"]
+            },
+            "description": "Execute an autonomous AI agent that decomposes the instruction into sub-tasks. Rate limit: 5/min."
+          }
+        },
+        {
+          "name": "List Agent Runs",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/agents/runs",
+              "host": ["{{base_url}}"],
+              "path": ["api", "agents", "runs"]
+            },
+            "description": "List all agent runs for the current user. Rate limit: 20/min."
+          }
+        }
+      ]
+    },
+    {
+      "name": "AI Chatbot Builder",
+      "item": [
+        {
+          "name": "Create Chatbot",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Support Bot\",\n  \"description\": \"Customer support chatbot\",\n  \"system_prompt\": \"You are a helpful customer support assistant. Answer based on the knowledge base.\",\n  \"model\": \"gemini\",\n  \"personality\": \"friendly\",\n  \"welcome_message\": \"Hello! How can I help you today?\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/chatbots",
+              "host": ["{{base_url}}"],
+              "path": ["api", "chatbots"]
+            },
+            "description": "Create a new chatbot with system prompt and configuration. Rate limit: 10/min."
+          }
+        },
+        {
+          "name": "Publish Chatbot",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{base_url}}/api/chatbots/:chatbot_id/publish",
+              "host": ["{{base_url}}"],
+              "path": ["api", "chatbots", ":chatbot_id", "publish"],
+              "variable": [
+                { "key": "chatbot_id", "value": "" }
+              ]
+            },
+            "description": "Publish chatbot and generate embed token. Rate limit: 5/min."
+          }
+        },
+        {
+          "name": "Get Embed Code",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/chatbots/:chatbot_id/embed-code",
+              "host": ["{{base_url}}"],
+              "path": ["api", "chatbots", ":chatbot_id", "embed-code"],
+              "variable": [
+                { "key": "chatbot_id", "value": "" }
+              ]
+            },
+            "description": "Get the HTML/JS embed snippet for a published chatbot. Rate limit: 20/min."
+          }
+        },
+        {
+          "name": "Chat via Widget (Public)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"What are your business hours?\",\n  \"session_id\": \"visitor-session-001\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/chatbots/widget/:embed_token/chat",
+              "host": ["{{base_url}}"],
+              "path": ["api", "chatbots", "widget", ":embed_token", "chat"],
+              "variable": [
+                { "key": "embed_token", "value": "" }
+              ]
+            },
+            "description": "Public chat endpoint for the embed widget. No JWT required. Rate limit: 30/min."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Compare",
+      "item": [
+        {
+          "name": "Run Comparison",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"prompt\": \"Explain quantum computing in simple terms\",\n  \"providers\": [\"gemini\", \"claude\", \"groq\"]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/compare/run",
+              "host": ["{{base_url}}"],
+              "path": ["api", "compare", "run"]
+            },
+            "description": "Run the same prompt across multiple AI providers in parallel. Rate limit: 5/min."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Data Analyst",
+      "item": [
+        {
+          "name": "Upload Dataset",
+          "request": {
+            "method": "POST",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "",
+                  "description": "CSV, JSON, or Excel file. Max 50 MB."
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/data/datasets",
+              "host": ["{{base_url}}"],
+              "path": ["api", "data", "datasets"]
+            },
+            "description": "Upload a dataset for analysis with DuckDB. Rate limit: 5/min."
+          }
+        },
+        {
+          "name": "Ask Dataset (NL Query)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"question\": \"What is the total revenue by product for Q1 2026?\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/data/datasets/:dataset_id/ask",
+              "host": ["{{base_url}}"],
+              "path": ["api", "data", "datasets", ":dataset_id", "ask"],
+              "variable": [
+                { "key": "dataset_id", "value": "" }
+              ]
+            },
+            "description": "Ask a natural language question about a dataset. AI generates SQL and executes via DuckDB. Rate limit: 5/min."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Marketplace",
+      "item": [
+        {
+          "name": "Browse Listings",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/marketplace/listings?limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "marketplace", "listings"],
+              "query": [
+                { "key": "limit", "value": "10" }
+              ]
+            },
+            "description": "Browse marketplace listings (public). Rate limit: 30/min."
+          }
+        },
+        {
+          "name": "Get Featured Listings",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/marketplace/featured",
+              "host": ["{{base_url}}"],
+              "path": ["api", "marketplace", "featured"]
+            },
+            "description": "Get featured marketplace listings (public). Rate limit: 30/min."
+          }
+        },
+        {
+          "name": "Install Listing",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{base_url}}/api/marketplace/listings/:listing_id/install",
+              "host": ["{{base_url}}"],
+              "path": ["api", "marketplace", "listings", ":listing_id", "install"],
+              "variable": [
+                { "key": "listing_id", "value": "" }
+              ]
+            },
+            "description": "Install a marketplace listing. Rate limit: 10/min."
+          }
+        }
+      ]
+    },
+    {
+      "name": "API Keys & Public API",
+      "item": [
+        {
+          "name": "Create API Key",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"My Integration Key\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/keys/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "keys", ""]
+            },
+            "description": "Create a new API key. The key is returned in plaintext ONCE. Rate limit: 5/min."
+          }
+        },
+        {
+          "name": "List API Keys",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/keys/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "keys", ""]
+            },
+            "description": "List API keys (prefix only, not the full key). Rate limit: 20/min."
+          }
+        },
+        {
+          "name": "[v1] Transcribe via API Key",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-API-Key", "value": "{{api_key}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"url\": \"https://www.youtube.com/watch?v=dQw4w9WgXcQ\",\n  \"language\": \"en\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/v1/transcribe",
+              "host": ["{{base_url}}"],
+              "path": ["v1", "transcribe"]
+            },
+            "description": "Submit a transcription job via the public API v1 using an API key. Rate limit: 10/min."
+          }
+        },
+        {
+          "name": "[v1] Get Job Status",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [
+              { "key": "X-API-Key", "value": "{{api_key}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/v1/jobs/:job_id",
+              "host": ["{{base_url}}"],
+              "path": ["v1", "jobs", ":job_id"],
+              "variable": [
+                { "key": "job_id", "value": "" }
+              ]
+            },
+            "description": "Check job status via the public API v1. Rate limit: 30/min."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Health & Monitoring",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": ["{{base_url}}"],
+              "path": ["health"]
+            },
+            "description": "Basic health check (status, version, environment)."
+          }
+        },
+        {
+          "name": "Readiness Probe",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/health/ready",
+              "host": ["{{base_url}}"],
+              "path": ["health", "ready"]
+            },
+            "description": "Kubernetes readiness probe (checks Postgres + Redis)."
+          }
+        },
+        {
+          "name": "List Registered Modules",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/modules",
+              "host": ["{{base_url}}"],
+              "path": ["api", "modules"]
+            },
+            "description": "List all registered modules with their status."
+          }
+        }
+      ]
+    }
+  ]
+}

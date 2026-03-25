@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "saas-ia-frontend",
+      "runtimeExecutable": "C:/Users/ibzpc/AppData/Roaming/npm/node_modules/pnpm/bin/pnpm.cjs",
+      "runtimeArgs": ["dev", "--port", "3002"],
+      "cwd": "mvp/frontend",
+      "port": 3002
+    }
+  ]
+}
