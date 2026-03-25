@@ -66,6 +66,10 @@ app.add_middleware(SelectiveCompressionMiddleware)
 from app.middleware.security_headers import SecurityHeadersMiddleware
 app.add_middleware(SecurityHeadersMiddleware)
 
+# 5b. Sliding Window Rate Limiter (global, coexists with per-endpoint slowapi)
+from app.middleware.rate_limiter import RateLimitMiddleware
+app.add_middleware(RateLimitMiddleware)
+
 # 5. Request Logging (timing + user_id + status-based log level)
 from app.middleware.logging_middleware import RequestLoggingMiddleware
 app.add_middleware(RequestLoggingMiddleware)

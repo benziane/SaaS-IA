@@ -12,6 +12,8 @@ import structlog
 from structlog.types import EventDict
 
 from app.config import settings
+from app.middleware.request_id_structlog import inject_context_vars
+from app.core.telemetry_structlog import inject_trace_context
 
 SENSITIVE_KEYS: frozenset[str] = frozenset({
     "password",
@@ -75,6 +77,8 @@ def configure_logging() -> None:
     # Shared processors used by both structlog and stdlib
     shared_processors: list[structlog.types.Processor] = [
         structlog.contextvars.merge_contextvars,
+        inject_context_vars,
+        inject_trace_context,
         filter_sensitive_data,
         add_environment,
         structlog.stdlib.add_log_level,
