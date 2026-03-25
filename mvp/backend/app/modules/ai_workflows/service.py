@@ -444,6 +444,16 @@ class WorkflowService:
         elif action == "voice_dub":
             target = config.get("target_language", "en")
             return {"output": f"[Dubbing to {target} queued]", "action": "voice_dub", "target_language": target}
+        elif action == "publish_social":
+            return await WorkflowService._node_publish_social(previous_output, config, user_id)
+        elif action == "search_marketplace":
+            return await WorkflowService._node_search_marketplace(previous_output, config)
+        elif action == "deploy_chatbot":
+            return await WorkflowService._node_deploy_chatbot(previous_output, config, user_id)
+        elif action == "send_webhook":
+            return await WorkflowService._node_send_webhook(previous_output, config)
+        elif action == "upscale_image":
+            return await WorkflowService._node_upscale_image(previous_output, config, user_id)
         else:
             return await WorkflowService._node_generate(previous_output, config, user_id)
 
@@ -738,6 +748,151 @@ class WorkflowService:
             return {"output": "Content is clean - no issues found.", "action": "security_scan", "findings_count": 0}
         except Exception as e:
             return {"output": text, "error": str(e)[:500], "action": "security_scan"}
+
+    @staticmethod
+    async def _node_publish_social(text: str, config: dict, user_id: UUID) -> dict:
+        """Publish content to social media platforms."""
+        platforms = config.get("platforms", ["twitter"])
+        if not text:
+            return {"output": "", "error": "No content to publish", "action": "publish_social"}
+        try:
+            from app.modules.social_publisher.service import SocialPublisherService
+            from app.database import get_session_context
+            async with get_session_context() as sp_session:
+                post = await SocialPublisherService.create_post(
+                    user_id=user_id,
+                    content=text[:5000],
+                    platforms=platforms,
+                    session=sp_session,
+                    hashtags=config.get("hashtags"),
+                )
+                published = await SocialPublisherService.publish_post(
+                    user_id=user_id,
+                    post_id=post.id,
+                    session=sp_session,
+                )
+            return {
+                "output": f"Published to {', '.join(platforms)} (post_id: {published.id})",
+                "action": "publish_social",
+                "post_id": str(published.id),
+            }
+        except Exception as e:
+            return {"output": text, "error": str(e)[:500], "action": "publish_social"}
+
+    @staticmethod
+    async def _node_search_marketplace(text: str, config: dict) -> dict:
+        """Search the marketplace for listings."""
+        query = config.get("query", text or "")
+        if not query:
+            return {"output": "", "error": "No search query", "action": "search_marketplace"}
+        try:
+            from app.modules.marketplace.service import MarketplaceService
+            from app.database import get_session_context
+            async with get_session_context() as mp_session:
+                svc = MarketplaceService(mp_session)
+                listings, total = await svc.list_listings(
+                    search=query[:200],
+                    category=config.get("category"),
+                    limit=config.get("limit", 5),
+                )
+            if listings:
+                output = f"Found {total} result(s):\n" + "\n".join(
+                    f"- {l.title} ({l.type}/{l.category}) v{l.version}" for l in listings
+                )
+                return {"output": output, "action": "search_marketplace", "results_count": total}
+            return {"output": "No marketplace listings found.", "action": "search_marketplace", "results_count": 0}
+        except Exception as e:
+            return {"output": "", "error": str(e)[:500], "action": "search_marketplace"}
+
+    @staticmethod
+    async def _node_deploy_chatbot(text: str, config: dict, user_id: UUID) -> dict:
+        """Create and publish a chatbot from workflow output."""
+        system_prompt = config.get("system_prompt", text or "")
+        name = config.get("name", "Workflow Chatbot")
+        if not system_prompt:
+            return {"output": "", "error": "No system prompt for chatbot", "action": "deploy_chatbot"}
+        try:
+            from app.modules.ai_chatbot_builder.service import ChatbotBuilderService
+            from app.database import get_session_context
+            async with get_session_context() as cb_session:
+                svc = ChatbotBuilderService(cb_session)
+                chatbot = await svc.create_chatbot(
+                    user_id=user_id,
+                    data={
+                        "name": name,
+                        "system_prompt": system_prompt[:10000],
+                        "model": config.get("model", "gemini"),
+                        "personality": config.get("personality", "professional"),
+                        "welcome_message": config.get("welcome_message"),
+                    },
+                )
+                published = await svc.publish_chatbot(
+                    user_id=user_id,
+                    chatbot_id=chatbot.id,
+                )
+            return {
+                "output": f"Chatbot deployed: {published.name} (token: {published.embed_token})",
+                "action": "deploy_chatbot",
+                "chatbot_id": str(published.id),
+                "embed_token": published.embed_token,
+            }
+        except Exception as e:
+            return {"output": "", "error": str(e)[:500], "action": "deploy_chatbot"}
+
+    @staticmethod
+    async def _node_send_webhook(text: str, config: dict) -> dict:
+        """Send data to a webhook URL."""
+        import httpx
+
+        url = config.get("url", "")
+        if not url:
+            return {"output": text, "error": "No webhook URL", "action": "send_webhook"}
+        try:
+            method = config.get("method", "POST").upper()
+            payload = {"content": text[:5000], "source": "saas-ia-workflow"}
+            async with httpx.AsyncClient(timeout=30) as client:
+                if method == "GET":
+                    resp = await client.get(url, headers=config.get("headers", {}))
+                else:
+                    resp = await client.post(
+                        url, json=payload, headers=config.get("headers", {}),
+                    )
+            return {
+                "output": f"Webhook sent: {resp.status_code}",
+                "action": "send_webhook",
+                "status_code": resp.status_code,
+            }
+        except Exception as e:
+            return {"output": text, "error": str(e)[:500], "action": "send_webhook"}
+
+    @staticmethod
+    async def _node_upscale_image(text: str, config: dict, user_id: UUID) -> dict:
+        """Upscale an image using Real-ESRGAN."""
+        image_id = config.get("image_id", text or "").strip()
+        scale = config.get("scale", 2)
+        if not image_id:
+            return {"output": "", "error": "No image_id for upscaling", "action": "upscale_image"}
+        try:
+            from uuid import UUID as _UUID
+            from app.modules.image_gen.service import ImageGenService
+            from app.database import get_session_context
+            parsed_id = _UUID(str(image_id).strip())
+            async with get_session_context() as img_session:
+                result = await ImageGenService.upscale_image(
+                    user_id=user_id,
+                    image_id=parsed_id,
+                    scale=scale,
+                    session=img_session,
+                )
+            if isinstance(result, dict) and result.get("error"):
+                return {"output": "", "error": result["error"], "action": "upscale_image"}
+            return {
+                "output": f"Image upscaled ({scale}x): {result.image_url or 'processing'}",
+                "action": "upscale_image",
+                "image_id": str(result.id),
+            }
+        except Exception as e:
+            return {"output": "", "error": str(e)[:500], "action": "upscale_image"}
 
     @staticmethod
     async def list_runs(

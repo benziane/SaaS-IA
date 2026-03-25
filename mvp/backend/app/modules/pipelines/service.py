@@ -470,6 +470,178 @@ class PipelineService:
                 step_output = "No text to scan"
             return {"type": "security_scan", "output": step_output}
 
+        # ---- Publish to social platforms step ----
+        elif step_type == "publish_social":
+            text = config.get("text", previous_output or "")
+            platforms = config.get("platforms", ["twitter"])
+            if text and pipeline:
+                try:
+                    from app.modules.social_publisher.service import SocialPublisherService
+                    from app.database import get_session_context
+                    async with get_session_context() as sp_session:
+                        post = await SocialPublisherService.create_post(
+                            user_id=pipeline.user_id,
+                            content=text[:5000],
+                            platforms=platforms,
+                            session=sp_session,
+                            hashtags=config.get("hashtags"),
+                        )
+                        published = await SocialPublisherService.publish_post(
+                            user_id=pipeline.user_id,
+                            post_id=post.id,
+                            session=sp_session,
+                        )
+                    step_output = f"Published to {', '.join(platforms)} (post_id: {published.id})"
+                except Exception as e:
+                    step_output = f"Social publish failed: {str(e)[:500]}"
+            else:
+                step_output = "No content to publish" if not text else "No pipeline context"
+            return {"type": "publish_social", "output": step_output}
+
+        # ---- Search marketplace step ----
+        elif step_type == "search_marketplace":
+            query = config.get("query", previous_output or "")
+            if query:
+                try:
+                    from app.modules.marketplace.service import MarketplaceService
+                    from app.database import get_session_context
+                    async with get_session_context() as mp_session:
+                        svc = MarketplaceService(mp_session)
+                        listings, total = await svc.list_listings(
+                            search=query[:200],
+                            category=config.get("category"),
+                            limit=config.get("limit", 5),
+                        )
+                    if listings:
+                        step_output = f"Found {total} result(s):\n" + "\n".join(
+                            f"- {l.title} ({l.type}/{l.category}) v{l.version}" for l in listings
+                        )
+                    else:
+                        step_output = "No marketplace listings found"
+                except Exception as e:
+                    step_output = f"Marketplace search failed: {str(e)[:500]}"
+            else:
+                step_output = "No search query provided"
+            return {"type": "search_marketplace", "output": step_output}
+
+        # ---- Deploy chatbot step ----
+        elif step_type == "deploy_chatbot":
+            text = config.get("system_prompt", previous_output or "")
+            name = config.get("name", "Pipeline Chatbot")
+            if text and pipeline:
+                try:
+                    from app.modules.ai_chatbot_builder.service import ChatbotBuilderService
+                    from app.database import get_session_context
+                    async with get_session_context() as cb_session:
+                        svc = ChatbotBuilderService(cb_session)
+                        chatbot = await svc.create_chatbot(
+                            user_id=pipeline.user_id,
+                            data={
+                                "name": name,
+                                "system_prompt": text[:10000],
+                                "model": config.get("model", "gemini"),
+                                "personality": config.get("personality", "professional"),
+                                "welcome_message": config.get("welcome_message"),
+                            },
+                        )
+                        published = await svc.publish_chatbot(
+                            user_id=pipeline.user_id,
+                            chatbot_id=chatbot.id,
+                        )
+                    step_output = f"Chatbot deployed: {published.name} (token: {published.embed_token})"
+                except Exception as e:
+                    step_output = f"Chatbot deploy failed: {str(e)[:500]}"
+            else:
+                step_output = "No system prompt for chatbot" if not text else "No pipeline context"
+            return {"type": "deploy_chatbot", "output": step_output}
+
+        # ---- Create webhook connector step ----
+        elif step_type == "create_webhook":
+            url = config.get("url", previous_output or "")
+            if url and url.startswith("http") and pipeline:
+                try:
+                    from app.modules.integration_hub.service import IntegrationHubService
+                    from app.database import get_session_context
+                    async with get_session_context() as ih_session:
+                        svc = IntegrationHubService(ih_session)
+                        connector = await svc.create_connector(
+                            user_id=pipeline.user_id,
+                            data={
+                                "name": config.get("name", "Pipeline Webhook"),
+                                "type": "webhook",
+                                "provider": "custom",
+                                "config": {
+                                    "url": url,
+                                    "method": config.get("method", "POST"),
+                                    "headers": config.get("headers", {}),
+                                },
+                                "enabled": True,
+                            },
+                        )
+                    step_output = f"Webhook created: {connector.name} (id: {connector.id})"
+                except Exception as e:
+                    step_output = f"Webhook creation failed: {str(e)[:500]}"
+            else:
+                if not url or not url.startswith("http"):
+                    step_output = "No valid URL provided for webhook"
+                else:
+                    step_output = "No pipeline context"
+            return {"type": "create_webhook", "output": step_output}
+
+        # ---- Sentiment analysis with RoBERTa step ----
+        elif step_type == "analyze_sentiment_roberta":
+            text = config.get("text", previous_output or "")
+            if text:
+                try:
+                    from app.modules.sentiment.service import SentimentService
+                    result = await SentimentService.analyze_text(text[:10000])
+                    method = result.get("sentiment_method", "llm")
+                    overall = result.get("overall_sentiment", "neutral")
+                    score = result.get("overall_score", 0)
+                    pos = result.get("positive_percent", 0)
+                    neg = result.get("negative_percent", 0)
+                    step_output = (
+                        f"Sentiment ({method}): {overall} (score: {score})\n"
+                        f"Positive: {pos}%\nNegative: {neg}%"
+                    )
+                    emotions = result.get("emotion_summary", {})
+                    if emotions:
+                        step_output += "\nEmotions: " + ", ".join(
+                            f"{k}({v})" for k, v in emotions.items()
+                        )
+                except Exception as e:
+                    step_output = f"RoBERTa sentiment failed: {str(e)[:500]}"
+            else:
+                step_output = "No text to analyze"
+            return {"type": "analyze_sentiment_roberta", "output": step_output}
+
+        # ---- Upscale image step ----
+        elif step_type == "upscale_image":
+            image_id = config.get("image_id", previous_output or "")
+            scale = config.get("scale", 2)
+            if image_id and pipeline:
+                try:
+                    from uuid import UUID as _UUID
+                    from app.modules.image_gen.service import ImageGenService
+                    from app.database import get_session_context
+                    parsed_id = _UUID(str(image_id).strip())
+                    async with get_session_context() as img_session:
+                        result = await ImageGenService.upscale_image(
+                            user_id=pipeline.user_id,
+                            image_id=parsed_id,
+                            scale=scale,
+                            session=img_session,
+                        )
+                    if isinstance(result, dict) and result.get("error"):
+                        step_output = f"Upscale failed: {result['error']}"
+                    else:
+                        step_output = f"Image upscaled ({scale}x): {result.image_url or 'processing'}"
+                except Exception as e:
+                    step_output = f"Image upscale failed: {str(e)[:500]}"
+            else:
+                step_output = "No image_id for upscaling" if not image_id else "No pipeline context"
+            return {"type": "upscale_image", "output": step_output}
+
         else:
             return {"type": step_type, "output": previous_output or "", "note": "Unknown step type"}
 

@@ -1,0 +1,9 @@
+{
+  "name": "ai_forms",
+  "version": "1.0.0",
+  "description": "AI-powered form builder with smart validation, response analysis, and AI-generated forms",
+  "prefix": "/api/forms",
+  "tags": ["ai_forms"],
+  "enabled": true,
+  "dependencies": []
+}

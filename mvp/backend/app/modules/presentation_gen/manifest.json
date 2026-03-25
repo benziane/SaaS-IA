@@ -1,0 +1,9 @@
+{
+  "name": "presentation_gen",
+  "version": "1.0.0",
+  "description": "AI-powered presentation generator - create slide decks from topics, text, or transcriptions",
+  "prefix": "/api/presentations",
+  "tags": ["presentation_gen"],
+  "enabled": true,
+  "dependencies": []
+}

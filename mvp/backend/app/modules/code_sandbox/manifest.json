@@ -1,0 +1,9 @@
+{
+  "name": "code_sandbox",
+  "version": "1.0.0",
+  "description": "Secure code sandbox with AI-powered code generation, execution, and debugging",
+  "prefix": "/api/sandbox",
+  "tags": ["code_sandbox"],
+  "enabled": true,
+  "dependencies": []
+}
