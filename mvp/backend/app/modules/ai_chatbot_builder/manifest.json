@@ -1,0 +1,9 @@
+{
+  "name": "ai_chatbot_builder",
+  "version": "1.0.0",
+  "description": "Visual chatbot builder with RAG, multi-channel deployment, and embed widget",
+  "prefix": "/api/chatbots",
+  "tags": ["ai_chatbot_builder"],
+  "enabled": true,
+  "dependencies": []
+}

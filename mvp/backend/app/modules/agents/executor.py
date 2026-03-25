@@ -98,6 +98,7 @@ async def execute_step(action: str, input_data: dict, previous_output: Optional[
         "generate_video": _exec_generate_video,
         "generate_clips": _exec_generate_clips,
         "fine_tune": _exec_fine_tune,
+        "publish_social": _exec_publish_social,
     }
 
     handler = handlers.get(action, _exec_generate)
@@ -516,3 +517,43 @@ async def _exec_fine_tune(input_data: dict, previous: Optional[str]) -> dict:
         "action": "fine_tune",
         "note": "Create a dataset from your transcriptions, conversations, or documents, then train a custom model.",
     }
+
+
+async def _exec_publish_social(input_data: dict, previous: Optional[str]) -> dict:
+    """Publish content to social media platforms."""
+    content = input_data.get("content", previous or "")
+    platforms = input_data.get("platforms", ["twitter", "linkedin"])
+    if not content:
+        return {"output": "", "error": "No content to publish", "action": "publish_social"}
+
+    try:
+        from app.modules.social_publisher.service import SocialPublisherService
+        from app.database import get_session_context
+        from uuid import UUID as UUIDType
+
+        user_id = input_data.get("_user_id")
+        if not user_id:
+            return {
+                "output": content,
+                "action": "publish_social",
+                "note": "No user context. Use the Social Publisher module to publish.",
+            }
+
+        uid = UUIDType(user_id) if isinstance(user_id, str) else user_id
+        async with get_session_context() as session:
+            post = await SocialPublisherService.create_post(
+                user_id=uid,
+                content=content[:5000],
+                platforms=platforms,
+                session=session,
+                hashtags=input_data.get("hashtags"),
+            )
+
+        return {
+            "output": f"[Social post created for {', '.join(platforms)}. Post ID: {post.id}. Use the Social Publisher to review and publish.]",
+            "action": "publish_social",
+            "post_id": str(post.id),
+            "platforms": platforms,
+        }
+    except Exception as e:
+        return {"output": "", "error": str(e)[:500], "action": "publish_social"}

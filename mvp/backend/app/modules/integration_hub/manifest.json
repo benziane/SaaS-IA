@@ -1,0 +1,9 @@
+{
+  "name": "integration_hub",
+  "version": "1.0.0",
+  "description": "External integrations hub (Zapier-like) with webhooks, OAuth2, and API key connectors",
+  "prefix": "/api/integrations",
+  "tags": ["integration_hub"],
+  "enabled": true,
+  "dependencies": []
+}

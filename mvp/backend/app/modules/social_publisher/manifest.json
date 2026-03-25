@@ -1,0 +1,9 @@
+{
+  "name": "social_publisher",
+  "version": "1.0.0",
+  "description": "Social media publishing hub - connect accounts, compose posts, schedule and publish to multiple platforms",
+  "prefix": "/api/social-publisher",
+  "tags": ["social_publisher"],
+  "enabled": true,
+  "dependencies": []
+}

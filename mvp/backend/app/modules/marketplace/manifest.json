@@ -1,0 +1,9 @@
+{
+  "name": "marketplace",
+  "version": "1.0.0",
+  "description": "Marketplace for modules, templates, prompts, workflows and datasets",
+  "prefix": "/api/marketplace",
+  "tags": ["marketplace"],
+  "enabled": true,
+  "dependencies": []
+}
