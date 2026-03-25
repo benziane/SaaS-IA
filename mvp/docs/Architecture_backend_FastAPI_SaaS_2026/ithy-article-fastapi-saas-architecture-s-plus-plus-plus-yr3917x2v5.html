@@ -1,0 +1,2757 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Élevez Votre FastAPI au Rang S+++ : Le Guide Ultime de l'Architecture Enterprise-Grade</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script defer id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<script defer type="module">import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';mermaid.initialize({ startOnLoad: true });</script>
+<style>
+      body {
+        max-width: 600px;
+      }
+      .canvas {
+        margin-left: -20%;
+      }
+      .ask-more-box {
+        display: none;
+      }
+      iframe {
+        display: none;
+      }
+
+      .faq-question {
+        color: black;
+        margin: 10px;
+        border-radius: 10px;
+        padding: 10px 5px 10px 15px;
+        font-size: 18px;
+        border: 2px solid #388278;
+      }
+      .faq-answer {
+        color: black;
+        margin: 10px;
+        margin-bottom: 20px;
+        border-radius: 10px;
+        padding :30px;
+        border: 2px solid rgba(56,130,120,0.2)
+      }
+      /* Add RTL support styles */
+      .rtl-support {
+        direction: rtl !important;
+        text-align: right !important;
+      }
+
+      img {
+        max-width: 50% !important;
+      }
+
+      .rtl-support pre,
+      .rtl-support code {
+        direction: ltr !important;
+        text-align: left !important;
+      }
+      
+      /* RTL list styling */
+      .rtl-support li {
+        padding-right: 1.5em;
+        padding-left: 0;
+      }
+      
+      .rtl-support li:before {
+        right: 0;
+        left: auto;
+      }
+
+      .article-date {
+        display: block;
+        text-align: center;
+        color: #aaa;
+        margin: 64px auto;
+      }
+
+</style>
+</head>
+<body>
+
+<div class="article-title-background" style="background-image: linear-gradient(rgba(26,28,31, 0.7), rgb(26, 28, 31) 80%), url('');">
+<div class="article-title-container">
+<h1 data-in-title-background="true" style="color: #fff">Élevez Votre FastAPI au Rang S+++ : Le Guide Ultime de l'Architecture Enterprise-Grade</h1>
+<h3 data-in-title-background="true" style="color: #fff">Transformez votre plateforme SaaS IA avec FastAPI 0.135, Python 3.13, et des pratiques d'ingénierie logicielle de pointe pour une scalabilité, une sécurité et une observabilité inégalées.</h3><div class="source-box with-sources" onclick="popupPro()" style="width: fit-content; margin-bottom: 40px;"><div class="pro-label">PRO</div><div class="favicon-container"><img alt="" class="favicon" src="https://t3.gstatic.com/faviconV2?client=SOCIAL&amp;type=FAVICON&amp;fallback_opts=TYPE,SIZE,URL&amp;url=https://medium.com" style="z-index: 3;"/><img alt="" class="favicon" src="https://t3.gstatic.com/faviconV2?client=SOCIAL&amp;type=FAVICON&amp;fallback_opts=TYPE,SIZE,URL&amp;url=https://github.com" style="z-index: 2;"/><img alt="" class="favicon" src="https://t3.gstatic.com/faviconV2?client=SOCIAL&amp;type=FAVICON&amp;fallback_opts=TYPE,SIZE,URL&amp;url=https://oneuptime.com" style="z-index: 1;"/></div><div class="source-count">68+ Sources</div></div><div class="table-of-contents" data-in-title-background="true"><ol class="toc-list"><li><a class="toc-link" href="#heading-1"><span class="toc-number">1.</span><span class="toc-text">Points Saillants pour une Architecture S+++</span></a></li><li><a class="toc-link" href="#heading-2"><span class="toc-number">2.</span><span class="toc-text">1. Security Headers Middleware : Une Muraille Numérique pour Votre API</span></a></li><li><a class="toc-link" href="#heading-3"><span class="toc-number">3.</span><span class="toc-text">2. Request ID / Correlation ID Middleware : Tracer le Parcours de Chaque Requête</span></a></li><li><a class="toc-link" href="#heading-4"><span class="toc-number">4.</span><span class="toc-text">3. Gzip/Brotli Compression Middleware : Accélérer les Réponses API</span></a></li><li><a class="toc-link" href="#heading-5"><span class="toc-number">5.</span><span class="toc-text">4. Graceful Shutdown : Des Arrêts Propres pour une Disponibilité Continue</span></a></li><li><a class="toc-link" href="#heading-6"><span class="toc-number">6.</span><span class="toc-text">5. Health Checks Avancés (Kubernetes-ready) : Surveillance Intelligente</span></a></li><li><a class="toc-link" href="#heading-7"><span class="toc-number">7.</span><span class="toc-text">6. Database Connection Pooling : Optimisation des Accès PostgreSQL</span></a></li><li><a class="toc-link" href="#heading-8"><span class="toc-number">8.</span><span class="toc-text">7. Structured Logging Enterprise : Des Logs Clairs et Exploitables</span></a></li><li><a class="toc-link" href="#heading-9"><span class="toc-number">9.</span><span class="toc-text">8. Circuit Breaker pour AI Providers : Protéger Votre Application des Défaillances Externes</span></a></li><li><a class="toc-link" href="#heading-10"><span class="toc-number">10.</span><span class="toc-text">9. API Rate Limiting Avancé : Contrôle Granulaire du Trafic</span></a></li><li><a class="toc-link" href="#heading-11"><span class="toc-number">11.</span><span class="toc-text">10. Dockerfile Multi-Stage Optimisé : Des Images Légères et Sécurisées</span></a></li><li><a class="toc-link" href="#heading-12"><span class="toc-number">12.</span><span class="toc-text">11. OpenTelemetry Integration : Traçabilité et Métriques Distribuées</span></a></li><li><a class="toc-link" href="#heading-13"><span class="toc-number">13.</span><span class="toc-text">12. Error Tracking (Sentry-like) : Capture Intelligente des Exceptions</span></a></li><li><a class="toc-link" href="#heading-14"><span class="toc-number">14.</span><span class="toc-text">FAQ (Foire Aux Questions)</span></a></li><li><a class="toc-link" href="#heading-15"><span class="toc-number">15.</span><span class="toc-text">Conclusion</span></a></li><li><a class="toc-link" href="#heading-16"><span class="toc-number">16.</span><span class="toc-text">Recommandations</span></a></li><li><a class="toc-link" href="#heading-17"><span class="toc-number">17.</span><span class="toc-text">Résultats de recherche référencés</span></a></li></ol></div>
+</div>
+</div>
+<div>
+<p>En tant qu'expert en architecture backend Python pour les plateformes SaaS de qualité entreprise, je comprends l'importance de construire des systèmes non seulement fonctionnels mais aussi robustes, sécurisés, observables et résilients. Votre plateforme SaaS IA, avec FastAPI, Python 3.13, PostgreSQL, Redis, Celery et Docker Compose, est déjà sur une bonne voie. Mon objectif est de vous fournir les stratégies et le code exacts pour élever votre architecture au niveau "S+++".</p>
+<hr/><h2 id="heading-1" style="color: #cc9900">Points Saillants pour une Architecture S+++</h2>
+<ul style="background: rgba(56,130,120,0.1);padding: 30px 10%;border-radius: 8px;width: 80%; border-left: 4px solid #388278;">
+<li><b>Sécurité Renforcée et Observabilité Détaillée :</b> Implémentez des middlewares de sécurité avancés et un système de logging structuré avec des IDs de corrélation, couplés à OpenTelemetry pour une traçabilité complète, afin d'assurer une défense robuste et une visibilité sans précédent sur le comportement de votre application.</li>
+<li><b>Gestion Intelligente des Ressources et Résilience Accrue :</b> Optimisez la gestion des connexions à la base de données avec des pools sophistiqués et intégrez des patterns de disjoncteur pour vos appels à des services tiers, garantissant ainsi une performance stable et une meilleure tolérance aux pannes.</li>
+<li><b>Déploiement Robuste et Efficace :</b> Utilisez des Dockerfiles multi-étapes pour des images légères et sécurisées, et mettez en œuvre un mécanisme d'arrêt gracieux pour des mises à jour sans interruption, assurant la continuité et l'efficacité de vos opérations en environnement conteneurisé.</li>
+</ul>
+<p>Chaque section ci-dessous détaille les implémentations spécifiques, le code, les références et les pièges à éviter pour atteindre cet objectif.</p>
+<hr/><h2 id="heading-2" style="color: #cc9900">1. Security Headers Middleware : Une Muraille Numérique pour Votre API</h2>
+<p>Les en-têtes de sécurité HTTP sont une première ligne de défense cruciale contre de nombreuses vulnérabilités web courantes. Ce middleware s'assure que chaque réponse de votre API inclut les directives de sécurité recommandées, protégeant vos utilisateurs et vos données.</p>
+<h3 style="color: #388278">Code Python Complet : <code>app/middleware/security_headers.py</code></h3>
+<pre><code>
+# app/middleware/security_headers.py
+from fastapi import FastAPI, Request, Response
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.types import ASGIApp
+
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    def __init__(self, app: ASGIApp,
+                 hsts_max_age: int = 31536000,
+                 csp_policy: str = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'",
+                 permissions_policy: str = "camera=(), microphone=(), geolocation=()",
+                 cache_control_api: str = "no-store, no-cache, must-revalidate, proxy-revalidate",
+                 cache_control_static: str = "public, max-age=31536000, immutable"):
+        super().__init__(app)
+        self.hsts_max_age = hsts_max_age
+        self.csp_policy = csp_policy
+        self.permissions_policy = permissions_policy
+        self.cache_control_api = cache_control_api
+        self.cache_control_static = cache_control_static
+
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+
+        # Strict-Transport-Security (HSTS)
+        response.headers["Strict-Transport-Security"] = f"max-age={self.hsts_max_age}; includeSubDomains; preload"
+
+        # Content-Security-Policy
+        response.headers["Content-Security-Policy"] = self.csp_policy
+
+        # X-Content-Type-Options: nosniff
+        response.headers["X-Content-Type-Options"] = "nosniff"
+
+        # X-Frame-Options: DENY
+        response.headers["X-Frame-Options"] = "DENY"
+
+        # X-XSS-Protection: 1; mode=block
+        response.headers["X-XSS-Protection"] = "1; mode=block"
+
+        # Referrer-Policy: strict-origin-when-cross-origin
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+
+        # Permissions-Policy
+        response.headers["Permissions-Policy"] = self.permissions_policy
+
+        # Cache-Control for API endpoints vs. static assets
+        if request.url.path.startswith("/api"):
+            response.headers["Cache-Control"] = self.cache_control_api
+        elif request.url.path.startswith("/static"):
+            response.headers["Cache-Control"] = self.cache_control_static
+
+        return response
+</code></pre>
+<h3 style="color: #388278">Intégration dans <code>main.py</code></h3>
+<pre><code>
+# main.py
+from fastapi import FastAPI
+from app.middleware.security_headers import SecurityHeadersMiddleware
+
+app = FastAPI()
+
+# Enregistrement du middleware
+app.add_middleware(
+    SecurityHeadersMiddleware,
+    # Personnalisez les politiques si nécessaire
+    csp_policy="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' ws:",
+    permissions_policy="camera=(), microphone=(), geolocation=(), clipboard-write=()",
+    cache_control_api="no-store, no-cache, must-revalidate, proxy-revalidate",
+    cache_control_static="public, max-age=31536000, immutable"
+)
+
+# ... vos autres routes et configurations
+</code></pre>
+<h4 style="color: #7FA86E">Astuce non-évidente :</h4>
+<p>La directive <code>preload</code> dans HSTS indique aux navigateurs d'ajouter votre domaine à une liste de préchargement HSTS, garantissant que les futures visites seront toujours via HTTPS, même la première. Cela nécessite cependant que votre domaine soit approuvé et listé par le projet Chromium HSTS preload list. Pour les politiques de cache, assurez-vous que les en-têtes sont appropriés pour chaque type de ressource. Par exemple, les API ne devraient généralement pas être mises en cache par les clients, d'où <code>no-store</code>, tandis que les assets statiques peuvent avoir un cache long.</p>
+<h4 style="color: #7FA86E">Erreurs Courantes à Éviter :</h4>
+<ul>
+<li>Une CSP trop restrictive peut casser des fonctionnalités (ex: intégration avec des outils tiers, CDNs). Testez minutieusement.</li>
+<li>Une CSP trop permissive est inefficace. Visez la spécificité.</li>
+<li>Oublier de configurer <code>preload</code> pour HSTS ou de le renouveler après expiration.</li>
+</ul>
+<h4 style="color: #7FA86E">Repo GitHub de Référence :</h4>
+<ul>
+<li><a href="https://github.com/fastapi/fastapi" target="_blank">tiangolo/fastapi - GitHub</a> (bien que les middlewares de sécurité soient souvent personnalisés, FastAPI lui-même est la base)</li>
+</ul>
+<hr/><h2 id="heading-3" style="color: #cc9900">2. Request ID / Correlation ID Middleware : Tracer le Parcours de Chaque Requête</h2>
+<p>Le <i>correlation ID</i> est essentiel pour la traçabilité des requêtes à travers un système distribué. Il permet de lier tous les logs, les traces et les événements à une transaction unique, simplifiant le débogage et l'analyse des incidents.</p>
+<h3 style="color: #388278">Code Python Complet : <code>app/middleware/correlation_id.py</code> et Intégration Structlog/Celery</h3>
+<pre><code>
+# app/middleware/correlation_id.py
+import uuid
+from contextvars import ContextVar
+from typing import Optional
+from fastapi import Request, Response
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.types import ASGIApp
+import structlog
+
+# ContextVar pour stocker le Request ID
+request_id_var: ContextVar[Optional[str]] = ContextVar("request_id", default=None)
+
+def get_request_id() -&gt; Optional[str]:
+    return request_id_var.get()
+
+class CorrelationIdMiddleware(BaseHTTPMiddleware):
+    def __init__(self, app: ASGIApp):
+        super().__init__(app)
+
+    async def dispatch(self, request: Request, call_next):
+        correlation_id = request.headers.get("X-Request-ID")
+        if not correlation_id:
+            correlation_id = str(uuid.uuid4())
+
+        token = request_id_var.set(correlation_id) # Stocke l'ID dans le contextvars
+
+        # Injecter dans structlog pour cette requête
+        structlog.contextvars.bind_contextvars(request_id=correlation_id)
+
+        response = await call_next(request)
+
+        response.headers["X-Request-ID"] = correlation_id
+        
+        structlog.contextvars.unbind_contextvars("request_id") # Nettoyer
+        request_id_var.reset(token) # Réinitialiser le contextvars
+
+        return response
+
+# Pour Celery: propagation du Request ID
+# Dans votre task Celery, vous devrez extraire le request_id du header
+# et le re-bind dans structlog.contextvars si vous voulez qu'il apparaisse dans les logs de Celery.
+# Exemple dans une task:
+# from celery import Celery
+# from structlog.contextvars import bind_contextvars
+#
+# celery_app = Celery('my_app')
+#
+# @celery_app.task(bind=True)
+# def my_celery_task(self, *args, **kwargs):
+#     request_id = self.request.headers.get('X-Request-ID') # Assurez-vous que Celery transmet les headers
+#     if request_id:
+#         bind_contextvars(request_id=request_id)
+#     # ... votre logique de tâche
+</code></pre>
+<h3 style="color: #388278">Intégration dans <code>main.py</code></h3>
+<pre><code>
+# main.py
+from fastapi import FastAPI
+from app.middleware.correlation_id import CorrelationIdMiddleware
+import structlog
+import structlog.contextvars
+
+app = FastAPI()
+
+# Assurez-vous que ce middleware est ajouté tôt dans la pile
+app.add_middleware(CorrelationIdMiddleware)
+
+# Configuration de structlog pour inclure request_id (détaillée plus loin)
+# ...
+</code></pre>
+<h4 style="color: #7FA86E">Astuce non-évidente :</h4>
+<p>L'utilisation de <code>contextvars</code> est cruciale en programmation asynchrone pour stocker des données contextuelles spécifiques à la requête sans les passer explicitement à chaque fonction. Pour Celery, la propagation du <code>request_id</code> nécessite de configurer votre broker (ex: RabbitMQ ou Redis) pour qu'il transmette les en-têtes personnalisés, puis de les récupérer et de les re-binder dans le contexte de la tâche Celery. Cela assure une traçabilité de bout en bout.</p>
+<h4 style="color: #7FA86E">Erreurs Courantes à Éviter :</h4>
+<ul>
+<li>Oublier de réinitialiser le <code>contextvars</code> après la requête, ce qui peut entraîner des fuites d'ID entre les requêtes.</li>
+<li>Ne pas propager le <code>request_id</code> aux services en aval (microservices, bases de données, queues de messages), brisant ainsi la chaîne de traçabilité.</li>
+<li>Ne pas configurer correctement Celery pour transmettre les en-têtes et les lier dans les workers.</li>
+</ul>
+<h4 style="color: #7FA86E">Repo GitHub de Référence :</h4>
+<ul>
+<li><a href="https://github.com/snok/asgi-correlation-id" target="_blank">snok/asgi-correlation-id - GitHub</a></li>
+</ul>
+<hr/><h2 id="heading-4" style="color: #cc9900">3. Gzip/Brotli Compression Middleware : Accélérer les Réponses API</h2>
+<p>La compression HTTP réduit la taille des données transférées, ce qui améliore la vitesse des requêtes et réduit la consommation de bande passante. Brotli offre généralement de meilleurs taux de compression que Gzip.</p>
+<h3 style="color: #388278">Code Python Complet : <code>app/middleware/compression.py</code></h3>
+<pre><code>
+# app/middleware/compression.py
+from fastapi import FastAPI, Request, Response
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.types import ASGIApp
+from starlette.responses import StreamingResponse
+import brotli
+import gzip
+import io
+import re
+
+class SmartCompressionMiddleware(BaseHTTPMiddleware):
+    def __init__(self, app: ASGIApp, minimum_size: int = 500, exclude_paths: list[str] = None):
+        super().__init__(app)
+        self.minimum_size = minimum_size
+        self.exclude_paths = exclude_paths if exclude_paths is not None else []
+
+    async def dispatch(self, request: Request, call_next):
+        if any(re.match(pattern, request.url.path) for pattern in self.exclude_paths):
+            return await call_next(request)
+
+        response: Response = await call_next(request)
+
+        if response.status_code &lt; 200 or response.status_code &gt;= 300:
+            return response
+
+        if not response.headers.get("content-type", "").startswith("application/json") and \
+           not response.headers.get("content-type", "").startswith("text/"):
+            return response
+        
+        if isinstance(response, StreamingResponse):
+            return response
+
+        response_body = b''
+        async for chunk in response.body_iterator:
+            response_body += chunk
+
+        if len(response_body) &lt; self.minimum_size:
+            # Si le corps est trop petit, ne pas compresser
+            response.headers["Content-Length"] = str(len(response_body))
+            return Response(content=response_body, status_code=response.status_code, headers=dict(response.headers), media_type=response.media_type)
+
+        accept_encoding = request.headers.get("Accept-Encoding", "")
+        
+        # Préférer Brotli si supporté
+        if "br" in accept_encoding and brotli:
+            compressed_body = brotli.compress(response_body)
+            response.headers["Content-Encoding"] = "br"
+        elif "gzip" in accept_encoding:
+            compressed_body = gzip.compress(response_body)
+            response.headers["Content-Encoding"] = "gzip"
+        else:
+            response.headers["Content-Length"] = str(len(response_body))
+            return Response(content=response_body, status_code=response.status_code, headers=dict(response.headers), media_type=response.media_type)
+
+        response.headers["Content-Length"] = str(len(compressed_body))
+        # Supprime l'en-tête ETag original car le contenu compressé est différent
+        if "ETag" in response.headers:
+            del response.headers["ETag"]
+        return Response(content=compressed_body, status_code=response.status_code, headers=dict(response.headers), media_type=response.media_type)
+
+</code></pre>
+<h3 style="color: #388278">Intégration dans <code>main.py</code></h3>
+<pre><code>
+# main.py
+from fastapi import FastAPI
+from app.middleware.compression import SmartCompressionMiddleware
+
+app = FastAPI()
+
+# Enregistrement du middleware de compression
+app.add_middleware(
+    SmartCompressionMiddleware,
+    minimum_size=500,  # Compresser seulement si la taille est &gt;= 500 octets
+    exclude_paths=[
+        "/metrics",        # Exclure les métriques Prometheus
+        "/sse.*",          # Exclure les endpoints SSE (streaming)
+        "/health/.*"       # Exclure les health checks
+    ]
+)
+
+# ... vos autres routes
+</code></pre>
+<h4 style="color: #7FA86E">Astuce non-évidente :</h4>
+<p>L'ordre des middlewares est important. Le middleware de compression doit se situer après tout middleware qui pourrait modifier le corps de la réponse, mais avant les middlewares qui pourraient avoir besoin du corps final (non compressé) pour leur logique (ex: logging de la taille réelle du body). La vérification de <code>brotli</code> en tant que module est importante car il n'est pas toujours installé par défaut. S'assurer d'exclure les endpoints de streaming (SSE) et les métriques (Prometheus) est crucial pour éviter des comportements inattendus ou des performances dégradées.</p>
+<h4 style="color: #7FA86E">Erreurs Courantes à Éviter :</h4>
+<ul>
+<li>Compresser des fichiers déjà compressés (images, vidéos) ce qui peut augmenter la taille au lieu de la réduire.</li>
+<li>Compresser des très petits fichiers où le coût de la compression/décompression dépasse le gain en bande passante.</li>
+<li>Ne pas exclure les endpoints de streaming ou les métriques, entraînant des problèmes.</li>
+<li>Oublier de supprimer l'en-tête ETag après compression, ce qui peut induire les caches en erreur.</li>
+</ul>
+<h4 style="color: #7FA86E">Repo GitHub de Référence :</h4>
+<ul>
+<li><a href="https://github.com/fullonic/brotli-asgi" target="_blank">fullonic/brotli-asgi - GitHub</a></li>
+</ul>
+<hr/><h2 id="heading-5" style="color: #cc9900">4. Graceful Shutdown : Des Arrêts Propres pour une Disponibilité Continue</h2>
+<p>Un arrêt gracieux permet à une application de terminer les tâches en cours et de libérer les ressources avant de s'arrêter complètement, minimisant ainsi les interruptions de service et la perte de données.</p>
+<h3 style="color: #388278">Code Python Complet : <code>app/lifespan.py</code> et Config Docker</h3>
+<pre><code>
+# app/lifespan.py
+import asyncio
+import signal
+from contextlib import asynccontextmanager
+from typing import AsyncGenerator
+from fastapi import FastAPI
+import asyncpg.pool
+import structlog
+from celery import Celery
+
+logger = structlog.get_logger(__name__)
+
+# Simule un pool asyncpg
+# Remplacez par votre instance réelle de pool asyncpg
+# from app.db.connection import database_pool_manager (exemple)
+class MockAsyncpgPool:
+    def __init__(self):
+        self.connections = 0
+        self.is_closed = False
+    
+    async def connect(self):
+        self.connections += 1
+        logger.info("Database connection opened", current_connections=self.connections)
+    
+    async def close(self):
+        self.connections -= 1
+        logger.info("Database connection closed", current_connections=self.connections)
+
+    async def terminate(self):
+        self.is_closed = True
+        logger.info("Asyncpg pool terminated")
+
+# Remplacez par l'initialisation de votre app Celery
+celery_app = Celery('my_app') 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI) -&gt; AsyncGenerator[None, None]:
+    logger.info("FastAPI application startup")
+
+    # ----- Initialisation des ressources -----
+    # Exemple: Connexion à la base de données
+    # Supposons que votre pool est géré globalement ou via une classe Singleton
+    app.state.db_pool = MockAsyncpgPool() # Remplacez par votre pool réel
+    logger.info("Database pool initialized")
+
+    # ----- Gestion des signaux pour l'arrêt gracieux -----
+    shutdown_event = asyncio.Event()
+
+    def handle_signal():
+        logger.info("Shutdown signal received, initiating graceful shutdown...")
+        shutdown_event.set()
+
+    # Capture SIGTERM et SIGINT (Ctrl+C)
+    # Note: Uvicorn gère déjà SIGTERM/SIGINT de base pour son propre processus
+    # Ceci est plus pour des logiques d'arrêt spécifiques à l'application
+    loop = asyncio.get_running_loop()
+    loop.add_signal_handler(signal.SIGTERM, handle_signal)
+    loop.add_signal_handler(signal.SIGINT, handle_signal)
+    
+    # Démarrage des workers Celery (si non démarrés séparément)
+    # Si Celery est un service distinct, cette partie n'est pas nécessaire ici
+    # Si vous voulez un warm shutdown, Celery doit être configuré pour cela.
+    # celery_app.control.enable_events() # Pour surveiller les tâches
+    # logger.info("Celery worker events enabled")
+
+    yield
+
+    # ----- Nettoyage des ressources lors de l'arrêt -----
+    logger.info("FastAPI application shutdown initiated")
+
+    # Attendre que toutes les requêtes HTTP en cours soient terminées (max 30s)
+    # Uvicorn gère cela en interne via son &lt;code&gt;graceful_timeout</code>.
+    # Pour une logique plus fine, vous pourriez utiliser des compteurs de requêtes actives.
+    # await shutdown_event.wait() # Si vous voulez attendre un signal explicite
+
+    # Fermeture propre du pool asyncpg
+    if hasattr(app.state, 'db_pool') and app.state.db_pool:
+        logger.info("Closing database pool...")
+        await app.state.db_pool.terminate()
+        logger.info("Database pool closed")
+
+    # Celery worker: warm shutdown
+    # Si Celery est géré par un autre processus (ex: en dehors de FastAPI),
+    # il doit avoir sa propre logique de warm shutdown.
+    # Exemple de commande pour un warm shutdown de Celery:
+    # celery -A proj worker -P solo -c 1 --loglevel=info --pool=solo --time-limit=30 --max-tasks-per-child=1 --max-memory-per-child=1000 --shutdown-when-finished
+    # Pour déclencher un shutdown via l'application FastAPI, cela dépend de votre architecture.
+    # Souvent, Celery workers reçoivent un SIGTERM directement de Kubernetes/Docker.
+    # Pour une approche in-app si Celery tourne avec FastAPI, vous pouvez simuler
+    # un warm shutdown pour les tâches en cours si vous les gérez.
+    # logger.info("Initiating warm shutdown for Celery workers (if running within this process)...")
+    # celery_app.control.broadcast('shutdown', destination=[]) # Cela envoie un signal de shutdown
+    #                                                       # mais les tâches en cours peuvent finir.
+    # asyncio.sleep(5) # Attendre un peu pour que les messages soient traités
+    logger.info("FastAPI application shutdown complete")
+
+</pre>
+<h3 style="color: #388278">Intégration dans <code>main.py</code></h3>
+<pre><code>
+# main.py
+from fastapi import FastAPI
+from app.lifespan import lifespan # Importer votre fonction lifespan
+
+app = FastAPI(lifespan=lifespan)
+
+# ... vos routes
+</code></pre>
+<h3 style="color: #388278">Configuration Docker</h3>
+<pre><code>
+# Dockerfile
+# ... votre Dockerfile optimisé (voir section 10)
+STOPSIGNAL SIGTERM
+# Pour Uvicorn, le paramètre --graceful-timeout gère le temps d'attente
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--graceful-timeout", "30"]
+
+# docker-compose.yml
+services:
+  fastapi_app:
+    build: .
+    ports:
+      - "8000:8000"
+    stop_signal: SIGTERM
+    stop_grace_period: 30s # Donne 30 secondes au conteneur pour s'arrêter
+  celery_worker:
+    build: .
+    command: celery -A app.celery_worker.celery_app worker -P gevent -c 1 --loglevel=info --time-limit=300 --max-tasks-per-child=1 # Exemple de commande
+    stop_signal: SIGTERM
+    stop_grace_period: 60s # Plus long pour Celery car les tâches peuvent être longues
+</code></pre>
+<h4 style="color: #7FA86E">Astuce non-évidente :</h4>
+<p>Pour Celery, un "warm shutdown" signifie que le worker arrête d'accepter de nouvelles tâches, mais termine celles qui sont déjà en cours. La commande <code>celery multi stop --wait</code> ou l'envoi d'un <code>SIGTERM</code> au worker Celery permet cette approche. Le <code>--time-limit</code> et <code>--max-tasks-per-child</code> de Celery sont également cruciaux pour éviter que des tâches individuelles ne bloquent le shutdown. Dans Docker Compose et Kubernetes, <code>stop_grace_period</code> et le <code>STOPSIGNAL</code> travaillent ensemble pour permettre un arrêt en douceur.</p>
+<h4 style="color: #7FA86E">Erreurs Courantes à Éviter :</h4>
+<ul>
+<li>Ne pas libérer les ressources ouvertes (connexions DB, fichiers, etc.) lors du shutdown.</li>
+<li>Dépendre uniquement du <code>SIGKILL</code> par défaut, qui coupe brutalement l'application.</li>
+<li>Ne pas donner suffisamment de temps aux workers Celery pour terminer leurs tâches.</li>
+<li>Oublier de configurer le <code>graceful-timeout</code> d'Uvicorn pour FastAPI.</li>
+</ul>
+<h4 style="color: #7FA86E">Repo GitHub de Référence :</h4>
+<ul>
+<li><a href="https://github.com/fastapi/fastapi" target="_blank">tiangolo/fastapi - GitHub</a> (pour le <code>lifespan</code>)</li>
+</ul>
+<hr/><h2 id="heading-6" style="color: #cc9900">5. Health Checks Avancés (Kubernetes-ready) : Surveillance Intelligente</h2>
+<p>Les probes Kubernetes (liveness, readiness, startup) sont fondamentales pour une gestion efficace des pods. Des checks avancés garantissent que l'état rapporté reflète précisément la capacité du service à fonctionner.</p>
+<h3 style="color: #388278">Code Python Complet : <code>app/routers/health.py</code></h3>
+<pre><code>
+# app/routers/health.py
+from fastapi import APIRouter, Depends, HTTPException, status
+from typing import Dict
+import asyncpg
+import redis.asyncio as redis
+import os
+import asyncio
+import structlog
+
+router = APIRouter()
+logger = structlog.get_logger(__name__)
+
+# Dépendances pour les checks de connectivité (mock pour l'exemple)
+# Remplacez par vos fonctions de connexion réelles
+async def get_db_pool():
+    # Ici, vous retournerez votre pool de connexion asyncpg réel
+    class MockDBPool:
+        async def fetchval(self, query):
+            # Simule une requête simple à la DB
+            await asyncio.sleep(0.01)
+            return 1
+    return MockDBPool()
+
+async def get_redis_client():
+    # Ici, vous retournerez votre client Redis réel
+    class MockRedisClient:
+        async def ping(self):
+            await asyncio.sleep(0.01)
+            return True
+    return MockRedisClient()
+
+
+@router.get("/health/live", summary="Liveness Probe", status_code=status.HTTP_200_OK)
+async def liveness_probe() -&gt; Dict[str, str]:
+    """
+    Indique si l'application est en cours d'exécution.
+    Ne devrait échouer qu'en cas de crash majeur (ex: blocage de l'event loop).
+    """
+    return {"status": "alive"}
+
+@router.get("/health/ready", summary="Readiness Probe", status_code=status.HTTP_200_OK)
+async def readiness_probe(
+    db_pool: object = Depends(get_db_pool), # Typez avec votre pool réel (ex: asyncpg.pool.Pool)
+    redis_client: object = Depends(get_redis_client) # Typez avec votre client réel (ex: redis.asyncio.Redis)
+) -&gt; Dict[str, str]:
+    """
+    Indique si l'application est prête à servir des requêtes.
+    Vérifie les dépendances critiques (DB, Redis).
+    """
+    checks = {}
+    try:
+        # Check PostgreSQL
+        # Exemple: exécutez une requête légère
+        await db_pool.fetchval("SELECT 1")
+        checks["postgresql"] = "ok"
+    except Exception as e:
+        logger.error("Readiness check failed: PostgreSQL", error=str(e))
+        checks["postgresql"] = f"failed: {e}"
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="PostgreSQL unavailable")
+
+    try:
+        # Check Redis
+        await redis_client.ping()
+        checks["redis"] = "ok"
+    except Exception as e:
+        logger.error("Readiness check failed: Redis", error=str(e))
+        checks["redis"] = f"failed: {e}"
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Redis unavailable")
+
+    return {"status": "ready", "dependencies": checks}
+
+@router.get("/health/startup", summary="Startup Probe", status_code=status.HTTP_200_OK)
+async def startup_probe() -&gt; Dict[str, str]:
+    """
+    Indique si l'application a terminé son initialisation coûteuse (migrations, chargement modules).
+    """
+    # Exemple: Vérifier l'état d'une variable globale ou d'un fichier de lock
+    # qui indique que les migrations ont été appliquées et que les modules sont chargés.
+    # Dans un environnement réel, cela pourrait impliquer:
+    # - La vérification de la version de la base de données après migrations
+    # - La confirmation du chargement de modèles ML ou de configurations complexes
+    
+    # Placeholder: Implémentez votre logique réelle ici
+    # Par exemple, si vous avez un flag global &lt;code&gt;app.state.startup_complete = True</code>
+    if not os.path.exists("/tmp/app_startup_complete"): # Exemple de flag via fichier
+         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Application still starting up")
+    
+    # Simulate async operations
+    await asyncio.sleep(0.1) 
+    
+    return {"status": "startup_complete"}
+
+</pre>
+<h3 style="color: #388278">Intégration dans <code>main.py</code></h3>
+<pre><code>
+# main.py
+from fastapi import FastAPI
+from app.routers import health
+
+app = FastAPI()
+
+app.include_router(health.router)
+
+# Pour la startup probe, vous devrez signaler la complétion après vos initialisations
+# Par exemple, dans votre fonction lifespan ou après les migrations
+@app.on_event("startup")
+async def app_startup_event():
+    # Exemple: exécuter les migrations ici ou charger des modules lourds
+    # await run_migrations()
+    # await load_ml_models()
+    # Une fois tout terminé:
+    with open("/tmp/app_startup_complete", "w") as f:
+        f.write("ready")
+    print("Application startup process complete.") # Output pour debug
+</code></pre>
+<h3 style="color: #388278">Configuration Docker/K8s</h3>
+<pre><code>
+# Dockerfile
+# Ajoutez une instruction HEALTHCHECK
+HEALTHCHECK --interval=30s --timeout=10s --retries=3 CMD curl -f http://localhost:8000/health/live || exit 1
+</code></pre>
+<pre><code>
+# Kubernetes Deployment YAML
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-fastapi-app
+spec:
+  # ...
+  template:
+    # ...
+    spec:
+      containers:
+      - name: fastapi-container
+        image: my-fastapi-image:latest
+        ports:
+        - containerPort: 8000
+        livenessProbe:
+          httpGet:
+            path: /health/live
+            port: 8000
+          initialDelaySeconds: 15 # Démarrer la vérification après 15s
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health/ready
+            port: 8000
+          initialDelaySeconds: 30 # Démarrer la vérification après 30s
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        startupProbe:
+          httpGet:
+            path: /health/startup
+            port: 8000
+          initialDelaySeconds: 0
+          periodSeconds: 5
+          failureThreshold: 20 # Permettre 20 * 5 = 100 secondes pour le démarrage
+          timeoutSeconds: 5
+</code></pre>
+<h4 style="color: #7FA86E">Astuce non-évidente :</h4>
+<p>Pour la <code>startupProbe</code>, l'utilisation d'un fichier temporaire (comme <code>/tmp/app_startup_complete</code>) est une méthode simple pour signaler la complétion. Dans des environnements plus complexes, vous pourriez utiliser une entrée Redis ou une petite table dans PostgreSQL pour stocker l'état de démarrage. Il est crucial d'ajuster <code>initialDelaySeconds</code> et <code>failureThreshold</code> pour donner à votre application suffisamment de temps pour démarrer, surtout si des migrations ou des chargements de données sont longs.</p>
+<h4 style="color: #7FA86E">Erreurs Courantes à Éviter :</h4>
+<ul>
+<li>Utiliser le même endpoint pour toutes les probes (<code>/health</code> qui renvoie toujours 200).</li>
+<li>Des checks trop longs ou coûteux dans les probes de liveness/readiness, qui peuvent bloquer l'application.</li>
+<li>Des seuils de <code>failureThreshold</code> trop bas pour la <code>startupProbe</code>, ce qui peut tuer l'application avant qu'elle n'ait eu le temps de démarrer.</li>
+</ul>
+<h4 style="color: #7FA86E">Repo GitHub de Référence :</h4>
+<ul>
+<li><a href="https://github.com/kubernetes/kubernetes" target="_blank">kubernetes/kubernetes - GitHub</a> (pour les concepts de probes)</li>
+</ul>
+<hr/><h2 id="heading-7" style="color: #cc9900">6. Database Connection Pooling : Optimisation des Accès PostgreSQL</h2>
+<p>Le <i>connection pooling</i> est une technique essentielle pour gérer les connexions à la base de données. Il permet de réutiliser des connexions existantes plutôt que d'en ouvrir et d'en fermer de nouvelles à chaque requête, ce qui réduit considérablement la latence et la charge sur le serveur de base de données.</p>
+<h3 style="color: #388278">Code Python Complet : <code>app/db/connection.py</code></h3>
+<pre><code>
+# app/db/connection.py
+import asyncpg
+import asyncio
+import logging
+from typing import Optional
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
+from sqlalchemy.pool import NullPool # Pour les tests, utilisez NullPool
+import structlog
+
+logger = structlog.get_logger(__name__)
+
+class DatabasePoolManager:
+    _instance: Optional[asyncpg.pool.Pool] = None
+    _engine = None
+    _session_factory = None
+
+    @classmethod
+    async def initialize(
+        cls,
+        db_url: str,
+        pool_min_size: int = 5,
+        pool_max_size: int = 20,
+        pool_timeout: int = 60, # seconds to wait for a connection from the pool
+        pool_recycle: int = 3600, # seconds after which a connection is recycled
+        max_overflow: int = 10, # additional connections to create beyond max_size
+        connect_attempts: int = 5, # number of retry attempts
+        retry_delay_base: int = 1, # base delay for exponential backoff
+    ):
+        if cls._instance is not None:
+            return
+
+        for attempt in range(connect_attempts):
+            try:
+                # Configuration pour asyncpg
+                cls._instance = await asyncpg.create_pool(
+                    db_url,
+                    min_size=pool_min_size,
+                    max_size=pool_max_size,
+                    timeout=pool_timeout,
+                    max_inactive_connection_lifetime=pool_recycle, # Equivalent de pool_recycle pour asyncpg
+                    # Optionnel: 'setup' peut exécuter des commandes après chaque connexion
+                    # setup=lambda conn: conn.set_type_codec(...)
+                )
+                logger.info("Database pool initialized successfully with asyncpg")
+
+                # Configuration pour SQLAlchemy 2.0 Async
+                # 'postgresql+asyncpg' indique d'utiliser asyncpg comme driver
+                cls._engine = create_async_engine(
+                    db_url,
+                    pool_size=pool_min_size, # Taille initiale du pool SQLAlchemy
+                    max_overflow=max_overflow, # Connexions additionnelles pour SQLAlchemy
+                    pool_timeout=pool_timeout, # Timeout pour obtenir une connexion
+                    pool_recycle=pool_recycle, # Recycler les connexions après cette durée
+                    pool_pre_ping=True, # Vérifie la viabilité de la connexion avant usage
+                    echo=False, # Mettre à True pour afficher les requêtes SQL
+                    future=True
+                )
+                cls._session_factory = async_sessionmaker(
+                    cls._engine, 
+                    expire_on_commit=False, 
+                    class_=AsyncSession
+                )
+                logger.info("SQLAlchemy Async Engine and Session Factory initialized successfully")
+                return
+
+            except asyncpg.exceptions.PostgresError as e:
+                logger.warning(
+                    f"Failed to connect to database (attempt {attempt + 1}/{connect_attempts}): {e}",
+                    delay=retry_delay_base * (2 ** attempt)
+                )
+                if attempt &lt; connect_attempts - 1:
+                    await asyncio.sleep(retry_delay_base * (2 ** attempt))
+                else:
+                    logger.error("All database connection attempts failed. Exiting.")
+                    raise
+
+    @classmethod
+    async def close(cls):
+        if cls._instance:
+            await cls._instance.close()
+            logger.info("Asyncpg database pool closed")
+            cls._instance = None
+        if cls._engine:
+            await cls._engine.dispose()
+            logger.info("SQLAlchemy Async Engine disposed")
+            cls._engine = None
+        cls._session_factory = None
+
+
+    @classmethod
+    def get_pool(cls) -&gt; asyncpg.pool.Pool:
+        if cls._instance is None:
+            raise RuntimeError("Database pool not initialized. Call initialize() first.")
+        return cls._instance
+
+    @classmethod
+    def get_engine(cls):
+        if cls._engine is None:
+            raise RuntimeError("SQLAlchemy Async Engine not initialized. Call initialize() first.")
+        return cls._engine
+
+    @classmethod
+    async def get_session(cls) -&gt; AsyncGenerator[AsyncSession, None]:
+        if cls._session_factory is None:
+            raise RuntimeError("SQLAlchemy Async Session Factory not initialized. Call initialize() first.")
+        async with cls._session_factory() as session:
+            try:
+                yield session
+            finally:
+                await session.close() # La connexion est retournée au pool
+
+    # Méthode pour obtenir les métriques du pool (asyncpg seulement)
+    @classmethod
+    def get_pool_metrics(cls) -&gt; dict:
+        if cls._instance:
+            return {
+                "connections_total": cls._instance.get_size(),
+                "connections_active": cls._instance.get_busy_size(),
+                "connections_idle": cls._instance.get_idle_size(),
+                "connections_waiting": cls._instance.get_waiters(),
+            }
+        return {}
+
+</code></pre>
+<h3 style="color: #388278">Intégration dans <code>main.py</code></h3>
+<pre><code>
+# main.py
+from fastapi import FastAPI, Depends
+from app.db.connection import DatabasePoolManager, AsyncSession
+import os
+
+app = FastAPI()
+
+@app.on_event("startup")
+async def startup_db_pool():
+    # Récupérez l'URL de votre base de données depuis les variables d'environnement
+    db_url = os.getenv("DATABASE_URL", "postgresql+asyncpg://user:password@host:port/dbname")
+    await DatabasePoolManager.initialize(
+        db_url=db_url,
+        pool_min_size=5,
+        pool_max_size=20,
+        pool_timeout=60,
+        pool_recycle=3600,
+        max_overflow=10,
+        connect_attempts=10, # Plus de tentatives au démarrage
+        retry_delay_base=2
+    )
+
+@app.on_event("shutdown")
+async def shutdown_db_pool():
+    await DatabasePoolManager.close()
+
+# Exemple d'utilisation dans une route
+@app.get("/items")
+async def read_items(session: AsyncSession = Depends(DatabasePoolManager.get_session)):
+    # Utilisez la session pour interagir avec la base de données via SQLModel
+    # from sqlmodel import select
+    # result = await session.execute(select(YourSQLModelClass))
+    # items = result.scalars().all()
+    # return items
+    return {"message": "Database access example"}
+
+@app.get("/db-metrics")
+async def get_db_metrics():
+    return DatabasePoolManager.get_pool_metrics()
+</code></pre>
+<h4 style="color: #7FA86E">Astuce non-évidente :</h4>
+<p>L'utilisation de <code>pool_pre_ping=True</code> avec SQLAlchemy est essentielle pour s'assurer que les connexions dans le pool sont toujours viables avant d'être utilisées. Cela aide à gérer les scénarios où la base de données a fermé des connexions inactives. Pour <code>asyncpg</code>, l'équivalent est <code>max_inactive_connection_lifetime</code>. Le backoff exponentiel pour les tentatives de connexion au démarrage est également une bonne pratique pour ne pas surcharger la base de données si elle est temporairement indisponible.</p>
+<h4 style="color: #7FA86E">Erreurs Courantes à Éviter :</h4>
+<ul>
+<li>Oublier de fermer le pool de connexions lors de l'arrêt de l'application, entraînant des connexions "orphans".</li>
+<li>Des tailles de pool trop petites, provoquant des blocages par manque de connexions disponibles.</li>
+<li>Des tailles de pool trop grandes, surchargeant la base de données.</li>
+<li>Ne pas gérer les échecs de connexion initiaux avec des retries et un backoff.</li>
+<li>Utiliser des connexions bloquantes (<code>psycopg2</code>) dans un contexte asynchrone (FastAPI).</li>
+</ul>
+<h4 style="color: #7FA86E">Repo GitHub de Référence :</h4>
+<ul>
+<li><a href="https://github.com/sqlalchemy/sqlalchemy" target="_blank">sqlalchemy/sqlalchemy - GitHub</a></li>
+<li><a href="https://github.com/MagicStack/asyncpg" target="_blank">MagicStack/asyncpg - GitHub</a></li>
+</ul>
+<hr/><h2 id="heading-8" style="color: #cc9900">7. Structured Logging Enterprise : Des Logs Clairs et Exploitables</h2>
+<p>Le logging structuré avec <code>structlog</code> transforme vos journaux en données exploitables, facilitant l'analyse, la recherche et le monitoring. L'intégration de contextvars permet d'enrichir chaque log avec des informations contextuelles clés comme le request ID ou l'ID utilisateur.</p>
+<h3 style="color: #388278">Code Python Complet : <code>app/logging_config.py</code></h3>
+<pre><code>
+# app/logging_config.py
+import logging
+import os
+import sys
+import structlog
+import time
+import re
+from typing import Any, Dict
+
+# Liste des champs sensibles à filtrer
+SENSITIVE_FIELDS = {"password", "token", "jwt", "api_key", "secret"}
+
+def filter_sensitive_data(logger, method_name, event_dict: Dict[str, Any]) -&gt; Dict[str, Any]:
+    """Filtre les données sensibles des event_dict."""
+    for key in list(event_dict.keys()):
+        if any(sf in key.lower() for sf in SENSITIVE_FIELDS):
+            event_dict[key] = "[FILTERED]"
+    return event_dict
+
+def add_request_duration(logger, method_name, event_dict: Dict[str, Any]) -&gt; Dict[str, Any]:
+    """Ajoute la durée de la requête aux logs."""
+    start_time = structlog.contextvars.get_contextvars().get("start_time")
+    if start_time:
+        duration = time.perf_counter() - start_time
+        event_dict["duration_ms"] = round(duration * 1000, 2)
+    return event_dict
+
+def add_user_id(logger, method_name, event_dict: Dict[str, Any]) -&gt; Dict[str, Any]:
+    """Injecte l'ID utilisateur depuis le contexte."""
+    user_id = structlog.contextvars.get_contextvars().get("user_id")
+    if user_id:
+        event_dict["user_id"] = user_id
+    return event_dict
+
+def configure_logging(json_logs: bool = False, log_level: str = "INFO"):
+    """Configure structlog pour l'application FastAPI."""
+    shared_processors = [
+        structlog.contextvars.merge_contextvars,
+        add_user_id, # Injecte l'ID utilisateur
+        add_request_duration, # Calcule et injecte la durée de la requête
+        filter_sensitive_data, # Filtre les données sensibles
+        structlog.stdlib.add_logger_name,
+        structlog.stdlib.add_log_level,
+        structlog.processors.TimeStamper(fmt="iso"),
+        structlog.processors.StackInfoRenderer(),
+        structlog.processors.format_exc_info,
+        structlog.processors.UnicodeDecoder(),
+    ]
+
+    if json_logs:
+        # Configuration pour les logs JSON en production
+        processor = structlog.processors.JSONRenderer()
+    else:
+        # Configuration pour les logs lisibles en développement
+        processor = structlog.dev.ConsoleRenderer()
+
+    structlog.configure(
+        processors=shared_processors + [processor],
+        logger_factory=structlog.stdlib.LoggerFactory(),
+        wrapper_class=structlog.stdlib.BoundLogger,
+        cache_logger_on_first_use=True,
+    )
+
+    # Capture les logs Python standard et les achemine via structlog
+    logging.basicConfig(
+        format="%(message)s",
+        stream=sys.stdout,
+        level=getattr(logging, log_level.upper()),
+        handlers=[
+            structlog.stdlib.ProcessorFormatter.wrap_for_formatter(
+                logging.StreamHandler(sys.stdout),
+                wrapper_class=structlog.stdlib.BoundLogger,
+                processors=shared_processors + [
+                    structlog.stdlib.ProcessorFormatter.drop_color_wrap, # Important pour éviter les caractères de couleur dans JSON
+                    processor,
+                ],
+            )
+        ]
+    )
+
+    # Définir les niveaux de log pour des modules spécifiques
+    logging.getLogger("uvicorn.access").setLevel(logging.WARNING) # Moins verbeux pour l'accès uvicorn
+    logging.getLogger("uvicorn.error").setLevel(logging.INFO)
+    logging.getLogger("asyncpg").setLevel(logging.INFO) # Ajustez si vous avez besoin de plus de détails sur la DB
+    logging.getLogger("sqlalchemy.engine").setLevel(logging.WARNING) # Évitez les logs trop verbeux de SQLAlchemy
+
+# Middleware pour le timing des requêtes et le nettoyage du contexte
+class LoggingContextMiddleware:
+    async def __call__(self, request, call_next):
+        structlog.contextvars.clear_contextvars()
+        request_id = request.headers.get("X-Request-ID", str(uuid.uuid4())) # Assurez-vous d'avoir le CorrelationIdMiddleware avant
+        user_id = request.state.get("user_id") # Supposons que votre auth middleware a mis user_id dans request.state
+        
+        structlog.contextvars.bind_contextvars(
+            request_id=request_id,
+            user_id=user_id,
+            path=request.url.path,
+            method=request.method,
+            start_time=time.perf_counter()
+        )
+
+        response = await call_next(request)
+        return response
+
+</code></pre>
+<h3 style="color: #388278">Intégration dans <code>main.py</code></h3>
+<pre><code>
+# main.py
+from fastapi import FastAPI, Request
+from app.logging_config import configure_logging, LoggingContextMiddleware
+from app.middleware.correlation_id import CorrelationIdMiddleware # Import pour l'ordre
+import structlog
+import os
+import uuid
+
+# Configure structlog TÔT
+json_logs_enabled = os.getenv("ENVIRONMENT", "development") == "production"
+log_level = os.getenv("LOG_LEVEL", "INFO")
+configure_logging(json_logs=json_logs_enabled, log_level=log_level)
+
+logger = structlog.get_logger(__name__)
+
+app = FastAPI()
+
+# Les middlewares structlog doivent être appelés dans l'ordre pour que les contextes soient bien définis.
+# 1. CorrelationIdMiddleware doit venir en premier pour générer/récupérer le request_id
+app.add_middleware(CorrelationIdMiddleware)
+# 2. LoggingContextMiddleware pour bind d'autres infos et le timing
+app.middleware("http")(LoggingContextMiddleware()) # Utilisation directe comme fonction décorateur
+# ... (autres middlewares comme SecurityHeadersMiddleware, SmartCompressionMiddleware)
+
+# Exemple de middleware d'authentification qui met l'user_id dans request.state
+@app.middleware("http")
+async def auth_middleware(request: Request, call_next):
+    # Simuler l'extraction de user_id à partir du JWT
+    # En production, vous auriez une logique de vérification JWT
+    auth_header = request.headers.get("Authorization")
+    if auth_header and auth_header.startswith("Bearer "):
+        # decoded_token = decode_jwt(auth_header[7:])
+        # request.state.user_id = decoded_token.get("sub") # 'sub' est souvent l'ID utilisateur
+        request.state.user_id = "user_123" # Placeholder
+    response = await call_next(request)
+    return response
+
+
+@app.get("/")
+async def root():
+    logger.info("Root endpoint accessed", some_data="value")
+    return {"message": "Hello from FastAPI"}
+
+</code></pre>
+<h4 style="color: #7FA86E">Astuce non-évidente :</h4>
+<p>L'utilisation de <code>structlog.contextvars.clear_contextvars()</code> au début de chaque requête dans <code>LoggingContextMiddleware</code> est cruciale pour éviter les fuites de contexte entre les requêtes. Sans cela, une requête pourrait hériter des informations d'une requête précédente (comme le <code>request_id</code> ou <code>user_id</code>), ce qui est un problème majeur de sécurité et de traçabilité. Assurez-vous que votre middleware d'authentification définit le <code>user_id</code> dans <code>request.state</code> pour qu'il soit disponible pour le middleware de logging.</p>
+<h4 style="color: #7FA86E">Erreurs Courantes à Éviter :</h4>
+<ul>
+<li>Oublier de configurer <code>structlog.contextvars.clear_contextvars()</code>, entraînant des contextes de logs incorrects.</li>
+<li>Ne pas capturer les logs des librairies standard via <code>logging.basicConfig</code> et <code>structlog.stdlib.ProcessorFormatter</code>.</li>
+<li>Des filtres de données sensibles incomplets, laissant des informations exposées.</li>
+<li>Des niveaux de log inappropriés, rendant les logs trop verbeux ou pas assez informatifs.</li>
+</ul>
+<h4 style="color: #7FA86E">Repo GitHub de Référence :</h4>
+<ul>
+<li><a href="https://github.com/hynek/structlog" target="_blank">hynek/structlog - GitHub</a></li>
+</ul>
+<hr/><h2 id="heading-9" style="color: #cc9900">8. Circuit Breaker pour AI Providers : Protéger Votre Application des Défaillances Externes</h2>
+<p>Le pattern <i>Circuit Breaker</i> est une défense essentielle pour les applications distribuées. Il empêche une application de tenter continuellement d'accéder à un service externe défaillant, ce qui pourrait épuiser les ressources et entraîner des défaillances en cascade. Au lieu de cela, il échoue rapidement, permettant au service défaillant de récupérer et offrant des stratégies de fallback.</p>
+<h3 style="color: #388278">Code Python Complet : <code>app/circuit_breaker.py</code></h3>
+<pre><code>
+# app/circuit_breaker.py
+import time
+import asyncio
+from enum import Enum, auto
+from typing import Callable, Any, Coroutine
+import structlog
+
+logger = structlog.get_logger(__name__)
+
+class CircuitBreakerState(Enum):
+    CLOSED = auto()    # Le service fonctionne normalement. Les requêtes passent.
+    OPEN = auto()      # Le service est défaillant. Les requêtes sont bloquées.
+    HALF_OPEN = auto() # Après une période, quelques requêtes sont autorisées à tester si le service a récupéré.
+
+class CircuitBreaker:
+    def __init__(
+        self,
+        name: str,
+        failure_threshold: int = 5,
+        recovery_timeout: int = 60,  # Temps en secondes pour passer de OPEN à HALF_OPEN
+        reset_timeout: int = 300,    # Temps en secondes pour réinitialiser le compteur de pannes en CLOSED
+        fallback_function: Optional[Callable[..., Coroutine[Any, Any, Any]]] = None
+    ):
+        self.name = name
+        self.failure_threshold = failure_threshold
+        self.recovery_timeout = recovery_timeout
+        self.reset_timeout = reset_timeout
+        self.fallback_function = fallback_function
+
+        self._state = CircuitBreakerState.CLOSED
+        self._failures = 0
+        self._last_failure_time = None
+        self._last_open_time = None
+        self._lock = asyncio.Lock()
+
+    @property
+    def state(self) -&gt; CircuitBreakerState:
+        # Logique pour passer de OPEN à HALF_OPEN
+        if self._state == CircuitBreakerState.OPEN:
+            if time.time() - self._last_open_time &gt; self.recovery_timeout:
+                self._state = CircuitBreakerState.HALF_OPEN
+                logger.warning(f"Circuit Breaker '{self.name}' moved to HALF_OPEN state.", state="HALF_OPEN")
+        
+        # Logique pour réinitialiser le compteur de pannes si CLOSED depuis longtemps
+        if self._state == CircuitBreakerState.CLOSED and self._failures &gt; 0 and \
+           self._last_failure_time and time.time() - self._last_failure_time &gt; self.reset_timeout:
+            self._failures = 0
+            logger.info(f"Circuit Breaker '{self.name}' reset failure count.", state="CLOSED", failures=self._failures)
+
+        return self._state
+
+    async def __call__(self, func: Callable[..., Coroutine[Any, Any, Any]]):
+        async def wrapper(*args, **kwargs):
+            async with self._lock:
+                current_state = self.state
+
+                if current_state == CircuitBreakerState.OPEN:
+                    logger.warning(
+                        f"Circuit Breaker '{self.name}' is OPEN, blocking call to '{func.__name__}'.",
+                        state="OPEN"
+                    )
+                    if self.fallback_function:
+                        return await self.fallback_function(*args, **kwargs)
+                    raise CircuitBreakerOpenException(
+                        f"Circuit Breaker '{self.name}' is OPEN."
+                    )
+                
+                if current_state == CircuitBreakerState.HALF_OPEN:
+                    # Une seule requête est autorisée à passer pour tester la récupération
+                    if self._failures == 0: # Si c'est la première requête en HALF_OPEN
+                        logger.info(
+                            f"Circuit Breaker '{self.name}' is HALF_OPEN, allowing a single test call to '{func.__name__}'.",
+                            state="HALF_OPEN"
+                        )
+                    else: # Toutes les autres requêtes sont bloquées
+                        logger.warning(
+                            f"Circuit Breaker '{self.name}' is HALF_OPEN, but test call already in progress or failed. Blocking call to '{func.__name__}'.",
+                            state="HALF_OPEN"
+                        )
+                        if self.fallback_function:
+                            return await self.fallback_function(*args, **kwargs)
+                        raise CircuitBreakerOpenException(
+                            f"Circuit Breaker '{self.name}' is HALF_OPEN."
+                        )
+
+            try:
+                result = await func(*args, **kwargs)
+                async with self._lock:
+                    if current_state != CircuitBreakerState.CLOSED:
+                        # Si la requête en HALF_OPEN réussit, réinitialiser
+                        self._state = CircuitBreakerState.CLOSED
+                        self._failures = 0
+                        self._last_failure_time = None
+                        self._last_open_time = None
+                        logger.info(
+                            f"Circuit Breaker '{self.name}' moved to CLOSED state after successful call.",
+                            state="CLOSED"
+                        )
+                return result
+            except Exception as e:
+                async with self._lock:
+                    self._failures += 1
+                    self._last_failure_time = time.time()
+                    logger.error(
+                        f"Circuit Breaker '{self.name}' recorded a failure calling '{func.__name__}'. "
+                        f"Failures: {self._failures}/{self.failure_threshold}",
+                        error=str(e), state=self._state
+                    )
+                    if self._failures &gt;= self.failure_threshold and self._state != CircuitBreakerState.OPEN:
+                        self._state = CircuitBreakerState.OPEN
+                        self._last_open_time = time.time()
+                        logger.error(
+                            f"Circuit Breaker '{self.name}' moved to OPEN state due to excessive failures.",
+                            state="OPEN"
+                        )
+                
+                if self.fallback_function:
+                    return await self.fallback_function(*args, **kwargs)
+                raise CircuitBreakerFailedException(
+                    f"Circuit Breaker '{self.name}' failed after {self._failures} attempts."
+                ) from e
+        return wrapper
+
+class CircuitBreakerOpenException(Exception):
+    """Exception levée lorsque le circuit breaker est en état OPEN."""
+    pass
+
+class CircuitBreakerFailedException(Exception):
+    """Exception levée lorsque le circuit breaker a échoué (mais n'est pas OPEN)."""
+    pass
+
+# ---------- Gestion des Providers IA ----------
+class AIProvider:
+    def __init__(self, name: str, cb: CircuitBreaker):
+        self.name = name
+        self.circuit_breaker = cb
+
+    @self.circuit_breaker
+    async def call_ai_service(self, prompt: str) -&gt; str:
+        logger.info(f"Calling AI service {self.name} with prompt", prompt=prompt)
+        # Simuler une défaillance ou un succès
+        if time.time() % 10 &lt; 3: # 30% de chance d'échec
+            logger.error(f"AI service {self.name} failed!", provider=self.name)
+            raise ValueError(f"AI service {self.name} temporarily unavailable")
+        
+        await asyncio.sleep(0.5) # Simuler le temps de réponse
+        return f"Response from {self.name} for: {prompt}"
+
+async def fallback_ai_response(prompt: str) -&gt; str:
+    logger.warning("Using fallback AI response", prompt=prompt)
+    return f"Fallback response for: {prompt} (AI service unavailable)"
+
+# Initialisation des Circuit Breakers et Providers
+gemini_cb = CircuitBreaker(
+    name="Gemini",
+    failure_threshold=3,
+    recovery_timeout=30, # 30s avant de passer en HALF_OPEN
+    fallback_function=fallback_ai_response
+)
+gemini_provider = AIProvider("Gemini", gemini_cb)
+
+claude_cb = CircuitBreaker(
+    name="Claude",
+    failure_threshold=5,
+    recovery_timeout=60,
+    fallback_function=fallback_ai_response
+)
+claude_provider = AIProvider("Claude", claude_cb)
+
+groq_cb = CircuitBreaker(
+    name="Groq",
+    failure_threshold=2,
+    recovery_timeout=15,
+    fallback_function=fallback_ai_response
+)
+groq_provider = AIProvider("Groq", groq_cb)
+
+# Liste des providers, par ordre de préférence (ou de coût, etc.)
+AI_PROVIDERS = [gemini_provider, claude_provider, groq_provider]
+
+async def call_with_provider_fallback(prompt: str) -&gt; str:
+    for provider in AI_PROVIDERS:
+        try:
+            return await provider.call_ai_service(prompt)
+        except (CircuitBreakerOpenException, CircuitBreakerFailedException):
+            logger.warning(f"Provider {provider.name} unavailable or circuit open, trying next one.")
+            continue # Tente le prochain provider
+        except Exception as e:
+            # Gérer les autres exceptions non liées au circuit breaker ici
+            logger.error(f"Error calling {provider.name}: {e}", provider=provider.name)
+            continue
+    
+    logger.critical("All AI providers failed or are unavailable.")
+    return await fallback_ai_response(prompt) # Si tous les providers échouent, utilisez le fallback global
+
+</code></pre>
+<h3 style="color: #388278">Intégration dans <code>main.py</code></h3>
+<pre><code>
+# main.py
+from fastapi import FastAPI
+from app.circuit_breaker import call_with_provider_fallback, gemini_cb, claude_cb, groq_cb
+import structlog
+
+logger = structlog.get_logger(__name__)
+app = FastAPI()
+
+@app.get("/generate-ai-text")
+async def generate_ai_text(prompt: str):
+    try:
+        response = await call_with_provider_fallback(prompt)
+        # Pour le monitoring, vous pouvez loguer l'état des breakers
+        logger.info("AI Provider states",
+                    gemini_state=str(gemini_cb.state.name),
+                    claude_state=str(claude_cb.state.name),
+                    groq_state=str(groq_cb.state.name))
+        return {"response": response}
+    except Exception as e:
+        logger.error("Failed to generate AI text after all fallbacks", error=str(e))
+        return {"error": "Could not generate AI text at this time."}, 500
+
+</code></pre>
+<div style="height: 500px;"><canvas id="radarCanvas"></canvas></div>
+<script id="site_chart_radar">
+const ctxRadar = document.getElementById("radarCanvas");
+const radarChart = new Chart(ctxRadar, {
+    type: 'radar',
+    data: {
+        labels: ['Fiabilité', 'Scalabilité', 'Performance', 'Résilience', 'Observabilité', 'Sécurité'],
+        datasets: [{
+            label: 'Architecture Actuelle',
+            data: [3, 3, 4, 3, 3, 3],
+            backgroundColor: 'rgba(255, 99, 132, 0.2)',
+            borderColor: 'rgba(255, 99, 132, 1)',
+            pointBackgroundColor: 'rgba(255, 99, 132, 1)',
+            pointBorderColor: '#fff',
+            pointHoverBackgroundColor: '#fff',
+            pointHoverBorderColor: 'rgba(255, 99, 132, 1)',
+            borderWidth: 1,
+            fill: true
+        }, {
+            label: 'Architecture Cible S+++',
+            data: [5, 5, 5, 5, 5, 5],
+            backgroundColor: 'rgba(54, 162, 235, 0.2)',
+            borderColor: 'rgba(54, 162, 235, 1)',
+            pointBackgroundColor: 'rgba(54, 162, 235, 1)',
+            pointBorderColor: '#fff',
+            pointHoverBackgroundColor: '#fff',
+            pointHoverBorderColor: 'rgba(54, 162, 235, 1)',
+            borderWidth: 1,
+            fill: true
+        }]
+    },
+    options: {
+        maintainAspectRatio: false,
+        lineTension: 0.2,
+        scales: {
+            r: {
+                beginAtZero: true,
+                min: 0,
+                max: 5,
+                ticks: {
+                    backdropColor: 'rgba(0, 0, 0, 0)',
+                    color: '#888888',
+                    stepSize: 1
+                },
+                pointLabels: {
+                    color: '#888888'
+                },
+                grid: {
+                    color: '#888888'
+                },
+                angleLines: {
+                    color: '#888888'
+                }
+            }
+        },
+        plugins: {
+            legend: {
+                labels: {
+                    color: '#888888'
+                }
+            }
+        }
+    }
+});
+radarChart.update();
+</script>
+<p style="text-align: center;"><i>Comparaison des capacités architecturales : de l'état actuel à l'objectif S+++.</i></p>
+<p>Ce graphique radar illustre l'amélioration des caractéristiques clés de votre plateforme en passant d'une architecture fonctionnelle mais standard à une architecture S+++ de niveau entreprise. Chaque point représente une dimension cruciale où les pratiques proposées dans ce guide apportent des gains significatifs, transformant votre application en un système hautement optimisé et résilient.</p>
+<h4 style="color: #7FA86E">Astuce non-évidente :</h4>
+<p>L'implémentation du <code>CircuitBreaker</code> en tant que décorateur asynchrone est puissante, mais elle doit être thread-safe. L'utilisation d'un <code>asyncio.Lock</code> est essentielle pour protéger les variables d'état du disjoncteur (<code>_state</code>, <code>_failures</code>, etc.) contre les accès concurrents, évitant ainsi les conditions de course dans un environnement FastAPI asynchrone. La gestion des différents providers avec une boucle et un fallback permet une grande flexibilité et une meilleure résilience.</p>
+<h4 style="color: #7FA86E">Erreurs Courantes à Éviter :</h4>
+<ul>
+<li>Oublier la synchronisation des états du disjoncteur dans un environnement concurrentiel.</li>
+<li>Définir des seuils de panne trop bas, ce qui pourrait faire passer le disjoncteur en état OPEN trop fréquemment.</li>
+<li>Des fonctions de fallback qui échouent également, ou qui sont trop lentes.</li>
+<li>Ne pas avoir de mécanisme de réinitialisation automatique du compteur de pannes en état CLOSED, même sans panne, pour éviter qu'une accumulation lente de pannes ne l'ouvre brusquement.</li>
+</ul>
+<h4 style="color: #7FA86E">Repo GitHub de Référence :</h4>
+<ul>
+<li><a href="https://github.com/Netflix/Hystrix" target="_blank">Netflix/Hystrix - GitHub</a> (bien que Hystrix soit en Java, c'est la référence historique pour les patterns de circuit breaker)</li>
+</ul>
+<hr/><h2 id="heading-10" style="color: #cc9900">9. API Rate Limiting Avancé : Contrôle Granulaire du Trafic</h2>
+<p>Le <i>Rate Limiting</i> est essentiel pour protéger votre API contre les abus, les attaques par déni de service (DoS) et pour assurer une utilisation équitable des ressources. Un système avancé intègre des algorithmes plus sophistiqués et fournit des en-têtes de réponse standards.</p>
+<h3 style="color: #388278">Code Python Complet : <code>app/middleware/rate_limiter.py</code></h3>
+<pre><code>
+# app/middleware/rate_limiter.py
+from fastapi import Request, Response, HTTPException, status
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.types import ASGIApp
+import redis.asyncio as redis
+import time
+import math
+import os
+from collections import deque
+from typing import Dict, Deque, Any
+import structlog
+
+logger = structlog.get_logger(__name__)
+
+# Config Redis (remplacez par votre configuration réelle)
+REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+redis_client: Optional[redis.Redis] = None
+
+async def get_redis_client_instance():
+    global redis_client
+    if redis_client is None:
+        redis_client = redis.from_url(REDIS_URL)
+    return redis_client
+
+class SlidingWindowRateLimiter:
+    def __init__(self, capacity: int, window_seconds: int, burst_capacity: int = 0):
+        self.capacity = capacity
+        self.window_seconds = window_seconds
+        self.burst_capacity = burst_capacity
+        self.timestamps: Dict[str, Deque[float]] = {}
+        self.last_reset: Dict[str, float] = {}
+
+    async def _cleanup_timestamps(self, key: str):
+        now = time.time()
+        # Supprimer les timestamps en dehors de la fenêtre glissante
+        while self.timestamps[key] and self.timestamps[key][0] &lt;= now - self.window_seconds:
+            self.timestamps[key].popleft()
+
+    async def allow_request(self, key: str) -&gt; (bool, int, int, int):
+        if key not in self.timestamps:
+            self.timestamps[key] = deque()
+            self.last_reset[key] = time.time()
+
+        await self._cleanup_timestamps(key)
+        
+        now = time.time()
+        current_requests = len(self.timestamps[key])
+        
+        # Logique pour le burst allowance (basé sur le Token Bucket, mais intégré ici)
+        # Ici, une approche simplifiée: le burst est un dépassement temporaire de la capacité normale.
+        # Nous allons vérifier si le nombre de requêtes dépasse la capacité normale
+        # ET la capacité de burst.
+        
+        allowed_limit = self.capacity
+        if self.burst_capacity &gt; 0:
+            # Pour un burst, nous permettons temporairement plus de requêtes
+            # L'idée est que vous pouvez faire plus de requêtes en un court laps de temps
+            # tant que le total sur la fenêtre reste gérable.
+            # Une implémentation réelle de Token Bucket serait plus précise.
+            # Ici, nous nous basons sur le fait que le nombre de requêtes "réelles"
+            # ne dépasse pas la capacité + burst.
+            allowed_limit = self.capacity + self.burst_capacity
+
+        if current_requests &lt; allowed_limit:
+            self.timestamps[key].append(now)
+            remaining = allowed_limit - len(self.timestamps[key])
+            reset_after = max(0, self.window_seconds - (now - self.last_reset[key]))
+            return True, allowed_limit, remaining, math.ceil(reset_after)
+        else:
+            remaining = allowed_limit - current_requests
+            reset_after = max(0, self.window_seconds - (now - self.last_reset[key]))
+            return False, allowed_limit, remaining, math.ceil(reset_after)
+
+# Utilisation d'un dictionnaire pour gérer plusieurs limiteurs par endpoint/route
+rate_limiters: Dict[str, SlidingWindowRateLimiter] = {}
+
+class RateLimitingMiddleware(BaseHTTPMiddleware):
+    def __init__(self, app: ASGIApp,
+                 default_capacity: int = 100,
+                 default_window_seconds: int = 60,
+                 default_burst: int = 20,
+                 whitelist_ips: list[str] = None,
+                 config_per_path: Dict[str, Dict[str, Any]] = None):
+        super().__init__(app)
+        self.default_capacity = default_capacity
+        self.default_window_seconds = default_window_seconds
+        self.default_burst = default_burst
+        self.whitelist_ips = whitelist_ips if whitelist_ips is not None else []
+        self.config_per_path = config_per_path if config_per_path is not None else {}
+
+    async def dispatch(self, request: Request, call_next):
+        client_ip = request.client.host if request.client else "unknown"
+
+        if client_ip in self.whitelist_ips:
+            return await call_next(request)
+
+        # Déterminer la clé de limite (ici par IP, peut être par user_id, API Key, etc.)
+        rate_limit_key = f"rate_limit:{client_ip}:{request.url.path}" # Rate limit par IP et par endpoint
+
+        # Obtenir la configuration spécifique pour ce chemin, ou utiliser les valeurs par défaut
+        path_config = self.config_per_path.get(request.url.path, {
+            "capacity": self.default_capacity,
+            "window_seconds": self.default_window_seconds,
+            "burst_capacity": self.default_burst
+        })
+        
+        capacity = path_config.get("capacity", self.default_capacity)
+        window = path_config.get("window_seconds", self.default_window_seconds)
+        burst = path_config.get("burst_capacity", self.default_burst)
+
+        if rate_limit_key not in rate_limiters:
+            # Crée un limiteur pour cette combinaison clé/chemin
+            rate_limiters[rate_limit_key] = SlidingWindowRateLimiter(capacity, window, burst)
+            
+        allowed, limit, remaining, reset_after = await rate_limiters[rate_limit_key].allow_request(rate_limit_key)
+
+        response = Response()
+        response.headers["X-RateLimit-Limit"] = str(limit)
+        response.headers["X-RateLimit-Remaining"] = str(max(0, remaining))
+        response.headers["X-RateLimit-Reset"] = str(reset_after) # Temps en secondes jusqu'au reset
+
+        if not allowed:
+            logger.warning(
+                "Rate limit exceeded",
+                ip=client_ip,
+                path=request.url.path,
+                limit=limit,
+                remaining=remaining,
+                reset_after=reset_after
+            )
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail="Too Many Requests"
+            )
+        
+        response = await call_next(request)
+        
+        # S'assure que les headers sont ajoutés même si la réponse vient d'un autre middleware
+        response.headers["X-RateLimit-Limit"] = str(limit)
+        response.headers["X-RateLimit-Remaining"] = str(max(0, remaining -1 )) # -1 car la requête actuelle a consommé une ressource
+        response.headers["X-RateLimit-Reset"] = str(reset_after)
+
+        return response
+
+</code></pre>
+<h3 style="color: #388278">Intégration dans <code>main.py</code></h3>
+<pre><code>
+# main.py
+from fastapi import FastAPI
+from app.middleware.rate_limiter import RateLimitingMiddleware
+import os
+
+app = FastAPI()
+
+# Initialisation du client Redis pour le rate limiter
+@app.on_event("startup")
+async def startup_event():
+    from app.middleware.rate_limiter import get_redis_client_instance
+    await get_redis_client_instance() # Initialise le client Redis
+
+# Enregistrement du middleware de Rate Limiting
+app.add_middleware(
+    RateLimitingMiddleware,
+    default_capacity=100,
+    default_window_seconds=60,
+    default_burst=20,
+    whitelist_ips=["127.0.0.1", "::1", os.getenv("KUBERNETES_HEALTH_CHECK_IP", "")], # Ajoutez les IPs de vos probes K8s
+    config_per_path={
+        "/api/v1/auth/login": {"capacity": 10, "window_seconds": 30, "burst_capacity": 5}, # Plus restrictif
+        "/api/v1/ai/generate": {"capacity": 50, "window_seconds": 60, "burst_capacity": 10},
+    }
+)
+
+# ... vos routes
+</code></pre>
+<h4 style="color: #7FA86E">Astuce non-évidente :</h4>
+<p>L'implémentation d'un <code>SlidingWindowRateLimiter</code> sans Redis (pour la démo) stocke les horodatages en mémoire. Pour un environnement distribué (Kubernetes), l'utilisation de Redis est impérative pour un état partagé et cohérent entre les instances de l'API. Le <code>burst_capacity</code> est une clé de performance : il permet à l'application d'absorber des pics de trafic courts au-dessus de la capacité normale, sans déclencher le limiteur, tant que le taux moyen sur la fenêtre reste dans les limites. La gestion du <code>X-RateLimit-Remaining</code> après le <code>call_next(request)</code> assure que la valeur renvoyée reflète l'état après la consommation de la requête actuelle.</p>
+<h4 style="color: #7FA86E">Erreurs Courantes à Éviter :</h4>
+<ul>
+<li>Utiliser une fenêtre fixe qui peut pénaliser les utilisateurs au début d'une nouvelle fenêtre (le <i>burst effect</i>).</li>
+<li>Ne pas fournir les en-têtes <code>X-RateLimit-*</code>, ce qui rend la limite invisible pour les clients.</li>
+<li>Ne pas gérer correctement le <code>Retry-After</code>, ou fournir une valeur imprécise.</li>
+<li>Définir des limites trop agressives qui bloquent des utilisateurs légitimes.</li>
+<li>Implémenter le rate limiting en mémoire dans un environnement distribué (Kubernetes), ce qui rend le limiteur inefficace.</li>
+</ul>
+<h4 style="color: #7FA86E">Repo GitHub de Référence :</h4>
+<ul>
+<li><a href="https://github.com/encode/starlette-limiter" target="_blank">encode/starlette-limiter - GitHub</a> (bien qu'il s'agisse d'un wrapper, il implémente ces concepts)</li>
+</ul>
+<hr/><h2 id="heading-11" style="color: #cc9900">10. Dockerfile Multi-Stage Optimisé : Des Images Légères et Sécurisées</h2>
+<p>Un Dockerfile multi-stage réduit la taille de l'image finale en séparant les dépendances de build du runtime. Cela améliore la sécurité, réduit les temps de pull et de déploiement, et diminue la surface d'attaque.</p>
+<h3 style="color: #388278">Code Complet : <code>Dockerfile</code> et <code>.dockerignore</code></h3>
+<pre><code>
+# Dockerfile
+# --- Stage 1: Builder ---
+FROM python:3.13-slim-bookworm AS builder
+
+# Définir l'utilisateur non-root pour la sécurité
+ARG UID=10001
+RUN adduser --disabled-password --gecos "" --home /app --uid "${UID}" appuser
+
+WORKDIR /app
+
+# Installer Poetry (ou pip-tools)
+# Utiliser Poetry pour gérer les dépendances de manière déclarative
+RUN pip install poetry==1.8.2
+
+# Copier les fichiers de définition de dépendances Poetry
+COPY pyproject.toml poetry.lock ./
+
+# Configuration de Poetry pour créer un environnement virtuel dans le conteneur
+RUN poetry config virtualenvs.create false \
+    &amp;&amp; poetry install --no-root --only main --no-interaction --no-ansi
+
+# Nettoyage des caches pip et Poetry
+RUN rm -rf /root/.cache/pip /root/.cache/pypoetry
+
+
+# --- Stage 2: Runtime ---
+FROM python:3.13-slim-bookworm AS runtime
+
+ARG UID=10001
+RUN adduser --disabled-password --gecos "" --home /app --uid "${UID}" appuser
+
+WORKDIR /app
+
+# Copier les dépendances installées depuis le stage builder
+COPY --from=builder /usr/local/lib/python3.13/site-packages /usr/local/lib/python3.13/site-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
+
+# Copier le code de l'application
+COPY . /app
+
+# Assurez-vous que l'utilisateur non-root est le propriétaire des fichiers de l'application
+RUN chown -R appuser:appuser /app
+
+# Définir l'utilisateur d'exécution
+USER appuser
+
+# Exposer le port de l'application
+EXPOSE 8000
+
+# Labels OCI (Open Container Initiative) standards
+LABEL org.opencontainers.image.authors="votre_nom@votre_entreprise.com"
+LABEL org.opencontainers.image.licenses="MIT"
+LABEL org.opencontainers.image.source="https://github.com/votre_repo/votre_app"
+LABEL org.opencontainers.image.description="FastAPI AI SaaS platform"
+LABEL org.opencontainers.image.url="https://votre_entreprise.com"
+LABEL org.opencontainers.image.version="1.0.0"
+LABEL org.opencontainers.image.created=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
+LABEL org.opencontainers.image.revision=$(git rev-parse HEAD)
+
+
+# HEALTHCHECK instruction (voir section 5 pour des checks plus avancés)
+HEALTHCHECK --interval=30s --timeout=10s --retries=3 CMD curl -f http://localhost:8000/health/live || exit 1
+
+# STOPSIGNAL pour un arrêt gracieux (voir section 4)
+STOPSIGNAL SIGTERM
+
+# Commande pour exécuter l'application
+# Utilisez Uvicorn avec Gunicorn pour la production pour une meilleure gestion des processus
+# Assurez-vous d'avoir Gunicorn installé dans vos dépendances Poetry
+# CMD ["gunicorn", "main:app", "--workers", "4", "--worker-class", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8000", "--timeout", "120"]
+# Ou directement Uvicorn si vous n'avez pas Gunicorn
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4", "--log-level", "info", "--graceful-timeout", "30"]
+
+</code></pre>
+<h3 style="color: #388278">Code Complet : <code>.dockerignore</code></h3>
+<pre><code>
+# .dockerignore
+# Ignorer les fichiers Python compilés
+*.pyc
+*.pyo
+__pycache__
+.pytest_cache
+
+# Ignorer les fichiers liés à l'environnement de développement
+.env
+.venv
+venv/
+.mypy_cache/
+.vscode/
+.idea/
+*.sqlite3
+
+# Ignorer les répertoires et fichiers Git
+.git
+.gitignore
+
+# Ignorer les fichiers de logs
+*.log
+logs/
+
+# Ignorer les fichiers de documentation, de tests (si non nécessaires au runtime)
+docs/
+tests/
+
+# Ignorer les fichiers temporaires et de build
+tmp/
+dist/
+build/
+*.egg-info/
+</code></pre>
+<h4 style="color: #7FA86E">Astuce non-évidente :</h4>
+<p>L'utilisation de <code>poetry config virtualenvs.create false</code> dans le stage builder est cruciale pour que Poetry installe les dépendances directement dans l'environnement Python du conteneur (<code>/usr/local/lib/python3.13/site-packages</code>), ce qui les rend faciles à copier vers le stage runtime sans avoir à répliquer un environnement virtuel entier. L'argument <code>--no-root</code> lors de l'installation des dépendances Poetry évite d'installer le projet lui-même en mode éditable dans le builder, ce qui est généralement inutile pour le build d'une image Docker.</p>
+<h4 style="color: #7FA86E">Erreurs Courantes à Éviter :</h4>
+<ul>
+<li>Ne pas utiliser de Dockerfile multi-stage, résultant en des images Docker volumineuses.</li>
+<li>Exécuter le conteneur en tant que root, ce qui représente un risque de sécurité majeur.</li>
+<li>Ne pas utiliser <code>.dockerignore</code>, copiant des fichiers inutiles qui augmentent la taille de l'image.</li>
+<li>Ne pas optimiser l'ordre des instructions dans le Dockerfile, invalidant le cache Docker fréquemment.</li>
+<li>Oublier la commande <code>HEALTHCHECK</code> et <code>STOPSIGNAL</code> pour une bonne intégration Kubernetes.</li>
+</ul>
+<h4 style="color: #7FA86E">Repo GitHub de Référence :</h4>
+<ul>
+<li><a href="https://github.com/tiangolo/fastapi" target="_blank">tiangolo/fastapi - GitHub</a> (La documentation FastAPI a de bonnes sections sur Docker)</li>
+</ul>
+<hr/><h2 id="heading-12" style="color: #cc9900">11. OpenTelemetry Integration : Traçabilité et Métriques Distribuées</h2>
+<p>OpenTelemetry fournit un cadre standardisé pour instrumenter, générer, collecter et exporter des données de télémétrie (traces, métriques, logs). C'est un élément clé pour l'observabilité des systèmes distribués, permettant de comprendre le flux des requêtes à travers votre architecture.</p>
+<h3 style="color: #388278">Code Python Complet : <code>app/observability/opentelemetry_config.py</code></h3>
+<pre><code>
+# app/observability/opentelemetry_config.py
+import os
+from opentelemetry import trace
+from opentelemetry.sdk.resources import Resource
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import (
+    ConsoleSpanExporter,
+    BatchSpanProcessor,
+    SimpleSpanProcessor,
+)
+from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+from opentelemetry.instrumentation.asyncpg import AsyncPGInstrumentor
+from opentelemetry.instrumentation.redis import RedisInstrumentor
+from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
+from opentelemetry.sdk.metrics import MeterProvider
+from opentelemetry.sdk.metrics.export import (
+    ConsoleMetricExporter,
+    PeriodicExportingMetricReader,
+)
+from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import OTLPMetricExporter
+import structlog
+from structlog.processors import JSONRenderer
+
+logger = structlog.get_logger(__name__)
+
+def configure_opentelemetry(app, service_name: str = "fastapi-ai-saas", environment: str = "development"):
+    resource = Resource.create({
+        "service.name": service_name,
+        "service.version": os.getenv("APP_VERSION", "1.0.0"),
+        "environment": environment,
+    })
+
+    # --- Tracing ---
+    provider = TracerProvider(resource=resource)
+    
+    if environment == "production":
+        otlp_endpoint = os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT", "http://localhost:4317")
+        span_exporter = OTLPSpanExporter(endpoint=otlp_endpoint)
+        span_processor = BatchSpanProcessor(span_exporter)
+        logger.info("OpenTelemetry Tracing configured for OTLP export", endpoint=otlp_endpoint)
+    else:
+        span_exporter = ConsoleSpanExporter()
+        span_processor = SimpleSpanProcessor(span_exporter)
+        logger.info("OpenTelemetry Tracing configured for Console export (development mode)")
+
+    provider.add_span_processor(span_processor)
+    trace.set_tracer_provider(provider)
+
+    # --- Metrics (example, more advanced setup typically involves custom metrics) ---
+    # metrics_provider = MeterProvider(resource=resource)
+    # if environment == "production":
+    #     metric_exporter = OTLPMetricExporter(endpoint=otlp_endpoint)
+    #     metrics_reader = PeriodicExportingMetricReader(metric_exporter, export_interval_millis=5000)
+    #     logger.info("OpenTelemetry Metrics configured for OTLP export", endpoint=otlp_endpoint)
+    # else:
+    #     metric_exporter = ConsoleMetricExporter()
+    #     metrics_reader = PeriodicExportingMetricReader(metric_exporter, export_interval_millis=5000)
+    #     logger.info("OpenTelemetry Metrics configured for Console export (development mode)")
+    # metrics_provider.add_metric_reader(metrics_reader)
+    # set_meter_provider(metrics_provider)
+
+
+    # --- Instrumentation ---
+    # FastAPI
+    FastAPIInstrumentor.instrument_app(app, tracer_provider=provider)
+    logger.info("FastAPI Instrumented")
+
+    # AsyncPG (pour PostgreSQL)
+    AsyncPGInstrumentor().instrument()
+    logger.info("AsyncPG Instrumented")
+
+    # Redis
+    RedisInstrumentor().instrument()
+    logger.info("Redis Instrumented")
+
+    # HTTPX (pour appels externes, ex: AI Providers)
+    HTTPXClientInstrumentor().instrument()
+    logger.info("HTTPX Instrumented")
+
+    # --- Correlation avec Structlog ---
+    # Pour injecter le trace_id et span_id d'OpenTelemetry dans les logs structlog
+    # Créez un processor structlog pour cela.
+    def add_otel_trace_info(logger, method_name, event_dict):
+        current_span = trace.get_current_span()
+        if current_span and current_span.get_span_context().is_valid:
+            event_dict["trace_id"] = current_span.get_span_context().trace_id
+            event_dict["span_id"] = current_span.get_span_context().span_id
+        return event_dict
+    
+    # Ajoutez ce processor à la configuration de structlog
+    # Assurez-vous qu'il est ajouté avant le JSONRenderer
+    # Cette étape doit être faite dans la configuration de structlog, pas ici directement
+    # car structlog.configure est appelé une seule fois.
+    # Voir la section 7 pour l'intégration complète dans structlog_config.py
+
+</code></pre>
+<h3 style="color: #388278">Mise à jour de <code>app/logging_config.py</code> pour la corrélation</h3>
+<pre><code>
+# app/logging_config.py (ajouts pour OpenTelemetry)
+# ... (imports existants)
+from opentelemetry import trace # Nouvel import
+
+# Nouveau processor pour ajouter les IDs de trace OpenTelemetry
+def add_otel_trace_info(logger, method_name, event_dict: Dict[str, Any]) -&gt; Dict[str, Any]:
+    current_span = trace.get_current_span()
+    if current_span and current_span.get_span_context().is_valid:
+        event_dict["otel.trace_id"] = format(current_span.get_span_context().trace_id, "032x") # Format hex
+        event_dict["otel.span_id"] = format(current_span.get_span_context().span_id, "016x") # Format hex
+    return event_dict
+
+def configure_logging(json_logs: bool = False, log_level: str = "INFO"):
+    """Configure structlog pour l'application FastAPI."""
+    shared_processors = [
+        structlog.contextvars.merge_contextvars,
+        add_user_id,
+        add_request_duration,
+        filter_sensitive_data,
+        add_otel_trace_info, # AJOUTER CE PROCESSOR ICI
+        structlog.stdlib.add_logger_name,
+        structlog.stdlib.add_log_level,
+        structlog.processors.TimeStamper(fmt="iso"),
+        structlog.processors.StackInfoRenderer(),
+        structlog.processors.format_exc_info,
+        structlog.processors.UnicodeDecoder(),
+    ]
+    # ... (le reste de la fonction reste identique)
+</code></pre>
+<h3 style="color: #388278">Intégration dans <code>main.py</code></h3>
+<pre><code>
+# main.py
+from fastapi import FastAPI
+from app.observability.opentelemetry_config import configure_opentelemetry
+from app.logging_config import configure_logging # Assurez-vous d'utiliser la version mise à jour
+import os
+import structlog
+
+# Configurer structlog en premier
+json_logs_enabled = os.getenv("ENVIRONMENT", "development") == "production"
+log_level = os.getenv("LOG_LEVEL", "INFO")
+configure_logging(json_logs=json_logs_enabled, log_level=log_level)
+
+logger = structlog.get_logger(__name__)
+
+app = FastAPI()
+
+# Configurer OpenTelemetry après l'initialisation de FastAPI
+environment = os.getenv("ENVIRONMENT", "development")
+configure_opentelemetry(app, service_name="fastapi-ai-saas", environment=environment)
+
+# ... (vos middlewares et routes)
+</code></pre>
+<h4 style="color: #7FA86E">Astuce non-évidente :</h4>
+<p>L'ordre d'initialisation est important : configurez <code>structlog</code> en premier, puis <code>OpenTelemetry</code>. Le processor <code>add_otel_trace_info</code> dans <code>structlog</code> doit être placé avant le <code>JSONRenderer</code> ou <code>ConsoleRenderer</code> pour que les IDs de trace et de span soient correctement ajoutés à l'<code>event_dict</code> avant le rendu final. Pour l'export OTLP, assurez-vous que votre collecteur OpenTelemetry est accessible et configuré pour recevoir les données sur le port par défaut (4317 pour gRPC).</p>
+<h4 style="color: #7FA86E">Erreurs Courantes à Éviter :</h4>
+<ul>
+<li>Oublier d'instrumenter une bibliothèque utilisée (ex: oubli de <code>RedisInstrumentor</code> si vous utilisez Redis).</li>
+<li>Ne pas configurer correctement l'exportateur (OTLP) en production, résultant en des traces qui ne sont pas envoyées.</li>
+<li>Des problèmes de corrélation (logs sans trace_id) si le processor structlog est mal placé ou si les IDs ne sont pas correctement extraits.</li>
+<li>Surcharger l'application avec trop de métriques ou de traces si le niveau de détail n'est pas ajusté.</li>
+</ul>
+<h4 style="color: #7FA86E">Repo GitHub de Référence :</h4>
+<ul>
+<li><a href="https://github.com/open-telemetry/opentelemetry-python" target="_blank">open-telemetry/opentelemetry-python - GitHub</a></li>
+</ul>
+<hr/><h2 id="heading-13" style="color: #cc9900">12. Error Tracking (Sentry-like) : Capture Intelligente des Exceptions</h2>
+<p>L'intégration d'un outil d'error tracking comme Sentry (ou une alternative open-source comme GlitchTip) est cruciale pour surveiller les erreurs en production. Il permet de détecter, de regrouper et de résoudre rapidement les problèmes, en fournissant un contexte détaillé de l'erreur.</p>
+<h3 style="color: #388278">Code Python Complet : <code>app/error_tracking.py</code></h3>
+<pre><code>
+# app/error_tracking.py
+import sentry_sdk
+from sentry_sdk.integrations.fastapi import FastAPIIntegration
+from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
+from sentry_sdk.integrations.redis import RedisIntegration
+from sentry_sdk.integrations.celery import CeleryIntegration
+import os
+import structlog
+from typing import Any, Dict
+
+logger = structlog.get_logger(__name__)
+
+def configure_sentry(app, dsn: Optional[str] = None, environment: str = "development", release: str = None):
+    if not dsn:
+        logger.info("Sentry DSN not provided, Sentry will not be initialized.")
+        return
+
+    sentry_sdk.init(
+        dsn=dsn,
+        environment=environment,
+        release=release,
+        integrations=[
+            FastAPIIntegration(transaction_style="endpoint"),
+            SqlalchemyIntegration(),
+            RedisIntegration(),
+            CeleryIntegration(), # Si Celery est dans le même processus ou bien configuré
+        ],
+        traces_sample_rate=1.0, # Ajustez le taux d'échantillonnage des traces en fonction de votre volume
+        profiles_sample_rate=1.0, # Ajustez le taux d'échantillonnage des profils
+        send_default_pii=True, # Envoyez les informations personnelles identifiables (PII) si nécessaire
+        server_name_from_host=True, # Utilise le hostname comme nom de serveur
+        max_breadcrumbs=50, # Nombre maximum de breadcrumbs à collecter
+        attach_stacktrace=True, # Attacher une stacktrace complète aux événements
+        # Filtrage de données sensibles (peut aussi être fait avec des Sentry.filters)
+        # before_send=filter_sentry_event,
+    )
+    logger.info("Sentry initialized successfully.")
+
+# Exemple de fonction pour ajouter du contexte utilisateur (à appeler après authentification)
+def set_sentry_user_context(user_id: str, email: Optional[str] = None):
+    sentry_sdk.set_user({"id": user_id, "email": email})
+
+# Exemple de fonction pour ajouter un contexte global (ex: request_id)
+def set_sentry_context(key: str, value: Any):
+    sentry_sdk.set_context(key, value)
+
+# Custom error handler for 500s (optional, Sentry handles most automatically)
+async def custom_internal_server_error_handler(request, exc):
+    # Sentry doit déjà avoir capturé l'erreur via l'intégration FastAPI
+    # Vous pouvez ajouter ici une logique supplémentaire ou un rendu de page d'erreur personnalisé
+    logger.error("Internal Server Error caught by custom handler", exc_info=True)
+    return JSONResponse(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        content={"message": "An unexpected error occurred. Please try again later.", "request_id": request.headers.get("X-Request-ID")}
+    )
+
+# Fonction pour intégrer le request_id et user_id des contextvars structlog dans Sentry
+def sentry_before_send(event: Dict[str, Any], hint: Dict[str, Any]) -&gt; Optional[Dict[str, Any]]:
+    # Tente de récupérer le request_id et user_id des contextvars de structlog
+    # ou de l'état de la requête si cela a été bind par un middleware précédent
+    request_id = structlog.contextvars.get_contextvars().get("request_id")
+    user_id = structlog.contextvars.get_contextvars().get("user_id")
+
+    if request_id:
+        if "contexts" not in event:
+            event["contexts"] = {}
+        event["contexts"]["request"] = {"id": request_id} # Sentry convention pour request ID
+    
+    if user_id:
+        if "user" not in event:
+            event["user"] = {}
+        event["user"]["id"] = user_id
+    
+    # Filtrer d'autres données sensibles avant d'envoyer à Sentry
+    if "request" in event and "data" in event["request"]:
+        if "password" in event["request"]["data"]:
+            event["request"]["data"]["password"] = "[FILTERED]"
+        if "token" in event["request"]["data"]:
+            event["request"]["data"]["token"] = "[FILTERED]"
+    
+    return event
+</code></pre>
+<h3 style="color: #388278">Intégration dans <code>main.py</code></h3>
+<pre><code>
+# main.py
+from fastapi import FastAPI, Request, status
+from fastapi.responses import JSONResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
+from app.error_tracking import configure_sentry, set_sentry_user_context, sentry_before_send, custom_internal_server_error_handler
+import os
+import sentry_sdk
+import structlog
+from sentry_sdk.integrations.logging import LoggingIntegration
+
+logger = structlog.get_logger(__name__)
+app = FastAPI()
+
+@app.on_event("startup")
+async def startup_event():
+    # Configure Sentry TÔT
+    sentry_dsn = os.getenv("SENTRY_DSN")
+    sentry_env = os.getenv("ENVIRONMENT", "development")
+    app_version = os.getenv("APP_VERSION", "1.0.0")
+    configure_sentry(app, dsn=sentry_dsn, environment=sentry_env, release=app_version)
+    
+    # Ajouter le processor sentry_before_send à Sentry
+    if sentry_dsn:
+        sentry_sdk.add_breadcrumb(
+            category="startup",
+            message="FastAPI application starting up",
+            level="info",
+        )
+        sentry_sdk.flush() # S'assurer que le breadcrumb est envoyé si l'app crash juste après
+
+    # Intégrer Sentry avec structlog (en envoyant les logs critiques à Sentry)
+    # C'est une approche pour ne pas tout envoyer, mais plutôt les erreurs structlog
+    # sentry_logging = LoggingIntegration(
+    #     level=logging.INFO,        # Capture logs &gt;= INFO
+    #     event_level=logging.ERROR  # Envoie seulement ERROR et CRITICAL à Sentry en tant qu'événements
+    # )
+    # sentry_sdk.add_integration(sentry_logging) # Déjà fait dans configure_sentry via integrations=[...]
+
+
+# Capture des exceptions non gérées
+@app.exception_handler(StarletteHTTPException)
+async def http_exception_handler(request: Request, exc: StarletteHTTPException):
+    # Sentry captera les erreurs FastAPI/Starlette automatiquement avec FastAPIIntegration
+    # Vous pouvez ajouter un logging structuré ici si nécessaire
+    logger.warning("HTTP Exception", status_code=exc.status_code, detail=exc.detail, request_id=request.headers.get("X-Request-ID"))
+    return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
+
+@app.exception_handler(Exception)
+async def catch_all_exception_handler(request: Request, exc: Exception):
+    # Sentry captera cette exception automatiquement
+    # Loggez l'erreur avec structlog avant de retourner la réponse d'erreur
+    logger.error("Unhandled Exception", exc_info=True, request_id=request.headers.get("X-Request-ID"), error_message=str(exc))
+    return await custom_internal_server_error_handler(request, exc)
+
+
+# Exemple d'utilisation dans une route
+@app.get("/trigger-error")
+async def trigger_error():
+    logger.info("Triggering a test error...")
+    1 / 0 # Ceci déclenchera une ZeroDivisionError
+</code></pre>
+<h4 style="color: #7FA86E">Astuce non-évidente :</h4>
+<p>L'argument <code>before_send</code> dans <code>sentry_sdk.init</code> est un hook puissant pour manipuler l'événement Sentry avant qu'il ne soit envoyé. C'est l'endroit idéal pour injecter des informations contextuelles supplémentaires (comme le <code>request_id</code> ou le <code>user_id</code> provenant de <code>structlog.contextvars</code> ou <code>request.state</code>) et pour filtrer des données sensibles qui auraient pu échapper aux filtres par défaut de Sentry. Pensez également à utiliser <code>sentry_sdk.add_breadcrumb</code> pour enregistrer des étapes importantes du parcours utilisateur ou du traitement, ce qui aide à comprendre l'historique avant une erreur.</p>
+<h4 style="color: #7FA86E">Erreurs Courantes à Éviter :</h4>
+<ul>
+<li>Oublier de configurer le DSN (Data Source Name) de Sentry en production, désactivant de fait le tracking.</li>
+<li>Des taux d'échantillonnage des traces (<code>traces_sample_rate</code>) trop bas pour les environnements où vous avez besoin d'une visibilité complète.</li>
+<li>Ne pas intégrer les contextes importants (<code>request_id</code>, <code>user_id</code>) dans Sentry, rendant le débogage plus difficile.</li>
+<li>Ne pas utiliser <code>before_send</code> pour filtrer des données sensibles qui pourraient se retrouver dans les stack traces ou les variables locales.</li>
+</ul>
+<h4 style="color: #7FA86E">Repo GitHub de Référence :</h4>
+<ul>
+<li><a href="https://github.com/getsentry/sentry-python" target="_blank">getsentry/sentry-python - GitHub</a></li>
+</ul>
+<div class="mermaid" style="width: 100%;">
+mindmap
+  root["Architecture FastAPI S+++ (2026)"]
+    Scalabilité
+      Database_Pooling["Connection Pooling (asyncpg)"]
+        pool_size["pool_size, max_overflow"]
+        pool_recycle["pool_recycle, pre_ping"]
+        metrics_pool["Metrics: active, idle, waiting"]
+      Rate_Limiting["API Rate Limiting (Sliding Window)"]
+        headers_ratelimit["X-RateLimit-* Headers"]
+        burst_allowance["Burst Allowance"]
+        whitelist_ips["Whitelist IPs"]
+      Compression["Gzip/Brotli Compression"]
+        threshold_size["Seuil de taille min"]
+        exclude_endpoints["Exclusion SSE, /metrics"]
+    Sécurité
+      Security_Headers["Security Headers Middleware"]
+        hsts["HSTS"]
+        csp["CSP"]
+        x_options["X-Content-Type-Options, X-Frame-Options, X-XSS-Protection"]
+        referrer_policy["Referrer-Policy"]
+        permissions_policy["Permissions-Policy"]
+      JWT_Auth["JWT Authentication"]
+        user_id_context["user_id injection (structlog, Sentry)"]
+    Observabilité
+      Structured_Logging["Structured Logging (structlog)"]
+        json_output["JSON (prod), human-readable (dev)"]
+        request_id_log["Request ID automatique"]
+        user_id_log["User ID injection"]
+        timing_perf["Performance Timing (duration)"]
+        sensitive_filter["Sensitive Data Filtering"]
+        log_levels["Log Levels par module"]
+      Request_ID["Request/Correlation ID Middleware"]
+        uuid4_generation["Génération UUID4"]
+        contextvars_storage["Stockage contextvars"]
+        header_propagation["X-Request-ID Header"]
+        celery_propagation["Celery Task Propagation"]
+      OpenTelemetry_Integration["OpenTelemetry (Traces &amp; Metrics)"]
+        auto_instrumentation["FastAPI, asyncpg, Redis, httpx"]
+        otlp_exporter["OTLP Collector (prod)"]
+        trace_log_correlation["trace_id/span_id dans logs"]
+      Error_Tracking["Error Tracking (Sentry-like)"]
+        auto_capture_500["Capture automatique 500"]
+        context_enrichment["Contexte: user_id, request_id, module, endpoint"]
+        breadcrumbs["Breadcrumbs"]
+        sensitive_data_sentry["Filtrage données sensibles"]
+    Résilience
+      Graceful_Shutdown["Arrêt Gracieux (FastAPI, Celery, asyncpg)"]
+        signal_handling["Signal Handlers (SIGTERM, SIGINT)"]
+        drain_http["Drain connexions HTTP"]
+        close_pools["Fermeture pools asyncpg"]
+        celery_warm_shutdown["Celery Warm Shutdown"]
+        docker_stopsignal["Docker STOPSIGNAL + grace_period"]
+      Circuit_Breaker["Circuit Breaker (AI Providers)"]
+        three_states["Closed, Open, Half-Open"]
+        failure_threshold["Seuil de défaillance configurable"]
+        fallback_logic["Fallback automatique (autres providers)"]
+        metrics_breaker["Metrics: circuit state, failure count"]
+      Health_Checks["Health Checks Avancés (K8s-ready)"]
+        liveness_probe["/health/live (app alive)"]
+        readiness_probe["/health/ready (DB, Redis)"]
+        startup_probe["/health/startup (migrations, modules chargés)"]
+</div>
+<script id="site_mindmap">mermaid.initialize({ startOnLoad: true });</script>
+<p style="text-align: center;"><i>Mindmap de l'architecture S+++ avec les composants clés et leurs interconnexions.</i></p>
+<p>Ce mindmap illustre l'interdépendance et le rôle de chaque composant architectural décrit dans ce guide. Il met en évidence comment les différentes couches (sécurité, observabilité, résilience, scalabilité) travaillent ensemble pour former une plateforme SaaS robuste et performante. La couleur des nœuds indique la catégorie générale d'amélioration, tandis que les sous-nœuds détaillent les fonctionnalités spécifiques.</p>
+<hr/><h2 id="heading-14" style="color: #cc9900">FAQ (Foire Aux Questions)</h2>
+<div class="faq-question">
+Comment puis-je tester l'efficacité de ces middlewares ?
+</div>
+<div class="faq-answer">
+Pour tester l'efficacité des middlewares, utilisez des outils comme Postman ou curl pour vérifier les en-têtes de réponse (Security Headers, Rate Limiting, Correlation ID). Pour la compression, comparez la taille des réponses avec et sans le middleware. Pour le circuit breaker, simulez des défaillances des services tiers. Pour le logging et OpenTelemetry, examinez vos logs et vos traces dans votre système d'observabilité (ex: Grafana, Kibana, Jaeger). Des tests unitaires et d'intégration sont également essentiels pour valider la logique de chaque middleware.
+</div>
+<div class="faq-question">
+Ces solutions sont-elles compatibles avec l'approche "modulaire" des 25 modules auto-découverts ?
+</div>
+<div class="faq-answer">
+Oui, absolument. Tous les middlewares et configurations proposés sont conçus pour être ajoutés à votre application FastAPI de manière modulaire, soit via <code>app.add_middleware()</code>, soit en incluant des routeurs spécifiques (pour les health checks), soit en configurant des initialisations au démarrage de l'application (lifespan, OpenTelemetry, Sentry). L'approche par <code>app.add_middleware()</code> ou <code>app.include_router()</code> assure que ces composants s'intègrent sans nécessiter de refactoring massif de vos modules existants.
+</div>
+<div class="faq-question">
+Quel est l'impact de toutes ces améliorations sur les performances ?
+</div>
+<div class="faq-answer">
+Chaque amélioration ajoute une légère surcharge (overhead). Cependant, les bénéfices en termes de sécurité, de résilience et d'observabilité compensent largement cette surcharge. De plus, certaines améliorations (compression, connection pooling) sont des optimisations de performance directes. Il est crucial de surveiller les performances (avec Prometheus et OpenTelemetry) après chaque ajout pour identifier et optimifier les éventuels goulots d'étranglement. Un bon équilibre doit être trouvé entre la sécurité/robustesse et les performances pures.
+</div>
+<div class="faq-question">
+Comment puis-je gérer les secrets (DSN Sentry, URL de base de données) de manière sécurisée ?
+</div>
+<div class="faq-answer">
+Utilisez des variables d'environnement (comme démontré avec <code>os.getenv()</code>) pour tous les secrets et configurations sensibles. En production, ces variables d'environnement doivent être injectées via votre orchestrateur (Kubernetes Secrets, Docker Compose secrets, HashiCorp Vault, AWS Secrets Manager, etc.). Ne jamais les commettre dans votre dépôt de code.
+</div>
+<div class="faq-question">
+Y a-t-il une limite au nombre de middlewares que l'on peut ajouter ?
+</div>
+<div class="faq-answer">
+Techniquement, il n'y a pas de limite stricte. Cependant, chaque middleware ajoute une couche de traitement à chaque requête, augmentant la latence. Une bonne pratique est de n'ajouter que les middlewares absolument nécessaires et d'optimiser leur ordre d'exécution pour minimiser l'impact. Les middlewares qui nécessitent des informations "propres" (ex: pas encore compressées, pas encore routées) devraient venir en premier, tandis que ceux qui agissent sur la réponse finale (ex: compression, security headers) peuvent venir plus tard.
+</div>
+<hr/><h2 id="heading-15" style="color: #cc9900">Conclusion</h2>
+<p>La transformation de votre plateforme SaaS IA en une architecture S+++ de niveau entreprise est un voyage qui implique une attention minutieuse aux détails, une compréhension approfondie des meilleures pratiques et une implémentation rigoureuse. Les solutions fournies dans ce guide, couvrant la sécurité, la scalabilité, l'observabilité et la résilience, sont des étapes concrètes vers cet objectif. En adoptant ces patterns et en les adaptant à votre contexte spécifique, vous construirez une application FastAPI capable de gérer des charges élevées, de résister aux défaillances et de fournir une expérience utilisateur exceptionnelle, tout en restant facile à maintenir et à déboguer.</p>
+<hr/><h2 id="heading-16" style="color: #cc9900">Recommandations</h2>
+<ul style="list-style-type: none; padding: 20px; background: transparent; width: 100%; margin: -20px;">
+<li class="no-bullet-item" style="margin: 15px 0; padding: 0; display: block;">
+<a href="/?query=Optimisation des performances FastAPI avec Gunicorn et Uvicorn" onmouseout="this.style.backgroundColor=\'#c90\'; this.style.transform=\'scale(1)\'" onmouseover="this.style.backgroundColor=\'#e0a800\'; this.style.transform=\'scale(1.02)\'" rel="noreferrer noopener nofollow" style="display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; text-decoration: none; color: white; background-color: #c90; border-radius: 15px; width: 100%; box-sizing: border-box; transition: all 0.2s ease;" target="_blank">
+<span>Optimisation des performances FastAPI avec Gunicorn et Uvicorn</span>
+<i class="fas fa-arrow-right" style="color: white; margin-left: 15px; font-size: 1.2em;"></i>
+</a>
+</li>
+<li class="no-bullet-item" style="margin: 15px 0; padding: 0; display: block;">
+<a href="/?query=Mise en place d'un pipeline CI/CD pour FastAPI avec Kubernetes" onmouseout="this.style.backgroundColor=\'#c90\'; this.style.transform=\'scale(1)\'" onmouseover="this.style.backgroundColor=\'#e0a800\'; this.style.transform=\'scale(1.02)\'" rel="noreferrer noopener nofollow" style="display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; text-decoration: none; color: white; background-color: #c90; border-radius: 15px; width: 100%; box-sizing: border-box; transition: all 0.2s ease;" target="_blank">
+<span>Mise en place d'un pipeline CI/CD pour FastAPI avec Kubernetes</span>
+<i class="fas fa-arrow-right" style="color: white; margin-left: 15px; font-size: 1.2em;"></i>
+</a>
+</li>
+<li class="no-bullet-item" style="margin: 15px 0; padding: 0; display: block;">
+<a href="/?query=Sécurisation avancée des API FastAPI avec OAuth2 et JWT" onmouseout="this.style.backgroundColor=\'#c90\'; this.style.transform=\'scale(1)\'" onmouseover="this.style.backgroundColor=\'#e0a800\'; this.style.transform=\'scale(1.02)\'" rel="noreferrer noopener nofollow" style="display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; text-decoration: none; color: white; background-color: #c90; border-radius: 15px; width: 100%; box-sizing: border-box; transition: all 0.2s ease;" target="_blank">
+<span>Sécurisation avancée des API FastAPI avec OAuth2 et JWT</span>
+<i class="fas fa-arrow-right" style="color: white; margin-left: 15px; font-size: 1.2em;"></i>
+</a>
+</li>
+<li class="no-bullet-item" style="margin: 15px 0; padding: 0; display: block;">
+<a href="/?query=Stratégies de monitoring et d'alerting pour FastAPI avec Prometheus et Grafana" onmouseout="this.style.backgroundColor=\'#c90\'; this.style.transform=\'scale(1)\'" onmouseover="this.style.backgroundColor=\'#e0a800\'; this.style.transform=\'scale(1.02)\'" rel="noreferrer noopener nofollow" style="display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; text-decoration: none; color: white; background-color: #c90; border-radius: 15px; width: 100%; box-sizing: border-box; transition: all 0.2s ease;" target="_blank">
+<span>Stratégies de monitoring et d'alerting pour FastAPI avec Prometheus et Grafana</span>
+<i class="fas fa-arrow-right" style="color: white; margin-left: 15px; font-size: 1.2em;"></i>
+</a>
+</li>
+</ul>
+<hr/><h2 id="heading-17" style="color: #cc9900">Résultats de recherche référencés</h2>
+<div class="search-results" style="margin: 30px 0; width: 100%;">
+<div class="search-result" style="margin-bottom: 20px; font-family: Arial, sans-serif;">
+<div style="display: flex; align-items: center; margin-bottom: 3px;">
+<img alt="" src="https://t3.gstatic.com/faviconV2?client=SOCIAL&amp;type=FAVICON&amp;fallback_opts=TYPE,SIZE,URL&amp;url=https://gist.github.com" style="width: 16px; height: 16px; margin: auto 10px;"/>
+<span class="search-result-title" style="font-size: 14px;">gist.github.com</span>
+</div>
+<a class="search-result-description" href="https://gist.github.com/joshschmelzle/e44b4476261d3bc641ceda89aa29f00d" rel="noreferrer noopener nofollow" style="font-size: 18px; text-decoration: none; display: block; margin: 0 0 3px 36px; font-weight: 400; line-height: 1.3;" target="_blank">
+                                    Logging setup for FastAPI, Uvicorn and Structlog (with Datadog ... - Gist
+                                </a>
+</div>
+<div class="search-result" style="margin-bottom: 20px; font-family: Arial, sans-serif;">
+<div style="display: flex; align-items: center; margin-bottom: 3px;">
+<img alt="" src="https://t3.gstatic.com/faviconV2?client=SOCIAL&amp;type=FAVICON&amp;fallback_opts=TYPE,SIZE,URL&amp;url=https://wazaari.dev" style="width: 16px; height: 16px; margin: auto 10px;"/>
+<span class="search-result-title" style="font-size: 14px;">wazaari.dev</span>
+</div>
+<a class="search-result-description" href="https://wazaari.dev/blog/fastapi-structlog-integration" rel="noreferrer noopener nofollow" style="font-size: 18px; text-decoration: none; display: block; margin: 0 0 3px 36px; font-weight: 400; line-height: 1.3;" target="_blank">
+                                    Integrating FastAPI with Structlog - Yet Another Techblog
+                                </a>
+</div>
+<div class="search-result" style="margin-bottom: 20px; font-family: Arial, sans-serif;">
+<div style="display: flex; align-items: center; margin-bottom: 3px;">
+<img alt="" src="https://t3.gstatic.com/faviconV2?client=SOCIAL&amp;type=FAVICON&amp;fallback_opts=TYPE,SIZE,URL&amp;url=https://oneuptime.com" style="width: 16px; height: 16px; margin: auto 10px;"/>
+<span class="search-result-title" style="font-size: 14px;">oneuptime.com</span>
+</div>
+<a class="search-result-description" href="https://oneuptime.com/blog/post/2026-02-02-fastapi-structured-logging/view" rel="noreferrer noopener nofollow" style="font-size: 18px; text-decoration: none; display: block; margin: 0 0 3px 36px; font-weight: 400; line-height: 1.3;" target="_blank">
+                                    How to Add Structured Logging to FastAPI - OneUptime
+                                </a>
+</div>
+<div class="search-result" style="margin-bottom: 20px; font-family: Arial, sans-serif;">
+<div style="display: flex; align-items: center; margin-bottom: 3px;">
+<img alt="" src="https://t3.gstatic.com/faviconV2?client=SOCIAL&amp;type=FAVICON&amp;fallback_opts=TYPE,SIZE,URL&amp;url=https://apitally.io" style="width: 16px; height: 16px; margin: auto 10px;"/>
+<span class="search-result-title" style="font-size: 14px;">apitally.io</span>
+</div>
+<a class="search-result-description" href="https://apitally.io/blog/fastapi-logging-guide" rel="noreferrer noopener nofollow" style="font-size: 18px; text-decoration: none; display: block; margin: 0 0 3px 36px; font-weight: 400; line-height: 1.3;" target="_blank">
+                                    A complete guide to logging in FastAPI - Apitally Blog
+                                </a>
+</div>
+<div class="search-result" style="margin-bottom: 20px; font-family: Arial, sans-serif;">
+<div style="display: flex; align-items: center; margin-bottom: 3px;">
+<img alt="" src="https://t3.gstatic.com/faviconV2?client=SOCIAL&amp;type=FAVICON&amp;fallback_opts=TYPE,SIZE,URL&amp;url=https://github.com" style="width: 16px; height: 16px; margin: auto 10px;"/>
+<span class="search-result-title" style="font-size: 14px;">github.com</span>
+</div>
+<a class="search-result-description" href="https://github.com/snok/asgi-correlation-id" rel="noreferrer noopener nofollow" style="font-size: 18px; text-decoration: none; display: block; margin: 0 0 3px 36px; font-weight: 400; line-height: 1.3;" target="_blank">
+                                    snok/asgi-correlation-id: Request ID propagation for ASGI apps - GitHub
+                                </a>
+</div>
+<div class="search-result" style="margin-bottom: 20px; font-family: Arial, sans-serif;">
+<div style="display: flex; align-items: center; margin-bottom: 3px;">
+<img alt="" src="https://t3.gstatic.com/faviconV2?client=SOCIAL&amp;type=FAVICON&amp;fallback_opts=TYPE,SIZE,URL&amp;url=https://ouassim.tech" style="width: 16px; height: 16px; margin: auto 10px;"/>
+<span class="search-result-title" style="font-size: 14px;">ouassim.tech</span>
+</div>
+<a class="search-result-description" href="https://ouassim.tech/notes/setting-up-structured-logging-in-fastapi-with-structlog/" rel="noreferrer noopener nofollow" style="font-size: 18px; text-decoration: none; display: block; margin: 0 0 3px 36px; font-weight: 400; line-height: 1.3;" target="_blank">
+                                    Setting Up Structured Logging in FastAPI with structlog - Ouassim G.
+                                </a>
+</div>
+<div class="search-result" style="margin-bottom: 20px; font-family: Arial, sans-serif;">
+<div style="display: flex; align-items: center; margin-bottom: 3px;">
+<img alt="" src="https://t3.gstatic.com/faviconV2?client=SOCIAL&amp;type=FAVICON&amp;fallback_opts=TYPE,SIZE,URL&amp;url=https://fastapi.tiangolo.com" style="width: 16px; height: 16px; margin: auto 10px;"/>
+<span class="search-result-title" style="font-size: 14px;">fastapi.tiangolo.com</span>
+</div>
+<a class="search-result-description" href="https://fastapi.tiangolo.com/advanced/middleware/" rel="noreferrer noopener nofollow" style="font-size: 18px; text-decoration: none; display: block; margin: 0 0 3px 36px; font-weight: 400; line-height: 1.3;" target="_blank">
+                                    Advanced Middleware - FastAPI
+                                </a>
+</div>
+<div class="search-result" style="margin-bottom: 20px; font-family: Arial, sans-serif;">
+<div style="display: flex; align-items: center; margin-bottom: 3px;">
+<img alt="" src="https://t3.gstatic.com/faviconV2?client=SOCIAL&amp;type=FAVICON&amp;fallback_opts=TYPE,SIZE,URL&amp;url=https://github.com" style="width: 16px; height: 16px; margin: auto 10px;"/>
+<span class="search-result-title" style="font-size: 14px;">github.com</span>
+</div>
+<a class="search-result-description" href="https://github.com/fullonic/brotli-asgi" rel="noreferrer noopener nofollow" style="font-size: 18px; text-decoration: none; display: block; margin: 0 0 3px 36px; font-weight: 400; line-height: 1.3;" target="_blank">
+                                    fullonic/brotli-asgi: A compression AGSI middleware using brotli. - GitHub
+                                </a>
+</div>
+<div class="search-result" style="margin-bottom: 20px; font-family: Arial, sans-serif;">
+<div style="display: flex; align-items: center; margin-bottom: 3px;">
+<img alt="" src="https://t3.gstatic.com/faviconV2?client=SOCIAL&amp;type=FAVICON&amp;fallback_opts=TYPE,SIZE,URL&amp;url=https://oneuptime.com" style="width: 16px; height: 16px; margin: auto 10px;"/>
+<span class="search-result-title" style="font-size: 14px;">oneuptime.com</span>
+</div>
+<a class="search-result-description" href="https://oneuptime.com/blog/post/2026-02-02-fastapi-async-database/view" rel="noreferrer noopener nofollow" style="font-size: 18px; text-decoration: none; display: block; margin: 0 0 3px 36px; font-weight: 400; line-height: 1.3;" target="_blank">
+                                    How to Use Async Database Connections in FastAPI - OneUptime
+                                </a>
+</div>
+<div class="search-result" style="margin-bottom: 20px; font-family: Arial, sans-serif;">
+<div style="display: flex; align-items: center; margin-bottom: 3px;">
+<img alt="" src="https://t3.gstatic.com/faviconV2?client=SOCIAL&amp;type=FAVICON&amp;fallback_opts=TYPE,SIZE,URL&amp;url=https://python.plainenglish.io" style="width: 16px; height: 16px; margin: auto 10px;"/>
+<span class="search-result-title" style="font-size: 14px;">python.plainenglish.io</span>
+</div>
+<a class="search-result-description" href="https://python.plainenglish.io/database-connections-in-fastapi-best-practices-for-efficient-and-scalable-apis-eb0867ed9e7c" rel="noreferrer noopener nofollow" style="font-size: 18px; text-decoration: none; display: block; margin: 0 0 3px 36px; font-weight: 400; line-height: 1.3;" target="_blank">
+                                    Database Connections in FastAPI: Best Practices for Efficient and ... - Plainenglish.io
+                                </a>
+</div>
+<div class="search-result" style="margin-bottom: 20px; font-family: Arial, sans-serif;">
+<div style="display: flex; align-items: center; margin-bottom: 3px;">
+<img alt="" src="https://t3.gstatic.com/faviconV2?client=SOCIAL&amp;type=FAVICON&amp;fallback_opts=TYPE,SIZE,URL&amp;url=https://weirdsheeplabs.com" style="width: 16px; height: 16px; margin: auto 10px;"/>
+<span class="search-result-title" style="font-size: 14px;">weirdsheeplabs.com</span>
+</div>
+<a class="search-result-description" href="https://weirdsheeplabs.com/blog/fast-and-furious-async-testing-with-fastapi-and-pytest" rel="noreferrer noopener nofollow" style="font-size: 18px; text-decoration: none; display: block; margin: 0 0 3px 36px; font-weight: 400; line-height: 1.3;" target="_blank">
+                                    Fast and furious: async testing with FastAPI and pytest
+                                </a>
+</div>
+<div class="search-result" style="margin-bottom: 20px; font-family: Arial, sans-serif;">
+<div style="display: flex; align-items: center; margin-bottom: 3px;">
+<img alt="" src="https://t3.gstatic.com/faviconV2?client=SOCIAL&amp;type=FAVICON&amp;fallback_opts=TYPE,SIZE,URL&amp;url=https://structlog.org" style="width: 16px; height: 16px; margin: auto 10px;"/>
+<span class="search-result-title" style="font-size: 14px;">structlog.org</span>
+</div>
+<a class="search-result-description" href="https://www.structlog.org/en/latest/contextvars.html" rel="noreferrer noopener nofollow" style="font-size: 18px; text-decoration: none; display: block; margin: 0 0 3px 36px; font-weight: 400; line-height: 1.3;" target="_blank">
+                                    Context Variables — structlog UNRELEASED documentation
+                                </a>
+</div>
+<div class="search-result" style="margin-bottom: 20px; font-family: Arial, sans-serif;">
+<div style="display: flex; align-items: center; margin-bottom: 3px;">
+<img alt="" src="https://t3.gstatic.com/faviconV2?client=SOCIAL&amp;type=FAVICON&amp;fallback_opts=TYPE,SIZE,URL&amp;url=https://blog.stackademic.com" style="width: 16px; height: 16px; margin: auto 10px;"/>
+<span class="search-result-title" style="font-size: 14px;">blog.stackademic.com</span>
+</div>
+<a class="search-result-description" href="https://blog.stackademic.com/a-deep-dive-into-asynchronous-request-handling-and-concurrency-patterns-in-fastapi-699393bb3845" rel="noreferrer noopener nofollow" style="font-size: 18px; text-decoration: none; display: block; margin: 0 0 3px 36px; font-weight: 400; line-height: 1.3;" target="_blank">
+                                    A Deep Dive into Asynchronous Request Handling ... - Stackademic
+                                </a>
+</div>
+<div class="search-result" style="margin-bottom: 20px; font-family: Arial, sans-serif;">
+<div style="display: flex; align-items: center; margin-bottom: 3px;">
+<img alt="" src="https://t3.gstatic.com/faviconV2?client=SOCIAL&amp;type=FAVICON&amp;fallback_opts=TYPE,SIZE,URL&amp;url=https://stackoverflow.com" style="width: 16px; height: 16px; margin: auto 10px;"/>
+<span class="search-result-title" style="font-size: 14px;">stackoverflow.com</span>
+</div>
+<a class="search-result-description" href="https://stackoverflow.com/questions/69967439/asyncpg-fastapi-creating-more-connection-than-pool-limit" rel="noreferrer noopener nofollow" style="font-size: 18px; text-decoration: none; display: block; margin: 0 0 3px 36px; font-weight: 400; line-height: 1.3;" target="_blank">
+                                    asyncpg/fastapi creating more connection than pool limit
+                                </a>
+</div>
+<div class="search-result" style="margin-bottom: 20px; font-family: Arial, sans-serif;">
+<div style="display: flex; align-items: center; margin-bottom: 3px;">
+<img alt="" src="https://t3.gstatic.com/faviconV2?client=SOCIAL&amp;type=FAVICON&amp;fallback_opts=TYPE,SIZE,URL&amp;url=https://medium.com" style="width: 16px; height: 16px; margin: auto 10px;"/>
+<span class="search-result-title" style="font-size: 14px;">medium.com</span>
+</div>
+<a class="search-result-description" href="https://medium.com/@bhagyarana80/how-i-achieved-millisecond-level-latency-in-fastapi-with-http-3-and-brotli-compression-c1f686cf5c42" rel="noreferrer noopener nofollow" style="font-size: 18px; text-decoration: none; display: block; margin: 0 0 3px 36px; font-weight: 400; line-height: 1.3;" target="_blank">
+                                    How I Achieved Millisecond-Level Latency in FastAPI with HTTP/3 ...
+                                </a>
+</div>
+<div class="search-result" style="margin-bottom: 20px; font-family: Arial, sans-serif;">
+<div style="display: flex; align-items: center; margin-bottom: 3px;">
+<img alt="" src="https://t3.gstatic.com/faviconV2?client=SOCIAL&amp;type=FAVICON&amp;fallback_opts=TYPE,SIZE,URL&amp;url=https://pypi.org" style="width: 16px; height: 16px; margin: auto 10px;"/>
+<span class="search-result-title" style="font-size: 14px;">pypi.org</span>
+</div>
+<a class="search-result-description" href="https://pypi.org/project/fastapi-structlog/" rel="noreferrer noopener nofollow" style="font-size: 18px; text-decoration: none; display: block; margin: 0 0 3px 36px; font-weight: 400; line-height: 1.3;" target="_blank">
+                                    fastapi-structlog · PyPI
+                                </a>
+</div>
+<div class="search-result" style="margin-bottom: 20px; font-family: Arial, sans-serif;">
+<div style="display: flex; align-items: center; margin-bottom: 3px;">
+<img alt="" src="https://t3.gstatic.com/faviconV2?client=SOCIAL&amp;type=FAVICON&amp;fallback_opts=TYPE,SIZE,URL&amp;url=https://github.com" style="width: 16px; height: 16px; margin: auto 10px;"/>
+<span class="search-result-title" style="font-size: 14px;">github.com</span>
+</div>
+<a class="search-result-description" href="https://github.com/rennf93/fastapi-guard" rel="noreferrer noopener nofollow" style="font-size: 18px; text-decoration: none; display: block; margin: 0 0 3px 36px; font-weight: 400; line-height: 1.3;" target="_blank">
+                                    GitHub - rennf93/fastapi-guard: A security library for FastAPI that provides middleware to control IPs, log requests, and detect penetration attempts. It integrates seamlessly with FastAPI to offer robust protection against various security threats. · GitHub
+                                </a>
+</div>
+<div class="search-result" style="margin-bottom: 20px; font-family: Arial, sans-serif;">
+<div style="display: flex; align-items: center; margin-bottom: 3px;">
+<img alt="" src="https://t3.gstatic.com/faviconV2?client=SOCIAL&amp;type=FAVICON&amp;fallback_opts=TYPE,SIZE,URL&amp;url=https://github.com" style="width: 16px; height: 16px; margin: auto 10px;"/>
+<span class="search-result-title" style="font-size: 14px;">github.com</span>
+</div>
+<a class="search-result-description" href="https://github.com/fastapi/fastapi/issues/397" rel="noreferrer noopener nofollow" style="font-size: 18px; text-decoration: none; display: block; margin: 0 0 3px 36px; font-weight: 400; line-height: 1.3;" target="_blank">
+                                    How can I implement a Correlation ID middleware? · Issue #397 ...
+                                </a>
+</div>
+<div class="search-result" style="margin-bottom: 20px; font-family: Arial, sans-serif;">
+<div style="display: flex; align-items: center; margin-bottom: 3px;">
+<img alt="" src="https://t3.gstatic.com/faviconV2?client=SOCIAL&amp;type=FAVICON&amp;fallback_opts=TYPE,SIZE,URL&amp;url=https://medium.com" style="width: 16px; height: 16px; margin: auto 10px;"/>
+<span class="search-result-title" style="font-size: 14px;">medium.com</span>
+</div>
+<a class="search-result-description" href="https://medium.com/@sizanmahmud08/securing-your-fastapi-application-with-middleware-a-production-ready-guide-part-2-8a6914f56e24" rel="noreferrer noopener nofollow" style="font-size: 18px; text-decoration: none; display: block; margin: 0 0 3px 36px; font-weight: 400; line-height: 1.3;" target="_blank">
+                                    Securing Your FastAPI Application with Middleware: A Production-Ready Guide (Part 2) | by Sizan Mahmud | Medium
+                                </a>
+</div>
+<div class="search-result" style="margin-bottom: 20px; font-family: Arial, sans-serif;">
+<div style="display: flex; align-items: center; margin-bottom: 3px;">
+<img alt="" src="https://t3.gstatic.com/faviconV2?client=SOCIAL&amp;type=FAVICON&amp;fallback_opts=TYPE,SIZE,URL&amp;url=https://signoz.io" style="width: 16px; height: 16px; margin: auto 10px;"/>
+<span class="search-result-title" style="font-size: 14px;">signoz.io</span>
+</div>
+<a class="search-result-description" href="https://signoz.io/guides/structlog/" rel="noreferrer noopener nofollow" style="font-size: 18px; text-decoration: none; display: block; margin: 0 0 3px 36px; font-weight: 400; line-height: 1.3;" target="_blank">
+                                    Complete Guide to Logging with StructLog in Python | SigNoz
+                                </a>
+</div>
+<div class="search-result" style="margin-bottom: 20px; font-family: Arial, sans-serif;">
+<div style="display: flex; align-items: center; margin-bottom: 3px;">
+<img alt="" src="https://t3.gstatic.com/faviconV2?client=SOCIAL&amp;type=FAVICON&amp;fallback_opts=TYPE,SIZE,URL&amp;url=https://testdriven.io" style="width: 16px; height: 16px; margin: auto 10px;"/>
+<span class="search-result-title" style="font-size: 14px;">testdriven.io</span>
+</div>
+<a class="search-result-description" href="https://testdriven.io/blog/fastapi-sqlmodel/" rel="noreferrer noopener nofollow" style="font-size: 18px; text-decoration: none; display: block; margin: 0 0 3px 36px; font-weight: 400; line-height: 1.3;" target="_blank">
+                                    FastAPI with Async SQLAlchemy, SQLModel, and Alembic
+                                </a>
+</div>
+<div class="search-result" style="margin-bottom: 20px; font-family: Arial, sans-serif;">
+<div style="display: flex; align-items: center; margin-bottom: 3px;">
+<img alt="" src="https://t3.gstatic.com/faviconV2?client=SOCIAL&amp;type=FAVICON&amp;fallback_opts=TYPE,SIZE,URL&amp;url=https://fastapi.tiangolo.com" style="width: 16px; height: 16px; margin: auto 10px;"/>
+<span class="search-result-title" style="font-size: 14px;">fastapi.tiangolo.com</span>
+</div>
+<a class="search-result-description" href="https://fastapi.tiangolo.com/tutorial/middleware/" rel="noreferrer noopener nofollow" style="font-size: 18px; text-decoration: none; display: block; margin: 0 0 3px 36px; font-weight: 400; line-height: 1.3;" target="_blank">
+                                    Middleware - FastAPI
+                                </a>
+</div>
+<div class="search-result" style="margin-bottom: 20px; font-family: Arial, sans-serif;">
+<div style="display: flex; align-items: center; margin-bottom: 3px;">
+<img alt="" src="https://t3.gstatic.com/faviconV2?client=SOCIAL&amp;type=FAVICON&amp;fallback_opts=TYPE,SIZE,URL&amp;url=https://leapcell.io" style="width: 16px; height: 16px; margin: auto 10px;"/>
+<span class="search-result-title" style="font-size: 14px;">leapcell.io</span>
+</div>
+<a class="search-result-description" href="https://leapcell.io/blog/building-high-performance-async-apis-with-fastapi-sqlalchemy-2-0-and-asyncpg" rel="noreferrer noopener nofollow" style="font-size: 18px; text-decoration: none; display: block; margin: 0 0 3px 36px; font-weight: 400; line-height: 1.3;" target="_blank">
+                                    Building High-Performance Async APIs with FastAPI, SQLAlchemy ...
+                                </a>
+</div>
+<div class="search-result" style="margin-bottom: 20px; font-family: Arial, sans-serif;">
+<div style="display: flex; align-items: center; margin-bottom: 3px;">
+<img alt="" src="https://t3.gstatic.com/faviconV2?client=SOCIAL&amp;type=FAVICON&amp;fallback_opts=TYPE,SIZE,URL&amp;url=https://medium.com" style="width: 16px; height: 16px; margin: auto 10px;"/>
+<span class="search-result-title" style="font-size: 14px;">medium.com</span>
+</div>
+<a class="search-result-description" href="https://medium.com/@abipoongodi1211/fastapi-best-practices-a-complete-guide-for-building-production-ready-apis-bb27062d7617" rel="noreferrer noopener nofollow" style="font-size: 18px; text-decoration: none; display: block; margin: 0 0 3px 36px; font-weight: 400; line-height: 1.3;" target="_blank">
+                                    FastAPI Best Practices: A Complete Guide for Building Production ...
+                                </a>
+</div>
+<div class="search-result" style="margin-bottom: 20px; font-family: Arial, sans-serif;">
+<div style="display: flex; align-items: center; margin-bottom: 3px;">
+<img alt="" src="https://t3.gstatic.com/faviconV2?client=SOCIAL&amp;type=FAVICON&amp;fallback_opts=TYPE,SIZE,URL&amp;url=https://semaphore.io" style="width: 16px; height: 16px; margin: auto 10px;"/>
+<span class="search-result-title" style="font-size: 14px;">semaphore.io</span>
+</div>
+<a class="search-result-description" href="https://semaphore.io/blog/custom-middleware-fastapi" rel="noreferrer noopener nofollow" style="font-size: 18px; text-decoration: none; display: block; margin: 0 0 3px 36px; font-weight: 400; line-height: 1.3;" target="_blank">
+                                    Building Custom Middleware in FastAPI - Semaphore
+                                </a>
+</div>
+<div class="search-result" style="margin-bottom: 20px; font-family: Arial, sans-serif;">
+<div style="display: flex; align-items: center; margin-bottom: 3px;">
+<img alt="" src="https://t3.gstatic.com/faviconV2?client=SOCIAL&amp;type=FAVICON&amp;fallback_opts=TYPE,SIZE,URL&amp;url=https://stackoverflow.com" style="width: 16px; height: 16px; margin: auto 10px;"/>
+<span class="search-result-title" style="font-size: 14px;">stackoverflow.com</span>
+</div>
+<a class="search-result-description" href="https://stackoverflow.com/questions/61153498/what-is-the-good-way-to-provide-an-authentication-in-fastapi" rel="noreferrer noopener nofollow" style="font-size: 18px; text-decoration: none; display: block; margin: 0 0 3px 36px; font-weight: 400; line-height: 1.3;" target="_blank">
+                                    What is the good way to provide an authentication in FASTAPI? - Stack Overflow
+                                </a>
+</div>
+<div class="search-result" style="margin-bottom: 20px; font-family: Arial, sans-serif;">
+<div style="display: flex; align-items: center; margin-bottom: 3px;">
+<img alt="" src="https://t3.gstatic.com/faviconV2?client=SOCIAL&amp;type=FAVICON&amp;fallback_opts=TYPE,SIZE,URL&amp;url=https://propelauth.com" style="width: 16px; height: 16px; margin: auto 10px;"/>
+<span class="search-result-title" style="font-size: 14px;">propelauth.com</span>
+</div>
+<a class="search-result-description" href="https://www.propelauth.com/post/fastapi-auth-with-dependency-injection" rel="noreferrer noopener nofollow" style="font-size: 18px; text-decoration: none; display: block; margin: 0 0 3px 36px; font-weight: 400; line-height: 1.3;" target="_blank">
+                                    FastAPI Auth with Dependency Injection | PropelAuth
+                                </a>
+</div>
+<div class="search-result" style="margin-bottom: 20px; font-family: Arial, sans-serif;">
+<div style="display: flex; align-items: center; margin-bottom: 3px;">
+<img alt="" src="https://t3.gstatic.com/faviconV2?client=SOCIAL&amp;type=FAVICON&amp;fallback_opts=TYPE,SIZE,URL&amp;url=https://davidmuraya.com" style="width: 16px; height: 16px; margin: auto 10px;"/>
+<span class="search-result-title" style="font-size: 14px;">davidmuraya.com</span>
+</div>
+<a class="search-result-description" href="https://davidmuraya.com/blog/fastapi-security-guide/" rel="noreferrer noopener nofollow" style="font-size: 18px; text-decoration: none; display: block; margin: 0 0 3px 36px; font-weight: 400; line-height: 1.3;" target="_blank">
+                                    A Practical Guide to FastAPI Security
+                                </a>
+</div>
+<div class="search-result" style="margin-bottom: 20px; font-family: Arial, sans-serif;">
+<div style="display: flex; align-items: center; margin-bottom: 3px;">
+<img alt="" src="https://t3.gstatic.com/faviconV2?client=SOCIAL&amp;type=FAVICON&amp;fallback_opts=TYPE,SIZE,URL&amp;url=https://medium.com" style="width: 16px; height: 16px; margin: auto 10px;"/>
+<span class="search-result-title" style="font-size: 14px;">medium.com</span>
+</div>
+<a class="search-result-description" href="https://medium.com/@hadiyolworld007/fastapi-brotli-gzip-negotiation-smaller-payloads-faster-apis-zero-client-changes-e648b2a1b0d5" rel="noreferrer noopener nofollow" style="font-size: 18px; text-decoration: none; display: block; margin: 0 0 3px 36px; font-weight: 400; line-height: 1.3;" target="_blank">
+                                    FastAPI + Brotli/Gzip Negotiation: Smaller Payloads, Faster APIs ...
+                                </a>
+</div>
+<div class="search-result" style="margin-bottom: 20px; font-family: Arial, sans-serif;">
+<div style="display: flex; align-items: center; margin-bottom: 3px;">
+<img alt="" src="https://t3.gstatic.com/faviconV2?client=SOCIAL&amp;type=FAVICON&amp;fallback_opts=TYPE,SIZE,URL&amp;url=https://linkedin.com" style="width: 16px; height: 16px; margin: auto 10px;"/>
+<span class="search-result-title" style="font-size: 14px;">linkedin.com</span>
+</div>
+<a class="search-result-description" href="https://www.linkedin.com/pulse/best-practices-creating-fastapi-postgresql-connection-parasuraman-359uc" rel="noreferrer noopener nofollow" style="font-size: 18px; text-decoration: none; display: block; margin: 0 0 3px 36px; font-weight: 400; line-height: 1.3;" target="_blank">
+                                    Best Practices for Creating a FastAPI and PostgreSQL Connection
+                                </a>
+</div>
+<div class="search-result" style="margin-bottom: 20px; font-family: Arial, sans-serif;">
+<div style="display: flex; align-items: center; margin-bottom: 3px;">
+<img alt="" src="https://t3.gstatic.com/faviconV2?client=SOCIAL&amp;type=FAVICON&amp;fallback_opts=TYPE,SIZE,URL&amp;url=https://shipsafer.app" style="width: 16px; height: 16px; margin: auto 10px;"/>
+<span class="search-result-title" style="font-size: 14px;">shipsafer.app</span>
+</div>
+<a class="search-result-description" href="https://www.shipsafer.app/blog/fastapi-security-guide" rel="noreferrer noopener nofollow" style="font-size: 18px; text-decoration: none; display: block; margin: 0 0 3px 36px; font-weight: 400; line-height: 1.3;" target="_blank">
+                                    FastAPI Security Guide: Auth, Input Validation, and OWASP Best Practices — ShipSafer
+                                </a>
+</div>
+<div class="search-result" style="margin-bottom: 20px; font-family: Arial, sans-serif;">
+<div style="display: flex; align-items: center; margin-bottom: 3px;">
+<img alt="" src="https://t3.gstatic.com/faviconV2?client=SOCIAL&amp;type=FAVICON&amp;fallback_opts=TYPE,SIZE,URL&amp;url=https://medium.com" style="width: 16px; height: 16px; margin: auto 10px;"/>
+<span class="search-result-title" style="font-size: 14px;">medium.com</span>
+</div>
+<a class="search-result-description" href="https://medium.com/@diwasb54/building-a-bulletproof-fastapi-middleware-stack-from-development-to-production-in-one-framework-36227c7cc5a3" rel="noreferrer noopener nofollow" style="font-size: 18px; text-decoration: none; display: block; margin: 0 0 3px 36px; font-weight: 400; line-height: 1.3;" target="_blank">
+                                    Building a Bulletproof FastAPI Middleware Stack: From ... - Medium
+                                </a>
+</div>
+<div class="search-result" style="margin-bottom: 20px; font-family: Arial, sans-serif;">
+<div style="display: flex; align-items: center; margin-bottom: 3px;">
+<img alt="" src="https://t3.gstatic.com/faviconV2?client=SOCIAL&amp;type=FAVICON&amp;fallback_opts=TYPE,SIZE,URL&amp;url=https://medium.com" style="width: 16px; height: 16px; margin: auto 10px;"/>
+<span class="search-result-title" style="font-size: 14px;">medium.com</span>
+</div>
+<a class="search-result-description" href="https://medium.com/@devendra631995/starlette-with-fastapi-understanding-the-foundation-and-adding-correlation-ids-for-179c5c65b2d1" rel="noreferrer noopener nofollow" style="font-size: 18px; text-decoration: none; display: block; margin: 0 0 3px 36px; font-weight: 400; line-height: 1.3;" target="_blank">
+                                    Starlette With FastAPI - And Adding Correlation IDs for… - Medium
+                                </a>
+</div>
+<div class="search-result" style="margin-bottom: 20px; font-family: Arial, sans-serif;">
+<div style="display: flex; align-items: center; margin-bottom: 3px;">
+<img alt="" src="https://t3.gstatic.com/faviconV2?client=SOCIAL&amp;type=FAVICON&amp;fallback_opts=TYPE,SIZE,URL&amp;url=https://oneuptime.com" style="width: 16px; height: 16px; margin: auto 10px;"/>
+<span class="search-result-title" style="font-size: 14px;">oneuptime.com</span>
+</div>
+<a class="search-result-description" href="https://oneuptime.com/blog/post/2026-02-02-fastapi-middleware/view" rel="noreferrer noopener nofollow" style="font-size: 18px; text-decoration: none; display: block; margin: 0 0 3px 36px; font-weight: 400; line-height: 1.3;" target="_blank">
+                                    How to Add Middleware to FastAPI - OneUptime
+                                </a>
+</div>
+<div class="search-result" style="margin-bottom: 20px; font-family: Arial, sans-serif;">
+<div style="display: flex; align-items: center; margin-bottom: 3px;">
+<img alt="" src="https://t3.gstatic.com/faviconV2?client=SOCIAL&amp;type=FAVICON&amp;fallback_opts=TYPE,SIZE,URL&amp;url=https://fastapi-guard.com" style="width: 16px; height: 16px; margin: auto 10px;"/>
+<span class="search-result-title" style="font-size: 14px;">fastapi-guard.com</span>
+</div>
+<a class="search-result-description" href="https://fastapi-guard.com/" rel="noreferrer noopener nofollow" style="font-size: 18px; text-decoration: none; display: block; margin: 0 0 3px 36px; font-weight: 400; line-height: 1.3;" target="_blank">
+                                    FastAPI Guard - Enterprise Security Middleware for FastAPI
+                                </a>
+</div>
+<div class="search-result" style="margin-bottom: 20px; font-family: Arial, sans-serif;">
+<div style="display: flex; align-items: center; margin-bottom: 3px;">
+<img alt="" src="https://t3.gstatic.com/faviconV2?client=SOCIAL&amp;type=FAVICON&amp;fallback_opts=TYPE,SIZE,URL&amp;url=https://github.com" style="width: 16px; height: 16px; margin: auto 10px;"/>
+<span class="search-result-title" style="font-size: 14px;">github.com</span>
+</div>
+<a class="search-result-description" href="https://github.com/fastapi/fastapi/discussions/9097" rel="noreferrer noopener nofollow" style="font-size: 18px; text-decoration: none; display: block; margin: 0 0 3px 36px; font-weight: 400; line-height: 1.3;" target="_blank">
+                                    How to maintain global pool of db connection and use it in each and ...
+                                </a>
+</div>
+<div class="search-result" style="margin-bottom: 20px; font-family: Arial, sans-serif;">
+<div style="display: flex; align-items: center; margin-bottom: 3px;">
+<img alt="" src="https://t3.gstatic.com/faviconV2?client=SOCIAL&amp;type=FAVICON&amp;fallback_opts=TYPE,SIZE,URL&amp;url=https://medium.com" style="width: 16px; height: 16px; margin: auto 10px;"/>
+<span class="search-result-title" style="font-size: 14px;">medium.com</span>
+</div>
+<a class="search-result-description" href="https://medium.com/@bhagyarana80/fastapi-with-asyncpostgres-lower-latency-through-native-drivers-ca69ad941cb8" rel="noreferrer noopener nofollow" style="font-size: 18px; text-decoration: none; display: block; margin: 0 0 3px 36px; font-weight: 400; line-height: 1.3;" target="_blank">
+                                    FastAPI with AsyncPostgres: Lower Latency Through Native Drivers
+                                </a>
+</div>
+<div class="search-result" style="margin-bottom: 20px; font-family: Arial, sans-serif;">
+<div style="display: flex; align-items: center; margin-bottom: 3px;">
+<img alt="" src="https://t3.gstatic.com/faviconV2?client=SOCIAL&amp;type=FAVICON&amp;fallback_opts=TYPE,SIZE,URL&amp;url=https://dev.to" style="width: 16px; height: 16px; margin: auto 10px;"/>
+<span class="search-result-title" style="font-size: 14px;">dev.to</span>
+</div>
+<a class="search-result-description" href="https://dev.to/akarshan/asynchronous-database-sessions-in-fastapi-with-sqlalchemy-1o7e" rel="noreferrer noopener nofollow" style="font-size: 18px; text-decoration: none; display: block; margin: 0 0 3px 36px; font-weight: 400; line-height: 1.3;" target="_blank">
+                                    Asynchronous Database Sessions in FastAPI with SQLAlchemy
+                                </a>
+</div>
+<div class="search-result" style="margin-bottom: 20px; font-family: Arial, sans-serif;">
+<div style="display: flex; align-items: center; margin-bottom: 3px;">
+<img alt="" src="https://t3.gstatic.com/faviconV2?client=SOCIAL&amp;type=FAVICON&amp;fallback_opts=TYPE,SIZE,URL&amp;url=https://angelospanag.me" style="width: 16px; height: 16px; margin: auto 10px;"/>
+<span class="search-result-title" style="font-size: 14px;">angelospanag.me</span>
+</div>
+<a class="search-result-description" href="https://www.angelospanag.me/blog/structured-logging-using-structlog-and-fastapi" rel="noreferrer noopener nofollow" style="font-size: 18px; text-decoration: none; display: block; margin: 0 0 3px 36px; font-weight: 400; line-height: 1.3;" target="_blank">
+                                    Structured logging using structlog and FastAPI
+                                </a>
+</div>
+<div class="search-result" style="margin-bottom: 20px; font-family: Arial, sans-serif;">
+<div style="display: flex; align-items: center; margin-bottom: 3px;">
+<img alt="" src="https://t3.gstatic.com/faviconV2?client=SOCIAL&amp;type=FAVICON&amp;fallback_opts=TYPE,SIZE,URL&amp;url=https://linkedin.com" style="width: 16px; height: 16px; margin: auto 10px;"/>
+<span class="search-result-title" style="font-size: 14px;">linkedin.com</span>
+</div>
+<a class="search-result-description" href="https://www.linkedin.com/pulse/best-practices-create-middleware-fastapi-manikandan-parasuraman-smt8c" rel="noreferrer noopener nofollow" style="font-size: 18px; text-decoration: none; display: block; margin: 0 0 3px 36px; font-weight: 400; line-height: 1.3;" target="_blank">
+                                    Best Practices to Create Middleware in FastAPI - LinkedIn
+                                </a>
+</div>
+<div class="search-result" style="margin-bottom: 20px; font-family: Arial, sans-serif;">
+<div style="display: flex; align-items: center; margin-bottom: 3px;">
+<img alt="" src="https://t3.gstatic.com/faviconV2?client=SOCIAL&amp;type=FAVICON&amp;fallback_opts=TYPE,SIZE,URL&amp;url=https://oneuptime.com" style="width: 16px; height: 16px; margin: auto 10px;"/>
+<span class="search-result-title" style="font-size: 14px;">oneuptime.com</span>
+</div>
+<a class="search-result-description" href="https://oneuptime.com/blog/post/2026-01-24-configure-api-compression/view" rel="noreferrer noopener nofollow" style="font-size: 18px; text-decoration: none; display: block; margin: 0 0 3px 36px; font-weight: 400; line-height: 1.3;" target="_blank">
+                                    How to Configure Compression for APIs - OneUptime
+                                </a>
+</div>
+<div class="search-result" style="margin-bottom: 20px; font-family: Arial, sans-serif;">
+<div style="display: flex; align-items: center; margin-bottom: 3px;">
+<img alt="" src="https://t3.gstatic.com/faviconV2?client=SOCIAL&amp;type=FAVICON&amp;fallback_opts=TYPE,SIZE,URL&amp;url=https://medium.com" style="width: 16px; height: 16px; margin: auto 10px;"/>
+<span class="search-result-title" style="font-size: 14px;">medium.com</span>
+</div>
+<a class="search-result-description" href="https://medium.com/@sondrelg_12432/setting-up-request-id-logging-for-your-fastapi-application-4dc190aac0ea" rel="noreferrer noopener nofollow" style="font-size: 18px; text-decoration: none; display: block; margin: 0 0 3px 36px; font-weight: 400; line-height: 1.3;" target="_blank">
+                                    Setting up request ID logging for your FastAPI application | Medium
+                                </a>
+</div>
+<div class="search-result" style="margin-bottom: 20px; font-family: Arial, sans-serif;">
+<div style="display: flex; align-items: center; margin-bottom: 3px;">
+<img alt="" src="https://t3.gstatic.com/faviconV2?client=SOCIAL&amp;type=FAVICON&amp;fallback_opts=TYPE,SIZE,URL&amp;url=https://pypi.org" style="width: 16px; height: 16px; margin: auto 10px;"/>
+<span class="search-result-title" style="font-size: 14px;">pypi.org</span>
+</div>
+<a class="search-result-description" href="https://pypi.org/project/structlog-config/" rel="noreferrer noopener nofollow" style="font-size: 18px; text-decoration: none; display: block; margin: 0 0 3px 36px; font-weight: 400; line-height: 1.3;" target="_blank">
+                                    structlog-config · PyPI
+                                </a>
+</div>
+<div class="search-result" style="margin-bottom: 20px; font-family: Arial, sans-serif;">
+<div style="display: flex; align-items: center; margin-bottom: 3px;">
+<img alt="" src="https://t3.gstatic.com/faviconV2?client=SOCIAL&amp;type=FAVICON&amp;fallback_opts=TYPE,SIZE,URL&amp;url=https://reddit.com" style="width: 16px; height: 16px; margin: auto 10px;"/>
+<span class="search-result-title" style="font-size: 14px;">reddit.com</span>
+</div>
+<a class="search-result-description" href="https://www.reddit.com/r/Python/comments/1ilhbkk/fastapi_guard_a_fastapi_extension_to_secure_your/" rel="noreferrer noopener nofollow" style="font-size: 18px; text-decoration: none; display: block; margin: 0 0 3px 36px; font-weight: 400; line-height: 1.3;" target="_blank">
+                                    r/Python on Reddit: FastAPI Guard - A FastAPI extension to secure your APIs
+                                </a>
+</div>
+<div class="search-result" style="margin-bottom: 20px; font-family: Arial, sans-serif;">
+<div style="display: flex; align-items: center; margin-bottom: 3px;">
+<img alt="" src="https://t3.gstatic.com/faviconV2?client=SOCIAL&amp;type=FAVICON&amp;fallback_opts=TYPE,SIZE,URL&amp;url=https://reddit.com" style="width: 16px; height: 16px; margin: auto 10px;"/>
+<span class="search-result-title" style="font-size: 14px;">reddit.com</span>
+</div>
+<a class="search-result-description" href="https://www.reddit.com/r/FastAPI/comments/pi0zdy/best_approach_for_async_sqlalchemy_in_fastapi/" rel="noreferrer noopener nofollow" style="font-size: 18px; text-decoration: none; display: block; margin: 0 0 3px 36px; font-weight: 400; line-height: 1.3;" target="_blank">
+                                    Best approach for async SQLAlchemy in FastAPI - Reddit
+                                </a>
+</div>
+<div class="search-result" style="margin-bottom: 20px; font-family: Arial, sans-serif;">
+<div style="display: flex; align-items: center; margin-bottom: 3px;">
+<img alt="" src="https://t3.gstatic.com/faviconV2?client=SOCIAL&amp;type=FAVICON&amp;fallback_opts=TYPE,SIZE,URL&amp;url=https://gealber.com" style="width: 16px; height: 16px; margin: auto 10px;"/>
+<span class="search-result-title" style="font-size: 14px;">gealber.com</span>
+</div>
+<a class="search-result-description" href="https://gealber.com/building-brotli-middleware-fastapi" rel="noreferrer noopener nofollow" style="font-size: 18px; text-decoration: none; display: block; margin: 0 0 3px 36px; font-weight: 400; line-height: 1.3;" target="_blank">
+                                    Building a Brotli Middleware with FastAPI - Gealber el calvo lindo
+                                </a>
+</div>
+<div class="search-result" style="margin-bottom: 20px; font-family: Arial, sans-serif;">
+<div style="display: flex; align-items: center; margin-bottom: 3px;">
+<img alt="" src="https://t3.gstatic.com/faviconV2?client=SOCIAL&amp;type=FAVICON&amp;fallback_opts=TYPE,SIZE,URL&amp;url=https://ssojet.com" style="width: 16px; height: 16px; margin: auto 10px;"/>
+<span class="search-result-title" style="font-size: 14px;">ssojet.com</span>
+</div>
+<a class="search-result-description" href="https://ssojet.com/compression/compress-files-with-gzip-in-fastapi" rel="noreferrer noopener nofollow" style="font-size: 18px; text-decoration: none; display: block; margin: 0 0 3px 36px; font-weight: 400; line-height: 1.3;" target="_blank">
+                                    Compress Files with gzip in FastAPI - SSOJet
+                                </a>
+</div>
+<div class="search-result" style="margin-bottom: 20px; font-family: Arial, sans-serif;">
+<div style="display: flex; align-items: center; margin-bottom: 3px;">
+<img alt="" src="https://t3.gstatic.com/faviconV2?client=SOCIAL&amp;type=FAVICON&amp;fallback_opts=TYPE,SIZE,URL&amp;url=https://medium.com" style="width: 16px; height: 16px; margin: auto 10px;"/>
+<span class="search-result-title" style="font-size: 14px;">medium.com</span>
+</div>
+<a class="search-result-description" href="https://medium.com/@chandanp20k/leveraging-custom-middleware-in-python-fastapi-for-enhanced-web-development-09ba72b5ddc6" rel="noreferrer noopener nofollow" style="font-size: 18px; text-decoration: none; display: block; margin: 0 0 3px 36px; font-weight: 400; line-height: 1.3;" target="_blank">
+                                    Securing FastAPI: Implementing Token Authentication with Custom Middleware | by Chandan p | Medium
+                                </a>
+</div>
+<div class="search-result" style="margin-bottom: 20px; font-family: Arial, sans-serif;">
+<div style="display: flex; align-items: center; margin-bottom: 3px;">
+<img alt="" src="https://t3.gstatic.com/faviconV2?client=SOCIAL&amp;type=FAVICON&amp;fallback_opts=TYPE,SIZE,URL&amp;url=https://spwoodcock.dev" style="width: 16px; height: 16px; margin: auto 10px;"/>
+<span class="search-result-title" style="font-size: 14px;">spwoodcock.dev</span>
+</div>
+<a class="search-result-description" href="https://spwoodcock.dev/blog/2024-10-fastapi-pydantic-psycopg/" rel="noreferrer noopener nofollow" style="font-size: 18px; text-decoration: none; display: block; margin: 0 0 3px 36px; font-weight: 400; line-height: 1.3;" target="_blank">
+                                    FastAPI, Pydantic, Psycopg3: The Ultimate Trio for Python Web APIs
+                                </a>
+</div>
+<div class="search-result" style="margin-bottom: 20px; font-family: Arial, sans-serif;">
+<div style="display: flex; align-items: center; margin-bottom: 3px;">
+<img alt="" src="https://t3.gstatic.com/faviconV2?client=SOCIAL&amp;type=FAVICON&amp;fallback_opts=TYPE,SIZE,URL&amp;url=https://fastapi.tiangolo.com" style="width: 16px; height: 16px; margin: auto 10px;"/>
+<span class="search-result-title" style="font-size: 14px;">fastapi.tiangolo.com</span>
+</div>
+<a class="search-result-description" href="https://fastapi.tiangolo.com/tutorial/security/" rel="noreferrer noopener nofollow" style="font-size: 18px; text-decoration: none; display: block; margin: 0 0 3px 36px; font-weight: 400; line-height: 1.3;" target="_blank">
+                                    Security - FastAPI
+                                </a>
+</div>
+<div class="search-result" style="margin-bottom: 20px; font-family: Arial, sans-serif;">
+<div style="display: flex; align-items: center; margin-bottom: 3px;">
+<img alt="" src="https://t3.gstatic.com/faviconV2?client=SOCIAL&amp;type=FAVICON&amp;fallback_opts=TYPE,SIZE,URL&amp;url=https://auth0.com" style="width: 16px; height: 16px; margin: auto 10px;"/>
+<span class="search-result-title" style="font-size: 14px;">auth0.com</span>
+</div>
+<a class="search-result-description" href="https://auth0.com/blog/build-and-secure-fastapi-server-with-auth0/" rel="noreferrer noopener nofollow" style="font-size: 18px; text-decoration: none; display: block; margin: 0 0 3px 36px; font-weight: 400; line-height: 1.3;" target="_blank">
+                                    Build and Secure a FastAPI Server with Auth0
+                                </a>
+</div>
+<div class="search-result" style="margin-bottom: 20px; font-family: Arial, sans-serif;">
+<div style="display: flex; align-items: center; margin-bottom: 3px;">
+<img alt="" src="https://t3.gstatic.com/faviconV2?client=SOCIAL&amp;type=FAVICON&amp;fallback_opts=TYPE,SIZE,URL&amp;url=https://dba.stackexchange.com" style="width: 16px; height: 16px; margin: auto 10px;"/>
+<span class="search-result-title" style="font-size: 14px;">dba.stackexchange.com</span>
+</div>
+<a class="search-result-description" href="https://dba.stackexchange.com/questions/36828/how-to-best-use-connection-pooling-in-sqlalchemy-for-pgbouncer-transaction-level" rel="noreferrer noopener nofollow" style="font-size: 18px; text-decoration: none; display: block; margin: 0 0 3px 36px; font-weight: 400; line-height: 1.3;" target="_blank">
+                                    How to best use connection pooling in SQLAlchemy for PgBouncer ...
+                                </a>
+</div>
+<div class="search-result" style="margin-bottom: 20px; font-family: Arial, sans-serif;">
+<div style="display: flex; align-items: center; margin-bottom: 3px;">
+<img alt="" src="https://t3.gstatic.com/faviconV2?client=SOCIAL&amp;type=FAVICON&amp;fallback_opts=TYPE,SIZE,URL&amp;url=https://blog.danielclayton.co.uk" style="width: 16px; height: 16px; margin: auto 10px;"/>
+<span class="search-result-title" style="font-size: 14px;">blog.danielclayton.co.uk</span>
+</div>
+<a class="search-result-description" href="https://blog.danielclayton.co.uk/posts/database-connections-with-fastapi/" rel="noreferrer noopener nofollow" style="font-size: 18px; text-decoration: none; display: block; margin: 0 0 3px 36px; font-weight: 400; line-height: 1.3;" target="_blank">
+                                    Psycopg Database Connections with FastAPI - Dan Clayton's Blog
+                                </a>
+</div>
+<div class="search-result" style="margin-bottom: 20px; font-family: Arial, sans-serif;">
+<div style="display: flex; align-items: center; margin-bottom: 3px;">
+<img alt="" src="https://t3.gstatic.com/faviconV2?client=SOCIAL&amp;type=FAVICON&amp;fallback_opts=TYPE,SIZE,URL&amp;url=https://shiladityamajumder.medium.com" style="width: 16px; height: 16px; margin: auto 10px;"/>
+<span class="search-result-title" style="font-size: 14px;">shiladityamajumder.medium.com</span>
+</div>
+<a class="search-result-description" href="https://shiladityamajumder.medium.com/async-apis-with-fastapi-patterns-pitfalls-best-practices-2d72b2b66f25" rel="noreferrer noopener nofollow" style="font-size: 18px; text-decoration: none; display: block; margin: 0 0 3px 36px; font-weight: 400; line-height: 1.3;" target="_blank">
+                                    Async APIs with FastAPI: Patterns, Pitfalls &amp; Best Practices
+                                </a>
+</div>
+<div class="search-result" style="margin-bottom: 20px; font-family: Arial, sans-serif;">
+<div style="display: flex; align-items: center; margin-bottom: 3px;">
+<img alt="" src="https://t3.gstatic.com/faviconV2?client=SOCIAL&amp;type=FAVICON&amp;fallback_opts=TYPE,SIZE,URL&amp;url=https://reddit.com" style="width: 16px; height: 16px; margin: auto 10px;"/>
+<span class="search-result-title" style="font-size: 14px;">reddit.com</span>
+</div>
+<a class="search-result-description" href="https://www.reddit.com/r/node/comments/1px3bog/enabling_gzip_brotli_gave_me_3040_faster_api/" rel="noreferrer noopener nofollow" style="font-size: 18px; text-decoration: none; display: block; margin: 0 0 3px 36px; font-weight: 400; line-height: 1.3;" target="_blank">
+                                    Enabling Gzip + Brotli gave me ~30–40% faster API responses : r/node
+                                </a>
+</div>
+<div class="search-result" style="margin-bottom: 20px; font-family: Arial, sans-serif;">
+<div style="display: flex; align-items: center; margin-bottom: 3px;">
+<img alt="" src="https://t3.gstatic.com/faviconV2?client=SOCIAL&amp;type=FAVICON&amp;fallback_opts=TYPE,SIZE,URL&amp;url=https://davidmuraya.com" style="width: 16px; height: 16px; margin: auto 10px;"/>
+<span class="search-result-title" style="font-size: 14px;">davidmuraya.com</span>
+</div>
+<a class="search-result-description" href="https://www.davidmuraya.com/blog/adding-middleware-to-fastapi-applications/" rel="noreferrer noopener nofollow" style="font-size: 18px; text-decoration: none; display: block; margin: 0 0 3px 36px; font-weight: 400; line-height: 1.3;" target="_blank">
+                                    6 Essential FastAPI Middlewares for Production-Ready Apps
+                                </a>
+</div>
+<div class="search-result" style="margin-bottom: 20px; font-family: Arial, sans-serif;">
+<div style="display: flex; align-items: center; margin-bottom: 3px;">
+<img alt="" src="https://t3.gstatic.com/faviconV2?client=SOCIAL&amp;type=FAVICON&amp;fallback_opts=TYPE,SIZE,URL&amp;url=https://gist.github.com" style="width: 16px; height: 16px; margin: auto 10px;"/>
+<span class="search-result-title" style="font-size: 14px;">gist.github.com</span>
+</div>
+<a class="search-result-description" href="https://gist.github.com/nymous/f138c7f06062b7c43c060bf03759c29e" rel="noreferrer noopener nofollow" style="font-size: 18px; text-decoration: none; display: block; margin: 0 0 3px 36px; font-weight: 400; line-height: 1.3;" target="_blank">
+                                    Logging setup for FastAPI, Uvicorn and Structlog (with Datadog ...
+                                </a>
+</div>
+<div class="search-result" style="margin-bottom: 20px; font-family: Arial, sans-serif;">
+<div style="display: flex; align-items: center; margin-bottom: 3px;">
+<img alt="" src="https://t3.gstatic.com/faviconV2?client=SOCIAL&amp;type=FAVICON&amp;fallback_opts=TYPE,SIZE,URL&amp;url=https://github.com" style="width: 16px; height: 16px; margin: auto 10px;"/>
+<span class="search-result-title" style="font-size: 14px;">github.com</span>
+</div>
+<a class="search-result-description" href="https://github.com/code-specialist/fastapi-auth-middleware" rel="noreferrer noopener nofollow" style="font-size: 18px; text-decoration: none; display: block; margin: 0 0 3px 36px; font-weight: 400; line-height: 1.3;" target="_blank">
+                                    code-specialist/fastapi-auth-middleware - GitHub
+                                </a>
+</div>
+<div class="search-result" style="margin-bottom: 20px; font-family: Arial, sans-serif;">
+<div style="display: flex; align-items: center; margin-bottom: 3px;">
+<img alt="" src="https://t3.gstatic.com/faviconV2?client=SOCIAL&amp;type=FAVICON&amp;fallback_opts=TYPE,SIZE,URL&amp;url=https://oneuptime.com" style="width: 16px; height: 16px; margin: auto 10px;"/>
+<span class="search-result-title" style="font-size: 14px;">oneuptime.com</span>
+</div>
+<a class="search-result-description" href="https://oneuptime.com/blog/post/2025-01-06-python-connection-pooling-postgresql/view" rel="noreferrer noopener nofollow" style="font-size: 18px; text-decoration: none; display: block; margin: 0 0 3px 36px; font-weight: 400; line-height: 1.3;" target="_blank">
+                                    How to Implement Connection Pooling in Python for PostgreSQL
+                                </a>
+</div>
+<div class="search-result" style="margin-bottom: 20px; font-family: Arial, sans-serif;">
+<div style="display: flex; align-items: center; margin-bottom: 3px;">
+<img alt="" src="https://t3.gstatic.com/faviconV2?client=SOCIAL&amp;type=FAVICON&amp;fallback_opts=TYPE,SIZE,URL&amp;url=https://fastapi.tiangolo.com" style="width: 16px; height: 16px; margin: auto 10px;"/>
+<span class="search-result-title" style="font-size: 14px;">fastapi.tiangolo.com</span>
+</div>
+<a class="search-result-description" href="https://fastapi.tiangolo.com/tutorial/security/first-steps/" rel="noreferrer noopener nofollow" style="font-size: 18px; text-decoration: none; display: block; margin: 0 0 3px 36px; font-weight: 400; line-height: 1.3;" target="_blank">
+                                    Security - First Steps - FastAPI
+                                </a>
+</div>
+<div class="search-result" style="margin-bottom: 20px; font-family: Arial, sans-serif;">
+<div style="display: flex; align-items: center; margin-bottom: 3px;">
+<img alt="" src="https://t3.gstatic.com/faviconV2?client=SOCIAL&amp;type=FAVICON&amp;fallback_opts=TYPE,SIZE,URL&amp;url=https://fastapi.tiangolo.com" style="width: 16px; height: 16px; margin: auto 10px;"/>
+<span class="search-result-title" style="font-size: 14px;">fastapi.tiangolo.com</span>
+</div>
+<a class="search-result-description" href="https://fastapi.tiangolo.com/async/" rel="noreferrer noopener nofollow" style="font-size: 18px; text-decoration: none; display: block; margin: 0 0 3px 36px; font-weight: 400; line-height: 1.3;" target="_blank">
+                                    Concurrency and async / await - FastAPI
+                                </a>
+</div>
+<div class="search-result" style="margin-bottom: 20px; font-family: Arial, sans-serif;">
+<div style="display: flex; align-items: center; margin-bottom: 3px;">
+<img alt="" src="https://t3.gstatic.com/faviconV2?client=SOCIAL&amp;type=FAVICON&amp;fallback_opts=TYPE,SIZE,URL&amp;url=https://dev.to" style="width: 16px; height: 16px; margin: auto 10px;"/>
+<span class="search-result-title" style="font-size: 14px;">dev.to</span>
+</div>
+<a class="search-result-description" href="https://dev.to/gealber/gzip-middleware-recipe-for-fastapi-4b14" rel="noreferrer noopener nofollow" style="font-size: 18px; text-decoration: none; display: block; margin: 0 0 3px 36px; font-weight: 400; line-height: 1.3;" target="_blank">
+                                    Gzip Middleware recipe for FastAPI - DEV Community
+                                </a>
+</div>
+<div class="search-result" style="margin-bottom: 20px; font-family: Arial, sans-serif;">
+<div style="display: flex; align-items: center; margin-bottom: 3px;">
+<img alt="" src="https://t3.gstatic.com/faviconV2?client=SOCIAL&amp;type=FAVICON&amp;fallback_opts=TYPE,SIZE,URL&amp;url=https://escape.tech" style="width: 16px; height: 16px; margin: auto 10px;"/>
+<span class="search-result-title" style="font-size: 14px;">escape.tech</span>
+</div>
+<a class="search-result-description" href="https://escape.tech/blog/how-to-secure-fastapi-api/" rel="noreferrer noopener nofollow" style="font-size: 18px; text-decoration: none; display: block; margin: 0 0 3px 36px; font-weight: 400; line-height: 1.3;" target="_blank">
+                                    How to secure APIs built with FastAPI: A complete guide
+                                </a>
+</div>
+<div class="search-result" style="margin-bottom: 20px; font-family: Arial, sans-serif;">
+<div style="display: flex; align-items: center; margin-bottom: 3px;">
+<img alt="" src="https://t3.gstatic.com/faviconV2?client=SOCIAL&amp;type=FAVICON&amp;fallback_opts=TYPE,SIZE,URL&amp;url=https://pysolutions.dev" style="width: 16px; height: 16px; margin: auto 10px;"/>
+<span class="search-result-title" style="font-size: 14px;">pysolutions.dev</span>
+</div>
+<a class="search-result-description" href="https://pysolutions.dev/blog/fastapi-async-vs-sync-performance" rel="noreferrer noopener nofollow" style="font-size: 18px; text-decoration: none; display: block; margin: 0 0 3px 36px; font-weight: 400; line-height: 1.3;" target="_blank">
+                                    FastAPI Performance Deep Dive: Async vs Sync Operations for ...
+                                </a>
+</div>
+<div class="search-result" style="margin-bottom: 20px; font-family: Arial, sans-serif;">
+<div style="display: flex; align-items: center; margin-bottom: 3px;">
+<img alt="" src="https://t3.gstatic.com/faviconV2?client=SOCIAL&amp;type=FAVICON&amp;fallback_opts=TYPE,SIZE,URL&amp;url=https://dev.to" style="width: 16px; height: 16px; margin: auto 10px;"/>
+<span class="search-result-title" style="font-size: 14px;">dev.to</span>
+</div>
+<a class="search-result-description" href="https://dev.to/githubopensource/supercharge-your-fastapi-security-with-fastapi-guard-46b9" rel="noreferrer noopener nofollow" style="font-size: 18px; text-decoration: none; display: block; margin: 0 0 3px 36px; font-weight: 400; line-height: 1.3;" target="_blank">
+                                    Supercharge Your FastAPI Security with fastapi-guard! - DEV Community
+                                </a>
+</div>
+<div class="search-result" style="margin-bottom: 20px; font-family: Arial, sans-serif;">
+<div style="display: flex; align-items: center; margin-bottom: 3px;">
+<img alt="" src="https://t3.gstatic.com/faviconV2?client=SOCIAL&amp;type=FAVICON&amp;fallback_opts=TYPE,SIZE,URL&amp;url=https://asifmuhammad.com" style="width: 16px; height: 16px; margin: auto 10px;"/>
+<span class="search-result-title" style="font-size: 14px;">asifmuhammad.com</span>
+</div>
+<a class="search-result-description" href="https://asifmuhammad.com/articles/database-pooling-fastapi" rel="noreferrer noopener nofollow" style="font-size: 18px; text-decoration: none; display: block; margin: 0 0 3px 36px; font-weight: 400; line-height: 1.3;" target="_blank">
+                                    Database Connection Pooling in FastAPI with SQLAlchemy
+                                </a>
+</div>
+<div class="search-result" style="margin-bottom: 20px; font-family: Arial, sans-serif;">
+<div style="display: flex; align-items: center; margin-bottom: 3px;">
+<img alt="" src="https://t3.gstatic.com/faviconV2?client=SOCIAL&amp;type=FAVICON&amp;fallback_opts=TYPE,SIZE,URL&amp;url=https://reddit.com" style="width: 16px; height: 16px; margin: auto 10px;"/>
+<span class="search-result-title" style="font-size: 14px;">reddit.com</span>
+</div>
+<a class="search-result-description" href="https://www.reddit.com/r/learnpython/comments/w5glaa/how_to_use_a_database_connection_pool/" rel="noreferrer noopener nofollow" style="font-size: 18px; text-decoration: none; display: block; margin: 0 0 3px 36px; font-weight: 400; line-height: 1.3;" target="_blank">
+                                    How to use a database connection pool effectively?[long *** post]
+                                </a>
+</div>
+<div class="search-result" style="margin-bottom: 20px; font-family: Arial, sans-serif;">
+<div style="display: flex; align-items: center; margin-bottom: 3px;">
+<img alt="" src="https://t3.gstatic.com/faviconV2?client=SOCIAL&amp;type=FAVICON&amp;fallback_opts=TYPE,SIZE,URL&amp;url=https://oneuptime.com" style="width: 16px; height: 16px; margin: auto 10px;"/>
+<span class="search-result-title" style="font-size: 14px;">oneuptime.com</span>
+</div>
+<a class="search-result-description" href="https://oneuptime.com/blog/post/2026-01-25-fastapi-authentication-middleware/view" rel="noreferrer noopener nofollow" style="font-size: 18px; text-decoration: none; display: block; margin: 0 0 3px 36px; font-weight: 400; line-height: 1.3;" target="_blank">
+                                    How to Build Authentication Middleware in FastAPI
+                                </a>
+</div>
+</div>
+<div data-slug="fastapi-saas-architecture-s-plus-plus-plus"></div></div><a class="article-date">Last updated March 24, 2026</a>
+<script>
+function detectRTL(text) {
+  const rtlChars = /[֑-߿‏‫‮יִ-﷽ﹰ-ﻼ]/g;
+  const matches = text.match(rtlChars) || [];
+  return matches.length > 100;
+}
+const isRTL = detectRTL(document.documentElement.innerHTML);
+if (isRTL) {
+  document.body.classList.add('rtl-support');
+  document.body.setAttribute('dir', 'rtl');
+}
+document.addEventListener("DOMContentLoaded", (event) => {window.print()});
+</script>
+</body>
+</html>

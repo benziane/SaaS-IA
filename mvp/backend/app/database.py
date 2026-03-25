@@ -2,9 +2,12 @@
 Database configuration and session management
 """
 
+import asyncio
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator
+from dataclasses import dataclass
+from typing import AsyncGenerator, Optional
 
+import structlog
 from sqlmodel import SQLModel, create_engine, Session
 from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlalchemy.ext.asyncio import create_async_engine
@@ -12,15 +15,28 @@ from sqlalchemy.orm import sessionmaker
 
 from app.config import settings
 
+logger = structlog.get_logger()
 
 # Convert postgresql:// to postgresql+asyncpg://
 database_url = settings.DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://")
 
-# Create async engine
+# Create async engine with connection pool tuning
 engine = create_async_engine(
     database_url,
     echo=settings.DEBUG,
     future=True,
+    pool_size=20,
+    max_overflow=10,
+    pool_timeout=30,
+    pool_recycle=3600,
+    pool_pre_ping=True,
+    connect_args={
+        "server_settings": {
+            "application_name": "saas_ia",
+            "jit": "off",
+            "statement_timeout": "30000",
+        }
+    },
 )
 
 # Create async session factory
@@ -68,11 +84,75 @@ async def get_session() -> AsyncGenerator[AsyncSession, None]:
 async def get_session_context():
     """
     Context manager for database session
-    
+
     Usage:
         async with get_session_context() as session:
             ...
     """
     async with async_session() as session:
         yield session
+
+
+# ---------------------------------------------------------------------------
+# Connection readiness check with retry
+# ---------------------------------------------------------------------------
+
+async def wait_for_db(max_retries: int = 5, base_delay: float = 1.0) -> None:
+    """
+    Wait for the database to become reachable using exponential backoff.
+
+    Raises ``ConnectionError`` after *max_retries* failed attempts.
+    """
+    from sqlalchemy import text
+
+    for attempt in range(1, max_retries + 1):
+        try:
+            async with engine.connect() as conn:
+                await conn.execute(text("SELECT 1"))
+            logger.info("database_ready", attempt=attempt)
+            return
+        except Exception as exc:
+            delay = base_delay * (2 ** (attempt - 1))
+            logger.warning(
+                "database_not_ready",
+                attempt=attempt,
+                max_retries=max_retries,
+                next_retry_in=delay,
+                error=str(exc),
+            )
+            if attempt == max_retries:
+                raise ConnectionError(
+                    f"Database not reachable after {max_retries} attempts"
+                ) from exc
+            await asyncio.sleep(delay)
+
+
+# ---------------------------------------------------------------------------
+# Connection pool metrics
+# ---------------------------------------------------------------------------
+
+@dataclass
+class PoolMetrics:
+    """Snapshot of the connection-pool state."""
+    size: int
+    checked_in: int
+    checked_out: int
+    overflow: int
+
+    @staticmethod
+    def get_stats() -> Optional["PoolMetrics"]:
+        """
+        Return current pool statistics, or ``None`` if the pool is not
+        available (e.g. NullPool).
+        """
+        pool = engine.pool
+        try:
+            return PoolMetrics(
+                size=pool.size(),
+                checked_in=pool.checkedin(),
+                checked_out=pool.checkedout(),
+                overflow=pool.overflow(),
+            )
+        except AttributeError:
+            return None
 

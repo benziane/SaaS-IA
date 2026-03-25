@@ -155,7 +155,7 @@ if (-not $FrontendOnly) {
         Log "Run stop-env.bat first to restart" "Cyan"
     } else {
         Log "Starting Docker Compose services..." "Cyan"
-        docker-compose up -d 2>&1 | Out-Null
+        $null = docker-compose up -d 2>&1
         
         if ($LASTEXITCODE -eq 0) {
             Log "Waiting for services to be ready..." "Cyan"

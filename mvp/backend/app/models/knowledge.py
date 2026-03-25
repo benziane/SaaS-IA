@@ -1,5 +1,7 @@
 """
 Knowledge Base models: Documents and chunks for RAG.
+
+Supports both TF-IDF (legacy) and pgvector (v2) search.
 """
 
 from datetime import datetime
@@ -7,6 +9,7 @@ from enum import Enum
 from typing import Optional
 from uuid import UUID, uuid4
 
+from sqlalchemy import Column
 from sqlmodel import Field, SQLModel
 
 
@@ -28,6 +31,7 @@ class Document(SQLModel, table=True):
     total_chunks: int = Field(default=0)
     status: DocumentStatus = Field(default=DocumentStatus.PENDING)
     error: Optional[str] = Field(default=None, max_length=1000)
+    embedding_model: Optional[str] = Field(default=None, max_length=100)
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
@@ -42,4 +46,7 @@ class DocumentChunk(SQLModel, table=True):
     content: str
     chunk_index: int = Field(default=0)
     metadata_json: str = Field(default="{}")
+    # pgvector embedding - nullable for backward compat with existing chunks
+    # Stored as a pgvector vector(384) column via migration
+    # Not declared here as SQLModel type - managed via raw SQL in migration
     created_at: datetime = Field(default_factory=datetime.utcnow)

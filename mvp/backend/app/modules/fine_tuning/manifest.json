@@ -1,0 +1,9 @@
+{
+  "name": "fine_tuning",
+  "version": "1.0.0",
+  "description": "Fine-tuning studio - create datasets from platform data, train custom models, evaluate and deploy",
+  "prefix": "/api/fine-tuning",
+  "tags": ["fine_tuning"],
+  "enabled": true,
+  "dependencies": []
+}

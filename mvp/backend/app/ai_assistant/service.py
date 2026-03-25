@@ -673,7 +673,40 @@ Contenu restructuré :"""
         user_id: Optional[UUID] = None,
         module: str = "general",
     ) -> dict:
-        """Process text using a specific provider (for comparison mode)."""
+        """Process text using a specific provider.
+
+        Auto-routes through LiteLLM proxy if available (exact token counting + cost).
+        Falls back to direct provider calls if LiteLLM is not installed.
+        """
+        # Try LiteLLM proxy first (better cost tracking, unified API)
+        try:
+            from app.ai_assistant.litellm_proxy import is_available as litellm_available, complete as litellm_complete
+            if litellm_available():
+                return await litellm_complete(
+                    text=f"Task: {task}\n\n{text}",
+                    provider_name=provider_name,
+                    user_id=user_id,
+                    module=module,
+                    task=task,
+                )
+        except Exception as e:
+            logger.debug("litellm_proxy_fallback", error=str(e))
+
+        # Fallback: direct provider calls (original implementation)
+        return await AIAssistantService._process_text_direct(
+            text=text, task=task, provider_name=provider_name,
+            user_id=user_id, module=module,
+        )
+
+    @staticmethod
+    async def _process_text_direct(
+        text: str,
+        task: str = "general",
+        provider_name: str = "gemini",
+        user_id: Optional[UUID] = None,
+        module: str = "general",
+    ) -> dict:
+        """Original direct provider implementation (preserved as fallback)."""
         from app.ai_assistant.providers.gemini import GeminiProvider
         from app.ai_assistant.providers.claude import ClaudeProvider
         from app.ai_assistant.providers.groq import GroqProvider
@@ -704,7 +737,6 @@ Contenu restructuré :"""
             raise
         finally:
             elapsed_ms = int((time.monotonic() - start_time) * 1000)
-            # Estimate tokens (~4 chars per token)
             est_input_tokens = max(len(prompt) // 4, 1)
             est_output_tokens = max(len(result) // 4, 1) if result else 0
             try:
@@ -722,7 +754,7 @@ Contenu restructuré :"""
                     error=error_msg,
                 )
             except Exception:
-                pass  # Never block main flow
+                pass
 
         return {
             "processed_text": result,

@@ -47,6 +47,16 @@ class SearchResponse(BaseModel):
     total: int
 
 
+class ChunkRead(BaseModel):
+    """A single document chunk."""
+    id: UUID
+    chunk_index: int
+    content: str
+
+    class Config:
+        from_attributes = True
+
+
 class AskRequest(BaseModel):
     """RAG question request."""
     question: str = Field(..., min_length=1, max_length=5000)

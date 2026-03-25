@@ -1,0 +1,9 @@
+{
+  "name": "data_analyst",
+  "version": "1.0.0",
+  "description": "AI-powered data analysis with natural language queries, charts, and automated reports",
+  "prefix": "/api/data",
+  "tags": ["data_analyst"],
+  "enabled": true,
+  "dependencies": []
+}

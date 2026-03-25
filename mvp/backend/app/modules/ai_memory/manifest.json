@@ -1,0 +1,9 @@
+{
+  "name": "ai_memory",
+  "version": "1.0.0",
+  "description": "Persistent AI memory - user preferences, facts, context injection across all modules",
+  "prefix": "/api/memory",
+  "tags": ["ai_memory"],
+  "enabled": true,
+  "dependencies": []
+}

@@ -1,0 +1,9 @@
+{
+  "name": "content_studio",
+  "version": "1.0.0",
+  "description": "Multi-format content generation studio - transform any source into blog, social, newsletter, SEO",
+  "prefix": "/api/content-studio",
+  "tags": ["content_studio"],
+  "enabled": true,
+  "dependencies": []
+}

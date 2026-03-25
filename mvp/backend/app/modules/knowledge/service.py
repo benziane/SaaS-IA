@@ -1,7 +1,10 @@
 """
 Knowledge Base service - Document processing, chunking, search, and RAG.
 
-Uses TF-IDF + cosine similarity for the MVP. Can be upgraded to pgvector later.
+Search modes (auto-selected):
+- TF-IDF (legacy, always available) - original cosine similarity
+- Vector search (pgvector + sentence-transformers) - semantic embeddings
+- Hybrid search (TF-IDF + vector, auto-selected when embeddings exist)
 """
 
 import json
@@ -113,7 +116,15 @@ class KnowledgeService:
             # Chunk the text
             chunks = KnowledgeService._chunk_text(text_content)
 
-            # Store chunks
+            # Generate embeddings if sentence-transformers is available
+            from app.modules.knowledge import embedding_service
+            embeddings = None
+            if embedding_service.is_available():
+                chunk_texts = [c for c in chunks]
+                embeddings = embedding_service.embed_texts(chunk_texts)
+                document.embedding_model = embedding_service.get_model_name()
+
+            # Store chunks (with embeddings if available)
             for i, chunk_text in enumerate(chunks):
                 chunk = DocumentChunk(
                     document_id=document.id,
@@ -123,6 +134,17 @@ class KnowledgeService:
                     metadata_json=json.dumps({"filename": filename, "chunk_index": i}),
                 )
                 session.add(chunk)
+                await session.flush()
+
+                # Store embedding via raw SQL (pgvector column not in SQLModel)
+                if embeddings and embeddings[i] is not None:
+                    emb_str = "[" + ",".join(str(v) for v in embeddings[i]) + "]"
+                    await session.execute(
+                        __import__("sqlalchemy").text(
+                            "UPDATE document_chunks SET embedding = :emb WHERE id = :cid"
+                        ),
+                        {"emb": emb_str, "cid": str(chunk.id)},
+                    )
 
             document.total_chunks = len(chunks)
             document.status = DocumentStatus.INDEXED
@@ -131,11 +153,13 @@ class KnowledgeService:
             await session.commit()
             await session.refresh(document)
 
+            has_vectors = embeddings is not None and any(e is not None for e in embeddings)
             logger.info(
                 "document_indexed",
                 document_id=str(document.id),
                 filename=filename,
                 chunks=len(chunks),
+                vector_search_enabled=has_vectors,
             )
 
         except Exception as e:
@@ -206,6 +230,23 @@ class KnowledgeService:
         return list(result.scalars().all())
 
     @staticmethod
+    async def list_document_chunks(
+        document_id: UUID,
+        user_id: UUID,
+        session: AsyncSession,
+    ):
+        """List all chunks for a document, verifying ownership."""
+        document = await session.get(Document, document_id)
+        if not document or document.user_id != user_id:
+            return None
+        result = await session.execute(
+            select(DocumentChunk)
+            .where(DocumentChunk.document_id == document_id)
+            .order_by(DocumentChunk.chunk_index)
+        )
+        return list(result.scalars().all())
+
+    @staticmethod
     async def delete_document(
         document_id: UUID,
         user_id: UUID,
@@ -236,7 +277,35 @@ class KnowledgeService:
         session: AsyncSession,
         limit: int = 5,
     ) -> list[dict]:
-        """Search documents using TF-IDF cosine similarity."""
+        """Smart search: uses hybrid (vector + TF-IDF) when embeddings exist, falls back to TF-IDF.
+
+        This method auto-detects the best search strategy:
+        1. If pgvector embeddings exist -> hybrid search (best quality)
+        2. Otherwise -> TF-IDF cosine similarity (legacy, always works)
+        """
+        # Try hybrid search first (pgvector + TF-IDF fusion)
+        try:
+            from app.modules.knowledge import embedding_service
+            if embedding_service.is_available():
+                hybrid_results = await KnowledgeService.search_hybrid(
+                    user_id, query, session, limit
+                )
+                if hybrid_results:
+                    return hybrid_results
+        except Exception as e:
+            logger.debug("hybrid_search_fallback", reason=str(e))
+
+        # Fallback: original TF-IDF search (always works)
+        return await KnowledgeService.search_tfidf(user_id, query, session, limit)
+
+    @staticmethod
+    async def search_tfidf(
+        user_id: UUID,
+        query: str,
+        session: AsyncSession,
+        limit: int = 5,
+    ) -> list[dict]:
+        """Original TF-IDF cosine similarity search (legacy, always available)."""
         # Get all user chunks
         result = await session.execute(
             select(DocumentChunk, Document.filename)
@@ -272,6 +341,120 @@ class KnowledgeService:
         # Sort by score descending
         scored.sort(key=lambda x: x["score"], reverse=True)
         return scored[:limit]
+
+    @staticmethod
+    async def search_vector(
+        user_id: UUID,
+        query: str,
+        session: AsyncSession,
+        limit: int = 5,
+    ) -> list[dict]:
+        """Semantic vector search using pgvector cosine similarity.
+
+        Requires embeddings to be generated (sentence-transformers + pgvector).
+        Returns empty list if embeddings are not available.
+        """
+        from app.modules.knowledge import embedding_service
+
+        query_embedding = embedding_service.embed_text(query)
+        if query_embedding is None:
+            return []
+
+        emb_str = "[" + ",".join(str(v) for v in query_embedding) + "]"
+
+        try:
+            import sqlalchemy as sa
+            # pgvector cosine distance: 1 - cosine_similarity (lower = more similar)
+            sql = sa.text("""
+                SELECT
+                    dc.id AS chunk_id,
+                    dc.document_id,
+                    d.filename,
+                    dc.content,
+                    dc.chunk_index,
+                    1 - (dc.embedding <=> :query_emb::vector) AS score
+                FROM document_chunks dc
+                JOIN documents d ON dc.document_id = d.id
+                WHERE dc.user_id = :uid
+                  AND dc.embedding IS NOT NULL
+                ORDER BY dc.embedding <=> :query_emb::vector
+                LIMIT :lim
+            """)
+
+            result = await session.execute(
+                sql, {"uid": str(user_id), "query_emb": emb_str, "lim": limit}
+            )
+            rows = result.fetchall()
+
+            return [
+                {
+                    "chunk_id": row[0],
+                    "document_id": row[1],
+                    "filename": row[2],
+                    "content": row[3],
+                    "chunk_index": row[4],
+                    "score": round(float(row[5]), 4),
+                }
+                for row in rows
+                if row[5] and float(row[5]) > 0.1  # filter low-quality matches
+            ]
+
+        except Exception as e:
+            logger.warning("vector_search_failed", error=str(e))
+            return []
+
+    @staticmethod
+    async def search_hybrid(
+        user_id: UUID,
+        query: str,
+        session: AsyncSession,
+        limit: int = 5,
+        vector_weight: float = 0.7,
+    ) -> list[dict]:
+        """Hybrid search: combines vector similarity (70%) with TF-IDF (30%).
+
+        Reciprocal Rank Fusion (RRF) merges results from both methods
+        for better precision and recall than either alone.
+        """
+        # Run both searches
+        vector_results = await KnowledgeService.search_vector(
+            user_id, query, session, limit=limit * 2
+        )
+        tfidf_results = await KnowledgeService.search_tfidf(
+            user_id, query, session, limit=limit * 2
+        )
+
+        if not vector_results:
+            return tfidf_results[:limit]
+        if not tfidf_results:
+            return vector_results[:limit]
+
+        # Reciprocal Rank Fusion (RRF)
+        k = 60  # RRF constant
+        rrf_scores: dict[str, dict] = {}
+
+        for rank, result in enumerate(vector_results):
+            cid = str(result["chunk_id"])
+            rrf_scores[cid] = result.copy()
+            rrf_scores[cid]["rrf_score"] = vector_weight * (1.0 / (k + rank + 1))
+
+        for rank, result in enumerate(tfidf_results):
+            cid = str(result["chunk_id"])
+            tfidf_rrf = (1 - vector_weight) * (1.0 / (k + rank + 1))
+            if cid in rrf_scores:
+                rrf_scores[cid]["rrf_score"] += tfidf_rrf
+            else:
+                rrf_scores[cid] = result.copy()
+                rrf_scores[cid]["rrf_score"] = tfidf_rrf
+
+        # Sort by RRF score
+        merged = sorted(rrf_scores.values(), key=lambda x: x["rrf_score"], reverse=True)
+
+        # Normalize scores to 0-1 range
+        for item in merged:
+            item["score"] = round(item.pop("rrf_score") * 100, 4)
+
+        return merged[:limit]
 
     @staticmethod
     async def rag_query(

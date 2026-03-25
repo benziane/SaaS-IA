@@ -1,0 +1,9 @@
+{
+  "name": "multi_agent_crew",
+  "version": "1.0.0",
+  "description": "Collaborative AI agent crews with specialized roles, inter-agent communication, and templates",
+  "prefix": "/api/crews",
+  "tags": ["multi_agent_crew"],
+  "enabled": true,
+  "dependencies": []
+}

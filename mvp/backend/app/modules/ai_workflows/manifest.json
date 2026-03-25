@@ -1,0 +1,9 @@
+{
+  "name": "ai_workflows",
+  "version": "1.0.0",
+  "description": "No-code AI workflow automation with triggers, actions, and templates",
+  "prefix": "/api/workflows",
+  "tags": ["ai_workflows"],
+  "enabled": true,
+  "dependencies": []
+}

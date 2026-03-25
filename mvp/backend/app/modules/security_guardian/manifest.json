@@ -1,0 +1,9 @@
+{
+  "name": "security_guardian",
+  "version": "1.0.0",
+  "description": "AI security guardrails, PII detection, audit trails, and compliance monitoring",
+  "prefix": "/api/security",
+  "tags": ["security_guardian"],
+  "enabled": true,
+  "dependencies": []
+}

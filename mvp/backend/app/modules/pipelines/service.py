@@ -357,6 +357,119 @@ class PipelineService:
                     step_output = "No pipeline context"
             return {"type": "crawl_and_index", "output": step_output}
 
+        # ---- Content Studio step ----
+        elif step_type == "content_studio":
+            text = config.get("text", previous_output or "")
+            fmt = config.get("format", "blog_article")
+            if text:
+                try:
+                    from app.models.content_studio import ContentFormat
+                    from app.modules.content_studio.service import ContentStudioService
+                    result = await ContentStudioService._generate_single(
+                        source_text=text[:12000],
+                        fmt=ContentFormat(fmt),
+                        tone=config.get("tone", "professional"),
+                        target_audience=config.get("target_audience"),
+                        keywords=None,
+                        language=config.get("language", "auto"),
+                        provider=config.get("provider"),
+                        custom_instructions=config.get("instructions"),
+                        user_id=getattr(pipeline, "user_id", None),
+                    )
+                    step_output = result.get("content", "")
+                except Exception as e:
+                    step_output = f"Content generation failed: {str(e)[:500]}"
+            else:
+                step_output = "No text for content generation"
+            return {"type": "content_studio", "output": step_output, "format": fmt}
+
+        # ---- Generate image step ----
+        elif step_type == "generate_image":
+            prompt = config.get("prompt", previous_output or "")
+            style = config.get("style", "digital_art")
+            if prompt and pipeline:
+                try:
+                    from app.modules.image_gen.service import ImageGenService
+                    from app.database import get_session_context
+                    async with get_session_context() as img_session:
+                        image = await ImageGenService.generate_image(
+                            user_id=pipeline.user_id, prompt=prompt[:2000], style=style,
+                            provider=config.get("provider", "gemini"),
+                            width=config.get("width", 1024), height=config.get("height", 1024),
+                            session=img_session,
+                        )
+                    step_output = f"Image generated: {image.image_url or 'processing'} (style: {style})"
+                except Exception as e:
+                    step_output = f"Image generation failed: {str(e)[:500]}"
+            else:
+                step_output = "No prompt for image generation"
+            return {"type": "generate_image", "output": step_output}
+
+        # ---- Generate video step ----
+        elif step_type == "generate_video":
+            prompt = config.get("prompt", previous_output or "")
+            if prompt and pipeline:
+                try:
+                    from app.modules.video_gen.service import VideoGenService
+                    from app.database import get_session_context
+                    async with get_session_context() as vid_session:
+                        video = await VideoGenService.generate_video(
+                            user_id=pipeline.user_id,
+                            title=config.get("title", "Pipeline Video"),
+                            prompt=prompt[:2000],
+                            video_type=config.get("video_type", "text_to_video"),
+                            provider=config.get("provider", "gemini"),
+                            duration_s=config.get("duration_s", 10),
+                            width=1920, height=1080, session=vid_session,
+                        )
+                    step_output = f"Video generated: {video.video_url or 'processing'}"
+                except Exception as e:
+                    step_output = f"Video generation failed: {str(e)[:500]}"
+            else:
+                step_output = "No prompt for video generation"
+            return {"type": "generate_video", "output": step_output}
+
+        # ---- Text-to-speech step ----
+        elif step_type == "text_to_speech":
+            text = config.get("text", previous_output or "")
+            if text and pipeline:
+                try:
+                    from app.modules.voice_clone.service import VoiceCloneService
+                    from app.database import get_session_context
+                    async with get_session_context() as tts_session:
+                        synthesis = await VoiceCloneService.synthesize(
+                            user_id=pipeline.user_id, text=text[:5000],
+                            voice_id=config.get("voice_id"),
+                            provider=config.get("provider", "openai"),
+                            output_format="mp3", language=config.get("language", "auto"),
+                            session=tts_session,
+                        )
+                    step_output = f"Audio generated: {synthesis.audio_url or 'processing'} ({synthesis.duration_s}s)"
+                except Exception as e:
+                    step_output = f"TTS failed: {str(e)[:500]}"
+            else:
+                step_output = "No text for TTS"
+            return {"type": "text_to_speech", "output": step_output}
+
+        # ---- Security scan step ----
+        elif step_type == "security_scan":
+            text = config.get("text", previous_output or "")
+            if text:
+                try:
+                    from app.modules.security_guardian.service import SecurityGuardianService
+                    findings = SecurityGuardianService._detect_pii(text) + SecurityGuardianService._detect_prompt_injection(text)
+                    if findings:
+                        step_output = f"Found {len(findings)} issue(s):\n" + "\n".join(
+                            f"- [{f['severity']}] {f['type']}: {f['description']}" for f in findings[:10]
+                        )
+                    else:
+                        step_output = "Content is clean - no security issues found."
+                except Exception as e:
+                    step_output = f"Scan failed: {str(e)[:500]}"
+            else:
+                step_output = "No text to scan"
+            return {"type": "security_scan", "output": step_output}
+
         else:
             return {"type": step_type, "output": previous_output or "", "note": "Unknown step type"}
 

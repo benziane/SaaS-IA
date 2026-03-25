@@ -9,19 +9,26 @@ import {
   CardContent,
   Chip,
   CircularProgress,
+  Dialog,
+  DialogContent,
+  DialogTitle,
   Divider,
   Grid,
+  IconButton,
   List,
   ListItem,
+  ListItemButton,
   ListItemText,
   Skeleton,
   TextField,
   Typography,
 } from '@mui/material';
+import CloseIcon from '@mui/icons-material/Close';
 
 import {
   useAsk,
   useDeleteDocument,
+  useDocumentChunks,
   useDocuments,
   useSearch,
   useUploadDocument,
@@ -44,11 +51,25 @@ export default function KnowledgePage() {
   const fileRef = useRef<HTMLInputElement>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [question, setQuestion] = useState('');
+  const [selectedDocId, setSelectedDocId] = useState<string | null>(null);
+  const [selectedDocName, setSelectedDocName] = useState<string>('');
+
+  const { data: chunks, isLoading: chunksLoading } = useDocumentChunks(selectedDocId);
 
   const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) uploadMutation.mutate(file);
     if (fileRef.current) fileRef.current.value = '';
+  };
+
+  const handleViewChunks = (id: string, name: string) => {
+    setSelectedDocId(id);
+    setSelectedDocName(name);
+  };
+
+  const handleCloseModal = () => {
+    setSelectedDocId(null);
+    setSelectedDocName('');
   };
 
   return (
@@ -106,6 +127,7 @@ export default function KnowledgePage() {
                   {documents.map((doc) => (
                     <ListItem
                       key={doc.id}
+                      disablePadding
                       secondaryAction={
                         <Button
                           size="small"
@@ -117,16 +139,22 @@ export default function KnowledgePage() {
                         </Button>
                       }
                     >
-                      <ListItemText
-                        primary={doc.filename}
-                        secondary={`${doc.total_chunks} chunks`}
-                      />
-                      <Chip
-                        label={doc.status}
-                        size="small"
-                        color={STATUS_COLORS[doc.status] || 'default'}
-                        sx={{ mr: 1 }}
-                      />
+                      <ListItemButton
+                        onClick={() => handleViewChunks(doc.id, doc.filename)}
+                        disabled={doc.status !== 'indexed'}
+                        sx={{ pr: 10 }}
+                      >
+                        <ListItemText
+                          primary={doc.filename}
+                          secondary={`${doc.total_chunks} chunks — cliquer pour voir`}
+                        />
+                        <Chip
+                          label={doc.status}
+                          size="small"
+                          color={STATUS_COLORS[doc.status] || 'default'}
+                          sx={{ mr: 1 }}
+                        />
+                      </ListItemButton>
                     </ListItem>
                   ))}
                 </List>
@@ -208,6 +236,52 @@ export default function KnowledgePage() {
           </Card>
         </Grid>
       </Grid>
+
+      {/* Document Chunks Viewer Modal */}
+      <Dialog open={!!selectedDocId} onClose={handleCloseModal} maxWidth="md" fullWidth>
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Box>
+            <Typography variant="h6">{selectedDocName}</Typography>
+            {chunks && (
+              <Typography variant="caption" color="text.secondary">
+                {chunks.length} chunk(s)
+              </Typography>
+            )}
+          </Box>
+          <IconButton onClick={handleCloseModal} size="small">
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent dividers sx={{ maxHeight: '70vh', overflowY: 'auto' }}>
+          {chunksLoading ? (
+            <CircularProgress />
+          ) : !chunks?.length ? (
+            <Typography color="text.secondary">Aucun chunk disponible.</Typography>
+          ) : (
+            chunks.map((chunk) => (
+              <Box key={chunk.id} sx={{ mb: 2 }}>
+                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
+                  Chunk #{chunk.chunk_index + 1}
+                </Typography>
+                <Box
+                  sx={{
+                    p: 1.5,
+                    bgcolor: 'action.hover',
+                    borderRadius: 1,
+                    fontFamily: 'monospace',
+                    fontSize: '0.8rem',
+                    whiteSpace: 'pre-wrap',
+                    wordBreak: 'break-word',
+                  }}
+                >
+                  {chunk.content}
+                </Box>
+                {chunk.chunk_index < chunks.length - 1 && <Divider sx={{ mt: 2 }} />}
+              </Box>
+            ))
+          )}
+        </DialogContent>
+      </Dialog>
     </Box>
   );
 }

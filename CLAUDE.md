@@ -1,89 +1,154 @@
-# SaaS-IA - Plateforme d'Orchestration IA
+# CLAUDE.md - SaaS-IA Platform
 
-## Description
-Plateforme SaaS d'orchestration IA multi-providers avec transcription, RAG, pipelines, agents et collaboration multi-tenant.
+## Projet
 
-## Stack Technique
-- **Backend**: FastAPI 0.135 / Python 3.11+ / SQLModel / Alembic
-- **Frontend**: Next.js 15 / React 18 / Material-UI 6 / TypeScript strict
-- **Base de donnees**: PostgreSQL 16 + Redis 7
-- **Queue**: Celery 5.6 + Flower
-- **Auth**: JWT (python-jose + passlib/bcrypt)
-- **Paiement**: Stripe (Free/Pro/Enterprise)
-- **Providers IA**: Gemini, Claude, Groq, OpenAI, AssemblyAI
-- **Monitoring**: Prometheus + structlog
+Plateforme SaaS modulaire d'intelligence artificielle - 22+ modules backend auto-decouverts, 20+ pages frontend, ~135 endpoints API.
 
-## Architecture
+## Stack technique
 
-### Backend modulaire
-Chaque module est dans `mvp/backend/app/modules/<nom>/` et contient:
-- `manifest.json` - declaration du module (name, version, prefix, tags, enabled, dependencies)
-- `routes.py` - expose un `router` APIRouter
-- `service.py` - logique metier
-- `schemas.py` - schemas Pydantic (optionnel)
+- **Backend** : FastAPI 0.135, Python 3.13, SQLModel + Pydantic 2, PostgreSQL 16 (AsyncPG), Redis 7, Celery
+- **Frontend** : Next.js 15 (App Router), React 18, MUI 6, TanStack Query 5, Axios
+- **AI Providers** : Gemini 2.0 Flash, Claude Sonnet, Groq Llama 3.3 70B (via AIAssistantService)
+- **Infra** : Docker Compose, Prometheus, structlog, Alembic migrations
+- **Ports** : Backend 8004, Frontend 3002, PostgreSQL 5435, Redis 6382, Flower 5555
 
-Les modules sont auto-decouverts par `ModuleRegistry` dans `app/modules/__init__.py`.
+## Architecture modulaire
 
-### Modules existants (12)
-agents, api_keys, billing, compare, conversation, cost_tracker, knowledge, pipelines, sentiment, transcription, web_crawler, workspaces
+Chaque module backend suit le pattern :
+```
+mvp/backend/app/modules/<module_name>/
+  __init__.py
+  manifest.json    # auto-discovery par ModuleRegistry
+  schemas.py       # Pydantic request/response
+  service.py       # Business logic
+  routes.py        # FastAPI APIRouter
+```
 
-### Frontend Sneat
-**OBLIGATOIRE**: Utiliser exclusivement le template **Sneat MUI Next.js Admin Template v3.0.0**.
-- NE JAMAIS creer de composants UI from scratch si Sneat/MUI les a
-- Composants features dans `mvp/frontend/src/features/`
-- Layouts dans `mvp/frontend/src/@layouts/`
-- Etat: Zustand + TanStack Query 5
-- Formulaires: React Hook Form + Zod
+Les modeles DB sont dans `mvp/backend/app/models/<module_name>.py`.
+Les migrations Alembic dans `mvp/backend/alembic/versions/`.
 
-## Conventions
+Frontend par module :
+```
+mvp/frontend/src/features/<module-name>/
+  types.ts
+  api.ts           # Axios calls vers le backend
+  hooks/use<Module>.ts  # React Query hooks
+mvp/frontend/src/app/(dashboard)/<route>/page.tsx
+```
 
-### Commits
-Format Conventional Commits: `<type>(<scope>): <description>`
-Types: feat, fix, docs, style, refactor, test, chore, perf, ci
+## Regles CRITIQUES
 
-### Backend (Python)
-- Style: PEP 8 / Formatter: Black / Linter: Ruff / Types: mypy
-- async/await pour toutes les operations I/O
-- structlog pour le logging
-- Pydantic pour la validation des entrees
+### NE JAMAIS supprimer ou ecraser un module ou une techno qui fonctionne
 
-### Frontend (TypeScript)
-- ESLint + Prettier
-- Composants fonctionnels + Hooks
-- TypeScript strict mode
-- Import MUI depuis `@mui/material`
+Cette regle concerne les **modules et les technologies**, pas le code en general :
+
+- Si un module fonctionne avec la techno X et qu'on trouve que la techno Y fait mieux : **on garde le module avec la techno X** et on cree une **nouvelle version** (v2) avec la techno Y
+- **JAMAIS** ecraser tout un module pour le remplacer par une autre implementation
+- **JAMAIS** desinstaller ou retirer une dependance utilisee par un module existant
+- L'ancien module/techno reste fonctionnel comme **fallback** et **reference**
+- Les deux versions coexistent : l'utilisateur ou le systeme choisit la meilleure automatiquement
+
+**Exemple concret** : le module `knowledge` utilisait TF-IDF pour la recherche.
+On a ajoute pgvector + sentence-transformers (v2) SANS supprimer TF-IDF.
+Resultat : `search()` auto-detecte hybrid si pgvector est dispo, sinon TF-IDF.
+Les deux coexistent, zero regression, upgrade transparent.
+
+**Modifier du code dans un fichier existant** (ajouter des methodes, corriger un bug, refactorer) est parfaitement OK.
+Ce qui est interdit c'est de **supprimer un module entier ou remplacer une techno fonctionnelle**.
+
+### Git
+
+- Ne JAMAIS force push
+- Ne JAMAIS amend un commit existant
+- Toujours creer de NOUVEAUX commits
+- Ne pas committer sans que l'utilisateur le demande explicitement
+- Ne pas committer les fichiers .env, credentials, ou cles API
+
+### Code
+
+- Suivre le pattern module existant (manifest.json + schemas + service + routes)
+- Les services utilisent `AIAssistantService.process_text_with_provider()` pour les appels IA
+- Les routes utilisent `@limiter.limit()`, `Depends(get_current_user)`, `Depends(get_session)`
+- Auth : JWT via `app.auth.get_current_user`
+- DB sessions : `from app.database import get_session`
+- Logging : `structlog.get_logger()`
+- Ne pas ajouter de commentaires inutiles ou de docstrings sur du code qu'on n'a pas modifie
+- Ne pas over-engineer : faire le minimum necessaire pour la feature demandee
+
+### Knowledge Base / Search
+
+- Le module `knowledge` supporte 3 modes de recherche : TF-IDF (legacy), Vector (pgvector), Hybrid (RRF fusion)
+- `search()` auto-detecte le meilleur mode disponible
+- Embeddings : `app.modules.knowledge.embedding_service` (all-MiniLM-L6-v2, 384 dim, singleton lazy-loaded)
+- Les embeddings sont stockes dans la colonne `embedding vector(384)` via pgvector (geree par migration SQL, pas SQLModel)
+- Pour ajouter un embedding a un chunk, utiliser raw SQL : `UPDATE document_chunks SET embedding = :emb WHERE id = :cid`
+- Toujours garder le TF-IDF comme fallback - ne jamais le supprimer
+
+## Modules existants (25)
+
+### Core (12)
+transcription, conversation, knowledge (hybrid search: pgvector + TF-IDF), compare, pipelines, agents, sentiment, web_crawler, workspaces, billing, api_keys, cost_tracker
+
+### P0 - Content & Automation (2)
+content_studio (10 formats), ai_workflows (DAG engine, 19 actions, 5 templates, networkx validation)
+
+### P1 - Intelligence & Safety (4)
+multi_agent_crew (9 roles, 4 templates), voice_clone (TTS OpenAI + Coqui + cloning), realtime_ai (voice/vision/meeting), security_guardian (Presidio PII + NeMo injection + audit)
+
+### P2 - Media & Intelligence (3)
+image_gen (10 styles), data_analyst (DuckDB + ydata-profiling + NL queries), video_gen (6 types)
+
+### P3 - Custom Models (1)
+fine_tuning (datasets from platform data, LoRA training, evaluation)
+
+### Platform - Monitoring, Search, Memory (3)
+ai_monitoring (LLM observability, traces, provider comparison), unified_search (cross-module search + RAG), ai_memory (persistent memory + context injection)
+
+## Integrations open-source (18 libs)
+
+| Lib | Module | Fallback |
+|-----|--------|----------|
+| pgvector + sentence-transformers | knowledge | TF-IDF |
+| litellm | ai_assistant | providers directs |
+| presidio | security_guardian | regex patterns |
+| faster-whisper + pyannote | transcription | AssemblyAI |
+| duckdb + ydata-profiling | data_analyst | pandas parser |
+| Coqui TTS | voice_clone | OpenAI TTS / mock |
+| NeMo-Guardrails | security_guardian | regex injection |
+| networkx | ai_workflows | Kahn's algorithm |
+
+Toutes les integrations suivent la regle : **auto-detection + fallback gracieux**.
+
+## Interconnexions
+
+3 systemes d'orchestration connectent tous les modules :
+- **Agent Executor** : 23 actions (appels directs aux services)
+- **Pipeline Steps** : 15 step types (chaining sequentiel)
+- **Workflow Actions** : 19 types (DAG avec branches paralleles)
+
+Quand on ajoute un nouveau module, penser a l'integrer dans les 3 systemes + le planner heuristique.
 
 ## Commandes utiles
 
-### Backend
 ```bash
-cd mvp/backend
-ruff check app/                          # Linting
-mypy app/                                # Type checking
-python -m pytest tests/ -v --cov=app     # Tests + coverage
-alembic revision --autogenerate -m "desc" # Migration
-alembic upgrade head                      # Appliquer migrations
+# Backend
+cd mvp && docker compose up -d
+cd mvp/backend && uvicorn app.main:app --reload --port 8000
+
+# Frontend
+cd mvp/frontend && npm run dev
+
+# Tests
+cd mvp/backend && pytest
+cd mvp/frontend && npm run test
+
+# Migrations
+cd mvp/backend && alembic upgrade head
 ```
 
-### Frontend
-```bash
-cd mvp/frontend
-npm run lint          # ESLint
-npm run type-check    # TypeScript
-npm run build         # Build production
-npx vitest            # Tests unitaires
-npx playwright test   # Tests E2E
-```
+## Documentation
 
-### Docker
-```bash
-docker compose up -d          # Demarrer tous les services
-docker compose logs -f backend # Logs backend
-```
-
-## Securite
-- Secrets dans `.env` uniquement (jamais en dur dans le code)
-- Validation Pydantic sur toutes les entrees API
-- JWT avec rotation de tokens
-- Rate limiting via slowapi + Redis
-- Webhooks Stripe signes
+- [README.md](mvp/README.md) - Vue d'ensemble et modules
+- [ROADMAP.md](mvp/ROADMAP.md) - Roadmap complete, changelog, endpoints API, connectivite
+- [TECH_AUDIT_ROADMAP.md](mvp/TECH_AUDIT_ROADMAP.md) - Audit open-source : libs a integrer, priorites, checkboxes de suivi
+- [backend/MIGRATIONS_GUIDE.md](mvp/backend/MIGRATIONS_GUIDE.md) - Guide migrations Alembic

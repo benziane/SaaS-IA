@@ -1,0 +1,9 @@
+{
+  "name": "realtime_ai",
+  "version": "1.0.0",
+  "description": "Real-time AI voice and vision sessions with WebSocket streaming",
+  "prefix": "/api/realtime",
+  "tags": ["realtime_ai"],
+  "enabled": true,
+  "dependencies": []
+}

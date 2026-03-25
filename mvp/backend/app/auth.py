@@ -125,6 +125,43 @@ async def get_current_user(
     return user
 
 
+async def get_current_user_optional(request: Request) -> Optional[User]:
+    """
+    Get current user from request without raising exceptions.
+
+    Returns the User if a valid Bearer token is present and the user
+    exists and is active.  Returns None otherwise.
+
+    Useful for middleware or optional-auth scenarios where
+    unauthenticated requests should not be rejected.
+    """
+    try:
+        auth_header = request.headers.get("Authorization", "")
+        if not auth_header.startswith("Bearer "):
+            return None
+
+        token = auth_header.split(" ", 1)[1]
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        email: str = payload.get("sub")
+        if not email:
+            return None
+
+        # Reject refresh tokens
+        if payload.get("type") == "refresh":
+            return None
+
+        from app.database import get_session_context
+
+        async with get_session_context() as session:
+            user = await get_user_by_email(session, email=email)
+            if user and user.is_active:
+                return user
+
+        return None
+    except Exception:
+        return None
+
+
 async def get_current_active_user(current_user: User = Depends(get_current_user)) -> User:
     """Get current active user"""
     if not current_user.is_active:

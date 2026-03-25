@@ -651,13 +651,32 @@ class TranscriptionService:
                 if transcript:
                     return transcript
 
-        # Strategy 2: Download audio + transcribe locally with Whisper
+        # Strategy 2: faster-whisper local (free, fast, with confidence retry)
+        if prefer_provider in ("auto", "whisper", "faster_whisper"):
+            try:
+                from app.modules.transcription.whisper_local import is_available as fw_available, transcribe_with_confidence_retry
+                if fw_available():
+                    from app.transcription import YouTubeService
+
+                    audio_file, metadata = await asyncio.to_thread(
+                        YouTubeService.download_audio, video_url
+                    )
+                    if audio_file:
+                        result = await transcribe_with_confidence_retry(
+                            audio_file, language, confidence_threshold=0.6,
+                        )
+                        if result and result.get("text"):
+                            logger.info("faster_whisper_success", confidence=result.get("confidence"))
+                            return result
+            except Exception as e:
+                logger.debug("faster_whisper_fallback", error=str(e))
+
+        # Strategy 2b: Legacy whisper_service fallback
         if prefer_provider in ("auto", "whisper"):
             try:
                 from app.transcription.whisper_service import transcribe_with_whisper
                 from app.transcription.youtube_service import YouTubeService
 
-                # Download audio
                 audio_path = await YouTubeService.download_audio(video_url)
                 if audio_path:
                     result = await transcribe_with_whisper(audio_path, language)

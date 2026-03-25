@@ -1,0 +1,23 @@
+# Dockge Configuration for SaaS-IA
+name: SaaS-IA
+description: "SaaS-IA - Plateforme IA pour transcription et analyse"
+icon: "🤖"
+tags:
+  - development
+  - ai
+  - fastapi
+  - postgresql
+  - redis
+  - assemblyai
+urls:
+  - name: Backend API
+    url: http://localhost:8004
+  - name: API Docs
+    url: http://localhost:8004/docs
+  - name: PostgreSQL
+    url: postgresql://localhost:5435
+  - name: Redis
+    url: redis://localhost:6382
+
+
+

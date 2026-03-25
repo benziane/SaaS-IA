@@ -1,0 +1,9 @@
+{
+  "name": "voice_clone",
+  "version": "1.0.0",
+  "description": "AI voice cloning, text-to-speech synthesis, and automatic dubbing",
+  "prefix": "/api/voice",
+  "tags": ["voice_clone"],
+  "enabled": true,
+  "dependencies": []
+}

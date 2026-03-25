@@ -1,0 +1,9 @@
+{
+  "name": "image_gen",
+  "version": "1.0.0",
+  "description": "AI image generation, editing, thumbnails, and visual content creation",
+  "prefix": "/api/images",
+  "tags": ["image_gen"],
+  "enabled": true,
+  "dependencies": []
+}

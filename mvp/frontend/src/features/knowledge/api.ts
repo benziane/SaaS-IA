@@ -6,11 +6,12 @@ import type { AxiosResponse } from 'axios';
 
 import apiClient from '@/lib/apiClient';
 
-import type { AskResponse, KBDocument, SearchResponse } from './types';
+import type { AskResponse, ChunkRead, KBDocument, SearchResponse } from './types';
 
 const KB_ENDPOINTS = {
   UPLOAD: '/api/knowledge/upload',
   DOCUMENTS: '/api/knowledge/documents',
+  CHUNKS: (id: string) => `/api/knowledge/documents/${id}/chunks`,
   DELETE: (id: string) => `/api/knowledge/documents/${id}`,
   SEARCH: '/api/knowledge/search',
   ASK: '/api/knowledge/ask',
@@ -43,6 +44,11 @@ export async function listDocuments(): Promise<KBDocument[]> {
   return response.data;
 }
 
+export async function listDocumentChunks(id: string): Promise<ChunkRead[]> {
+  const response: AxiosResponse<ChunkRead[]> = await apiClient.get(KB_ENDPOINTS.CHUNKS(id));
+  return response.data;
+}
+
 export async function deleteDocument(id: string): Promise<void> {
   await apiClient.delete(KB_ENDPOINTS.DELETE(id));
 }
@@ -62,5 +68,5 @@ export async function askQuestion(question: string): Promise<AskResponse> {
   return response.data;
 }
 
-export const knowledgeApi = { uploadDocument, listDocuments, deleteDocument, searchDocuments, askQuestion } as const;
+export const knowledgeApi = { uploadDocument, listDocuments, listDocumentChunks, deleteDocument, searchDocuments, askQuestion } as const;
 export default knowledgeApi;

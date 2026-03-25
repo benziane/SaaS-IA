@@ -2,6 +2,12 @@
  * Knowledge Base Types
  */
 
+export interface ChunkRead {
+  id: string;
+  chunk_index: number;
+  content: string;
+}
+
 export interface KBDocument {
   id: string;
   filename: string;

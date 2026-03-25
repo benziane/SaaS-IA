@@ -27,9 +27,10 @@ interface ModuleInfo {
   name: string;
   version: string;
   description: string;
-  enabled: boolean;
-  api_prefix: string;
+  enabled?: boolean;
+  prefix: string;
   dependencies: string[];
+  tags?: string[];
 }
 
 /* ========================================================================
@@ -66,8 +67,8 @@ function ModuleCard({ module }: { module: ModuleInfo }): JSX.Element {
         subheader={`v${module.version}`}
         action={
           <Chip
-            label={module.enabled ? 'Enabled' : 'Disabled'}
-            color={module.enabled ? 'success' : 'default'}
+            label={module.enabled !== false ? 'Enabled' : 'Disabled'}
+            color={module.enabled !== false ? 'success' : 'default'}
             size="small"
             variant="outlined"
           />
@@ -95,7 +96,7 @@ function ModuleCard({ module }: { module: ModuleInfo }): JSX.Element {
             mb: 2,
           }}
         >
-          {module.api_prefix}
+          {module.prefix}
         </Typography>
 
         {module.dependencies.length > 0 && (
@@ -131,9 +132,9 @@ export default function ModulesPage(): JSX.Element {
       try {
         setLoading(true);
         setError(null);
-        const response = await apiClient.get<ModuleInfo[]>('/api/modules');
+        const response = await apiClient.get<{ count: number; modules: ModuleInfo[] }>('/api/modules');
         if (!cancelled) {
-          setModules(response.data);
+          setModules(response.data.modules ?? []);
         }
       } catch (err: unknown) {
         if (!cancelled) {

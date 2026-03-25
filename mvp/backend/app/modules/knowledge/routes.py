@@ -16,6 +16,7 @@ from app.models.user import User
 from app.modules.knowledge.schemas import (
     AskRequest,
     AskResponse,
+    ChunkRead,
     DocumentRead,
     SearchRequest,
     SearchResponse,
@@ -122,6 +123,28 @@ async def list_documents(
     return await KnowledgeService.list_documents(current_user.id, session)
 
 
+@router.get("/documents/{document_id}/chunks", response_model=list[ChunkRead])
+@limiter.limit("20/minute")
+async def list_document_chunks(
+    request: Request,
+    document_id: UUID,
+    current_user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+):
+    """
+    List all chunks for a specific document.
+
+    Rate limit: 20 requests/minute
+    """
+    chunks = await KnowledgeService.list_document_chunks(document_id, current_user.id, session)
+    if chunks is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Document not found",
+        )
+    return chunks
+
+
 @router.delete("/documents/{document_id}", status_code=status.HTTP_204_NO_CONTENT)
 @limiter.limit("10/minute")
 async def delete_document(
@@ -214,3 +237,111 @@ async def ask_question(
         sources=[SearchResult(**s) for s in result["sources"]],
         provider=result["provider"],
     )
+
+
+@router.post("/search/vector", response_model=SearchResponse)
+@limiter.limit("20/minute")
+async def search_vector(
+    request: Request,
+    body: SearchRequest,
+    current_user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+):
+    """
+    Semantic vector search using pgvector embeddings.
+
+    Requires sentence-transformers to be installed and documents to have embeddings.
+    Falls back to empty results if vector search is unavailable.
+
+    Rate limit: 20 requests/minute
+    """
+    results = await KnowledgeService.search_vector(
+        user_id=current_user.id,
+        query=body.query,
+        session=session,
+        limit=body.limit,
+    )
+
+    return SearchResponse(
+        query=body.query,
+        results=[SearchResult(**r) for r in results],
+        total=len(results),
+    )
+
+
+@router.post("/reindex-embeddings", status_code=202)
+@limiter.limit("1/minute")
+async def reindex_embeddings(
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+):
+    """
+    Reindex all existing document chunks with vector embeddings.
+
+    This is useful after enabling sentence-transformers on an existing knowledge base.
+    Processes chunks that don't have embeddings yet.
+
+    Rate limit: 1 request/minute
+    """
+    from app.modules.knowledge import embedding_service
+
+    if not embedding_service.is_available():
+        from fastapi import HTTPException
+        raise HTTPException(
+            status_code=503,
+            detail="Embedding service not available. Install sentence-transformers.",
+        )
+
+    import sqlalchemy as sa
+
+    # Get chunks without embeddings
+    result = await session.execute(
+        sa.text("""
+            SELECT id, content FROM document_chunks
+            WHERE user_id = :uid AND embedding IS NULL
+            ORDER BY created_at
+            LIMIT 500
+        """),
+        {"uid": str(current_user.id)},
+    )
+    rows = result.fetchall()
+
+    if not rows:
+        return {"message": "All chunks already have embeddings", "reindexed": 0}
+
+    # Batch embed
+    texts = [row[1] for row in rows]
+    embeddings = embedding_service.embed_texts(texts)
+
+    reindexed = 0
+    for row, emb in zip(rows, embeddings):
+        if emb is not None:
+            emb_str = "[" + ",".join(str(v) for v in emb) + "]"
+            await session.execute(
+                sa.text("UPDATE document_chunks SET embedding = :emb WHERE id = :cid"),
+                {"emb": emb_str, "cid": str(row[0])},
+            )
+            reindexed += 1
+
+    await session.commit()
+
+    return {
+        "message": f"Reindexed {reindexed} chunks with embeddings",
+        "reindexed": reindexed,
+        "remaining": len(rows) - reindexed,
+        "model": embedding_service.get_model_name(),
+    }
+
+
+@router.get("/search/status")
+async def search_status():
+    """Check which search modes are available."""
+    from app.modules.knowledge import embedding_service
+    return {
+        "tfidf": True,
+        "vector": embedding_service.is_available(),
+        "hybrid": embedding_service.is_available(),
+        "embedding_model": embedding_service.get_model_name() if embedding_service.is_available() else None,
+        "embedding_dimensions": 384 if embedding_service.is_available() else None,
+    }

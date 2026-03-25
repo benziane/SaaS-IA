@@ -9,6 +9,10 @@ import {
   CardContent,
   Chip,
   CircularProgress,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  IconButton,
   LinearProgress,
   List,
   ListItem,
@@ -17,9 +21,10 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
+import CloseIcon from '@mui/icons-material/Close';
 
 import { useAgentRuns, useRunAgent } from '@/features/agents/hooks/useAgents';
-import type { AgentRun } from '@/features/agents/types';
+import type { AgentRun, AgentStep } from '@/features/agents/types';
 
 const STATUS_COLORS: Record<string, 'default' | 'primary' | 'success' | 'error' | 'warning'> = {
   planning: 'default',
@@ -42,7 +47,40 @@ const ACTION_LABELS: Record<string, string> = {
   create_pipeline: 'Pipeline Creation',
 };
 
+function StepOutputDialog({ step, open, onClose }: { step: AgentStep | null; open: boolean; onClose: () => void }) {
+  if (!step) return null;
+  let output = '';
+  if (step.output_json) {
+    try {
+      const parsed = typeof step.output_json === 'string' ? JSON.parse(step.output_json) : step.output_json;
+      output = parsed?.output || JSON.stringify(parsed, null, 2);
+    } catch {
+      output = step.output_json;
+    }
+  }
+  return (
+    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+      <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Box>
+          <Typography variant="h6">{ACTION_LABELS[step.action] || step.action}</Typography>
+          <Typography variant="caption" color="text.secondary">{step.description}</Typography>
+        </Box>
+        <IconButton onClick={onClose} size="small"><CloseIcon /></IconButton>
+      </DialogTitle>
+      <DialogContent dividers sx={{ maxHeight: '70vh', overflowY: 'auto' }}>
+        <Typography
+          variant="body2"
+          sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontFamily: 'monospace', fontSize: '0.82rem' }}
+        >
+          {output || 'Pas de résultat disponible.'}
+        </Typography>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function RunCard({ run }: { run: AgentRun }) {
+  const [selectedStep, setSelectedStep] = useState<AgentStep | null>(null);
   const progress = run.total_steps > 0 ? (run.current_step / run.total_steps) * 100 : 0;
 
   return (
@@ -84,7 +122,14 @@ function RunCard({ run }: { run: AgentRun }) {
                       primaryTypographyProps={{ variant: 'body2' }}
                       secondaryTypographyProps={{ variant: 'caption' }}
                     />
-                    <Chip label={step.status} size="small" color={STATUS_COLORS[step.status] || 'default'} variant="outlined" />
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      {stepOutput && (
+                        <Button size="small" variant="text" onClick={() => setSelectedStep(step)} sx={{ minWidth: 0, fontSize: '0.7rem' }}>
+                          Voir
+                        </Button>
+                      )}
+                      <Chip label={step.status} size="small" color={STATUS_COLORS[step.status] || 'default'} variant="outlined" />
+                    </Box>
                   </Box>
                   {stepOutput && (
                     <Typography
@@ -96,12 +141,14 @@ function RunCard({ run }: { run: AgentRun }) {
                         bgcolor: 'action.hover',
                         borderRadius: 1,
                         whiteSpace: 'pre-wrap',
-                        maxHeight: 120,
-                        overflow: 'auto',
+                        maxHeight: 80,
+                        overflow: 'hidden',
                         display: 'block',
+                        cursor: 'pointer',
                       }}
+                      onClick={() => setSelectedStep(step)}
                     >
-                      {stepOutput.length > 300 ? stepOutput.substring(0, 300) + '...' : stepOutput}
+                      {stepOutput.substring(0, 200)}{stepOutput.length > 200 ? '… (cliquer pour voir tout)' : ''}
                     </Typography>
                   )}
                 </ListItem>
@@ -114,6 +161,7 @@ function RunCard({ run }: { run: AgentRun }) {
           <Alert severity="error" sx={{ mt: 1 }}>{run.error}</Alert>
         )}
       </CardContent>
+      <StepOutputDialog step={selectedStep} open={!!selectedStep} onClose={() => setSelectedStep(null)} />
     </Card>
   );
 }

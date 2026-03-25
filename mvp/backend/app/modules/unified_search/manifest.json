@@ -1,0 +1,9 @@
+{
+  "name": "unified_search",
+  "version": "1.0.0",
+  "description": "Universal search across all platform modules - hybrid search, facets, cross-module RAG",
+  "prefix": "/api/search",
+  "tags": ["unified_search"],
+  "enabled": true,
+  "dependencies": []
+}

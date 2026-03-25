@@ -1,0 +1,9 @@
+{
+  "name": "ai_monitoring",
+  "version": "1.0.0",
+  "description": "LLM observability - quality scoring, latency tracking, cost analytics, prompt monitoring",
+  "prefix": "/api/monitoring",
+  "tags": ["ai_monitoring"],
+  "enabled": true,
+  "dependencies": []
+}

@@ -20,6 +20,7 @@ class AgentStepRead(BaseModel):
     description: str
     status: str
     error: Optional[str]
+    output_json: Optional[str]
     started_at: Optional[datetime]
     completed_at: Optional[datetime]
 

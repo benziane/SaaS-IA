@@ -6,8 +6,8 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { askQuestion, deleteDocument, listDocuments, searchDocuments, uploadDocument } from '../api';
-import type { AskResponse, KBDocument, SearchResponse } from '../types';
+import { askQuestion, deleteDocument, listDocumentChunks, listDocuments, searchDocuments, uploadDocument } from '../api';
+import type { AskResponse, ChunkRead, KBDocument, SearchResponse } from '../types';
 
 export function useDocuments() {
   return useQuery<KBDocument[]>({
@@ -29,6 +29,14 @@ export function useDeleteDocument() {
   return useMutation<void, Error, string>({
     mutationFn: deleteDocument,
     onSuccess: () => qc.invalidateQueries({ queryKey: ['knowledge', 'documents'] }),
+  });
+}
+
+export function useDocumentChunks(documentId: string | null) {
+  return useQuery<ChunkRead[]>({
+    queryKey: ['knowledge', 'chunks', documentId],
+    queryFn: () => listDocumentChunks(documentId!),
+    enabled: !!documentId,
   });
 }
 

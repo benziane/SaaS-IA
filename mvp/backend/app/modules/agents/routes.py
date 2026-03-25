@@ -55,7 +55,7 @@ async def run_agent(
             steps.append(AgentStepRead(
                 id=s.id, step_index=s.step_index, action=s.action,
                 description=s.description, status=s.status.value if hasattr(s.status, 'value') else s.status,
-                error=s.error, started_at=s.started_at, completed_at=s.completed_at,
+                error=s.error, output_json=s.output_json, started_at=s.started_at, completed_at=s.completed_at,
             ))
 
     return AgentRunRead(
@@ -106,7 +106,7 @@ async def get_run(
         AgentStepRead(
             id=s.id, step_index=s.step_index, action=s.action,
             description=s.description, status=s.status.value if hasattr(s.status, 'value') else s.status,
-            error=s.error, started_at=s.started_at, completed_at=s.completed_at,
+            error=s.error, output_json=s.output_json, started_at=s.started_at, completed_at=s.completed_at,
         )
         for s in data["steps"]
     ]
@@ -133,3 +133,33 @@ async def cancel_run(
     if not cancelled:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot cancel this run")
     return {"status": "cancelled"}
+
+
+@router.post("/react")
+@limiter.limit("3/minute")
+async def run_react_agent(
+    request: Request,
+    body: AgentRunRequest,
+    current_user: User = Depends(require_ai_call_quota),
+    session: AsyncSession = Depends(get_session),
+):
+    """Run an agent using ReAct (Reason + Act) pattern with reflection loops.
+
+    More advanced than the standard sequential agent - uses iterative
+    thinking, acting, observing, and self-reflection.
+
+    Rate limit: 3 requests/minute
+    """
+    from app.modules.agents.graph_engine import run_react_agent as react_run
+
+    result = await react_run(
+        instruction=body.instruction,
+        user_id=current_user.id,
+        max_iterations=5,
+    )
+
+    await BillingService.consume_quota(
+        current_user.id, "ai_call", len(result.get("steps_completed", [])) or 1, session
+    )
+
+    return result

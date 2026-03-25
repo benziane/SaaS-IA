@@ -1,0 +1,9 @@
+{
+  "name": "video_gen",
+  "version": "1.0.0",
+  "description": "AI video generation - text/image to video, highlight clips, talking avatars, explainers",
+  "prefix": "/api/videos",
+  "tags": ["video_gen"],
+  "enabled": true,
+  "dependencies": []
+}

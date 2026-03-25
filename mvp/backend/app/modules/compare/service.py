@@ -98,6 +98,16 @@ class CompareService:
             except Exception:
                 pass  # Cost tracking should never break main flow
 
+        # Auto-evaluate responses using LLM-as-judge (promptfoo-style)
+        try:
+            from app.modules.compare.eval_engine import evaluate_responses
+            valid_results = [r for r in results if r.get("response") and not r.get("error")]
+            if len(valid_results) >= 2:
+                results = await evaluate_responses(prompt, results, user_id)
+                logger.info("auto_evaluation_complete", evaluated=len(valid_results))
+        except Exception as e:
+            logger.debug("auto_evaluation_skipped", error=str(e))
+
         # Persist comparison
         comparison = ComparisonResult(
             user_id=user_id,
