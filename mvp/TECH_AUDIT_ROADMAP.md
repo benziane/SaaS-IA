@@ -37,7 +37,7 @@
 | # | Module | Lib/Repo | Stars | Impact | Action | Statut |
 |---|--------|----------|-------|--------|--------|--------|
 | 20 | voice_clone | **Coqui TTS** | 30K | TTS + voice cloning open-source complet, multi-langue | `pip install TTS` | [x] FAIT (v3.6.0) |
-| 6 | pipelines | **@xyflow/react** (React Flow) | 35K | Visual DAG builder drag-and-drop dans Next.js | `npm install @xyflow/react` | [ ] A examiner (frontend only) |
+| 6 | pipelines | **@xyflow/react** (React Flow) | 35K | Visual DAG builder drag-and-drop dans Next.js | `npm install @xyflow/react` | [x] FAIT (v4.0.0) |
 | 11 | security_guardian | **NeMo-Guardrails** (NVIDIA) | 5K | Guardrails programmables + injection detection avancee | `pip install nemoguardrails` | [x] FAIT (v3.6.0) |
 
 ### Priorite SEMAINE 3
@@ -55,14 +55,14 @@
 |---|--------|----------|-------|--------|--------|--------|
 | 8 | sentiment | **cardiffnlp/twitter-roberta-base** (HF) | - | Modele SOTA gratuit sentiment, remplacerait les appels LLM couteux | `transformers` pipeline local | [x] FAIT (v3.10.0) |
 | 9 | web_crawler | **Jina Reader API** | - | Fallback gratuit (1M tokens) : `https://r.jina.ai/URL` -> markdown | Simple HTTP call, zero setup | [x] FAIT (v3.10.0) |
-| 15 | video_gen | **remotion** | 20K | Video programmatique en React (explainers, shorts, dynamique) | `npm install remotion` | [ ] A examiner (frontend) |
+| 15 | video_gen | **remotion** | 20K | Video programmatique en React (explainers, shorts, dynamique) | `npm install remotion` | [x] FAIT (v4.0.0) |
 | 16 | video_gen | **ffmpeg-python** | 9K | Montage/decoupe/sous-titrage auto (remplacerait mock mode) | `pip install ffmpeg-python` | [x] FAIT (v3.10.0) |
 | 17 | fine_tuning | **unsloth** | 20K | Training LoRA 2x plus rapide, 70% moins de VRAM | `pip install unsloth` | [x] FAIT (v3.10.0) |
 | 18 | fine_tuning | **lm-evaluation-harness** | 15K | Benchmark standard pour evaluer modeles fine-tunes | `pip install lm-eval` | [x] FAIT (v3.10.0) |
 | 19 | image_gen | **Real-ESRGAN** | 25K | Upscaling images generes (x4 resolution) | `pip install realesrgan` | [x] FAIT (v3.10.0) |
 | 21 | content_studio | **textstat** | 3K | Scoring lisibilite (Flesch-Kincaid) pour optimiser SEO du contenu genere | `pip install textstat` | [x] FAIT (v3.10.0) |
 | 23 | realtime_ai | **livekit** + **livekit-agents** | 10K + 1K | WebRTC open-source pour sessions audio/video temps reel | `pip install livekit-server-sdk` | [x] FAIT (v3.10.0) |
-| 25 | workspaces | **yjs** | 15K | CRDT pour collaboration temps reel documents/annotations | `npm install yjs y-websocket` | [ ] A examiner (frontend) |
+| 25 | workspaces | **yjs** | 15K | CRDT pour collaboration temps reel documents/annotations | `npm install yjs y-websocket` | [x] FAIT (v4.0.0) |
 
 ---
 
@@ -74,10 +74,10 @@
 |---|--------|-----------------|-------|-------------|--------|
 | 23 | social_publisher | **postiz-app** | 15K | Alternative open-source Buffer/Hootsuite, scheduling multi-plateforme | [x] FAIT (v4.0.0) |
 | | | `tweepy` + `python-linkedin-v2` | - | APIs sociales directes (gratuit) | [x] FAIT (v4.0.0) |
-| 24 | unified_search | **Meilisearch** | 45K | Moteur de recherche ultra-rapide, hybrid search natif (BM25 + vectors), facettes, typo-tolerant | [ ] A examiner |
-| | | `meilisearch-python` | - | SDK Python officiel | [ ] A examiner |
-| 25 | ai_memory | **Mem0** | 25K | Couche memoire universelle pour IA, extraction auto de preferences | [ ] A examiner |
-| | | `mem0ai` | - | SDK Python, self-hostable | [ ] A examiner |
+| 24 | unified_search | **Meilisearch** | 45K | Moteur de recherche ultra-rapide, hybrid search natif (BM25 + vectors), facettes, typo-tolerant | [x] FAIT (v4.0.0) |
+| | | `meilisearch-python` | - | SDK Python officiel | [x] FAIT (v4.0.0) |
+| 25 | ai_memory | **Mem0** | 25K | Couche memoire universelle pour IA, extraction auto de preferences | [x] FAIT (v4.0.0) |
+| | | `mem0ai` | - | SDK Python, self-hostable | [x] FAIT (v4.0.0) |
 | 26 | integration_hub | **Nango** | 4K | OAuth2 + sync + webhooks pour 200+ APIs, self-hostable | [x] FAIT (v4.0.0) |
 | | | `authlib` | - | OAuth2 cote serveur Python | [x] FAIT (v4.0.0) |
 | 27 | ai_chatbot_builder | **Typebot** | 18K | Chatbot builder open-source, embed widget, self-hostable | [x] FAIT (v4.0.0) |
@@ -90,8 +90,8 @@
 | | | **Monaco Editor** | 40K | Editeur code VS Code dans le browser | [x] FAIT (v4.0.0) |
 | 31 | ai_forms | **conversational-form** | 10K | Formulaires conversationnels natifs | [x] FAIT (v4.0.0) |
 | | | `react-hook-form` | 40K | Deja dans notre stack | [x] FAIT (v4.0.0) |
-| 32 | ai_monitoring | **Langfuse** | 8K | Observabilite LLM open-source, self-hostable, traces + evals | [ ] A examiner |
-| | | `opentelemetry-api` | - | Tracing standardise | [ ] A examiner |
+| 32 | ai_monitoring | **Langfuse** | 8K | Observabilite LLM open-source, self-hostable, traces + evals | [x] FAIT (v4.0.0) |
+| | | `opentelemetry-api` | - | Tracing standardise | [x] FAIT (v4.0.0) |
 
 ---
 
@@ -198,8 +198,8 @@ Chaque astuce est une amelioration transversale a fort impact. A implementer dan
 | S4 | Real-ESRGAN | image_gen | Upscaling x4 + endpoint POST /upscale | [x] FAIT (v3.10.0) |
 | S4 | unsloth + lm-eval | fine_tuning | LoRA training reel + benchmark evaluation | [x] FAIT (v3.10.0) |
 | S4 | livekit-server-sdk | realtime_ai | WebRTC rooms + tokens + agent tokens | [x] FAIT (v3.10.0) |
-| S4 | remotion | video_gen | Frontend-only, a examiner | [ ] A examiner |
-| S4 | yjs | workspaces | Frontend-only, a examiner | [ ] A examiner |
+| S4 | remotion | video_gen | Video composer page (React) | [x] FAIT (v4.0.0) |
+| S4 | yjs | workspaces | Collaborative workspaces (CRDT) | [x] FAIT (v4.0.0) |
 
 ---
 

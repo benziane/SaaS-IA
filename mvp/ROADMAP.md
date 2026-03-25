@@ -1280,11 +1280,17 @@ CREATE INDEX ix_document_chunks_embedding_hnsw
 - Graceful shutdown with request draining
 - Multi-stage Dockerfile with tini
 
-#### Open-Source Integrations (26 total)
+#### Open-Source Integrations (29 total)
 - Semaine 4+: cardiffnlp/RoBERTa, textstat, Jina Reader, ffmpeg-python, Real-ESRGAN, unsloth, lm-eval, LiveKit
 - Enterprise: OpenTelemetry (7 packages), sentry-sdk, brotli
+- Platform: Meilisearch (unified_search), Mem0 (ai_memory), Langfuse (ai_monitoring)
 
-Total plateforme : **32 modules**, **38 pages**, **~250 endpoints**, **9 middleware layers**, **12 composants enterprise**
+#### Frontend Integrations
+- **@xyflow/react** : Visual pipeline builder (drag-and-drop DAG canvas)
+- **remotion** : Video composer page (programmatic video in React)
+- **yjs** : Collaborative workspaces (CRDT real-time editing)
+
+Total plateforme : **32 modules**, **38 pages**, **~270 endpoints**, **9 middleware layers**, **12 composants enterprise**, **29 libs open-source**
 
 ### v3.10.0 (2026-03-25) - Open-Source Libs Semaine 4+ (8 integrations)
 - **cardiffnlp/RoBERTa** : sentiment local SOTA (~100ms vs 5s LLM), couts /10, lazy-loaded pipeline

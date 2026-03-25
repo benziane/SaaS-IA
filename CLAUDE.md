@@ -2,7 +2,7 @@
 
 ## Projet
 
-Plateforme SaaS modulaire d'intelligence artificielle - 32 modules backend auto-decouverts, 38 pages frontend, ~250 endpoints API. Architecture enterprise S+++ (v4.0.0).
+Plateforme SaaS modulaire d'intelligence artificielle - 32 modules backend auto-decouverts, 38 pages frontend, ~270 endpoints API. Architecture enterprise S+++ (v4.0.0).
 
 ## Stack technique
 
@@ -111,7 +111,7 @@ social_publisher (multi-platform publishing, scheduling, analytics), integration
 ### New - Content & Dev Tools (3)
 presentation_gen (AI slides, 5 templates, export HTML/MD/PDF), code_sandbox (secure execution, AI code gen/debug), ai_forms (conversational forms, AI generation, scoring)
 
-## Integrations open-source (26 libs)
+## Integrations open-source (29 libs)
 
 | Lib | Module | Fallback |
 |-----|--------|----------|
@@ -133,6 +133,9 @@ presentation_gen (AI slides, 5 templates, export HTML/MD/PDF), code_sandbox (sec
 | livekit-server-sdk | realtime_ai | text-based sessions |
 | OpenTelemetry (7 packages) | core/telemetry | Prometheus seul |
 | sentry-sdk | core/error_tracking | structlog seul |
+| meilisearch | unified_search | PostgreSQL ILIKE |
+| mem0ai | ai_memory | DB queries |
+| langfuse | ai_monitoring | Prometheus seul |
 
 Toutes les integrations suivent la regle : **auto-detection + fallback gracieux** (pattern `HAS_XXX`).
 
