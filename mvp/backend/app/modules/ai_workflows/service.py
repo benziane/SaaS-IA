@@ -460,6 +460,8 @@ class WorkflowService:
             return await WorkflowService._node_execute_code(previous_output, config, user_id)
         elif action == "generate_form":
             return await WorkflowService._node_generate_form(previous_output, config, user_id)
+        elif action == "scrape_repos":
+            return await WorkflowService._node_scrape_repos(previous_output, config, user_id)
         else:
             return await WorkflowService._node_generate(previous_output, config, user_id)
 
@@ -993,6 +995,45 @@ class WorkflowService:
             }
         except Exception as e:
             return {"output": "", "error": str(e)[:500], "action": "generate_form"}
+
+    @staticmethod
+    async def _node_scrape_repos(text: str, config: dict, user_id: UUID) -> dict:
+        """Scrape GitHub repos using Skill Seekers."""
+        repos = config.get("repos", [])
+        targets = config.get("targets", ["claude"])
+        if not repos and text:
+            repos = [text.strip()]
+        if not repos:
+            return {"output": "", "error": "No repos provided", "action": "scrape_repos"}
+        try:
+            import json as _json
+            from app.modules.skill_seekers.service import SkillSeekersService
+            from app.database import get_session_context
+            svc = SkillSeekersService()
+            async with get_session_context() as ss_session:
+                job = await SkillSeekersService.create_job(
+                    user_id=user_id,
+                    repos=repos,
+                    targets=targets,
+                    enhance=config.get("enhance", False),
+                    session=ss_session,
+                )
+            await svc.run_job(job.id)
+            async with get_session_context() as ss_session:
+                from app.models.skill_seekers import ScrapeJob
+                job = await ss_session.get(ScrapeJob, job.id)
+            output_files = _json.loads(job.output_files_json) if job.output_files_json else []
+            import os
+            filenames = [os.path.basename(f) for f in output_files]
+            output = f"Scraped {len(repos)} repo(s) for {', '.join(targets)}: {', '.join(filenames)}" if filenames else "Scrape completed but no output files"
+            return {
+                "output": output,
+                "action": "scrape_repos",
+                "job_id": str(job.id),
+                "output_files": filenames,
+            }
+        except Exception as e:
+            return {"output": "", "error": str(e)[:500], "action": "scrape_repos"}
 
     @staticmethod
     async def list_runs(

@@ -2,7 +2,7 @@
 
 ## Projet
 
-Plateforme SaaS modulaire d'intelligence artificielle - 32 modules backend auto-decouverts, 38 pages frontend, ~270 endpoints API. Architecture enterprise S+++ (v4.0.0).
+Plateforme SaaS modulaire d'intelligence artificielle - 33 modules backend auto-decouverts, 41 pages frontend, ~280 endpoints API. Architecture enterprise S+++ (v4.0.0).
 
 ## Stack technique
 
@@ -85,7 +85,7 @@ Ce qui est interdit c'est de **supprimer un module entier ou remplacer une techn
 - Pour ajouter un embedding a un chunk, utiliser raw SQL : `UPDATE document_chunks SET embedding = :emb WHERE id = :cid`
 - Toujours garder le TF-IDF comme fallback - ne jamais le supprimer
 
-## Modules existants (32)
+## Modules existants (33)
 
 ### Core (12)
 transcription, conversation, knowledge (hybrid search: pgvector + TF-IDF), compare, pipelines, agents, sentiment, web_crawler, workspaces, billing, api_keys, cost_tracker
@@ -111,7 +111,10 @@ social_publisher (multi-platform publishing, scheduling, analytics), integration
 ### New - Content & Dev Tools (3)
 presentation_gen (AI slides, 5 templates, export HTML/MD/PDF), code_sandbox (secure execution, AI code gen/debug), ai_forms (conversational forms, AI generation, scoring)
 
-## Integrations open-source (29 libs)
+### Tools (1)
+skill_seekers (GitHub repo scraper + Claude AI packager, mock mode, async CLI execution)
+
+## Integrations open-source (30 libs)
 
 | Lib | Module | Fallback |
 |-----|--------|----------|
@@ -136,13 +139,14 @@ presentation_gen (AI slides, 5 templates, export HTML/MD/PDF), code_sandbox (sec
 | meilisearch | unified_search | PostgreSQL ILIKE |
 | mem0ai | ai_memory | DB queries |
 | langfuse | ai_monitoring | Prometheus seul |
+| skill-seekers | skill_seekers | mock mode |
 
 Toutes les integrations suivent la regle : **auto-detection + fallback gracieux** (pattern `HAS_XXX`).
 
 ## Interconnexions
 
 3 systemes d'orchestration connectent tous les modules :
-- **Agent Executor** : ~30 actions (appels directs aux services)
+- **Agent Executor** : ~68 actions (appels directs aux services)
 - **Pipeline Steps** : 20 step types (chaining sequentiel)
 - **Workflow Actions** : 23 types (DAG avec branches paralleles)
 

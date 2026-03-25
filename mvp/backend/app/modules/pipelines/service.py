@@ -725,6 +725,40 @@ class PipelineService:
                 step_output = "No prompt for form generation" if not prompt else "No pipeline context"
             return {"type": "generate_form", "output": step_output}
 
+        # ---- Scrape repos step (Skill Seekers) ----
+        elif step_type == "scrape_repos":
+            repos = config.get("repos", [])
+            targets = config.get("targets", ["claude"])
+            if not repos and previous_output:
+                repos = [previous_output.strip()]
+            if repos and pipeline:
+                try:
+                    from app.modules.skill_seekers.service import SkillSeekersService
+                    from app.database import get_session_context
+                    svc = SkillSeekersService()
+                    async with get_session_context() as ss_session:
+                        job = await SkillSeekersService.create_job(
+                            user_id=pipeline.user_id,
+                            repos=repos,
+                            targets=targets,
+                            enhance=config.get("enhance", False),
+                            session=ss_session,
+                        )
+                    await svc.run_job(job.id)
+                    async with get_session_context() as ss_session:
+                        job = await ss_session.get(
+                            __import__("app.models.skill_seekers", fromlist=["ScrapeJob"]).ScrapeJob,
+                            job.id,
+                        )
+                    output_files = json.loads(job.output_files_json) if job.output_files_json else []
+                    filenames = [__import__("os").path.basename(f) for f in output_files]
+                    step_output = f"Scraped {len(repos)} repo(s) for {', '.join(targets)}: {', '.join(filenames)}" if filenames else "Scrape completed but no output files"
+                except Exception as e:
+                    step_output = f"Repo scrape failed: {str(e)[:500]}"
+            else:
+                step_output = "No repos provided" if not repos else "No pipeline context"
+            return {"type": "scrape_repos", "output": step_output}
+
         else:
             return {"type": step_type, "output": previous_output or "", "note": "Unknown step type"}
 

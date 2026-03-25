@@ -1262,7 +1262,7 @@ CREATE INDEX ix_document_chunks_embedding_hnsw
 
 ### v4.0.0 (2026-03-25) - Ecosystem Modules + Content & Dev Tools + Enterprise S+++
 
-#### New Modules (7)
+#### New Modules (8)
 - **social_publisher** : Multi-platform publishing hub (scheduling, analytics, multi-platform)
 - **integration_hub** : External connectors with webhooks (10 connectors, triggers)
 - **ai_chatbot_builder** : RAG chatbots with embed deployment (widget, multi-channel)
@@ -1270,6 +1270,7 @@ CREATE INDEX ix_document_chunks_embedding_hnsw
 - **presentation_gen** : AI slides (5 templates, export HTML/MD/PDF)
 - **code_sandbox** : Secure execution (AI code gen/debug)
 - **ai_forms** : Conversational forms (AI generation, scoring)
+- **skill_seekers** : GitHub repo scraper + Claude AI packager (mock mode, async CLI execution)
 
 #### Enterprise Architecture (12 components)
 - 9 middleware layers (CORS, RequestID, ShutdownGuard, Sentry, RateLimit, Logging, Security, Compression, Prometheus)
@@ -1290,7 +1291,7 @@ CREATE INDEX ix_document_chunks_embedding_hnsw
 - **remotion** : Video composer page (programmatic video in React)
 - **yjs** : Collaborative workspaces (CRDT real-time editing)
 
-Total plateforme : **32 modules**, **38 pages**, **~270 endpoints**, **9 middleware layers**, **12 composants enterprise**, **29 libs open-source**
+Total plateforme : **33 modules**, **41 pages**, **~280 endpoints**, **9 middleware layers**, **12 composants enterprise**, **30 libs open-source**
 
 ### v3.10.0 (2026-03-25) - Open-Source Libs Semaine 4+ (8 integrations)
 - **cardiffnlp/RoBERTa** : sentiment local SOTA (~100ms vs 5s LLM), couts /10, lazy-loaded pipeline
