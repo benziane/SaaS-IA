@@ -35,4 +35,5 @@ celery_app.conf.update(
 celery_app.autodiscover_tasks([
     "app.modules.transcription",
     "app.modules.conversation",
+    "app.modules.skill_seekers",
 ])

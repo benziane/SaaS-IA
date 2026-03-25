@@ -10,10 +10,10 @@ import { ScrapeJobStatus } from '../types';
  * List scrape jobs with pagination.
  * Auto-polls every 2s when any job is running.
  */
-export function useSkillSeekersJobs(skip = 0, limit = 20) {
+export function useSkillSeekersJobs(skip = 0, limit = 20, statusFilter?: string) {
   return useQuery<PaginatedJobs>({
-    queryKey: ['skill-seekers-jobs', skip, limit],
-    queryFn: () => listJobs(skip, limit),
+    queryKey: ['skill-seekers-jobs', skip, limit, statusFilter],
+    queryFn: () => listJobs(skip, limit, statusFilter),
     staleTime: 5_000,
     refetchInterval: (query) => {
       const hasRunning = query.state.data?.items.some(

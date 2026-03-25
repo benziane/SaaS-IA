@@ -47,6 +47,12 @@ AVAILABLE_ACTIONS = {
     "execute_code": "Execute code in a secure sandbox (Python)",
     "generate_form": "Generate an AI-powered form from a natural language prompt",
     "scrape_repos": "Scrape GitHub repositories and package them for AI consumption (Claude, ChatGPT, etc.)",
+    "process_pdf": "Upload, parse, summarize, query, or export a PDF document",
+    "batch_transcribe": "Batch transcribe multiple YouTube URLs concurrently (max 20)",
+    "generate_summary": "Generate an AI-powered summary of a transcription (executive, detailed, bullet_points, action_items)",
+    "edit_audio": "Edit an audio file (trim, fade, normalize, noise reduction, speed change, merge)",
+    "generate_podcast": "Create a podcast episode with AI chapters, show notes, and RSS feed",
+    "analyze_repo": "Analyze a GitHub repository: detect tech stack, score code quality, scan dependencies and security",
 }
 
 
@@ -327,6 +333,41 @@ def _heuristic_plan(instruction: str) -> list[dict]:
             "action": "scrape_repos",
             "description": "Scrape GitHub repos and package for AI consumption",
             "input": {},
+        })
+
+    if any(w in instruction_lower for w in ["analyze repo", "repo analysis", "tech stack", "code quality", "audit repo", "scan repo", "review repo", "analyser repo", "analyse repo"]):
+        steps.append({
+            "action": "analyze_repo",
+            "description": "Analyze GitHub repository: tech stack, quality, dependencies, security",
+            "input": {},
+        })
+
+    if any(w in instruction_lower for w in ["pdf", "document pdf", "resume pdf", "analyze pdf", "summarize pdf", "parse pdf", "extract pdf"]):
+        steps.append({
+            "action": "process_pdf",
+            "description": "Process, analyze, or summarize a PDF document",
+            "input": {},
+        })
+
+    if any(w in instruction_lower for w in ["batch transcri", "multiple video", "bulk transcri", "several youtube", "many video", "liste video"]):
+        steps.append({
+            "action": "batch_transcribe",
+            "description": "Batch transcribe multiple YouTube URLs concurrently",
+            "input": {},
+        })
+
+    if any(w in instruction_lower for w in ["summary of transcri", "summarize transcri", "resume transcri", "executive summary", "action items from transcri", "bullet points from transcri"]):
+        style = "executive"
+        if any(w in instruction_lower for w in ["action item", "task", "next step"]):
+            style = "action_items"
+        elif any(w in instruction_lower for w in ["bullet", "point"]):
+            style = "bullet_points"
+        elif any(w in instruction_lower for w in ["detail"]):
+            style = "detailed"
+        steps.append({
+            "action": "generate_summary",
+            "description": f"Generate {style} summary of transcription",
+            "input": {"style": style},
         })
 
     if not steps:

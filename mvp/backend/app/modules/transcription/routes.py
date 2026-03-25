@@ -27,6 +27,15 @@ from app.schemas.transcription import (
     LiveStreamCaptureRequest, LiveStreamStatusResponse, LiveStreamCaptureResponse,
     VideoFrameAnalysis, VideoAnalyzeRequest, VideoAnalyzeResponse,
 )
+from app.schemas.transcription import (
+    BatchTranscribeRequest, BatchTranscribeResponse,
+    ChapterItem, ChapterResponse,
+    SummaryRequest, SummaryResponse,
+    KeywordItem, KeywordResponse,
+    ExportFormat, ExportResponse,
+    YouTubeMetadataV2,
+    SearchTranscriptionResult, SearchTranscriptionsResponse,
+)
 from app.modules.transcription.service import TranscriptionService
 from app.modules.transcription.websocket import get_debug_manager
 from app.transcription.audio_cache import get_audio_cache
@@ -409,6 +418,257 @@ async def delete_transcription(
     await service.delete_job(job_id, session)
     
     return None
+
+
+# ========================================================================
+# YouTube Enterprise v2 Endpoints
+# ========================================================================
+
+
+@router.post("/batch", response_model=BatchTranscribeResponse, status_code=status.HTTP_201_CREATED)
+@limiter.limit("5/minute")
+async def batch_transcribe(
+    request: Request,
+    body: BatchTranscribeRequest,
+    background_tasks: BackgroundTasks,
+    current_user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+    service: TranscriptionService = Depends(get_transcription_service),
+):
+    """
+    Batch transcribe multiple YouTube URLs concurrently.
+
+    Creates individual transcription jobs for each URL (max 20).
+    Jobs are processed in the background with max 3 concurrent operations.
+
+    Rate limit: 5 requests/minute
+    """
+    job_ids = await service.batch_transcribe(
+        user_id=current_user.id,
+        urls=body.urls,
+        session=session,
+        language=body.language,
+    )
+
+    # Schedule background processing for each job
+    for job_id in job_ids:
+        if _celery_available():
+            from app.modules.transcription.tasks import process_transcription_task
+            process_transcription_task.delay(str(job_id), "", body.language, "youtube")
+        else:
+            background_tasks.add_task(service.process_transcription, job_id)
+
+    errors = []
+    accepted_urls = set()
+    for jid in job_ids:
+        accepted_urls.add(str(jid))
+
+    return BatchTranscribeResponse(
+        job_ids=[str(jid) for jid in job_ids],
+        total=len(body.urls),
+        accepted=len(job_ids),
+        errors=errors,
+    )
+
+
+@router.post("/{job_id}/chapters", response_model=ChapterResponse)
+@limiter.limit("10/minute")
+async def generate_chapters(
+    request: Request,
+    job_id: UUID,
+    current_user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+    service: TranscriptionService = Depends(get_transcription_service),
+):
+    """
+    Generate AI-powered chapters from a completed transcription.
+
+    Analyzes the transcript text and creates timestamped chapters
+    with titles and summaries. Stores results in transcription metadata.
+
+    Rate limit: 10 requests/minute
+    """
+    try:
+        chapters = await service.generate_chapters(
+            transcription_id=job_id,
+            user_id=current_user.id,
+            session=session,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except PermissionError:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+
+    return ChapterResponse(
+        transcription_id=str(job_id),
+        chapters=[ChapterItem(**ch) for ch in chapters],
+        total_chapters=len(chapters),
+    )
+
+
+@router.post("/{job_id}/summary", response_model=SummaryResponse)
+@limiter.limit("10/minute")
+async def generate_summary(
+    request: Request,
+    job_id: UUID,
+    style: str = Query("executive", description="Summary style: executive, detailed, bullet_points, action_items"),
+    current_user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+    service: TranscriptionService = Depends(get_transcription_service),
+):
+    """
+    Generate an AI-powered summary of a completed transcription.
+
+    Supports multiple styles:
+    - executive: Concise 3-5 sentence summary
+    - detailed: Multi-paragraph detailed summary
+    - bullet_points: Key points as a bulleted list
+    - action_items: Extracted tasks and next steps
+
+    Rate limit: 10 requests/minute
+    """
+    try:
+        result = await service.generate_summary(
+            transcription_id=job_id,
+            user_id=current_user.id,
+            session=session,
+            style=style,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except PermissionError:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+
+    return SummaryResponse(**result)
+
+
+@router.post("/{job_id}/keywords", response_model=KeywordResponse)
+@limiter.limit("10/minute")
+async def extract_keywords(
+    request: Request,
+    job_id: UUID,
+    current_user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+    service: TranscriptionService = Depends(get_transcription_service),
+):
+    """
+    Extract key topics, entities, and keywords from a completed transcription.
+
+    Uses AI + optional TF-IDF for scoring. Returns keywords sorted by
+    relevance score with category classification.
+
+    Rate limit: 10 requests/minute
+    """
+    try:
+        keywords = await service.extract_keywords(
+            transcription_id=job_id,
+            user_id=current_user.id,
+            session=session,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except PermissionError:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+
+    return KeywordResponse(
+        transcription_id=str(job_id),
+        keywords=[KeywordItem(**kw) for kw in keywords],
+        total=len(keywords),
+    )
+
+
+@router.get("/{job_id}/export/{fmt}")
+@limiter.limit("30/minute")
+async def export_transcript(
+    request: Request,
+    job_id: UUID,
+    fmt: ExportFormat,
+    current_user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+    service: TranscriptionService = Depends(get_transcription_service),
+):
+    """
+    Export a completed transcription in multiple formats.
+
+    Supported formats:
+    - srt: SubRip subtitle format
+    - vtt: WebVTT subtitle format
+    - txt: Plain text
+    - md: Markdown with chapters (if generated)
+    - json: Structured JSON with all metadata
+
+    Rate limit: 30 requests/minute
+    """
+    try:
+        result = await service.export_transcript(
+            transcription_id=job_id,
+            user_id=current_user.id,
+            session=session,
+            fmt=fmt.value,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except PermissionError:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+
+    return ExportResponse(**result)
+
+
+@router.get("/metadata/v2")
+@limiter.limit("30/minute")
+async def get_youtube_metadata_v2(
+    request: Request,
+    url: str = Query(..., min_length=1, max_length=2000, description="YouTube video URL"),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Extract YouTube video metadata using yt-dlp (v2, enhanced).
+
+    Returns title, duration, channel, thumbnail, description,
+    publish_date, view_count, tags, categories, and more.
+
+    Rate limit: 30 requests/minute
+    """
+    metadata = await TranscriptionService.get_youtube_metadata(url)
+    if not metadata or metadata.get("error"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=metadata.get("error", "Could not extract metadata from URL"),
+        )
+
+    return YouTubeMetadataV2(**metadata)
+
+
+@router.get("/search/v2", response_model=SearchTranscriptionsResponse)
+@limiter.limit("30/minute")
+async def search_transcriptions(
+    request: Request,
+    q: str = Query(..., min_length=1, max_length=500, description="Search query"),
+    limit: int = Query(20, ge=1, le=100, description="Max results"),
+    current_user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+    service: TranscriptionService = Depends(get_transcription_service),
+):
+    """
+    Full-text search across all user's completed transcriptions.
+
+    Searches in transcript text content. Returns matching transcriptions
+    with highlighted snippets and relevance scores.
+
+    Rate limit: 30 requests/minute
+    """
+    results = await service.search_transcriptions(
+        user_id=current_user.id,
+        query=q,
+        session=session,
+        limit=limit,
+    )
+
+    return SearchTranscriptionsResponse(
+        query=q,
+        results=[SearchTranscriptionResult(**r) for r in results],
+        total=len(results),
+    )
 
 
 @router.websocket("/debug/{job_id}")

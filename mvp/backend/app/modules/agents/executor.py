@@ -106,6 +106,12 @@ async def execute_step(action: str, input_data: dict, previous_output: Optional[
         "execute_code": _exec_execute_code,
         "generate_form": _exec_generate_form,
         "scrape_repos": _exec_scrape_repos,
+        "analyze_repo": _exec_analyze_repo,
+        "batch_transcribe": _exec_batch_transcribe,
+        "generate_summary": _exec_generate_summary,
+        "process_pdf": _exec_process_pdf,
+        "edit_audio": _exec_edit_audio,
+        "generate_podcast": _exec_generate_podcast,
     }
 
     handler = handlers.get(action, _exec_generate)
@@ -877,6 +883,105 @@ async def _exec_search_marketplace(input_data: dict, previous: Optional[str]) ->
         return {"output": "", "error": str(e)[:500], "action": "search_marketplace"}
 
 
+async def _exec_batch_transcribe(input_data: dict, previous: Optional[str]) -> dict:
+    """Batch transcribe multiple YouTube URLs."""
+    urls = input_data.get("urls", [])
+    if not urls and previous:
+        # Try to extract URLs from previous output
+        import re
+        found = re.findall(r'https?://(?:www\.)?(?:youtube\.com/watch\?v=|youtu\.be/)[a-zA-Z0-9_-]+', previous)
+        urls = found[:20]
+    if not urls:
+        return {"output": "", "error": "No URLs provided for batch transcription", "action": "batch_transcribe"}
+
+    try:
+        from app.modules.transcription.service import TranscriptionService
+        from app.database import get_session_context
+        from uuid import UUID as UUIDType
+
+        user_id = input_data.get("_user_id")
+        if not user_id:
+            return {
+                "output": f"[Batch transcription ready for {len(urls)} URL(s). Use the Transcription module to process.]",
+                "action": "batch_transcribe",
+                "note": "No user context. Use the Transcription module directly.",
+            }
+
+        uid = UUIDType(user_id) if isinstance(user_id, str) else user_id
+        async with get_session_context() as session:
+            service = TranscriptionService()
+            job_ids = await service.batch_transcribe(
+                user_id=uid,
+                urls=urls,
+                session=session,
+                language=input_data.get("language", "auto"),
+            )
+
+        return {
+            "output": f"[Batch transcription created: {len(job_ids)} jobs for {len(urls)} URLs. "
+                      f"Job IDs: {', '.join(str(jid) for jid in job_ids[:5])}{'...' if len(job_ids) > 5 else ''}. "
+                      f"Use GET /api/transcription/{{job_id}} to check status.]",
+            "action": "batch_transcribe",
+            "job_ids": [str(jid) for jid in job_ids],
+            "total_urls": len(urls),
+            "jobs_created": len(job_ids),
+        }
+    except Exception as e:
+        return {"output": "", "error": str(e)[:500], "action": "batch_transcribe"}
+
+
+async def _exec_generate_summary(input_data: dict, previous: Optional[str]) -> dict:
+    """Generate an AI-powered summary of a transcription."""
+    transcription_id = input_data.get("transcription_id", "")
+    if not transcription_id and previous:
+        # Try to extract UUID from previous output
+        import re
+        uuids = re.findall(r'[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}', previous)
+        if uuids:
+            transcription_id = uuids[0]
+
+    if not transcription_id:
+        return {"output": "", "error": "No transcription_id provided for summary generation", "action": "generate_summary"}
+
+    style = input_data.get("style", "executive")
+
+    try:
+        from app.modules.transcription.service import TranscriptionService
+        from app.database import get_session_context
+        from uuid import UUID as UUIDType
+
+        user_id = input_data.get("_user_id")
+        if not user_id:
+            return {
+                "output": f"[Summary generation ready for transcription {transcription_id}. Use the Transcription module to process.]",
+                "action": "generate_summary",
+                "note": "No user context. Use the Transcription module directly.",
+            }
+
+        uid = UUIDType(user_id) if isinstance(user_id, str) else user_id
+        tid = UUIDType(transcription_id) if isinstance(transcription_id, str) else transcription_id
+
+        async with get_session_context() as session:
+            service = TranscriptionService()
+            result = await service.generate_summary(
+                transcription_id=tid,
+                user_id=uid,
+                session=session,
+                style=style,
+            )
+
+        summary = result.get("summary", "")
+        return {
+            "output": summary,
+            "action": "generate_summary",
+            "transcription_id": str(transcription_id),
+            "style": style,
+            "word_count": result.get("word_count", 0),
+        }
+    except Exception as e:
+        return {"output": "", "error": str(e)[:500], "action": "generate_summary"}
+
+
 async def _exec_scrape_repos(input_data: dict, previous: Optional[str]) -> dict:
     """Scrape GitHub repos and package for AI consumption via Skill Seekers."""
     repos = input_data.get("repos", [])
@@ -928,3 +1033,269 @@ async def _exec_scrape_repos(input_data: dict, previous: Optional[str]) -> dict:
         }
     except Exception as e:
         return {"output": "", "error": str(e)[:500], "action": "scrape_repos"}
+
+
+async def _exec_process_pdf(input_data: dict, previous: Optional[str]) -> dict:
+    """Process, summarize, or query a PDF document."""
+    pdf_id = input_data.get("pdf_id", "")
+    action = input_data.get("action", "summarize")
+
+    if not pdf_id:
+        return {
+            "output": "[PDF processing ready. Upload a PDF via the PDF Processor module, then use its ID to summarize, query, or export.]",
+            "action": "process_pdf",
+            "note": "No pdf_id provided. Upload a PDF first via POST /api/pdf/upload.",
+        }
+
+    try:
+        from app.modules.pdf_processor.service import PDFProcessorService
+        from app.database import get_session_context
+        from uuid import UUID as UUIDType
+
+        user_id = input_data.get("_user_id")
+        if not user_id:
+            return {
+                "output": f"[PDF {pdf_id} ready for processing. Use the PDF Processor module.]",
+                "action": "process_pdf",
+                "note": "No user context. Use the PDF Processor module directly.",
+            }
+
+        uid = UUIDType(user_id) if isinstance(user_id, str) else user_id
+        pid = UUIDType(pdf_id) if isinstance(pdf_id, str) else pdf_id
+
+        async with get_session_context() as session:
+            if action == "query":
+                question = input_data.get("question", previous or "")
+                if not question:
+                    return {"output": "", "error": "No question provided for PDF query", "action": "process_pdf"}
+                result = await PDFProcessorService.query_pdf(uid, pid, question, session)
+                if result:
+                    return {
+                        "output": result.get("answer", ""),
+                        "action": "process_pdf",
+                        "confidence": result.get("confidence", 0),
+                        "sources_count": len(result.get("sources", [])),
+                    }
+            elif action == "keywords":
+                result = await PDFProcessorService.extract_keywords(uid, pid, session)
+                if result:
+                    return {
+                        "output": ", ".join(result.get("keywords", [])),
+                        "action": "process_pdf",
+                    }
+            elif action == "export":
+                fmt = input_data.get("format", "markdown")
+                result = await PDFProcessorService.export_pdf(uid, pid, fmt, session)
+                if result:
+                    return {
+                        "output": result.get("content", "")[:3000],
+                        "action": "process_pdf",
+                        "format": fmt,
+                    }
+            else:
+                style = input_data.get("style", "executive")
+                result = await PDFProcessorService.summarize_pdf(uid, pid, session, style=style)
+                if result:
+                    return {
+                        "output": result.get("summary", ""),
+                        "action": "process_pdf",
+                        "style": style,
+                    }
+
+        return {"output": "", "error": "PDF not found or not accessible", "action": "process_pdf"}
+
+    except Exception as e:
+        return {"output": "", "error": str(e)[:500], "action": "process_pdf"}
+
+
+async def _exec_edit_audio(input_data: dict, previous: Optional[str]) -> dict:
+    """Edit an audio file using the Audio Studio module."""
+    audio_id = input_data.get("audio_id", "")
+    operations = input_data.get("operations", [])
+
+    if not audio_id:
+        return {
+            "output": "[Audio editing ready. Upload audio via POST /api/audio-studio/upload, then use its ID to edit.]",
+            "action": "edit_audio",
+            "note": "No audio_id provided. Upload an audio file first.",
+        }
+
+    try:
+        from app.modules.audio_studio.service import AudioStudioService
+        from app.database import get_session_context
+        from uuid import UUID as UUIDType
+
+        user_id = input_data.get("_user_id")
+        if not user_id:
+            return {
+                "output": f"[Audio {audio_id} ready for editing. Use the Audio Studio module.]",
+                "action": "edit_audio",
+                "note": "No user context. Use the Audio Studio module directly.",
+            }
+
+        uid = UUIDType(user_id) if isinstance(user_id, str) else user_id
+        aid = UUIDType(audio_id) if isinstance(audio_id, str) else audio_id
+
+        async with get_session_context() as session:
+            service = AudioStudioService(session)
+            result = await service.edit_audio(uid, aid, operations)
+
+        return {
+            "output": f"[Audio '{result.original_filename}' edited successfully. "
+                      f"Duration: {result.duration_seconds}s. Operations: {len(operations)}.]",
+            "action": "edit_audio",
+            "audio_id": str(result.id),
+            "duration_seconds": result.duration_seconds,
+        }
+    except Exception as e:
+        return {"output": "", "error": str(e)[:500], "action": "edit_audio"}
+
+
+async def _exec_generate_podcast(input_data: dict, previous: Optional[str]) -> dict:
+    """Create a podcast episode with AI chapters and show notes."""
+    audio_id = input_data.get("audio_id", "")
+    title = input_data.get("title", "Untitled Episode")
+
+    if not audio_id:
+        return {
+            "output": "[Podcast creation ready. Upload audio via POST /api/audio-studio/upload, then provide audio_id.]",
+            "action": "generate_podcast",
+            "note": "No audio_id provided. Upload an audio file first.",
+        }
+
+    try:
+        from app.modules.audio_studio.service import AudioStudioService
+        from app.database import get_session_context
+        from uuid import UUID as UUIDType
+
+        user_id = input_data.get("_user_id")
+        if not user_id:
+            return {
+                "output": f"[Podcast episode '{title}' ready. Use Audio Studio module with audio {audio_id}.]",
+                "action": "generate_podcast",
+                "note": "No user context. Use the Audio Studio module directly.",
+            }
+
+        uid = UUIDType(user_id) if isinstance(user_id, str) else user_id
+        aid = UUIDType(audio_id) if isinstance(audio_id, str) else audio_id
+
+        async with get_session_context() as session:
+            service = AudioStudioService(session)
+
+            # Generate chapters
+            await service.generate_chapters(uid, aid)
+            # Generate show notes
+            notes_result = await service.generate_show_notes(uid, aid)
+            show_notes_text = json.dumps(notes_result.get("show_notes", {}), ensure_ascii=False)
+
+            # Create episode
+            episode = await service.create_podcast_episode(uid, {
+                "audio_id": str(aid),
+                "title": title,
+                "description": input_data.get("description", ""),
+                "show_notes": show_notes_text,
+                "publish_date": input_data.get("publish_date"),
+            })
+
+        return {
+            "output": f"[Podcast episode '{episode.title}' created with AI chapters and show notes. "
+                      f"Episode ID: {episode.id}. Audio ID: {audio_id}.]",
+            "action": "generate_podcast",
+            "episode_id": str(episode.id),
+            "audio_id": str(audio_id),
+        }
+    except Exception as e:
+        return {"output": "", "error": str(e)[:500], "action": "generate_podcast"}
+
+
+async def _exec_analyze_repo(input_data: dict, previous: Optional[str]) -> dict:
+    """Analyze a GitHub repository for tech stack, quality, structure, etc."""
+    repo_url = input_data.get("repo_url", input_data.get("url", ""))
+    if not repo_url and previous:
+        # Try to extract a GitHub URL from previous output
+        import re
+        urls = re.findall(r"https?://github\.com/[a-zA-Z0-9_\-\.]+/[a-zA-Z0-9_\-\.]+", previous)
+        if urls:
+            repo_url = urls[0]
+        else:
+            # Try owner/repo format
+            repos = re.findall(r"[a-zA-Z0-9_\-\.]+/[a-zA-Z0-9_\-\.]+", previous)
+            if repos:
+                repo_url = repos[0]
+
+    if not repo_url:
+        return {"output": "", "error": "No repo URL provided for analysis", "action": "analyze_repo"}
+
+    analysis_types = input_data.get("analysis_types", ["all"])
+    depth = input_data.get("depth", "standard")
+
+    try:
+        from app.modules.repo_analyzer.service import RepoAnalyzerService
+        from app.modules.repo_analyzer.schemas import AnalysisCreate
+        from app.database import get_session_context
+
+        user_id = input_data.get("_user_id")
+        if not user_id:
+            return {
+                "output": f"[Repo analysis ready for {repo_url}. "
+                          f"Use the Repo Analyzer module to launch.]",
+                "action": "analyze_repo",
+                "note": "No user context. Use the Repo Analyzer module directly.",
+            }
+
+        from uuid import UUID as UUIDType
+        uid = UUIDType(user_id) if isinstance(user_id, str) else user_id
+
+        async with get_session_context() as session:
+            service = RepoAnalyzerService()
+            data = AnalysisCreate(
+                repo_url=repo_url,
+                analysis_types=analysis_types,
+                depth=depth,
+            )
+            analysis = await service.create_analysis(uid, data, session)
+            await service.run_analysis(analysis.id)
+
+        # Reload results
+        async with get_session_context() as session:
+            refreshed = await session.get(
+                __import__("app.models.repo_analyzer", fromlist=["RepoAnalysis"]).RepoAnalysis,
+                analysis.id,
+            )
+            if refreshed and refreshed.results_json:
+                import json
+                results = json.loads(refreshed.results_json)
+                # Build summary
+                quality = results.get("quality", {})
+                tech = results.get("tech_stack", {})
+                structure = results.get("structure", {})
+
+                summary_parts = [f"Repository: {repo_url}"]
+                if quality:
+                    summary_parts.append(f"Quality: {quality.get('grade', '?')} ({quality.get('score', 0)}/100)")
+                if tech:
+                    langs = ", ".join(tech.get("languages", {}).keys())
+                    frameworks = ", ".join(tech.get("frameworks", []))
+                    if langs:
+                        summary_parts.append(f"Languages: {langs}")
+                    if frameworks:
+                        summary_parts.append(f"Frameworks: {frameworks}")
+                if structure:
+                    summary_parts.append(f"Files: {structure.get('total_files', 0)}, Lines: {structure.get('total_lines', 0)}")
+
+                return {
+                    "output": "\n".join(summary_parts),
+                    "action": "analyze_repo",
+                    "analysis_id": str(analysis.id),
+                    "repo_url": repo_url,
+                    "results": results,
+                }
+
+        return {
+            "output": f"[Analysis created for {repo_url} but results not yet available. "
+                      f"Analysis ID: {analysis.id}]",
+            "action": "analyze_repo",
+            "analysis_id": str(analysis.id),
+        }
+    except Exception as e:
+        return {"output": "", "error": str(e)[:500], "action": "analyze_repo"}

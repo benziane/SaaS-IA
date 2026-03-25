@@ -1,0 +1,9 @@
+{
+  "name": "audio_studio",
+  "version": "1.0.0",
+  "description": "Podcast and audio editing studio with AI-powered editing, chapters, show notes, and RSS feed generation",
+  "prefix": "/api/audio-studio",
+  "tags": ["audio_studio"],
+  "enabled": true,
+  "dependencies": []
+}

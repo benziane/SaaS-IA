@@ -3,6 +3,7 @@ Transcription schemas for request/response validation
 """
 
 import re
+from enum import Enum
 from typing import Generic, List, Optional, TypeVar
 from uuid import UUID
 from datetime import datetime
@@ -318,3 +319,141 @@ class VideoAnalyzeResponse(BaseModel):
     analyses: list[VideoFrameAnalysis] = []
     summary: str = ""
     error: Optional[str] = None
+
+
+# ========================================================================
+# YouTube Enterprise v2 Schemas
+# ========================================================================
+
+
+class ExportFormat(str, Enum):
+    """Supported export formats for transcriptions."""
+    SRT = "srt"
+    VTT = "vtt"
+    TXT = "txt"
+    MD = "md"
+    JSON = "json"
+
+
+class BatchTranscribeRequest(BaseModel):
+    """Request for batch transcription of multiple YouTube URLs."""
+    urls: List[str] = Field(..., min_length=1, max_length=20, description="List of YouTube URLs to transcribe (max 20)")
+    language: str = Field(default="auto", max_length=10, description="Language code for all transcriptions")
+
+    @field_validator("urls")
+    @classmethod
+    def validate_urls(cls, v: list) -> list:
+        if len(v) > 20:
+            raise ValueError("Maximum 20 URLs per batch request")
+        if len(v) == 0:
+            raise ValueError("At least one URL is required")
+        for url in v:
+            if not url.strip():
+                raise ValueError("Empty URL found in list")
+        return [url.strip() for url in v]
+
+
+class BatchTranscribeResponse(BaseModel):
+    """Response from batch transcription."""
+    job_ids: List[str] = Field(default_factory=list, description="List of created job IDs")
+    total: int = 0
+    accepted: int = 0
+    errors: List[dict] = Field(default_factory=list, description="URLs that failed validation")
+
+
+class ChapterItem(BaseModel):
+    """A single AI-detected chapter."""
+    start_time: float = 0
+    end_time: float = 0
+    title: str = ""
+    summary: str = ""
+
+
+class ChapterResponse(BaseModel):
+    """Response from chapter generation."""
+    transcription_id: str = ""
+    chapters: List[ChapterItem] = Field(default_factory=list)
+    total_chapters: int = 0
+
+
+class SummaryRequest(BaseModel):
+    """Request for AI-powered summary generation."""
+    style: str = Field(
+        default="executive",
+        description="Summary style: executive, detailed, bullet_points, action_items"
+    )
+
+    @field_validator("style")
+    @classmethod
+    def validate_style(cls, v: str) -> str:
+        allowed = {"executive", "detailed", "bullet_points", "action_items"}
+        v = v.strip().lower()
+        if v not in allowed:
+            raise ValueError(f"style must be one of: {', '.join(sorted(allowed))}")
+        return v
+
+
+class SummaryResponse(BaseModel):
+    """Response from summary generation."""
+    transcription_id: str = ""
+    style: str = ""
+    summary: str = ""
+    word_count: int = 0
+
+
+class KeywordItem(BaseModel):
+    """A single extracted keyword/topic."""
+    keyword: str = ""
+    score: float = 0.0
+    category: str = "general"
+
+
+class KeywordResponse(BaseModel):
+    """Response from keyword extraction."""
+    transcription_id: str = ""
+    keywords: List[KeywordItem] = Field(default_factory=list)
+    total: int = 0
+
+
+class ExportResponse(BaseModel):
+    """Response from transcript export."""
+    transcription_id: str = ""
+    format: str = ""
+    content: str = ""
+    filename: str = ""
+
+
+class YouTubeMetadataV2(BaseModel):
+    """Enhanced YouTube video metadata (v2)."""
+    video_id: str = ""
+    title: str = ""
+    description: str = ""
+    channel: str = ""
+    channel_url: str = ""
+    duration_seconds: int = 0
+    view_count: int = 0
+    like_count: int = 0
+    publish_date: str = ""
+    thumbnail: str = ""
+    tags: List[str] = Field(default_factory=list)
+    categories: List[str] = Field(default_factory=list)
+    language: str = ""
+    is_live: bool = False
+
+
+class SearchTranscriptionResult(BaseModel):
+    """A single search result for transcription search."""
+    id: str = ""
+    video_url: str = ""
+    snippet: str = ""
+    score: float = 0.0
+    status: str = ""
+    created_at: Optional[datetime] = None
+    duration_seconds: Optional[int] = None
+
+
+class SearchTranscriptionsResponse(BaseModel):
+    """Response from transcription search."""
+    query: str = ""
+    results: List[SearchTranscriptionResult] = Field(default_factory=list)
+    total: int = 0

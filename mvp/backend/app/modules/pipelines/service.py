@@ -759,6 +759,152 @@ class PipelineService:
                 step_output = "No repos provided" if not repos else "No pipeline context"
             return {"type": "scrape_repos", "output": step_output}
 
+        # ---- Analyze repo step (Repo Analyzer) ----
+        elif step_type == "analyze_repo":
+            repo_url = config.get("repo_url", previous_output or "").strip()
+            analysis_types = config.get("analysis_types", ["all"])
+            depth = config.get("depth", "standard")
+            if repo_url and pipeline:
+                try:
+                    from app.modules.repo_analyzer.service import RepoAnalyzerService
+                    from app.modules.repo_analyzer.schemas import AnalysisCreate
+                    from app.database import get_session_context
+                    svc = RepoAnalyzerService()
+                    async with get_session_context() as ra_session:
+                        data = AnalysisCreate(
+                            repo_url=repo_url,
+                            analysis_types=analysis_types,
+                            depth=depth,
+                        )
+                        analysis = await svc.create_analysis(pipeline.user_id, data, ra_session)
+                    await svc.run_analysis(analysis.id)
+                    async with get_session_context() as ra_session:
+                        refreshed = await ra_session.get(
+                            __import__("app.models.repo_analyzer", fromlist=["RepoAnalysis"]).RepoAnalysis,
+                            analysis.id,
+                        )
+                    if refreshed and refreshed.results_json:
+                        results = json.loads(refreshed.results_json)
+                        quality = results.get("quality", {})
+                        tech = results.get("tech_stack", {})
+                        step_output = f"Repo: {repo_url} | Grade: {quality.get('grade', '?')} ({quality.get('score', 0)}/100)"
+                        if tech.get("frameworks"):
+                            step_output += f" | Frameworks: {', '.join(tech['frameworks'])}"
+                    else:
+                        step_output = f"Analysis created for {repo_url} but results not available"
+                except Exception as e:
+                    step_output = f"Repo analysis failed: {str(e)[:500]}"
+            else:
+                step_output = "No repo URL provided" if not repo_url else "No pipeline context"
+            return {"type": "analyze_repo", "output": step_output}
+
+        # ---- PDF processing step ----
+        elif step_type == "process_pdf":
+            pdf_id = config.get("pdf_id", "")
+            action = config.get("action", "summarize")
+            if pdf_id and pipeline:
+                try:
+                    from uuid import UUID as _UUID
+                    from app.modules.pdf_processor.service import PDFProcessorService
+                    from app.database import get_session_context
+                    parsed_id = _UUID(str(pdf_id).strip())
+                    async with get_session_context() as pdf_session:
+                        if action == "query":
+                            question = config.get("question", previous_output or "")
+                            result = await PDFProcessorService.query_pdf(
+                                pipeline.user_id, parsed_id, question, pdf_session,
+                            )
+                            step_output = result.get("answer", "") if result else "PDF query failed"
+                        elif action == "keywords":
+                            result = await PDFProcessorService.extract_keywords(
+                                pipeline.user_id, parsed_id, pdf_session,
+                            )
+                            step_output = ", ".join(result.get("keywords", [])) if result else "Keyword extraction failed"
+                        elif action == "export":
+                            fmt = config.get("format", "markdown")
+                            result = await PDFProcessorService.export_pdf(
+                                pipeline.user_id, parsed_id, fmt, pdf_session,
+                            )
+                            step_output = result.get("content", "")[:3000] if result else "Export failed"
+                        else:
+                            style = config.get("style", "executive")
+                            result = await PDFProcessorService.summarize_pdf(
+                                pipeline.user_id, parsed_id, pdf_session, style=style,
+                            )
+                            step_output = result.get("summary", "") if result else "Summarization failed"
+                except Exception as e:
+                    step_output = f"PDF processing failed: {str(e)[:500]}"
+            else:
+                step_output = "No pdf_id provided" if not pdf_id else "No pipeline context"
+            return {"type": "process_pdf", "output": step_output}
+
+        # ---- Audio editing step ----
+        elif step_type == "edit_audio":
+            audio_id = config.get("audio_id", "")
+            operations = config.get("operations", [])
+            if audio_id and pipeline:
+                try:
+                    from uuid import UUID as _UUID
+                    from app.modules.audio_studio.service import AudioStudioService
+                    from app.database import get_session_context
+                    parsed_id = _UUID(str(audio_id).strip())
+                    async with get_session_context() as audio_session:
+                        service = AudioStudioService(audio_session)
+                        result = await service.edit_audio(pipeline.user_id, parsed_id, operations)
+                        step_output = f"Audio edited: {result.original_filename} ({result.duration_seconds}s)"
+                except Exception as e:
+                    step_output = f"Audio edit failed: {str(e)[:500]}"
+            else:
+                step_output = "No audio_id provided" if not audio_id else "No pipeline context"
+            return {"type": "edit_audio", "output": step_output}
+
+        # ---- Audio transcription step ----
+        elif step_type == "transcribe_audio":
+            audio_id = config.get("audio_id", "")
+            if audio_id and pipeline:
+                try:
+                    from uuid import UUID as _UUID
+                    from app.modules.audio_studio.service import AudioStudioService
+                    from app.database import get_session_context
+                    parsed_id = _UUID(str(audio_id).strip())
+                    async with get_session_context() as audio_session:
+                        service = AudioStudioService(audio_session)
+                        result = await service.transcribe_audio(pipeline.user_id, parsed_id)
+                        step_output = result.transcript or "Transcription empty"
+                except Exception as e:
+                    step_output = f"Audio transcription failed: {str(e)[:500]}"
+            else:
+                step_output = "No audio_id provided" if not audio_id else "No pipeline context"
+            return {"type": "transcribe_audio", "output": step_output}
+
+        # ---- Generate podcast step ----
+        elif step_type == "generate_podcast":
+            audio_id = config.get("audio_id", "")
+            title = config.get("title", "Untitled Episode")
+            if audio_id and pipeline:
+                try:
+                    from uuid import UUID as _UUID
+                    from app.modules.audio_studio.service import AudioStudioService
+                    from app.database import get_session_context
+                    parsed_id = _UUID(str(audio_id).strip())
+                    async with get_session_context() as audio_session:
+                        service = AudioStudioService(audio_session)
+                        await service.generate_chapters(pipeline.user_id, parsed_id)
+                        notes = await service.generate_show_notes(pipeline.user_id, parsed_id)
+                        import json as _json
+                        episode = await service.create_podcast_episode(pipeline.user_id, {
+                            "audio_id": str(parsed_id),
+                            "title": title,
+                            "description": config.get("description", ""),
+                            "show_notes": _json.dumps(notes.get("show_notes", {}), ensure_ascii=False),
+                        })
+                        step_output = f"Podcast episode '{episode.title}' created (ID: {episode.id})"
+                except Exception as e:
+                    step_output = f"Podcast generation failed: {str(e)[:500]}"
+            else:
+                step_output = "No audio_id provided" if not audio_id else "No pipeline context"
+            return {"type": "generate_podcast", "output": step_output}
+
         else:
             return {"type": step_type, "output": previous_output or "", "note": "Unknown step type"}
 

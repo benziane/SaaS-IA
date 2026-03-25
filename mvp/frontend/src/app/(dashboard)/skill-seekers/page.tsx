@@ -2,22 +2,209 @@
 
 import { useState } from 'react';
 import {
-  Alert, Box, Button, Card, CardContent, Checkbox, Chip, CircularProgress,
-  Divider, FormControlLabel, Grid, IconButton, LinearProgress, Skeleton,
-  Switch, TextField, Tooltip, Typography,
+  Alert, Box, Button, Card, CardContent, CardActions, Checkbox, Chip, CircularProgress,
+  Divider, Drawer, FormControlLabel, Grid, IconButton, LinearProgress, Skeleton,
+  Stack, Switch, TextField, Tooltip, Typography,
 } from '@mui/material';
 import GitHubIcon from '@mui/icons-material/GitHub';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
+import CancelIcon from '@mui/icons-material/Cancel';
+import CloseIcon from '@mui/icons-material/Close';
 import DeleteIcon from '@mui/icons-material/Delete';
 import DownloadIcon from '@mui/icons-material/Download';
+import PreviewIcon from '@mui/icons-material/Visibility';
+import ReplayIcon from '@mui/icons-material/Replay';
 import RocketLaunchIcon from '@mui/icons-material/RocketLaunch';
 import TerminalIcon from '@mui/icons-material/Terminal';
 import RefreshIcon from '@mui/icons-material/Refresh';
 
 import { useSkillSeekersJobs, useSkillSeekersStatus, useSkillSeekersStats } from '@/features/skill-seekers/hooks/useSkillSeekers';
-import { useCreateScrapeJob, useDeleteScrapeJob } from '@/features/skill-seekers/hooks/useSkillSeekersMutations';
-import { getDownloadUrl } from '@/features/skill-seekers/api';
+import { useCreateScrapeJob, useDeleteScrapeJob, useRetryScrapeJob, useCancelScrapeJob } from '@/features/skill-seekers/hooks/useSkillSeekersMutations';
+import { getSignedDownloadUrl, previewFile } from '@/features/skill-seekers/api';
 import { ScrapeJobStatus } from '@/features/skill-seekers/types';
+import {
+  CATALOGUE_REPOS,
+  CATEGORY_LABELS,
+  CATEGORY_COLORS,
+  ALL_CATEGORIES,
+  type CatalogueCategory,
+} from '@/features/skill-seekers/catalogue';
+
+function formatStars(n: number): string {
+  if (n >= 1000) return `${(n / 1000).toFixed(n >= 10000 ? 0 : 1)}k`;
+  return String(n);
+}
+
+function SkillCatalogueDrawer({
+  open,
+  onClose,
+  selectedRepos,
+  onToggle,
+  filter,
+  onFilterChange,
+}: {
+  open: boolean;
+  onClose: () => void;
+  selectedRepos: string[];
+  onToggle: (repo: string) => void;
+  filter: CatalogueCategory | 'all';
+  onFilterChange: (f: CatalogueCategory | 'all') => void;
+}) {
+  const filtered = filter === 'all'
+    ? CATALOGUE_REPOS
+    : CATALOGUE_REPOS.filter((r) => r.category === filter);
+
+  const pendingCount = CATALOGUE_REPOS.filter(
+    (r) => selectedRepos.includes(r.repo)
+  ).length;
+
+  return (
+    <Drawer
+      anchor="right"
+      open={open}
+      onClose={onClose}
+      PaperProps={{ sx: { width: { xs: '100%', sm: 560, md: 720 }, display: 'flex', flexDirection: 'column' } }}
+    >
+      {/* Header */}
+      <Box sx={{ px: 3, py: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: 1, borderColor: 'divider' }}>
+        <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <AutoAwesomeIcon color="primary" fontSize="small" />
+          Catalogue Claude Skills
+        </Typography>
+        <IconButton onClick={onClose} size="small">
+          <CloseIcon />
+        </IconButton>
+      </Box>
+
+      {/* Filters */}
+      <Box sx={{ px: 3, py: 1.5, borderBottom: 1, borderColor: 'divider' }}>
+        <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap>
+          <Chip
+            label="Tous"
+            size="small"
+            variant={filter === 'all' ? 'filled' : 'outlined'}
+            color={filter === 'all' ? 'primary' : 'default'}
+            onClick={() => onFilterChange('all')}
+            clickable
+          />
+          {ALL_CATEGORIES.map((cat) => (
+            <Chip
+              key={cat}
+              label={CATEGORY_LABELS[cat]}
+              size="small"
+              variant={filter === cat ? 'filled' : 'outlined'}
+              onClick={() => onFilterChange(cat)}
+              clickable
+              sx={filter === cat ? { bgcolor: CATEGORY_COLORS[cat], color: '#fff', borderColor: CATEGORY_COLORS[cat], '&:hover': { bgcolor: CATEGORY_COLORS[cat] } } : { borderColor: CATEGORY_COLORS[cat], color: CATEGORY_COLORS[cat] }}
+            />
+          ))}
+        </Stack>
+      </Box>
+
+      {/* Cards grid */}
+      <Box sx={{ flex: 1, overflow: 'auto', p: 2 }}>
+        <Grid container spacing={1.5}>
+          {filtered.map((item) => {
+            const isSelected = selectedRepos.includes(item.repo);
+            const isDisabled = !isSelected && selectedRepos.length >= 10;
+            return (
+              <Grid item xs={12} sm={6} md={4} key={item.repo}>
+                <Card
+                  variant="outlined"
+                  sx={{
+                    height: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    opacity: isDisabled ? 0.5 : 1,
+                    borderColor: isSelected ? CATEGORY_COLORS[item.category] : undefined,
+                    borderWidth: isSelected ? 2 : 1,
+                  }}
+                >
+                  <CardContent sx={{ flex: 1, pb: 0.5 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 0.5 }}>
+                      <Typography variant="subtitle2" sx={{ fontWeight: 600, lineHeight: 1.2 }}>
+                        {item.name}
+                      </Typography>
+                      <Chip
+                        label={CATEGORY_LABELS[item.category]}
+                        size="small"
+                        sx={{ ml: 0.5, fontSize: '0.65rem', height: 18, bgcolor: CATEGORY_COLORS[item.category], color: '#fff', flexShrink: 0 }}
+                      />
+                    </Box>
+                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
+                      {item.repo}
+                    </Typography>
+                    <Typography variant="body2" sx={{ fontSize: '0.75rem', mb: 1, color: 'text.secondary' }}>
+                      {item.description}
+                    </Typography>
+                    <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap sx={{ mb: 0.5 }}>
+                      {item.tags.map((tag) => (
+                        <Chip key={tag} label={tag} size="small" variant="outlined" sx={{ fontSize: '0.6rem', height: 16 }} />
+                      ))}
+                    </Stack>
+                    <Typography variant="caption" color="text.secondary">
+                      {formatStars(item.stars)} ⭐
+                    </Typography>
+                  </CardContent>
+                  <CardActions sx={{ pt: 0.5, pb: 1, px: 2 }}>
+                    {isSelected ? (
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        color="success"
+                        fullWidth
+                        startIcon={<Checkbox checked size="small" sx={{ p: 0 }} />}
+                        onClick={() => onToggle(item.repo)}
+                        sx={{ fontSize: '0.7rem' }}
+                      >
+                        Déjà ajouté
+                      </Button>
+                    ) : (
+                      <Button
+                        size="small"
+                        variant="contained"
+                        fullWidth
+                        disabled={isDisabled}
+                        onClick={() => onToggle(item.repo)}
+                        sx={{ fontSize: '0.7rem' }}
+                      >
+                        Ajouter
+                      </Button>
+                    )}
+                  </CardActions>
+                </Card>
+              </Grid>
+            );
+          })}
+        </Grid>
+      </Box>
+
+      {/* Footer */}
+      <Box sx={{ px: 3, py: 2, borderTop: 1, borderColor: 'divider', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Typography variant="body2" color="text.secondary">
+          {pendingCount > 0 ? `${pendingCount} repo${pendingCount > 1 ? 's' : ''} sélectionné${pendingCount > 1 ? 's' : ''}` : 'Aucun repo sélectionné'}
+        </Typography>
+        <Button
+          variant="contained"
+          onClick={onClose}
+          disabled={pendingCount === 0}
+          startIcon={<RocketLaunchIcon />}
+        >
+          Confirmer
+        </Button>
+      </Box>
+    </Drawer>
+  );
+}
+
+const STATUS_TABS = [
+  { label: 'All', value: '' },
+  { label: 'Pending', value: 'pending' },
+  { label: 'Running', value: 'running' },
+  { label: 'Completed', value: 'completed' },
+  { label: 'Failed', value: 'failed' },
+];
 
 const TARGET_OPTIONS = [
   { id: 'claude', label: 'Claude' },
@@ -36,17 +223,25 @@ const STATUS_COLORS: Record<string, 'default' | 'info' | 'success' | 'error' | '
 };
 
 export default function SkillSeekersPage() {
+  const [statusFilter, setStatusFilter] = useState('');
   const { data: statusData, isLoading: statusLoading } = useSkillSeekersStatus();
-  const { data: jobsData, isLoading: jobsLoading, refetch } = useSkillSeekersJobs();
+  const { data: jobsData, isLoading: jobsLoading, refetch } = useSkillSeekersJobs(0, 20, statusFilter || undefined);
   const { data: statsData } = useSkillSeekersStats();
   const createMutation = useCreateScrapeJob();
   const deleteMutation = useDeleteScrapeJob();
+  const retryMutation = useRetryScrapeJob();
+  const cancelMutation = useCancelScrapeJob();
+  const [previewData, setPreviewData] = useState<{ filename: string; content: string } | null>(null);
 
   // Form state
   const [repoInput, setRepoInput] = useState('');
   const [repos, setRepos] = useState<string[]>([]);
   const [targets, setTargets] = useState<string[]>(['claude']);
   const [enhance, setEnhance] = useState(false);
+
+  // Catalogue state
+  const [catalogueOpen, setCatalogueOpen] = useState(false);
+  const [catalogueFilter, setCatalogueFilter] = useState<CatalogueCategory | 'all'>('all');
 
   const handleAddRepo = () => {
     const trimmed = repoInput.trim();
@@ -170,6 +365,15 @@ export default function SkillSeekersPage() {
                 >
                   <AddCircleOutlineIcon />
                 </Button>
+                <Button
+                  variant="outlined"
+                  startIcon={<AutoAwesomeIcon />}
+                  onClick={() => setCatalogueOpen(true)}
+                  size="small"
+                  sx={{ whiteSpace: 'nowrap' }}
+                >
+                  Catalogue
+                </Button>
               </Box>
 
               {/* Repo chips */}
@@ -245,9 +449,22 @@ export default function SkillSeekersPage() {
         <Grid item xs={12} md={7}>
           <Card>
             <CardContent>
-              <Typography variant="h6" sx={{ mb: 2 }}>
+              <Typography variant="h6" sx={{ mb: 1 }}>
                 Job History
               </Typography>
+              <Box sx={{ display: 'flex', gap: 0.5, mb: 2, flexWrap: 'wrap' }}>
+                {STATUS_TABS.map((tab) => (
+                  <Chip
+                    key={tab.value}
+                    label={tab.label}
+                    size="small"
+                    variant={statusFilter === tab.value ? 'filled' : 'outlined'}
+                    color={statusFilter === tab.value ? 'primary' : 'default'}
+                    onClick={() => setStatusFilter(tab.value)}
+                    clickable
+                  />
+                ))}
+              </Box>
 
               {jobsLoading ? (
                 <Box>
@@ -275,15 +492,27 @@ export default function SkillSeekersPage() {
                             {new Date(job.created_at).toLocaleString()}
                           </Typography>
                         </Box>
-                        <Tooltip title="Delete job">
-                          <IconButton
-                            size="small"
-                            onClick={() => deleteMutation.mutate(job.id)}
-                            disabled={deleteMutation.isPending}
-                          >
-                            <DeleteIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
+                        <Box sx={{ display: 'flex', gap: 0.5 }}>
+                          {(job.status === ScrapeJobStatus.RUNNING || job.status === ScrapeJobStatus.PENDING) && (
+                            <Tooltip title="Cancel job">
+                              <IconButton size="small" onClick={() => cancelMutation.mutate(job.id)} disabled={cancelMutation.isPending}>
+                                <CancelIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          )}
+                          {job.status === ScrapeJobStatus.FAILED && (
+                            <Tooltip title="Retry job">
+                              <IconButton size="small" onClick={() => retryMutation.mutate(job.id)} disabled={retryMutation.isPending}>
+                                <ReplayIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          )}
+                          <Tooltip title="Delete job">
+                            <IconButton size="small" onClick={() => deleteMutation.mutate(job.id)} disabled={deleteMutation.isPending}>
+                              <DeleteIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        </Box>
                       </Box>
 
                       {/* Repos */}
@@ -319,21 +548,38 @@ export default function SkillSeekersPage() {
                         </Alert>
                       )}
 
-                      {/* Download links for completed jobs */}
+                      {/* Download + Preview links for completed jobs */}
                       {job.status === ScrapeJobStatus.COMPLETED && job.output_files.length > 0 && (
                         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 1 }}>
                           {job.output_files.map((filename) => (
-                            <Button
-                              key={filename}
-                              size="small"
-                              variant="outlined"
-                              startIcon={<DownloadIcon />}
-                              href={getDownloadUrl(job.id, filename)}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                            >
-                              {filename}
-                            </Button>
+                            <Box key={filename} sx={{ display: 'flex', gap: 0.5 }}>
+                              <Button
+                                size="small"
+                                variant="outlined"
+                                startIcon={<PreviewIcon />}
+                                onClick={async () => {
+                                  try {
+                                    const data = await previewFile(job.id, filename);
+                                    setPreviewData({ filename, content: data.content });
+                                  } catch { /* handled by toast */ }
+                                }}
+                              >
+                                Preview
+                              </Button>
+                              <Button
+                                size="small"
+                                variant="outlined"
+                                startIcon={<DownloadIcon />}
+                                onClick={async () => {
+                                  try {
+                                    const url = await getSignedDownloadUrl(job.id, filename);
+                                    window.open(url, '_blank');
+                                  } catch { /* handled by interceptor */ }
+                                }}
+                              >
+                                {filename}
+                              </Button>
+                            </Box>
                           ))}
                         </Box>
                       )}
@@ -345,6 +591,40 @@ export default function SkillSeekersPage() {
           </Card>
         </Grid>
       </Grid>
+
+      {/* Preview dialog */}
+      {previewData && (
+        <Card sx={{ position: 'fixed', bottom: 16, right: 16, left: 16, maxHeight: '50vh', overflow: 'auto', zIndex: 1200, boxShadow: 8 }}>
+          <CardContent>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+              <Typography variant="subtitle2">{previewData.filename}</Typography>
+              <Button size="small" onClick={() => setPreviewData(null)}>Close</Button>
+            </Box>
+            <Divider sx={{ mb: 1 }} />
+            <Typography
+              variant="body2"
+              component="pre"
+              sx={{ whiteSpace: 'pre-wrap', fontFamily: 'monospace', fontSize: '0.8rem', maxHeight: '35vh', overflow: 'auto' }}
+            >
+              {previewData.content}
+            </Typography>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Catalogue Drawer */}
+      <SkillCatalogueDrawer
+        open={catalogueOpen}
+        onClose={() => setCatalogueOpen(false)}
+        selectedRepos={repos}
+        onToggle={(repo) => {
+          setRepos((prev) =>
+            prev.includes(repo) ? prev.filter((r) => r !== repo) : [...prev, repo]
+          );
+        }}
+        filter={catalogueFilter}
+        onFilterChange={setCatalogueFilter}
+      />
     </Box>
   );
 }

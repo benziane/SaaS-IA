@@ -47,6 +47,9 @@ class Transcription(SQLModel, table=True):
     sentiment_json: Optional[str] = Field(default=None)
     sentiment_score: Optional[float] = Field(default=None)
 
+    # v2 Enterprise metadata (chapters, summary, keywords stored as JSON)
+    metadata_json: Optional[str] = Field(default=None)
+
     # Error handling
     error: Optional[str] = Field(default=None, max_length=1000)
     retry_count: int = Field(default=0)

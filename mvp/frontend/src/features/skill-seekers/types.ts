@@ -60,6 +60,12 @@ export interface SkillSeekersStatus {
   mock_mode: boolean;
 }
 
+export interface FilePreview {
+  filename: string;
+  content: string;
+  truncated: boolean;
+}
+
 export interface ScrapeJobStats {
   total_jobs: number;
   completed: number;

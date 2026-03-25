@@ -1,0 +1,9 @@
+{
+  "name": "pdf_processor",
+  "version": "1.0.0",
+  "description": "PDF upload, parsing, AI summarization, RAG queries, and markdown export",
+  "prefix": "/api/pdf",
+  "tags": ["pdf_processor"],
+  "enabled": true,
+  "dependencies": []
+}

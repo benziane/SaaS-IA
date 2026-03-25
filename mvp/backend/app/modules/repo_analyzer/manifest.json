@@ -1,0 +1,9 @@
+{
+  "name": "repo_analyzer",
+  "version": "1.0.0",
+  "description": "Analyze GitHub repositories: detect tech stack, score quality, generate documentation, security scan",
+  "prefix": "/api/repo-analyzer",
+  "tags": ["repo_analyzer"],
+  "enabled": true,
+  "dependencies": []
+}

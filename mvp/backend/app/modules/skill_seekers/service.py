@@ -51,6 +51,21 @@ class SkillSeekersService:
         return HAS_SKILL_SEEKERS
 
     @staticmethod
+    def get_cli_version() -> Optional[str]:
+        """Return the installed skill-seekers CLI version, or None."""
+        if not HAS_SKILL_SEEKERS:
+            return None
+        try:
+            import subprocess
+            result = subprocess.run(
+                ["skill-seekers", "--version"],
+                capture_output=True, text=True, timeout=5,
+            )
+            return result.stdout.strip() if result.returncode == 0 else None
+        except Exception:
+            return None
+
+    @staticmethod
     def _validate_repo(repo: str) -> bool:
         """Validate repo name matches owner/repo pattern."""
         return bool(REPO_NAME_PATTERN.match(repo))
@@ -191,6 +206,26 @@ class SkillSeekersService:
                 job.output_files_json = json.dumps(output_files)
                 job.updated_at = datetime.utcnow()
                 await session.commit()
+
+                # Auto-index completed scrape results into Knowledge Base
+                try:
+                    from app.modules.knowledge.service import KnowledgeService
+                    for filepath in output_files:
+                        if os.path.isfile(filepath):
+                            with open(filepath, "r", encoding="utf-8") as f:
+                                content = f.read()
+                            if content and len(content.strip()) > 50:
+                                filename = f"skill_seekers_{os.path.basename(filepath)}"
+                                await KnowledgeService.index_text_content(
+                                    user_id=job.user_id,
+                                    filename=filename,
+                                    content=content,
+                                    content_type="text/markdown",
+                                    session=session,
+                                )
+                                logger.info("auto_index_scrape_result", file=filename)
+                except Exception as e:
+                    logger.warning("auto_index_scrape_failed", error=str(e))
 
                 logger.info(
                     "scrape_job_completed",
@@ -400,18 +435,21 @@ class SkillSeekersService:
         session: AsyncSession,
         skip: int = 0,
         limit: int = 20,
+        status_filter: Optional[ScrapeJobStatus] = None,
     ) -> tuple[list[ScrapeJob], int]:
-        """List scrape jobs for a user with pagination."""
+        """List scrape jobs for a user with pagination and optional status filter."""
+        conditions = [ScrapeJob.user_id == user_id]
+        if status_filter is not None:
+            conditions.append(ScrapeJob.status == status_filter)
+
         count_result = await session.execute(
-            select(func.count()).select_from(ScrapeJob).where(
-                ScrapeJob.user_id == user_id
-            )
+            select(func.count()).select_from(ScrapeJob).where(*conditions)
         )
         total = count_result.scalar_one()
 
         result = await session.execute(
             select(ScrapeJob)
-            .where(ScrapeJob.user_id == user_id)
+            .where(*conditions)
             .order_by(ScrapeJob.created_at.desc())
             .offset(skip)
             .limit(limit)
@@ -419,6 +457,34 @@ class SkillSeekersService:
         jobs = list(result.scalars().all())
 
         return jobs, total
+
+    @staticmethod
+    def generate_download_token(job_id: UUID, filename: str, expires_seconds: int = 300) -> str:
+        """Generate a signed token for authenticated file downloads."""
+        import hashlib
+        import time
+        from app.config import settings
+        expiry = int(time.time()) + expires_seconds
+        payload = f"{job_id}:{filename}:{expiry}"
+        sig = hashlib.sha256(f"{settings.SECRET_KEY}:{payload}".encode()).hexdigest()[:32]
+        return f"{expiry}.{sig}"
+
+    @staticmethod
+    def verify_download_token(job_id: UUID, filename: str, token: str) -> bool:
+        """Verify a signed download token."""
+        import hashlib
+        import time
+        from app.config import settings
+        try:
+            expiry_str, sig = token.split(".", 1)
+            expiry = int(expiry_str)
+            if time.time() > expiry:
+                return False
+            payload = f"{job_id}:{filename}:{expiry}"
+            expected = hashlib.sha256(f"{settings.SECRET_KEY}:{payload}".encode()).hexdigest()[:32]
+            return sig == expected
+        except Exception:
+            return False
 
     @staticmethod
     async def get_job(
@@ -534,6 +600,73 @@ class SkillSeekersService:
             "total_repos_scraped": total_repos,
             "recent_jobs": recent_jobs,
         }
+
+    @staticmethod
+    async def retry_job(
+        job_id: UUID,
+        user_id: UUID,
+        session: AsyncSession,
+    ) -> Optional[ScrapeJob]:
+        """Clone a failed job and reset it to pending for re-execution."""
+        original = await session.get(ScrapeJob, job_id)
+        if not original or original.user_id != user_id:
+            return None
+        if original.status != ScrapeJobStatus.FAILED:
+            return None
+
+        new_job = ScrapeJob(
+            user_id=user_id,
+            repos_json=original.repos_json,
+            targets_json=original.targets_json,
+            enhance=original.enhance,
+            status=ScrapeJobStatus.PENDING,
+        )
+        session.add(new_job)
+        await session.commit()
+        await session.refresh(new_job)
+
+        logger.info(
+            "scrape_job_retried",
+            original_id=str(job_id),
+            new_id=str(new_job.id),
+        )
+        return new_job
+
+    @staticmethod
+    async def cancel_job(
+        job_id: UUID,
+        user_id: UUID,
+        session: AsyncSession,
+    ) -> bool:
+        """Cancel a running or pending job."""
+        job = await session.get(ScrapeJob, job_id)
+        if not job or job.user_id != user_id:
+            return False
+        if job.status not in (ScrapeJobStatus.PENDING, ScrapeJobStatus.RUNNING):
+            return False
+
+        job.status = ScrapeJobStatus.FAILED
+        job.error = "Cancelled by user"
+        job.current_step = "cancelled"
+        job.updated_at = datetime.now(UTC)
+        session.add(job)
+        await session.commit()
+
+        logger.info("scrape_job_cancelled", job_id=str(job_id))
+        return True
+
+    @staticmethod
+    def get_file_preview(job: ScrapeJob, filename: str, max_chars: int = 5000) -> Optional[str]:
+        """Return the first max_chars of an output file content."""
+        if not job.output_files_json:
+            return None
+
+        files = json.loads(job.output_files_json)
+        for filepath in files:
+            if os.path.basename(filepath) == filename and os.path.isfile(filepath):
+                with open(filepath, "r", encoding="utf-8") as f:
+                    return f.read(max_chars)
+        return None
 
     @staticmethod
     def job_to_read(job: ScrapeJob) -> dict:

@@ -8,6 +8,7 @@ import type { AxiosResponse } from 'axios';
 import apiClient from '@/lib/apiClient';
 
 import type {
+  FilePreview,
   PaginatedJobs,
   ScrapeJob,
   ScrapeJobCreateRequest,
@@ -25,6 +26,10 @@ const SKILL_SEEKERS_ENDPOINTS = {
   STATUS: '/api/skill-seekers/status',
   JOB: (id: string) => `/api/skill-seekers/jobs/${id}`,
   DELETE: (id: string) => `/api/skill-seekers/jobs/${id}`,
+  RETRY: (id: string) => `/api/skill-seekers/jobs/${id}/retry`,
+  CANCEL: (id: string) => `/api/skill-seekers/jobs/${id}/cancel`,
+  PREVIEW: (id: string, filename: string) =>
+    `/api/skill-seekers/jobs/${id}/preview/${filename}`,
   DOWNLOAD: (id: string, filename: string) =>
     `/api/skill-seekers/jobs/${id}/download/${filename}`,
 } as const;
@@ -47,10 +52,12 @@ export async function createJob(data: ScrapeJobCreateRequest): Promise<ScrapeJob
 /**
  * List scrape jobs with pagination
  */
-export async function listJobs(skip = 0, limit = 20): Promise<PaginatedJobs> {
+export async function listJobs(skip = 0, limit = 20, status?: string): Promise<PaginatedJobs> {
+  const params: Record<string, unknown> = { skip, limit };
+  if (status) params.status = status;
   const response: AxiosResponse<PaginatedJobs> = await apiClient.get(
     SKILL_SEEKERS_ENDPOINTS.JOBS,
-    { params: { skip, limit } }
+    { params }
   );
   return response.data;
 }
@@ -83,6 +90,33 @@ export async function getStatus(): Promise<SkillSeekersStatus> {
 }
 
 /**
+ * Retry a failed scrape job
+ */
+export async function retryJob(id: string): Promise<ScrapeJob> {
+  const response: AxiosResponse<ScrapeJob> = await apiClient.post(
+    SKILL_SEEKERS_ENDPOINTS.RETRY(id)
+  );
+  return response.data;
+}
+
+/**
+ * Cancel a running/pending scrape job
+ */
+export async function cancelJob(id: string): Promise<void> {
+  await apiClient.post(SKILL_SEEKERS_ENDPOINTS.CANCEL(id));
+}
+
+/**
+ * Preview output file content
+ */
+export async function previewFile(jobId: string, filename: string): Promise<FilePreview> {
+  const response: AxiosResponse<FilePreview> = await apiClient.get(
+    SKILL_SEEKERS_ENDPOINTS.PREVIEW(jobId, filename)
+  );
+  return response.data;
+}
+
+/**
  * Get scrape job stats for the current user
  */
 export async function getStats(): Promise<ScrapeJobStats> {
@@ -93,7 +127,18 @@ export async function getStats(): Promise<ScrapeJobStats> {
 }
 
 /**
- * Get the download URL for an output file
+ * Get a signed download URL (token-based, no JWT required)
+ */
+export async function getSignedDownloadUrl(jobId: string, filename: string): Promise<string> {
+  const response = await apiClient.get<{ token: string; url: string }>(
+    `/api/skill-seekers/jobs/${jobId}/download-token/${filename}`
+  );
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8004';
+  return `${baseUrl}${response.data.url}`;
+}
+
+/**
+ * Get the download URL for an output file (legacy, requires JWT)
  */
 export function getDownloadUrl(jobId: string, filename: string): string {
   const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8004';
@@ -109,9 +154,13 @@ export const skillSeekersApi = {
   listJobs,
   getJob,
   deleteJob,
+  retryJob,
+  cancelJob,
+  previewFile,
   getStatus,
   getStats,
   getDownloadUrl,
+  getSignedDownloadUrl,
 } as const;
 
 export default skillSeekersApi;

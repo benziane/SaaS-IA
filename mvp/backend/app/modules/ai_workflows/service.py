@@ -462,6 +462,12 @@ class WorkflowService:
             return await WorkflowService._node_generate_form(previous_output, config, user_id)
         elif action == "scrape_repos":
             return await WorkflowService._node_scrape_repos(previous_output, config, user_id)
+        elif action == "edit_audio":
+            return await WorkflowService._node_edit_audio(previous_output, config, user_id)
+        elif action == "generate_podcast":
+            return await WorkflowService._node_generate_podcast(previous_output, config, user_id)
+        elif action == "analyze_repo":
+            return await WorkflowService._node_analyze_repo(previous_output, config, user_id)
         else:
             return await WorkflowService._node_generate(previous_output, config, user_id)
 
@@ -1106,3 +1112,111 @@ class WorkflowService:
             template_id=template_id,
         )
         return workflow
+
+    # -----------------------------------------------------------------------
+    # Audio Studio workflow nodes
+    # -----------------------------------------------------------------------
+
+    @staticmethod
+    async def _node_edit_audio(previous_output: str, config: dict, user_id: UUID) -> dict:
+        """Workflow node: edit audio file."""
+        audio_id = config.get("audio_id", "")
+        operations = config.get("operations", [])
+        if not audio_id:
+            return {"output": previous_output, "action": "edit_audio", "error": "No audio_id provided"}
+        try:
+            from app.modules.audio_studio.service import AudioStudioService
+            from app.database import get_session_context
+            from uuid import UUID as _UUID
+            parsed_id = _UUID(str(audio_id).strip())
+            async with get_session_context() as session:
+                service = AudioStudioService(session)
+                result = await service.edit_audio(user_id, parsed_id, operations)
+            return {
+                "output": f"Audio edited: {result.original_filename} ({result.duration_seconds}s)",
+                "action": "edit_audio",
+                "audio_id": str(result.id),
+            }
+        except Exception as e:
+            return {"output": previous_output, "action": "edit_audio", "error": str(e)[:500]}
+
+    @staticmethod
+    async def _node_generate_podcast(previous_output: str, config: dict, user_id: UUID) -> dict:
+        """Workflow node: generate podcast episode with chapters and show notes."""
+        audio_id = config.get("audio_id", "")
+        title = config.get("title", "Untitled Episode")
+        if not audio_id:
+            return {"output": previous_output, "action": "generate_podcast", "error": "No audio_id provided"}
+        try:
+            from app.modules.audio_studio.service import AudioStudioService
+            from app.database import get_session_context
+            from uuid import UUID as _UUID
+            import json as _json
+            parsed_id = _UUID(str(audio_id).strip())
+            async with get_session_context() as session:
+                service = AudioStudioService(session)
+                await service.generate_chapters(user_id, parsed_id)
+                notes = await service.generate_show_notes(user_id, parsed_id)
+                episode = await service.create_podcast_episode(user_id, {
+                    "audio_id": str(parsed_id),
+                    "title": title,
+                    "description": config.get("description", ""),
+                    "show_notes": _json.dumps(notes.get("show_notes", {}), ensure_ascii=False),
+                })
+            return {
+                "output": f"Podcast episode '{episode.title}' created (ID: {episode.id})",
+                "action": "generate_podcast",
+                "episode_id": str(episode.id),
+            }
+        except Exception as e:
+            return {"output": previous_output, "action": "generate_podcast", "error": str(e)[:500]}
+
+    @staticmethod
+    async def _node_analyze_repo(text: str, config: dict, user_id: UUID) -> dict:
+        """Analyze a GitHub repository in a workflow."""
+        repo_url = config.get("repo_url", text or "").strip()
+        if not repo_url:
+            return {"output": "", "error": "No repo URL provided", "action": "analyze_repo"}
+
+        analysis_types = config.get("analysis_types", ["all"])
+        depth = config.get("depth", "standard")
+
+        try:
+            from app.modules.repo_analyzer.service import RepoAnalyzerService
+            from app.modules.repo_analyzer.schemas import AnalysisCreate
+            from app.database import get_session_context
+            import json as _json
+
+            svc = RepoAnalyzerService()
+            async with get_session_context() as session:
+                data = AnalysisCreate(
+                    repo_url=repo_url,
+                    analysis_types=analysis_types,
+                    depth=depth,
+                )
+                analysis = await svc.create_analysis(user_id, data, session)
+            await svc.run_analysis(analysis.id)
+
+            from app.models.repo_analyzer import RepoAnalysis
+            async with get_session_context() as session:
+                refreshed = await session.get(RepoAnalysis, analysis.id)
+
+            if refreshed and refreshed.results_json:
+                results = _json.loads(refreshed.results_json)
+                quality = results.get("quality", {})
+                tech = results.get("tech_stack", {})
+                output = f"Repo: {repo_url} | Grade: {quality.get('grade', '?')} ({quality.get('score', 0)}/100)"
+                if tech.get("frameworks"):
+                    output += f" | Frameworks: {', '.join(tech['frameworks'])}"
+                return {
+                    "output": output,
+                    "action": "analyze_repo",
+                    "analysis_id": str(analysis.id),
+                }
+            return {
+                "output": f"Analysis created for {repo_url} (ID: {analysis.id})",
+                "action": "analyze_repo",
+                "analysis_id": str(analysis.id),
+            }
+        except Exception as e:
+            return {"output": "", "error": str(e)[:500], "action": "analyze_repo"}

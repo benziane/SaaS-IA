@@ -755,6 +755,705 @@ class TranscriptionService:
             "results": results,
         }
 
+    # ========================================================================
+    # YouTube Enterprise v2 Methods
+    # ========================================================================
+
+    async def batch_transcribe(
+        self,
+        user_id: UUID,
+        urls: list[str],
+        session: AsyncSession,
+        language: str = "auto",
+    ) -> list[UUID]:
+        """
+        Process multiple YouTube URLs concurrently.
+
+        Creates individual transcription records and processes them with
+        a semaphore limiting to 3 concurrent operations.
+        Returns list of job IDs.
+        """
+        semaphore = asyncio.Semaphore(3)
+        job_ids: list[UUID] = []
+        errors: list[dict] = []
+
+        async def _process_single(url: str) -> Optional[UUID]:
+            async with semaphore:
+                try:
+                    job = await self.create_job(
+                        video_url=url,
+                        user_id=user_id,
+                        language=language,
+                        session=session,
+                        source_type="youtube",
+                    )
+                    logger.info(
+                        "batch_transcribe_job_created",
+                        job_id=str(job.id),
+                        url=url,
+                    )
+                    return job.id
+                except Exception as e:
+                    logger.warning(
+                        "batch_transcribe_job_failed",
+                        url=url,
+                        error=str(e),
+                    )
+                    errors.append({"url": url, "error": str(e)[:500]})
+                    return None
+
+        results = await asyncio.gather(
+            *[_process_single(url) for url in urls],
+            return_exceptions=False,
+        )
+
+        for result in results:
+            if result is not None:
+                job_ids.append(result)
+
+        logger.info(
+            "batch_transcribe_complete",
+            user_id=str(user_id),
+            total_urls=len(urls),
+            jobs_created=len(job_ids),
+            errors=len(errors),
+        )
+
+        return job_ids
+
+    async def generate_chapters(
+        self,
+        transcription_id: UUID,
+        user_id: UUID,
+        session: AsyncSession,
+    ) -> list[dict]:
+        """
+        AI-powered chapter detection from transcript text.
+
+        Uses AIAssistantService to analyze the transcript and generate
+        timestamped chapters. Stores results in metadata_json.
+        """
+        import json
+
+        job = await session.get(Transcription, transcription_id)
+        if not job:
+            raise ValueError("Transcription not found")
+        if job.user_id != user_id:
+            raise PermissionError("Access denied")
+        if job.status != TranscriptionStatus.COMPLETED or not job.text:
+            raise ValueError("Transcription is not completed or has no text")
+
+        try:
+            from app.ai_assistant.service import AIAssistantService
+
+            prompt = (
+                "Analyze this transcript and generate timestamped chapters. "
+                "Return a JSON array of objects with keys: start_time (float seconds), "
+                "end_time (float seconds), title (string), summary (string). "
+                "Create logical chapter breaks based on topic changes. "
+                "If you cannot determine exact timestamps, estimate based on text position. "
+                "Respond ONLY with the JSON array.\n\n"
+                f"Transcript ({len(job.text)} chars):\n{job.text[:8000]}"
+            )
+
+            result = await AIAssistantService.process_text_with_provider(
+                text=prompt,
+                task="extract",
+                provider_name="gemini",
+                user_id=user_id,
+                module="transcription",
+            )
+
+            response_text = result.get("processed_text", "[]")
+
+            # Extract JSON array from response
+            start = response_text.find("[")
+            end = response_text.rfind("]") + 1
+            chapters = []
+            if start >= 0 and end > start:
+                try:
+                    chapters = json.loads(response_text[start:end])
+                except json.JSONDecodeError:
+                    chapters = []
+
+            if not chapters:
+                # Fallback: create chapters based on text length
+                duration = job.duration_seconds or 300
+                chunk_size = max(duration // 5, 60)
+                chapters = []
+                for i in range(0, duration, chunk_size):
+                    chapters.append({
+                        "start_time": float(i),
+                        "end_time": float(min(i + chunk_size, duration)),
+                        "title": f"Part {len(chapters) + 1}",
+                        "summary": "",
+                    })
+
+        except Exception as e:
+            logger.warning("generate_chapters_ai_failed", error=str(e))
+            duration = job.duration_seconds or 300
+            chunk_size = max(duration // 5, 60)
+            chapters = []
+            for i in range(0, duration, chunk_size):
+                chapters.append({
+                    "start_time": float(i),
+                    "end_time": float(min(i + chunk_size, duration)),
+                    "title": f"Part {len(chapters) + 1}",
+                    "summary": "",
+                })
+
+        # Store in metadata_json
+        existing_metadata = {}
+        if job.metadata_json:
+            try:
+                existing_metadata = json.loads(job.metadata_json)
+            except json.JSONDecodeError:
+                existing_metadata = {}
+
+        existing_metadata["chapters"] = chapters
+        existing_metadata["chapters_generated_at"] = datetime.now(UTC).isoformat()
+        job.metadata_json = json.dumps(existing_metadata, ensure_ascii=False)
+        job.updated_at = datetime.now(UTC)
+        session.add(job)
+        await session.commit()
+
+        logger.info(
+            "chapters_generated",
+            transcription_id=str(transcription_id),
+            chapter_count=len(chapters),
+        )
+
+        return chapters
+
+    async def generate_summary(
+        self,
+        transcription_id: UUID,
+        user_id: UUID,
+        session: AsyncSession,
+        style: str = "executive",
+    ) -> dict:
+        """
+        AI-powered summary in multiple styles.
+
+        Styles: executive (brief), detailed, bullet_points, action_items.
+        Stores result in metadata_json.
+        """
+        import json
+
+        job = await session.get(Transcription, transcription_id)
+        if not job:
+            raise ValueError("Transcription not found")
+        if job.user_id != user_id:
+            raise PermissionError("Access denied")
+        if job.status != TranscriptionStatus.COMPLETED or not job.text:
+            raise ValueError("Transcription is not completed or has no text")
+
+        style_prompts = {
+            "executive": (
+                "Provide a concise executive summary of this transcript in 3-5 sentences. "
+                "Focus on key takeaways and conclusions."
+            ),
+            "detailed": (
+                "Provide a detailed summary of this transcript covering all main topics discussed. "
+                "Use 2-3 paragraphs with clear structure."
+            ),
+            "bullet_points": (
+                "Summarize this transcript as a bulleted list of key points. "
+                "Use markdown bullet points (- ). Include 8-15 points."
+            ),
+            "action_items": (
+                "Extract all action items, tasks, and next steps from this transcript. "
+                "Format as a numbered checklist. Include who is responsible if mentioned."
+            ),
+        }
+
+        prompt_instruction = style_prompts.get(style, style_prompts["executive"])
+
+        try:
+            from app.ai_assistant.service import AIAssistantService
+
+            result = await AIAssistantService.process_text_with_provider(
+                text=f"{prompt_instruction}\n\nTranscript:\n{job.text[:8000]}",
+                task="summarize",
+                provider_name="gemini",
+                user_id=user_id,
+                module="transcription",
+            )
+
+            summary_text = result.get("processed_text", "")
+
+        except Exception as e:
+            logger.warning("generate_summary_ai_failed", error=str(e))
+            # Fallback: first N characters
+            summary_text = job.text[:500] + "..."
+
+        # Store in metadata_json
+        existing_metadata = {}
+        if job.metadata_json:
+            try:
+                existing_metadata = json.loads(job.metadata_json)
+            except json.JSONDecodeError:
+                existing_metadata = {}
+
+        summaries = existing_metadata.get("summaries", {})
+        summaries[style] = {
+            "text": summary_text,
+            "generated_at": datetime.now(UTC).isoformat(),
+            "word_count": len(summary_text.split()),
+        }
+        existing_metadata["summaries"] = summaries
+        job.metadata_json = json.dumps(existing_metadata, ensure_ascii=False)
+        job.updated_at = datetime.now(UTC)
+        session.add(job)
+        await session.commit()
+
+        logger.info(
+            "summary_generated",
+            transcription_id=str(transcription_id),
+            style=style,
+            word_count=len(summary_text.split()),
+        )
+
+        return {
+            "transcription_id": str(transcription_id),
+            "style": style,
+            "summary": summary_text,
+            "word_count": len(summary_text.split()),
+        }
+
+    async def extract_keywords(
+        self,
+        transcription_id: UUID,
+        user_id: UUID,
+        session: AsyncSession,
+    ) -> list[dict]:
+        """
+        Extract key topics, entities, and keywords from transcript.
+
+        Uses AI + optional TF-IDF for scoring. Returns sorted list of
+        {keyword, score, category}.
+        """
+        import json
+
+        job = await session.get(Transcription, transcription_id)
+        if not job:
+            raise ValueError("Transcription not found")
+        if job.user_id != user_id:
+            raise PermissionError("Access denied")
+        if job.status != TranscriptionStatus.COMPLETED or not job.text:
+            raise ValueError("Transcription is not completed or has no text")
+
+        keywords: list[dict] = []
+
+        # Strategy 1: AI-powered keyword extraction
+        try:
+            from app.ai_assistant.service import AIAssistantService
+
+            prompt = (
+                "Extract the key topics, entities, and keywords from this transcript. "
+                "Return a JSON array of objects with keys: keyword (string), "
+                "score (float 0-1 indicating importance), category (one of: topic, entity, "
+                "person, organization, location, concept, technical_term). "
+                "Return 10-25 keywords sorted by score descending. "
+                "Respond ONLY with the JSON array.\n\n"
+                f"Transcript:\n{job.text[:8000]}"
+            )
+
+            result = await AIAssistantService.process_text_with_provider(
+                text=prompt,
+                task="extract",
+                provider_name="gemini",
+                user_id=user_id,
+                module="transcription",
+            )
+
+            response_text = result.get("processed_text", "[]")
+            start = response_text.find("[")
+            end = response_text.rfind("]") + 1
+            if start >= 0 and end > start:
+                try:
+                    keywords = json.loads(response_text[start:end])
+                except json.JSONDecodeError:
+                    keywords = []
+
+        except Exception as e:
+            logger.warning("extract_keywords_ai_failed", error=str(e))
+
+        # Strategy 2: TF-IDF fallback/augmentation
+        if len(keywords) < 5:
+            try:
+                from sklearn.feature_extraction.text import TfidfVectorizer
+                import numpy as np
+
+                vectorizer = TfidfVectorizer(
+                    max_features=20,
+                    stop_words="english",
+                    ngram_range=(1, 2),
+                )
+                tfidf_matrix = vectorizer.fit_transform([job.text[:10000]])
+                feature_names = vectorizer.get_feature_names_out()
+                scores = tfidf_matrix.toarray()[0]
+
+                existing_kw_set = {k.get("keyword", "").lower() for k in keywords}
+                for idx in np.argsort(scores)[::-1]:
+                    word = feature_names[idx]
+                    if word.lower() not in existing_kw_set and scores[idx] > 0.01:
+                        keywords.append({
+                            "keyword": word,
+                            "score": round(float(scores[idx]), 4),
+                            "category": "topic",
+                        })
+                        existing_kw_set.add(word.lower())
+
+            except ImportError:
+                logger.debug("sklearn_not_available_for_tfidf_keywords")
+            except Exception as e:
+                logger.warning("tfidf_keyword_extraction_failed", error=str(e))
+
+        # Sort by score descending
+        keywords.sort(key=lambda k: k.get("score", 0), reverse=True)
+
+        # Store in metadata_json
+        existing_metadata = {}
+        if job.metadata_json:
+            try:
+                existing_metadata = json.loads(job.metadata_json)
+            except json.JSONDecodeError:
+                existing_metadata = {}
+
+        existing_metadata["keywords"] = keywords
+        existing_metadata["keywords_extracted_at"] = datetime.now(UTC).isoformat()
+        job.metadata_json = json.dumps(existing_metadata, ensure_ascii=False)
+        job.updated_at = datetime.now(UTC)
+        session.add(job)
+        await session.commit()
+
+        logger.info(
+            "keywords_extracted",
+            transcription_id=str(transcription_id),
+            keyword_count=len(keywords),
+        )
+
+        return keywords
+
+    async def export_transcript(
+        self,
+        transcription_id: UUID,
+        user_id: UUID,
+        session: AsyncSession,
+        fmt: str = "txt",
+    ) -> dict:
+        """
+        Export transcription in multiple formats.
+
+        Supported: srt (SubRip), vtt (WebVTT), txt (plain), md (markdown), json (structured).
+        """
+        import json as json_module
+
+        job = await session.get(Transcription, transcription_id)
+        if not job:
+            raise ValueError("Transcription not found")
+        if job.user_id != user_id:
+            raise PermissionError("Access denied")
+        if job.status != TranscriptionStatus.COMPLETED or not job.text:
+            raise ValueError("Transcription is not completed or has no text")
+
+        text = job.text
+        duration = job.duration_seconds or 0
+        title = job.video_url
+
+        # Parse chapters from metadata if available
+        chapters = []
+        if job.metadata_json:
+            try:
+                meta = json_module.loads(job.metadata_json)
+                chapters = meta.get("chapters", [])
+            except json_module.JSONDecodeError:
+                pass
+
+        if fmt == "srt":
+            content = self._format_srt(text, duration)
+            filename = f"transcription_{str(transcription_id)[:8]}.srt"
+        elif fmt == "vtt":
+            content = self._format_vtt(text, duration)
+            filename = f"transcription_{str(transcription_id)[:8]}.vtt"
+        elif fmt == "md":
+            content = self._format_markdown(text, title, chapters, duration)
+            filename = f"transcription_{str(transcription_id)[:8]}.md"
+        elif fmt == "json":
+            content = self._format_json(job)
+            filename = f"transcription_{str(transcription_id)[:8]}.json"
+        else:  # txt
+            content = text
+            filename = f"transcription_{str(transcription_id)[:8]}.txt"
+
+        return {
+            "transcription_id": str(transcription_id),
+            "format": fmt,
+            "content": content,
+            "filename": filename,
+        }
+
+    @staticmethod
+    def _format_srt(text: str, duration: int) -> str:
+        """Format text as SRT subtitle file."""
+        lines = [s.strip() for s in text.split(". ") if s.strip()]
+        if not lines:
+            return ""
+
+        srt_parts = []
+        time_per_line = max(duration / len(lines), 2.0) if duration > 0 else 3.0
+
+        for i, line in enumerate(lines):
+            start_sec = i * time_per_line
+            end_sec = start_sec + time_per_line
+
+            start_h = int(start_sec // 3600)
+            start_m = int((start_sec % 3600) // 60)
+            start_s = int(start_sec % 60)
+            start_ms = int((start_sec % 1) * 1000)
+
+            end_h = int(end_sec // 3600)
+            end_m = int((end_sec % 3600) // 60)
+            end_s = int(end_sec % 60)
+            end_ms = int((end_sec % 1) * 1000)
+
+            srt_parts.append(
+                f"{i + 1}\n"
+                f"{start_h:02d}:{start_m:02d}:{start_s:02d},{start_ms:03d} --> "
+                f"{end_h:02d}:{end_m:02d}:{end_s:02d},{end_ms:03d}\n"
+                f"{line}.\n"
+            )
+
+        return "\n".join(srt_parts)
+
+    @staticmethod
+    def _format_vtt(text: str, duration: int) -> str:
+        """Format text as WebVTT subtitle file."""
+        lines = [s.strip() for s in text.split(". ") if s.strip()]
+        if not lines:
+            return "WEBVTT\n\n"
+
+        vtt_parts = ["WEBVTT\n"]
+        time_per_line = max(duration / len(lines), 2.0) if duration > 0 else 3.0
+
+        for i, line in enumerate(lines):
+            start_sec = i * time_per_line
+            end_sec = start_sec + time_per_line
+
+            start_h = int(start_sec // 3600)
+            start_m = int((start_sec % 3600) // 60)
+            start_s = int(start_sec % 60)
+            start_ms = int((start_sec % 1) * 1000)
+
+            end_h = int(end_sec // 3600)
+            end_m = int((end_sec % 3600) // 60)
+            end_s = int(end_sec % 60)
+            end_ms = int((end_sec % 1) * 1000)
+
+            vtt_parts.append(
+                f"\n{start_h:02d}:{start_m:02d}:{start_s:02d}.{start_ms:03d} --> "
+                f"{end_h:02d}:{end_m:02d}:{end_s:02d}.{end_ms:03d}\n"
+                f"{line}.\n"
+            )
+
+        return "\n".join(vtt_parts)
+
+    @staticmethod
+    def _format_markdown(text: str, title: str, chapters: list, duration: int) -> str:
+        """Format transcript as Markdown with optional chapters."""
+        parts = [f"# Transcript\n\n**Source:** {title}\n"]
+
+        if duration:
+            minutes = duration // 60
+            seconds = duration % 60
+            parts.append(f"**Duration:** {minutes}m {seconds}s\n")
+
+        parts.append("---\n")
+
+        if chapters:
+            parts.append("## Chapters\n")
+            for ch in chapters:
+                start = ch.get("start_time", 0)
+                m, s = int(start // 60), int(start % 60)
+                parts.append(f"### [{m:02d}:{s:02d}] {ch.get('title', 'Chapter')}\n")
+                if ch.get("summary"):
+                    parts.append(f"_{ch['summary']}_\n")
+            parts.append("---\n")
+
+        parts.append("## Full Transcript\n")
+        parts.append(text)
+        parts.append("\n")
+
+        return "\n".join(parts)
+
+    @staticmethod
+    def _format_json(job) -> str:
+        """Format transcript as structured JSON."""
+        import json as json_module
+
+        metadata = {}
+        if job.metadata_json:
+            try:
+                metadata = json_module.loads(job.metadata_json)
+            except json_module.JSONDecodeError:
+                pass
+
+        data = {
+            "id": str(job.id),
+            "video_url": job.video_url,
+            "language": job.language,
+            "status": job.status.value if hasattr(job.status, "value") else str(job.status),
+            "text": job.text,
+            "confidence": job.confidence,
+            "duration_seconds": job.duration_seconds,
+            "created_at": job.created_at.isoformat() if job.created_at else None,
+            "completed_at": job.completed_at.isoformat() if job.completed_at else None,
+            "chapters": metadata.get("chapters", []),
+            "summaries": metadata.get("summaries", {}),
+            "keywords": metadata.get("keywords", []),
+        }
+
+        return json_module.dumps(data, indent=2, ensure_ascii=False)
+
+    @staticmethod
+    async def get_youtube_metadata(url: str) -> dict:
+        """
+        Extract YouTube video metadata using yt-dlp extract_info (no download).
+
+        Returns: title, duration, channel, thumbnail, description,
+        publish_date, view_count, etc.
+        """
+        try:
+            import yt_dlp
+
+            ydl_opts = {
+                "quiet": True,
+                "no_warnings": True,
+                "skip_download": True,
+                "extract_flat": False,
+            }
+
+            def _extract():
+                with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                    return ydl.extract_info(url, download=False)
+
+            info = await asyncio.to_thread(_extract)
+
+            if not info:
+                return {}
+
+            return {
+                "video_id": info.get("id", ""),
+                "title": info.get("title", ""),
+                "description": (info.get("description") or "")[:2000],
+                "channel": info.get("uploader", "") or info.get("channel", ""),
+                "channel_url": info.get("channel_url", ""),
+                "duration_seconds": info.get("duration", 0) or 0,
+                "view_count": info.get("view_count", 0) or 0,
+                "like_count": info.get("like_count", 0) or 0,
+                "publish_date": info.get("upload_date", ""),
+                "thumbnail": info.get("thumbnail", ""),
+                "tags": info.get("tags", []) or [],
+                "categories": info.get("categories", []) or [],
+                "language": info.get("language", ""),
+                "is_live": info.get("is_live", False) or False,
+            }
+
+        except ImportError:
+            logger.warning("yt_dlp_not_installed")
+            return {"error": "yt-dlp not installed"}
+        except Exception as e:
+            logger.warning("youtube_metadata_extraction_failed", url=url, error=str(e))
+            return {"error": str(e)[:500]}
+
+    async def search_transcriptions(
+        self,
+        user_id: UUID,
+        query: str,
+        session: AsyncSession,
+        limit: int = 20,
+    ) -> list[dict]:
+        """
+        Full-text search across all user's transcriptions.
+
+        Searches in text content and returns matching transcriptions
+        with highlighted snippets.
+        """
+        from sqlalchemy import or_, cast, String
+
+        query_lower = query.lower().strip()
+        if not query_lower:
+            return []
+
+        # Search in text content
+        statement = (
+            select(Transcription)
+            .where(
+                Transcription.user_id == user_id,
+                Transcription.status == TranscriptionStatus.COMPLETED,
+                Transcription.text.isnot(None),
+                Transcription.text.ilike(f"%{query_lower}%"),
+            )
+            .order_by(Transcription.created_at.desc())
+            .limit(limit)
+        )
+
+        result = await session.execute(statement)
+        jobs = result.scalars().all()
+
+        results = []
+        for job in jobs:
+            # Extract snippet around match
+            snippet = self._extract_snippet(job.text, query_lower, context_chars=150)
+
+            # Simple relevance score based on frequency
+            occurrences = job.text.lower().count(query_lower)
+            text_len = max(len(job.text), 1)
+            score = round(min(occurrences / (text_len / 1000), 1.0), 4)
+
+            results.append({
+                "id": str(job.id),
+                "video_url": job.video_url,
+                "snippet": snippet,
+                "score": score,
+                "status": job.status.value if hasattr(job.status, "value") else str(job.status),
+                "created_at": job.created_at.isoformat() if job.created_at else None,
+                "duration_seconds": job.duration_seconds,
+            })
+
+        # Sort by score descending
+        results.sort(key=lambda r: r.get("score", 0), reverse=True)
+
+        logger.info(
+            "search_transcriptions",
+            user_id=str(user_id),
+            query=query_lower,
+            results_count=len(results),
+        )
+
+        return results
+
+    @staticmethod
+    def _extract_snippet(text: str, query: str, context_chars: int = 150) -> str:
+        """Extract a text snippet around the first match with highlighting."""
+        text_lower = text.lower()
+        idx = text_lower.find(query.lower())
+
+        if idx < 0:
+            return text[:300] + "..." if len(text) > 300 else text
+
+        start = max(0, idx - context_chars)
+        end = min(len(text), idx + len(query) + context_chars)
+
+        snippet = text[start:end]
+        if start > 0:
+            snippet = "..." + snippet
+        if end < len(text):
+            snippet = snippet + "..."
+
+        return snippet
+
     async def delete_job(self, job_id: UUID, session: AsyncSession) -> bool:
         """Delete a transcription job"""
         

@@ -39,6 +39,7 @@ streamlink>=6.0.0
 moviepy>=2.0.0
 ffmpeg-python>=0.2.0
 pydub>=0.25.0
+noisereduce>=3.0.0
 Pillow>=10.0.0
 
 # Vector Search & Embeddings
@@ -55,6 +56,10 @@ nemoguardrails>=0.10.0
 
 # Voice (open-source TTS)
 TTS>=0.22.0
+
+# PDF Processing (auto-detect: PyMuPDF preferred, pdfplumber fallback)
+PyMuPDF>=1.24.0
+pdfplumber>=0.11.0
 
 # Data Analysis
 duckdb>=1.0.0
