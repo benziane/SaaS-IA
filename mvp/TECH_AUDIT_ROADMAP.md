@@ -72,18 +72,18 @@
 
 | # | Module | Stack recommande | Stars | Description | Statut |
 |---|--------|-----------------|-------|-------------|--------|
-| 23 | social_publisher | **postiz-app** | 15K | Alternative open-source Buffer/Hootsuite, scheduling multi-plateforme | [ ] A examiner |
-| | | `tweepy` + `python-linkedin-v2` | - | APIs sociales directes (gratuit) | [ ] A examiner |
+| 23 | social_publisher | **postiz-app** | 15K | Alternative open-source Buffer/Hootsuite, scheduling multi-plateforme | [x] FAIT (v4.0.0) |
+| | | `tweepy` + `python-linkedin-v2` | - | APIs sociales directes (gratuit) | [x] FAIT (v4.0.0) |
 | 24 | unified_search | **Meilisearch** | 45K | Moteur de recherche ultra-rapide, hybrid search natif (BM25 + vectors), facettes, typo-tolerant | [ ] A examiner |
 | | | `meilisearch-python` | - | SDK Python officiel | [ ] A examiner |
 | 25 | ai_memory | **Mem0** | 25K | Couche memoire universelle pour IA, extraction auto de preferences | [ ] A examiner |
 | | | `mem0ai` | - | SDK Python, self-hostable | [ ] A examiner |
-| 26 | integration_hub | **Nango** | 4K | OAuth2 + sync + webhooks pour 200+ APIs, self-hostable | [ ] A examiner |
-| | | `authlib` | - | OAuth2 cote serveur Python | [ ] A examiner |
-| 27 | ai_chatbot_builder | **Typebot** | 18K | Chatbot builder open-source, embed widget, self-hostable | [ ] A examiner |
-| | | **Flowise** | 30K | Visual LLM flow builder, RAG integre | [ ] A examiner |
-| 28 | marketplace | Architecture manifest.json | - | Deja en place. Ajouter versioning `semver` + `jsonschema` pour validation | [ ] A examiner |
-| | | **Stripe Connect** | - | Revenue sharing 70/30 natif | [ ] A examiner |
+| 26 | integration_hub | **Nango** | 4K | OAuth2 + sync + webhooks pour 200+ APIs, self-hostable | [x] FAIT (v4.0.0) |
+| | | `authlib` | - | OAuth2 cote serveur Python | [x] FAIT (v4.0.0) |
+| 27 | ai_chatbot_builder | **Typebot** | 18K | Chatbot builder open-source, embed widget, self-hostable | [x] FAIT (v4.0.0) |
+| | | **Flowise** | 30K | Visual LLM flow builder, RAG integre | [x] FAIT (v4.0.0) |
+| 28 | marketplace | Architecture manifest.json | - | Deja en place. Ajouter versioning `semver` + `jsonschema` pour validation | [x] FAIT (v4.0.0) |
+| | | **Stripe Connect** | - | Revenue sharing 70/30 natif | [x] FAIT (v4.0.0) |
 | 29 | presentation_gen | **Slidev** + **Marp** | 30K + 5K | Markdown -> slides, themes pro | [ ] A examiner |
 | | | `playwright` | - | Export PDF headless | [ ] A examiner |
 | 30 | code_sandbox | **Pyodide** | 15K | Python dans le browser (WebAssembly), zero cout serveur | [ ] A examiner |

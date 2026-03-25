@@ -40,6 +40,9 @@ AVAILABLE_ACTIONS = {
     "generate_video": "Generate an AI video from text or image",
     "generate_clips": "Generate highlight clips from a transcription",
     "fine_tune": "Create a training dataset or fine-tune a custom AI model",
+    "create_integration_webhook": "Create a webhook connector to receive events from external services (Slack, GitHub, Stripe, etc.)",
+    "deploy_chatbot": "Create and publish a custom AI chatbot with system prompt and optional RAG",
+    "search_marketplace": "Search the marketplace for modules, templates, prompts, workflows, or datasets",
 }
 
 
@@ -270,6 +273,27 @@ def _heuristic_plan(instruction: str) -> list[dict]:
         steps.append({
             "action": "fine_tune",
             "description": "Create training dataset or fine-tune model",
+            "input": {},
+        })
+
+    if any(w in instruction_lower for w in ["webhook", "integration", "connect", "connecteur", "slack", "github", "stripe", "zapier"]):
+        steps.append({
+            "action": "create_integration_webhook",
+            "description": "Create a webhook integration connector",
+            "input": {},
+        })
+
+    if any(w in instruction_lower for w in ["chatbot", "bot", "deploy bot", "assistant widget", "embed chatbot", "widget chat"]):
+        steps.append({
+            "action": "deploy_chatbot",
+            "description": "Create and deploy a custom chatbot",
+            "input": {},
+        })
+
+    if any(w in instruction_lower for w in ["marketplace", "store", "boutique", "template store", "browse module", "plugin"]):
+        steps.append({
+            "action": "search_marketplace",
+            "description": "Search the marketplace for listings",
             "input": {},
         })
 

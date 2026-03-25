@@ -1,7 +1,7 @@
 # ROADMAP - SaaS-IA Platform
 
 **Date de mise a jour** : 2026-03-25
-**Version actuelle** : MVP 3.10.0
+**Version actuelle** : MVP 4.0.0
 **Objectif** : Plateforme SaaS d'orchestration IA multi-modules, production-ready
 
 ---
@@ -1259,6 +1259,29 @@ CREATE INDEX ix_document_chunks_embedding_hnsw
 ---
 
 ## CHANGELOG
+
+### v4.0.0 (2026-03-25) - Ecosystem Modules + Enterprise S+++
+
+#### New Modules (4)
+- **social_publisher** : Multi-platform publishing hub (scheduling, analytics, multi-platform)
+- **integration_hub** : External connectors with webhooks (10 connectors, triggers)
+- **ai_chatbot_builder** : RAG chatbots with embed deployment (widget, multi-channel)
+- **marketplace** : Module/template/prompt marketplace (listings, ratings, installs, 8 categories)
+
+#### Enterprise Architecture (12 components)
+- 9 middleware layers (CORS, RequestID, ShutdownGuard, Sentry, RateLimit, Logging, Security, Compression, Prometheus)
+- Circuit breaker for AI providers
+- OpenTelemetry tracing (FastAPI + AsyncPG + Redis + HTTPX)
+- Sentry/GlitchTip error tracking
+- Kubernetes-ready health probes (live/ready/startup)
+- Graceful shutdown with request draining
+- Multi-stage Dockerfile with tini
+
+#### Open-Source Integrations (26 total)
+- Semaine 4+: cardiffnlp/RoBERTa, textstat, Jina Reader, ffmpeg-python, Real-ESRGAN, unsloth, lm-eval, LiveKit
+- Enterprise: OpenTelemetry (7 packages), sentry-sdk, brotli
+
+Total plateforme : **29 modules**, **35 pages**, **~210 endpoints**, **9 middleware layers**, **12 composants enterprise**
 
 ### v3.10.0 (2026-03-25) - Open-Source Libs Semaine 4+ (8 integrations)
 - **cardiffnlp/RoBERTa** : sentiment local SOTA (~100ms vs 5s LLM), couts /10, lazy-loaded pipeline

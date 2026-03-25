@@ -2,7 +2,7 @@
 
 ## Projet
 
-Plateforme SaaS modulaire d'intelligence artificielle - 25 modules backend auto-decouverts, 31 pages frontend, ~160 endpoints API. Architecture enterprise S+++ (v3.9.0).
+Plateforme SaaS modulaire d'intelligence artificielle - 29 modules backend auto-decouverts, 35 pages frontend, ~210 endpoints API. Architecture enterprise S+++ (v4.0.0).
 
 ## Stack technique
 
@@ -10,7 +10,7 @@ Plateforme SaaS modulaire d'intelligence artificielle - 25 modules backend auto-
 - **Frontend** : Next.js 15 (App Router), React 18, MUI 6, TanStack Query 5, Axios
 - **AI Providers** : Gemini 2.0 Flash, Claude Sonnet, Groq Llama 3.3 70B (via AIAssistantService + LiteLLM proxy)
 - **Infra** : Docker Compose (multi-stage), Prometheus, OpenTelemetry, structlog (JSON prod), Sentry/GlitchTip, Alembic
-- **Enterprise** : 9 middleware layers, circuit breaker, sliding window rate limit, graceful shutdown, K8s health probes
+- **Enterprise** : 9 middleware layers (CORS, RequestID, ShutdownGuard, Sentry, RateLimit, Logging, Security, Compression, Prometheus), 12 enterprise components (circuit breaker, sliding window rate limit, graceful shutdown, K8s health probes, OpenTelemetry tracing, Sentry error tracking, structured logging, DB pooling, compression Gzip+Brotli, security headers OWASP, multi-stage Dockerfile, tini PID 1)
 - **Ports** : Backend 8004, Frontend 3002, PostgreSQL 5435, Redis 6382, Flower 5555
 
 ## Architecture modulaire
@@ -85,7 +85,7 @@ Ce qui est interdit c'est de **supprimer un module entier ou remplacer une techn
 - Pour ajouter un embedding a un chunk, utiliser raw SQL : `UPDATE document_chunks SET embedding = :emb WHERE id = :cid`
 - Toujours garder le TF-IDF comme fallback - ne jamais le supprimer
 
-## Modules existants (25)
+## Modules existants (29)
 
 ### Core (12)
 transcription, conversation, knowledge (hybrid search: pgvector + TF-IDF), compare, pipelines, agents, sentiment, web_crawler, workspaces, billing, api_keys, cost_tracker
@@ -104,6 +104,9 @@ fine_tuning (datasets from platform data, LoRA training, evaluation)
 
 ### Platform - Monitoring, Search, Memory (3)
 ai_monitoring (LLM observability, traces, provider comparison), unified_search (cross-module search + RAG), ai_memory (persistent memory + context injection)
+
+### Ecosystem (4)
+social_publisher (multi-platform publishing, scheduling, analytics), integration_hub (10 connectors, webhooks, triggers), ai_chatbot_builder (RAG chatbots, embed widget, multi-channel), marketplace (listings, ratings, installs, 8 categories)
 
 ## Integrations open-source (26 libs)
 
@@ -133,7 +136,7 @@ Toutes les integrations suivent la regle : **auto-detection + fallback gracieux*
 ## Interconnexions
 
 3 systemes d'orchestration connectent tous les modules :
-- **Agent Executor** : 23 actions (appels directs aux services)
+- **Agent Executor** : ~27 actions (appels directs aux services)
 - **Pipeline Steps** : 15 step types (chaining sequentiel)
 - **Workflow Actions** : 19 types (DAG avec branches paralleles)
 

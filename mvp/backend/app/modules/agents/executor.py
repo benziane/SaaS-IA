@@ -99,6 +99,9 @@ async def execute_step(action: str, input_data: dict, previous_output: Optional[
         "generate_clips": _exec_generate_clips,
         "fine_tune": _exec_fine_tune,
         "publish_social": _exec_publish_social,
+        "create_integration_webhook": _exec_create_integration_webhook,
+        "deploy_chatbot": _exec_deploy_chatbot,
+        "search_marketplace": _exec_search_marketplace,
     }
 
     handler = handlers.get(action, _exec_generate)
@@ -557,3 +560,155 @@ async def _exec_publish_social(input_data: dict, previous: Optional[str]) -> dic
         }
     except Exception as e:
         return {"output": "", "error": str(e)[:500], "action": "publish_social"}
+
+
+async def _exec_create_integration_webhook(input_data: dict, previous: Optional[str]) -> dict:
+    """Create a webhook integration connector via Integration Hub."""
+    name = input_data.get("name", "")
+    provider = input_data.get("provider", "custom")
+    if not name:
+        name = f"{provider} webhook"
+
+    try:
+        from app.modules.integration_hub.service import IntegrationHubService
+        from app.database import get_session_context
+        from uuid import UUID as UUIDType
+
+        user_id = input_data.get("_user_id")
+        if not user_id:
+            return {
+                "output": f"[Webhook connector '{name}' ready to create. Use the Integration Hub module to set up.]",
+                "action": "create_integration_webhook",
+                "note": "No user context. Use the Integration Hub module directly.",
+            }
+
+        uid = UUIDType(user_id) if isinstance(user_id, str) else user_id
+        async with get_session_context() as session:
+            service = IntegrationHubService(session)
+            connector = await service.create_connector(
+                user_id=uid,
+                data={
+                    "name": name,
+                    "type": "webhook",
+                    "provider": provider,
+                    "config": input_data.get("config", {}),
+                    "enabled": True,
+                },
+            )
+
+        return {
+            "output": f"[Webhook connector '{connector.name}' created for {provider}. "
+                      f"Connector ID: {connector.id}. "
+                      f"Webhook URL: /api/integrations/webhook/{connector.id}]",
+            "action": "create_integration_webhook",
+            "connector_id": str(connector.id),
+            "provider": provider,
+            "webhook_url": f"/api/integrations/webhook/{connector.id}",
+        }
+    except Exception as e:
+        return {"output": "", "error": str(e)[:500], "action": "create_integration_webhook"}
+
+
+async def _exec_deploy_chatbot(input_data: dict, previous: Optional[str]) -> dict:
+    """Create and publish a chatbot via the Chatbot Builder."""
+    name = input_data.get("name", "")
+    system_prompt = input_data.get("system_prompt", "")
+    if not name:
+        return {"output": "", "error": "No chatbot name provided", "action": "deploy_chatbot"}
+    if not system_prompt:
+        system_prompt = "You are a helpful AI assistant."
+
+    try:
+        from app.modules.ai_chatbot_builder.service import ChatbotBuilderService
+        from app.database import get_session_context
+        from uuid import UUID as UUIDType
+
+        user_id = input_data.get("_user_id")
+        if not user_id:
+            return {
+                "output": f"[Chatbot '{name}' ready to deploy. Use the Chatbot Builder module to create and publish.]",
+                "action": "deploy_chatbot",
+                "note": "No user context. Use the Chatbot Builder module directly.",
+            }
+
+        uid = UUIDType(user_id) if isinstance(user_id, str) else user_id
+        async with get_session_context() as session:
+            service = ChatbotBuilderService(session)
+            chatbot = await service.create_chatbot(
+                user_id=uid,
+                data={
+                    "name": name,
+                    "description": input_data.get("description"),
+                    "system_prompt": system_prompt,
+                    "model": input_data.get("model", "gemini"),
+                    "personality": input_data.get("personality", "professional"),
+                    "welcome_message": input_data.get("welcome_message"),
+                    "knowledge_base_ids": input_data.get("knowledge_base_ids"),
+                },
+            )
+
+            # Auto-publish if requested (default: True for agent deploy action)
+            if input_data.get("publish", True):
+                chatbot = await service.publish_chatbot(uid, chatbot.id)
+
+        embed_info = ""
+        if chatbot.embed_token:
+            embed_info = f" Embed token: {chatbot.embed_token}."
+
+        return {
+            "output": f"[Chatbot '{chatbot.name}' created and {'published' if chatbot.is_published else 'drafted'}. "
+                      f"ID: {chatbot.id}.{embed_info}]",
+            "action": "deploy_chatbot",
+            "chatbot_id": str(chatbot.id),
+            "is_published": chatbot.is_published,
+            "embed_token": chatbot.embed_token,
+        }
+    except Exception as e:
+        return {"output": "", "error": str(e)[:500], "action": "deploy_chatbot"}
+
+
+async def _exec_search_marketplace(input_data: dict, previous: Optional[str]) -> dict:
+    """Search marketplace listings."""
+    query = input_data.get("query", input_data.get("search", previous or ""))
+    if not query:
+        return {"output": "", "error": "No search query for marketplace", "action": "search_marketplace"}
+
+    try:
+        from app.modules.marketplace.service import MarketplaceService
+        from app.database import get_session_context
+
+        async with get_session_context() as session:
+            service = MarketplaceService(session)
+            listings, total = await service.list_listings(
+                type=input_data.get("type"),
+                category=input_data.get("category"),
+                sort_by=input_data.get("sort_by", "newest"),
+                search=query,
+                limit=input_data.get("limit", 10),
+                offset=0,
+            )
+
+        if listings:
+            results_text = f"Found {total} marketplace listing(s) for '{query}':\n\n"
+            for listing in listings:
+                results_text += (
+                    f"- **{listing.title}** ({listing.type}, {listing.category}) "
+                    f"- {listing.rating}/5 stars, {listing.installs_count} installs"
+                )
+                if listing.price > 0:
+                    results_text += f", ${listing.price}"
+                results_text += f"\n  {listing.description[:150]}\n"
+            return {
+                "output": results_text,
+                "action": "search_marketplace",
+                "total": total,
+                "results_count": len(listings),
+            }
+        return {
+            "output": f"No marketplace listings found for '{query}'.",
+            "action": "search_marketplace",
+            "total": 0,
+            "results_count": 0,
+        }
+    except Exception as e:
+        return {"output": "", "error": str(e)[:500], "action": "search_marketplace"}
