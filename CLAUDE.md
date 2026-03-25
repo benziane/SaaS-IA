@@ -105,7 +105,7 @@ fine_tuning (datasets from platform data, LoRA training, evaluation)
 ### Platform - Monitoring, Search, Memory (3)
 ai_monitoring (LLM observability, traces, provider comparison), unified_search (cross-module search + RAG), ai_memory (persistent memory + context injection)
 
-## Integrations open-source (18 libs)
+## Integrations open-source (26 libs)
 
 | Lib | Module | Fallback |
 |-----|--------|----------|
@@ -117,8 +117,18 @@ ai_monitoring (LLM observability, traces, provider comparison), unified_search (
 | Coqui TTS | voice_clone | OpenAI TTS / mock |
 | NeMo-Guardrails | security_guardian | regex injection |
 | networkx | ai_workflows | Kahn's algorithm |
+| cardiffnlp/RoBERTa (transformers) | sentiment | LLM analysis |
+| textstat | content_studio | word count basique |
+| Jina Reader API | web_crawler | crawl4ai seul |
+| ffmpeg-python | video_gen | mock placeholders |
+| Real-ESRGAN | image_gen | pas d'upscaling |
+| unsloth | fine_tuning | mock training |
+| lm-evaluation-harness | fine_tuning | mock evaluation |
+| livekit-server-sdk | realtime_ai | text-based sessions |
+| OpenTelemetry (7 packages) | core/telemetry | Prometheus seul |
+| sentry-sdk | core/error_tracking | structlog seul |
 
-Toutes les integrations suivent la regle : **auto-detection + fallback gracieux**.
+Toutes les integrations suivent la regle : **auto-detection + fallback gracieux** (pattern `HAS_XXX`).
 
 ## Interconnexions
 
