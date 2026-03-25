@@ -1,15 +1,17 @@
 """
-AI Monitoring Service - Langfuse-style LLM observability.
+AI Monitoring Service - LLM observability with Langfuse integration.
 
 Provides quality scoring, latency tracking, cost analytics,
 provider comparison, and prompt effectiveness monitoring.
 
 Built on top of the existing cost_tracker (ai_usage_logs table).
+Langfuse integration adds LLM-specific observability (traces, generations, scores).
 """
 
+import os
 import json
 from datetime import datetime, timedelta
-from typing import Optional
+from typing import Any, Optional
 from uuid import UUID
 
 import structlog
@@ -19,7 +21,52 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.models.cost_tracking import AIUsageLog
 
+# Langfuse integration - auto-detection + graceful fallback
+try:
+    from langfuse import Langfuse
+    HAS_LANGFUSE = True
+except ImportError:
+    HAS_LANGFUSE = False
+
 logger = structlog.get_logger()
+
+# Langfuse client singleton (lazy-loaded)
+_langfuse_client: Optional[Any] = None
+
+
+def _get_langfuse_client():
+    """Get or create the Langfuse client singleton.
+
+    Reads LANGFUSE_PUBLIC_KEY, LANGFUSE_SECRET_KEY, LANGFUSE_HOST from env.
+    Returns None if Langfuse is not installed or not configured.
+    """
+    global _langfuse_client
+
+    if not HAS_LANGFUSE:
+        return None
+
+    if _langfuse_client is not None:
+        return _langfuse_client
+
+    public_key = os.environ.get("LANGFUSE_PUBLIC_KEY")
+    secret_key = os.environ.get("LANGFUSE_SECRET_KEY")
+    host = os.environ.get("LANGFUSE_HOST", "https://cloud.langfuse.com")
+
+    if not public_key or not secret_key:
+        logger.debug("langfuse_not_configured", reason="missing LANGFUSE_PUBLIC_KEY or LANGFUSE_SECRET_KEY")
+        return None
+
+    try:
+        _langfuse_client = Langfuse(
+            public_key=public_key,
+            secret_key=secret_key,
+            host=host,
+        )
+        logger.info("langfuse_client_initialized", host=host)
+        return _langfuse_client
+    except Exception as e:
+        logger.warning("langfuse_client_init_failed", error=str(e))
+        return None
 
 
 class AIMonitoringService:
@@ -194,3 +241,246 @@ class AIMonitoringService:
             }
             for t in result.scalars().all()
         ]
+
+    # ------------------------------------------------------------------
+    # Langfuse integration (LLM-specific observability)
+    # All methods are no-ops when Langfuse is not installed or configured.
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def create_trace(
+        name: str,
+        user_id: Optional[str] = None,
+        metadata: Optional[dict] = None,
+    ) -> Optional[Any]:
+        """Create a Langfuse trace for an end-to-end LLM operation.
+
+        Returns the trace object, or None if Langfuse is unavailable.
+        """
+        client = _get_langfuse_client()
+        if client is None:
+            return None
+
+        try:
+            trace = client.trace(
+                name=name,
+                user_id=user_id,
+                metadata=metadata or {},
+            )
+            logger.debug("langfuse_trace_created", name=name, trace_id=trace.id)
+            return trace
+        except Exception as e:
+            logger.warning("langfuse_trace_create_failed", name=name, error=str(e))
+            return None
+
+    @staticmethod
+    def create_generation(
+        trace_id: str,
+        name: str,
+        model: str,
+        input: Optional[Any] = None,
+        output: Optional[Any] = None,
+        usage: Optional[dict] = None,
+        metadata: Optional[dict] = None,
+    ) -> Optional[Any]:
+        """Create a Langfuse generation (LLM call) within a trace.
+
+        Args:
+            trace_id: The parent trace ID.
+            name: Name of the generation (e.g. "summarize", "translate").
+            model: Model identifier (e.g. "gemini-2.0-flash").
+            input: The prompt / input sent to the LLM.
+            output: The LLM response.
+            usage: Token usage dict with keys: input, output, total, unit.
+            metadata: Additional metadata dict.
+
+        Returns the generation object, or None if Langfuse is unavailable.
+        """
+        client = _get_langfuse_client()
+        if client is None:
+            return None
+
+        try:
+            generation = client.generation(
+                trace_id=trace_id,
+                name=name,
+                model=model,
+                input=input,
+                output=output,
+                usage=usage or {},
+                metadata=metadata or {},
+            )
+            logger.debug(
+                "langfuse_generation_created",
+                trace_id=trace_id,
+                name=name,
+                generation_id=generation.id,
+            )
+            return generation
+        except Exception as e:
+            logger.warning("langfuse_generation_create_failed", trace_id=trace_id, error=str(e))
+            return None
+
+    @staticmethod
+    def score_generation(
+        trace_id: str,
+        generation_id: Optional[str] = None,
+        name: str = "quality",
+        value: float = 0.0,
+        comment: Optional[str] = None,
+    ) -> bool:
+        """Score a generation or trace for quality tracking.
+
+        Args:
+            trace_id: The trace to score.
+            generation_id: Optional specific generation to score.
+            name: Score name (e.g. "quality", "relevance", "hallucination").
+            value: Numeric score value.
+            comment: Optional human-readable comment.
+
+        Returns True if the score was recorded, False otherwise.
+        """
+        client = _get_langfuse_client()
+        if client is None:
+            return False
+
+        try:
+            score_kwargs = {
+                "trace_id": trace_id,
+                "name": name,
+                "value": value,
+            }
+            if generation_id:
+                score_kwargs["observation_id"] = generation_id
+            if comment:
+                score_kwargs["comment"] = comment
+
+            client.score(**score_kwargs)
+            logger.debug(
+                "langfuse_score_recorded",
+                trace_id=trace_id,
+                name=name,
+                value=value,
+            )
+            return True
+        except Exception as e:
+            logger.warning("langfuse_score_failed", trace_id=trace_id, error=str(e))
+            return False
+
+    @staticmethod
+    def send_to_langfuse(
+        provider: str,
+        model: str,
+        module: str,
+        action: str,
+        user_id: Optional[str] = None,
+        input_tokens: int = 0,
+        output_tokens: int = 0,
+        latency_ms: int = 0,
+        success: bool = True,
+        error: Optional[str] = None,
+        input_text: Optional[str] = None,
+        output_text: Optional[str] = None,
+    ) -> None:
+        """Send an AI usage event to Langfuse as a trace + generation.
+
+        Called by track_ai_usage() to mirror events to Langfuse.
+        Fails silently to never block the main flow.
+        """
+        client = _get_langfuse_client()
+        if client is None:
+            return
+
+        try:
+            trace = client.trace(
+                name=f"{module}/{action}",
+                user_id=user_id,
+                metadata={
+                    "provider": provider,
+                    "model": model,
+                    "module": module,
+                    "action": action,
+                    "success": success,
+                },
+            )
+
+            usage = {
+                "input": input_tokens,
+                "output": output_tokens,
+                "total": input_tokens + output_tokens,
+                "unit": "TOKENS",
+            }
+
+            gen_metadata = {"latency_ms": latency_ms}
+            if error:
+                gen_metadata["error"] = error[:500]
+
+            client.generation(
+                trace_id=trace.id,
+                name=action,
+                model=model,
+                input=input_text,
+                output=output_text,
+                usage=usage,
+                metadata=gen_metadata,
+                level="ERROR" if not success else "DEFAULT",
+                status_message=error[:500] if error else None,
+            )
+
+            logger.debug(
+                "langfuse_event_sent",
+                trace_id=trace.id,
+                module=module,
+                action=action,
+            )
+        except Exception as e:
+            logger.warning("langfuse_send_failed", error=str(e))
+
+    @staticmethod
+    def get_langfuse_dashboard_url() -> Optional[str]:
+        """Return the Langfuse dashboard URL for the current project.
+
+        Returns None if Langfuse is not configured.
+        """
+        if not HAS_LANGFUSE:
+            return None
+
+        host = os.environ.get("LANGFUSE_HOST", "https://cloud.langfuse.com")
+        public_key = os.environ.get("LANGFUSE_PUBLIC_KEY")
+
+        if not public_key:
+            return None
+
+        return f"{host.rstrip('/')}/dashboard"
+
+    @staticmethod
+    def flush() -> bool:
+        """Flush the Langfuse client to ensure all events are sent.
+
+        Should be called before application shutdown.
+        Returns True if flush succeeded, False otherwise.
+        """
+        client = _get_langfuse_client()
+        if client is None:
+            return False
+
+        try:
+            client.flush()
+            logger.info("langfuse_flushed")
+            return True
+        except Exception as e:
+            logger.warning("langfuse_flush_failed", error=str(e))
+            return False
+
+    @staticmethod
+    def get_langfuse_status() -> dict:
+        """Return Langfuse integration status for health checks."""
+        configured = bool(
+            os.environ.get("LANGFUSE_PUBLIC_KEY") and os.environ.get("LANGFUSE_SECRET_KEY")
+        )
+        return {
+            "installed": HAS_LANGFUSE,
+            "configured": configured,
+            "active": HAS_LANGFUSE and configured and _langfuse_client is not None,
+            "host": os.environ.get("LANGFUSE_HOST", "https://cloud.langfuse.com") if configured else None,
+        }

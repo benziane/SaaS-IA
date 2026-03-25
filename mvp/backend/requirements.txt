@@ -85,6 +85,9 @@ google-generativeai==0.8.6
 anthropic==0.86.0
 openai==1.54.5  # Pinned v1.x for Groq compatibility
 
+# Persistent AI Memory (optional - falls back to DB queries)
+mem0ai>=0.1.0
+
 # Search (optional - falls back to PostgreSQL)
 meilisearch>=0.31.0
 
@@ -99,6 +102,9 @@ python-dateutil>=2.9.0
 # Monitoring & Observability
 prometheus-client==0.24.1
 pyyaml==6.0.3
+
+# LLM Observability (Langfuse - optional, falls back to DB-only monitoring)
+langfuse>=2.0.0
 
 # Enterprise Observability (OpenTelemetry)
 opentelemetry-api>=1.27.0

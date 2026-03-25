@@ -90,6 +90,34 @@ async def extract_memories(
     return {"extracted": len(memories), "memories": memories}
 
 
+@router.get("/recall")
+@limiter.limit("30/minute")
+async def recall_memories(
+    request: Request,
+    query: str = Query(..., min_length=1, max_length=500, description="Search query for semantic recall"),
+    limit: int = Query(10, ge=1, le=50),
+    current_user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+):
+    """Recall memories relevant to a query (Mem0 semantic search with DB fallback)."""
+    results = await AIMemoryService.recall_memories(
+        current_user.id, query, session, limit=limit,
+    )
+    return {"results": results, "count": len(results)}
+
+
+@router.post("/sync-to-mem0")
+@limiter.limit("2/minute")
+async def sync_to_mem0(
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+):
+    """Bulk-sync existing DB memories to Mem0 for enhanced semantic recall."""
+    result = await AIMemoryService.sync_to_mem0(current_user.id, session)
+    return result
+
+
 @router.delete("/forget-all", status_code=status.HTTP_200_OK)
 @limiter.limit("1/minute")
 async def forget_all(
