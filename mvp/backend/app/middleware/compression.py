@@ -50,3 +50,7 @@ class CompressionMiddleware:
 
         # Delegate to Starlette GZipMiddleware
         await self.gzip(scope, receive, send)
+
+
+# Alias used by app.main
+SelectiveCompressionMiddleware = CompressionMiddleware

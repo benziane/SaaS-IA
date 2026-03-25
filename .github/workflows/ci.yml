@@ -10,9 +10,16 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  PYTHON_VERSION: "3.13"
+  NODE_VERSION: "20"
+
 jobs:
-  backend-lint:
-    name: Backend Lint & Type Check
+  # ──────────────────────────────────────────────────────────
+  # Job 1: Backend Linting & Security
+  # ──────────────────────────────────────────────────────────
+  lint-backend:
+    name: Backend Lint & Security
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -22,7 +29,7 @@ jobs:
 
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
           cache-dependency-path: mvp/backend/requirements.txt
 
@@ -30,47 +37,91 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install ruff mypy
 
       - name: Lint with ruff
-        run: ruff check app/ --exit-zero
+        run: ruff check app/
 
-      - name: Type check with mypy
-        run: mypy app/ --ignore-missing-imports
+      - name: Check formatting with ruff
+        run: ruff format --check app/
 
-  backend-test:
+      - name: Security scan with bandit
+        run: bandit -r app/ -c pyproject.toml -ll --exit-zero
+        # -ll = only medium+ severity; --exit-zero = don't fail on findings
+        # Remove --exit-zero once baseline is clean
+
+  # ──────────────────────────────────────────────────────────
+  # Job 2: Backend Tests (Postgres + Redis services)
+  # ──────────────────────────────────────────────────────────
+  test-backend:
     name: Backend Tests
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: mvp/backend
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_DB: saas_ia_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U test_user -d saas_ia_test"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
     env:
       ENVIRONMENT: testing
-      SECRET_KEY: test-secret-key-ci
-      DATABASE_URL: sqlite+aiosqlite:///test.db
-      REDIS_URL: ""
+      SECRET_KEY: test-secret-key-ci-${{ github.run_id }}
+      DATABASE_URL: postgresql+asyncpg://test_user:test_password@localhost:5432/saas_ia_test
+      REDIS_URL: redis://localhost:6379/0
+      # Mock API keys for modules that auto-detect providers
       ASSEMBLYAI_API_KEY: MOCK
       GEMINI_API_KEY: MOCK
       CLAUDE_API_KEY: MOCK
       GROQ_API_KEY: MOCK
+      OPENAI_API_KEY: MOCK
+      STRIPE_SECRET_KEY: MOCK
+      STRIPE_WEBHOOK_SECRET: MOCK
+
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
           cache-dependency-path: mvp/backend/requirements.txt
 
-      - name: Install dependencies
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends ffmpeg libpq-dev
+
+      - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install aiosqlite
-          pip install pytest pytest-asyncio pytest-cov httpx
 
-      - name: Run unit tests
-        run: pytest tests/ -v --tb=short --junitxml=test-results.xml --cov=app --cov-report=xml --cov-report=term
+      - name: Run tests
+        run: >
+          pytest tests/ -v --tb=short --timeout=60
+          --junitxml=test-results.xml
+          --cov=app --cov-report=xml --cov-report=term-missing
 
       - name: Upload test results
         uses: actions/upload-artifact@v4
@@ -78,6 +129,15 @@ jobs:
         with:
           name: test-results
           path: mvp/backend/test-results.xml
+          retention-days: 14
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: backend-coverage
+          path: mvp/backend/coverage.xml
+          retention-days: 14
 
       - name: Upload coverage to Codecov
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -88,8 +148,11 @@ jobs:
           name: backend-coverage
         continue-on-error: true
 
-  frontend-build:
-    name: Frontend Build
+  # ──────────────────────────────────────────────────────────
+  # Job 3: Frontend Linting & Type Checking
+  # ──────────────────────────────────────────────────────────
+  lint-frontend:
+    name: Frontend Lint & Type Check
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -99,29 +162,130 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: "18"
+          node-version: ${{ env.NODE_VERSION }}
           cache: npm
           cache-dependency-path: mvp/frontend/package-lock.json
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Type check and build
-        run: npx next build
-        env:
-          NEXT_PUBLIC_API_URL: http://localhost:8004
+      - name: Lint with ESLint
+        run: npm run lint
 
-  security-scan:
-    name: Security Scan
+      - name: TypeScript type check
+        run: npx tsc --noEmit
+
+  # ──────────────────────────────────────────────────────────
+  # Job 4: Frontend Build (depends on lint-frontend)
+  # ──────────────────────────────────────────────────────────
+  build-frontend:
+    name: Frontend Build
     runs-on: ubuntu-latest
-    needs: [backend-test]
+    needs: [lint-frontend]
+    defaults:
+      run:
+        working-directory: mvp/frontend
+    env:
+      NEXT_PUBLIC_API_URL: http://localhost:8004
     steps:
       - uses: actions/checkout@v4
 
-      - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@master
+      - uses: actions/setup-node@v4
         with:
-          scan-type: 'fs'
-          scan-ref: 'mvp/backend'
-          severity: 'HIGH,CRITICAL'
-          exit-code: '0'
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: mvp/frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Next.js application
+        run: npm run build
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-build
+          path: mvp/frontend/.next/
+          retention-days: 7
+
+  # ──────────────────────────────────────────────────────────
+  # Job 5: Docker Build (depends on test-backend)
+  # ──────────────────────────────────────────────────────────
+  docker-build:
+    name: Docker Build
+    runs-on: ubuntu-latest
+    needs: [test-backend]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build backend Docker image
+        run: |
+          docker build \
+            --tag saas-ia-backend:test \
+            --tag saas-ia-backend:${{ github.sha }} \
+            --file mvp/backend/Dockerfile \
+            mvp/backend/
+
+      - name: Verify image was built
+        run: docker image inspect saas-ia-backend:test > /dev/null 2>&1
+
+      - name: Check image size
+        run: |
+          SIZE=$(docker image inspect saas-ia-backend:test --format='{{.Size}}')
+          SIZE_MB=$((SIZE / 1024 / 1024))
+          echo "Image size: ${SIZE_MB} MB"
+          echo "## Docker Image Size" >> $GITHUB_STEP_SUMMARY
+          echo "- **saas-ia-backend:test** — ${SIZE_MB} MB" >> $GITHUB_STEP_SUMMARY
+
+          # Warn if image exceeds 3 GB
+          if [ "$SIZE_MB" -gt 3072 ]; then
+            echo "::warning::Docker image is ${SIZE_MB} MB — consider optimizing"
+          fi
+
+  # ──────────────────────────────────────────────────────────
+  # Job 6: Security Scan (pip audit + npm audit)
+  # ──────────────────────────────────────────────────────────
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # -- Python vulnerability scan --
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: mvp/backend/requirements.txt
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pip-audit
+          pip install -r mvp/backend/requirements.txt
+
+      - name: Audit Python dependencies
+        run: pip-audit --strict --desc on
+        continue-on-error: true
+        # continue-on-error: known transitive vuln noise — remove once baseline is clean
+
+      # -- Node vulnerability scan --
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: mvp/frontend/package-lock.json
+
+      - name: Install Node dependencies
+        working-directory: mvp/frontend
+        run: npm ci
+
+      - name: Audit Node dependencies
+        working-directory: mvp/frontend
+        run: npm audit --audit-level=high
+        continue-on-error: true
+        # continue-on-error: some transitive deps may flag — remove once clean

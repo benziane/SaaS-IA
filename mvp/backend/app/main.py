@@ -42,6 +42,11 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# --- OpenAPI enrichment (tags, servers, security schemes) ---
+from app.api.docs import custom_openapi, TAGS_METADATA
+app.openapi_tags = TAGS_METADATA
+app.openapi = lambda: custom_openapi(app)
+
 # --- Phase 6a: OpenTelemetry (must be after app creation) ---
 from app.core.telemetry import setup_telemetry
 setup_telemetry(app)
@@ -96,7 +101,11 @@ app.add_middleware(
 )
 
 # Import Celery request_id signals (auto-registers on import)
-import app.middleware.request_id_celery  # noqa: F401
+# NOTE: Using importlib to avoid `import app.middleware.request_id_celery`
+# which would rebind the name `app` in this module to the `app` package,
+# overwriting the FastAPI instance assigned above.
+import importlib as _importlib
+_importlib.import_module("app.middleware.request_id_celery")
 
 # Include routers
 app.include_router(

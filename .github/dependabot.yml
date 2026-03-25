@@ -4,8 +4,7 @@ updates:
   - package-ecosystem: pip
     directory: /mvp/backend
     schedule:
-      interval: weekly
-      day: monday
+      interval: monthly
     open-pull-requests-limit: 10
     labels:
       - dependencies
@@ -13,13 +12,21 @@ updates:
     commit-message:
       prefix: "chore(deps)"
       include: scope
+    # Auto-create PRs for security updates regardless of schedule
+    groups:
+      python-security:
+        applies-to: security-updates
+      python-minor:
+        applies-to: version-updates
+        update-types:
+          - minor
+          - patch
 
   # Frontend npm dependencies
   - package-ecosystem: npm
     directory: /mvp/frontend
     schedule:
-      interval: weekly
-      day: monday
+      interval: monthly
     open-pull-requests-limit: 10
     labels:
       - dependencies
@@ -28,13 +35,20 @@ updates:
       prefix: "chore(deps)"
       include: scope
     versioning-strategy: increase
+    groups:
+      npm-security:
+        applies-to: security-updates
+      npm-minor:
+        applies-to: version-updates
+        update-types:
+          - minor
+          - patch
 
   # GitHub Actions
   - package-ecosystem: github-actions
     directory: /
     schedule:
-      interval: weekly
-      day: monday
+      interval: monthly
     open-pull-requests-limit: 5
     labels:
       - dependencies
@@ -47,8 +61,7 @@ updates:
   - package-ecosystem: docker
     directory: /mvp/backend
     schedule:
-      interval: weekly
-      day: monday
+      interval: monthly
     open-pull-requests-limit: 5
     labels:
       - dependencies
@@ -61,8 +74,7 @@ updates:
   - package-ecosystem: docker
     directory: /mvp/frontend
     schedule:
-      interval: weekly
-      day: monday
+      interval: monthly
     open-pull-requests-limit: 5
     labels:
       - dependencies

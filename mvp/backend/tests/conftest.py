@@ -7,9 +7,9 @@ All fixtures are designed to run WITHOUT external services
 
 import os
 import pytest
-from datetime import datetime
+from datetime import datetime, timedelta
 from uuid import uuid4
-from unittest.mock import patch
+from unittest.mock import patch, AsyncMock, MagicMock
 
 
 # ---------------------------------------------------------------------------
@@ -25,7 +25,10 @@ _TEST_ENV = {
     "ALGORITHM": "HS256",
     "ACCESS_TOKEN_EXPIRE_MINUTES": "30",
     "REFRESH_TOKEN_EXPIRE_DAYS": "7",
-    "DATABASE_URL": "sqlite+aiosqlite:///test.db",
+    # Use a PostgreSQL-compatible URL so that app.database's engine
+    # creation with pool_size/max_overflow does not error. The engine
+    # is never actually connected during tests.
+    "DATABASE_URL": "postgresql+asyncpg://test:test@localhost:5432/test_saas_ia",
     "REDIS_URL": "redis://localhost:6379/15",
     "ASSEMBLYAI_API_KEY": "MOCK",
     "GEMINI_API_KEY": "MOCK",
@@ -53,6 +56,123 @@ def test_settings():
     with patch.dict(os.environ, _TEST_ENV, clear=False):
         from app.config import Settings
         return Settings()
+
+
+# ---------------------------------------------------------------------------
+# Fixtures: FastAPI app & async client
+# ---------------------------------------------------------------------------
+
+@pytest.fixture()
+def app():
+    """
+    Return the FastAPI application instance.
+
+    The app is imported from the real entry point so that all routers,
+    middleware, and module discovery are exercised.  Module-level engine
+    creation is allowed (PostgreSQL URL in _TEST_ENV) but no real DB
+    connection is made.
+    """
+    with patch.dict(os.environ, _TEST_ENV, clear=False):
+        from app.main import app as _app
+        yield _app
+
+
+@pytest.fixture()
+async def client(app):
+    """
+    Provide an httpx.AsyncClient configured for the test app.
+
+    Uses ``httpx.ASGITransport`` so that requests go through the full
+    ASGI middleware stack without needing a running server.
+
+    The database ``init_db`` and ``engine.dispose`` calls from the
+    lifespan manager are mocked out so that tests do not need a live
+    PostgreSQL instance.
+    """
+    import httpx
+
+    transport = httpx.ASGITransport(app=app)
+    with (
+        patch("app.database.init_db", new_callable=AsyncMock),
+        patch("app.database.engine") as mock_engine,
+        patch("app.cache._get_redis", new_callable=AsyncMock, return_value=None),
+    ):
+        mock_engine.dispose = AsyncMock()
+        async with httpx.AsyncClient(
+            transport=transport,
+            base_url="http://testserver",
+        ) as ac:
+            yield ac
+
+
+@pytest.fixture()
+def auth_headers():
+    """
+    Return an Authorization header dict containing a valid JWT for a
+    test user.  The token is signed with the test SECRET_KEY.
+    """
+    from jose import jwt
+
+    secret = _TEST_ENV["SECRET_KEY"]
+    algorithm = _TEST_ENV["ALGORITHM"]
+    expire = datetime.utcnow() + timedelta(minutes=30)
+
+    payload = {
+        "sub": "testuser@example.com",
+        "exp": expire,
+        "type": "access",
+    }
+    token = jwt.encode(payload, secret, algorithm=algorithm)
+    return {"Authorization": f"Bearer {token}"}
+
+
+@pytest.fixture()
+def test_user():
+    """Return a mock User object suitable for dependency injection."""
+    user = MagicMock()
+    user.id = uuid4()
+    user.email = "testuser@example.com"
+    user.full_name = "Test User"
+    user.role = "user"
+    user.is_active = True
+    user.hashed_password = "$2b$12$mock_hashed_password_for_testing"
+    user.created_at = datetime.utcnow()
+    user.updated_at = datetime.utcnow()
+    return user
+
+
+@pytest.fixture()
+async def session():
+    """
+    Provide an async in-memory SQLite session.
+
+    This creates all tables in a fresh SQLite database, yields the
+    session, and tears down after the test.  No PostgreSQL required.
+    """
+    from sqlalchemy.ext.asyncio import create_async_engine
+    from sqlalchemy.orm import sessionmaker
+    from sqlmodel import SQLModel
+    from sqlmodel.ext.asyncio.session import AsyncSession
+
+    engine = create_async_engine(
+        "sqlite+aiosqlite://",
+        echo=False,
+        future=True,
+    )
+
+    async with engine.begin() as conn:
+        await conn.run_sync(SQLModel.metadata.create_all)
+
+    async_session_factory = sessionmaker(
+        engine,
+        class_=AsyncSession,
+        expire_on_commit=False,
+    )
+
+    async with async_session_factory() as sess:
+        yield sess
+
+    await engine.dispose()
 
 
 # ---------------------------------------------------------------------------
