@@ -2,39 +2,20 @@
 
 import { useState } from 'react';
 import {
-  Alert,
-  Box,
-  Button,
-  Card,
-  CardActions,
-  CardContent,
-  Chip,
-  CircularProgress,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  FormControl,
-  Grid,
-  IconButton,
-  InputLabel,
-  MenuItem,
-  Select,
-  Skeleton,
-  Tab,
-  Tabs,
-  TextField,
-  Tooltip,
-  Typography,
-} from '@mui/material';
-import AddIcon from '@mui/icons-material/Add';
-import DeleteIcon from '@mui/icons-material/Delete';
-import SendIcon from '@mui/icons-material/Send';
-import ScheduleIcon from '@mui/icons-material/Schedule';
-import BarChartIcon from '@mui/icons-material/BarChart';
-import LinkOffIcon from '@mui/icons-material/LinkOff';
-import ShareIcon from '@mui/icons-material/Share';
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+  Share2, Plus, Trash2, Send, Clock, BarChart3, Unlink, Copy, Loader2,
+} from 'lucide-react';
+
+import { Card, CardContent, CardFooter } from '@/lib/design-hub/components/Card';
+import { Badge } from '@/lib/design-hub/components/Badge';
+import { Alert, AlertDescription } from '@/lib/design-hub/components/Alert';
+import { Button } from '@/lib/design-hub/components/Button';
+import { Input } from '@/lib/design-hub/components/Input';
+import { Textarea } from '@/lib/design-hub/components/Textarea';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/lib/design-hub/components/Tabs';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/lib/design-hub/components/Select';
+import { Skeleton } from '@/lib/design-hub/components/Skeleton';
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/lib/design-hub/components/Tooltip';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/lib/design-hub/components/Dialog';
 
 import {
   useAccounts,
@@ -56,12 +37,12 @@ const PLATFORM_OPTIONS = [
   { id: 'facebook', label: 'Facebook', color: '#1877F2' },
 ];
 
-const STATUS_COLORS: Record<string, 'default' | 'primary' | 'success' | 'error' | 'warning' | 'info'> = {
-  draft: 'default',
+const STATUS_VARIANT: Record<string, 'secondary' | 'default' | 'success' | 'destructive' | 'warning'> = {
+  draft: 'secondary',
   scheduled: 'warning',
-  publishing: 'info',
+  publishing: 'default',
   published: 'success',
-  failed: 'error',
+  failed: 'destructive',
 };
 
 type TabValue = 'compose' | 'scheduled' | 'published' | 'accounts';
@@ -155,491 +136,482 @@ export default function SocialPublisherPage() {
     const platformChips = post.platforms.map((p) => {
       const info = PLATFORM_OPTIONS.find((o) => o.id === p);
       return (
-        <Chip
+        <span
           key={p}
-          label={info?.label || p}
-          size="small"
-          sx={{ bgcolor: info?.color, color: '#fff', fontSize: '0.7rem' }}
-        />
+          className="inline-flex items-center rounded px-2 py-0.5 text-[0.7rem] font-semibold text-white"
+          style={{ backgroundColor: info?.color }}
+        >
+          {info?.label || p}
+        </span>
       );
     });
 
     return (
-      <Card key={post.id} variant="outlined" sx={{ mb: 2 }}>
-        <CardContent>
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
-            <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
+      <Card key={post.id} className="mb-2">
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex gap-1 flex-wrap">
               {platformChips}
-            </Box>
-            <Chip
-              label={post.status}
-              size="small"
-              color={STATUS_COLORS[post.status] || 'default'}
-            />
-          </Box>
-          <Typography
-            variant="body2"
-            sx={{
-              whiteSpace: 'pre-wrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              display: '-webkit-box',
-              WebkitLineClamp: 4,
-              WebkitBoxOrient: 'vertical',
-              mb: 1,
-            }}
-          >
+            </div>
+            <Badge variant={STATUS_VARIANT[post.status] || 'secondary'}>
+              {post.status}
+            </Badge>
+          </div>
+          <p className="text-sm whitespace-pre-wrap overflow-hidden text-ellipsis line-clamp-4 mb-2">
             {post.content}
-          </Typography>
+          </p>
           {post.hashtags.length > 0 && (
-            <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', mb: 1 }}>
+            <div className="flex gap-1 flex-wrap mb-2">
               {post.hashtags.map((h) => (
-                <Chip key={h} label={`#${h}`} size="small" variant="outlined" color="primary" />
+                <Badge key={h} variant="outline">#{h}</Badge>
               ))}
-            </Box>
+            </div>
           )}
-          <Typography variant="caption" color="text.secondary">
+          <p className="text-xs text-[var(--text-low)]">
             {post.schedule_at
               ? `Scheduled: ${new Date(post.schedule_at).toLocaleString()}`
               : post.published_at
               ? `Published: ${new Date(post.published_at).toLocaleString()}`
               : `Created: ${new Date(post.created_at).toLocaleString()}`}
-          </Typography>
+          </p>
         </CardContent>
         {showActions && (
-          <CardActions sx={{ justifyContent: 'flex-end', pt: 0 }}>
-            <Tooltip title="Copy content">
-              <IconButton size="small" onClick={() => handleCopy(post.content)}>
-                <ContentCopyIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
-            {(post.status === 'draft' || post.status === 'scheduled') && (
-              <Tooltip title="Publish now">
-                <IconButton
-                  size="small"
-                  color="primary"
-                  onClick={() => publishMutation.mutate(post.id)}
-                  disabled={publishMutation.isPending}
-                >
-                  <SendIcon fontSize="small" />
-                </IconButton>
+          <CardFooter className="justify-end gap-1 pt-0 px-4 pb-3">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="ghost" size="icon" onClick={() => handleCopy(post.content)}>
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Copy content</TooltipContent>
               </Tooltip>
-            )}
-            {post.status === 'published' && (
-              <Tooltip title="View analytics">
-                <IconButton
-                  size="small"
-                  color="info"
-                  onClick={() => setAnalyticsPostId(post.id)}
-                >
-                  <BarChartIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-            )}
-            {post.status !== 'published' && (
-              <Tooltip title="Delete">
-                <IconButton
-                  size="small"
-                  color="error"
-                  onClick={() => deleteMutation.mutate(post.id)}
-                  disabled={deleteMutation.isPending}
-                >
-                  <DeleteIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-            )}
-          </CardActions>
+              {(post.status === 'draft' || post.status === 'scheduled') && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="text-[var(--accent)]"
+                      onClick={() => publishMutation.mutate(post.id)}
+                      disabled={publishMutation.isPending}
+                    >
+                      <Send className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Publish now</TooltipContent>
+                </Tooltip>
+              )}
+              {post.status === 'published' && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setAnalyticsPostId(post.id)}
+                    >
+                      <BarChart3 className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>View analytics</TooltipContent>
+                </Tooltip>
+              )}
+              {post.status !== 'published' && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="text-red-500 hover:text-red-600"
+                      onClick={() => deleteMutation.mutate(post.id)}
+                      disabled={deleteMutation.isPending}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Delete</TooltipContent>
+                </Tooltip>
+              )}
+            </TooltipProvider>
+          </CardFooter>
         )}
       </Card>
     );
   };
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
-        <Box>
-          <Typography variant="h4" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <ShareIcon color="primary" /> Social Publisher
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
+    <div className="p-6">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold flex items-center gap-2">
+            <Share2 className="h-6 w-6 text-[var(--accent)]" /> Social Publisher
+          </h1>
+          <p className="text-sm text-[var(--text-mid)]">
             Compose, schedule, and publish to multiple social media platforms
-          </Typography>
-        </Box>
-      </Box>
+          </p>
+        </div>
+      </div>
 
-      <Tabs
-        value={activeTab}
-        onChange={(_, v) => setActiveTab(v)}
-        sx={{ mb: 3, borderBottom: 1, borderColor: 'divider' }}
-      >
-        <Tab label="Compose" value="compose" />
-        <Tab label={`Scheduled (${scheduledPosts.length})`} value="scheduled" />
-        <Tab label={`Published (${publishedPosts.length})`} value="published" />
-        <Tab label={`Accounts (${accounts?.length || 0})`} value="accounts" />
-      </Tabs>
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabValue)} className="mb-6">
+        <TabsList>
+          <TabsTrigger value="compose">Compose</TabsTrigger>
+          <TabsTrigger value="scheduled">Scheduled ({scheduledPosts.length})</TabsTrigger>
+          <TabsTrigger value="published">Published ({publishedPosts.length})</TabsTrigger>
+          <TabsTrigger value="accounts">Accounts ({accounts?.length || 0})</TabsTrigger>
+        </TabsList>
 
-      {/* ---- Compose Tab ---- */}
-      {activeTab === 'compose' && (
-        <Grid container spacing={3}>
-          <Grid item xs={12} md={8}>
-            <Card>
-              <CardContent>
-                <Typography variant="h6" sx={{ mb: 2 }}>New Post</Typography>
-                <TextField
-                  fullWidth
-                  multiline
-                  rows={6}
-                  label="What do you want to share?"
-                  placeholder="Write your post content here..."
-                  value={content}
-                  onChange={(e) => setContent(e.target.value)}
-                  sx={{ mb: 2 }}
-                  inputProps={{ maxLength: 10000 }}
-                  helperText={`${content.length} / 10,000 characters`}
-                />
-
-                <Typography variant="subtitle2" sx={{ mb: 1 }}>Target Platforms</Typography>
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 2 }}>
-                  {PLATFORM_OPTIONS.map((p) => (
-                    <Chip
-                      key={p.id}
-                      label={p.label}
-                      variant={selectedPlatforms.includes(p.id) ? 'filled' : 'outlined'}
-                      sx={
-                        selectedPlatforms.includes(p.id)
-                          ? { bgcolor: p.color, color: '#fff' }
-                          : {}
-                      }
-                      onClick={() => togglePlatform(p.id)}
+        {/* ---- Compose Tab ---- */}
+        <TabsContent value="compose">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="md:col-span-2">
+              <Card>
+                <CardContent className="p-6">
+                  <h3 className="text-lg font-semibold mb-4">New Post</h3>
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium mb-1 text-[var(--text-mid)]">What do you want to share?</label>
+                    <Textarea
+                      rows={6}
+                      placeholder="Write your post content here..."
+                      value={content}
+                      onChange={(e) => setContent(e.target.value)}
+                      maxLength={10000}
                     />
+                    <p className="text-xs text-[var(--text-low)] mt-1">{content.length} / 10,000 characters</p>
+                  </div>
+
+                  <h4 className="text-sm font-semibold mb-2">Target Platforms</h4>
+                  <div className="flex flex-wrap gap-1.5 mb-4">
+                    {PLATFORM_OPTIONS.map((p) => (
+                      <button
+                        key={p.id}
+                        type="button"
+                        className="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold border transition-colors cursor-pointer"
+                        style={
+                          selectedPlatforms.includes(p.id)
+                            ? { backgroundColor: p.color, color: '#fff', borderColor: p.color }
+                            : { borderColor: 'var(--border)', color: 'var(--text-mid)', backgroundColor: 'transparent' }
+                        }
+                        onClick={() => togglePlatform(p.id)}
+                      >
+                        {p.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-1 text-[var(--text-mid)]">Hashtags (comma separated)</label>
+                      <Input
+                        placeholder="AI, SaaS, innovation"
+                        value={hashtags}
+                        onChange={(e) => setHashtags(e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1 text-[var(--text-mid)]">Schedule (optional)</label>
+                      <Input
+                        type="datetime-local"
+                        value={scheduleDate}
+                        onChange={(e) => setScheduleDate(e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2 mt-6 justify-end">
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        if (!scheduleDate) return;
+                        handleCompose();
+                      }}
+                      disabled={!content.trim() || selectedPlatforms.length === 0 || !scheduleDate || createPostMutation.isPending}
+                    >
+                      <Clock className="h-4 w-4 mr-1" />
+                      Schedule
+                    </Button>
+                    <Button
+                      onClick={handleCompose}
+                      disabled={!content.trim() || selectedPlatforms.length === 0 || createPostMutation.isPending}
+                    >
+                      {createPostMutation.isPending
+                        ? <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                        : <Send className="h-4 w-4 mr-1" />}
+                      {scheduleDate ? 'Schedule Post' : 'Create Draft'}
+                    </Button>
+                  </div>
+
+                  {createPostMutation.isError && (
+                    <Alert variant="destructive" className="mt-4">
+                      <AlertDescription>{createPostMutation.error?.message}</AlertDescription>
+                    </Alert>
+                  )}
+                  {createPostMutation.isSuccess && (
+                    <Alert variant="success" className="mt-4">
+                      <AlertDescription>Post created successfully!</AlertDescription>
+                    </Alert>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Draft Posts sidebar */}
+            <div>
+              <Card>
+                <CardContent className="p-6">
+                  <h3 className="text-lg font-semibold mb-4">Drafts ({draftPosts.length})</h3>
+                  {postsLoading ? (
+                    <Skeleton className="h-[200px] w-full" />
+                  ) : draftPosts.length === 0 ? (
+                    <p className="text-[var(--text-mid)] text-center py-8">
+                      No draft posts yet
+                    </p>
+                  ) : (
+                    draftPosts.map((post) => renderPostCard(post))
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </TabsContent>
+
+        {/* ---- Scheduled Tab ---- */}
+        <TabsContent value="scheduled">
+          <Card>
+            <CardContent className="p-6">
+              <h3 className="text-lg font-semibold mb-4">Scheduled Posts</h3>
+              {postsLoading ? (
+                <Skeleton className="h-[300px] w-full" />
+              ) : scheduledPosts.length === 0 ? (
+                <div className="text-center py-12">
+                  <Clock className="h-12 w-12 text-[var(--text-low)] mx-auto mb-2" />
+                  <p className="text-[var(--text-mid)]">No scheduled posts</p>
+                  <p className="text-sm text-[var(--text-mid)]">
+                    Schedule posts from the Compose tab
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                  {scheduledPosts.map((post) => (
+                    <div key={post.id}>
+                      {renderPostCard(post)}
+                    </div>
                   ))}
-                </Box>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-                <Grid container spacing={2}>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      fullWidth
-                      size="small"
-                      label="Hashtags (comma separated)"
-                      placeholder="AI, SaaS, innovation"
-                      value={hashtags}
-                      onChange={(e) => setHashtags(e.target.value)}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      fullWidth
-                      size="small"
-                      type="datetime-local"
-                      label="Schedule (optional)"
-                      value={scheduleDate}
-                      onChange={(e) => setScheduleDate(e.target.value)}
-                      InputLabelProps={{ shrink: true }}
-                    />
-                  </Grid>
-                </Grid>
+        {/* ---- Published Tab ---- */}
+        <TabsContent value="published">
+          <Card>
+            <CardContent className="p-6">
+              <h3 className="text-lg font-semibold mb-4">Published Posts</h3>
+              {postsLoading ? (
+                <Skeleton className="h-[300px] w-full" />
+              ) : publishedPosts.length === 0 ? (
+                <div className="text-center py-12">
+                  <Share2 className="h-12 w-12 text-[var(--text-low)] mx-auto mb-2" />
+                  <p className="text-[var(--text-mid)]">No published posts yet</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                  {publishedPosts.map((post) => (
+                    <div key={post.id}>
+                      {renderPostCard(post)}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-                <Box sx={{ display: 'flex', gap: 1, mt: 3, justifyContent: 'flex-end' }}>
-                  <Button
-                    variant="outlined"
-                    startIcon={<ScheduleIcon />}
-                    onClick={() => {
-                      if (!scheduleDate) return;
-                      handleCompose();
-                    }}
-                    disabled={!content.trim() || selectedPlatforms.length === 0 || !scheduleDate || createPostMutation.isPending}
-                  >
-                    Schedule
-                  </Button>
-                  <Button
-                    variant="contained"
-                    startIcon={createPostMutation.isPending ? <CircularProgress size={16} color="inherit" /> : <SendIcon />}
-                    onClick={handleCompose}
-                    disabled={!content.trim() || selectedPlatforms.length === 0 || createPostMutation.isPending}
-                  >
-                    {scheduleDate ? 'Schedule Post' : 'Create Draft'}
-                  </Button>
-                </Box>
-
-                {createPostMutation.isError && (
-                  <Alert severity="error" sx={{ mt: 2 }}>{createPostMutation.error?.message}</Alert>
-                )}
-                {createPostMutation.isSuccess && (
-                  <Alert severity="success" sx={{ mt: 2 }}>Post created successfully!</Alert>
-                )}
-              </CardContent>
-            </Card>
-          </Grid>
-
-          {/* Draft Posts sidebar */}
-          <Grid item xs={12} md={4}>
-            <Card>
-              <CardContent>
-                <Typography variant="h6" sx={{ mb: 2 }}>Drafts ({draftPosts.length})</Typography>
-                {postsLoading ? (
-                  <Skeleton variant="rectangular" height={200} />
-                ) : draftPosts.length === 0 ? (
-                  <Typography color="text.secondary" sx={{ textAlign: 'center', py: 4 }}>
-                    No draft posts yet
-                  </Typography>
-                ) : (
-                  draftPosts.map((post) => renderPostCard(post))
-                )}
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
-      )}
-
-      {/* ---- Scheduled Tab ---- */}
-      {activeTab === 'scheduled' && (
-        <Card>
-          <CardContent>
-            <Typography variant="h6" sx={{ mb: 2 }}>Scheduled Posts</Typography>
-            {postsLoading ? (
-              <Skeleton variant="rectangular" height={300} />
-            ) : scheduledPosts.length === 0 ? (
-              <Box sx={{ textAlign: 'center', py: 6 }}>
-                <ScheduleIcon sx={{ fontSize: 48, color: 'text.disabled', mb: 1 }} />
-                <Typography color="text.secondary">No scheduled posts</Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Schedule posts from the Compose tab
-                </Typography>
-              </Box>
-            ) : (
-              <Grid container spacing={2}>
-                {scheduledPosts.map((post) => (
-                  <Grid item xs={12} sm={6} md={4} key={post.id}>
-                    {renderPostCard(post)}
-                  </Grid>
-                ))}
-              </Grid>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* ---- Published Tab ---- */}
-      {activeTab === 'published' && (
-        <Card>
-          <CardContent>
-            <Typography variant="h6" sx={{ mb: 2 }}>Published Posts</Typography>
-            {postsLoading ? (
-              <Skeleton variant="rectangular" height={300} />
-            ) : publishedPosts.length === 0 ? (
-              <Box sx={{ textAlign: 'center', py: 6 }}>
-                <ShareIcon sx={{ fontSize: 48, color: 'text.disabled', mb: 1 }} />
-                <Typography color="text.secondary">No published posts yet</Typography>
-              </Box>
-            ) : (
-              <Grid container spacing={2}>
-                {publishedPosts.map((post) => (
-                  <Grid item xs={12} sm={6} md={4} key={post.id}>
-                    {renderPostCard(post)}
-                  </Grid>
-                ))}
-              </Grid>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* ---- Accounts Tab ---- */}
-      {activeTab === 'accounts' && (
-        <Card>
-          <CardContent>
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-              <Typography variant="h6">Connected Accounts</Typography>
-              <Button
-                variant="contained"
-                size="small"
-                startIcon={<AddIcon />}
-                onClick={() => setConnectOpen(true)}
-              >
-                Connect Account
-              </Button>
-            </Box>
-            {accountsLoading ? (
-              <Skeleton variant="rectangular" height={200} />
-            ) : !accounts?.length ? (
-              <Box sx={{ textAlign: 'center', py: 6 }}>
-                <LinkOffIcon sx={{ fontSize: 48, color: 'text.disabled', mb: 1 }} />
-                <Typography color="text.secondary">No accounts connected</Typography>
-                <Button size="small" onClick={() => setConnectOpen(true)} sx={{ mt: 1 }}>
-                  Connect your first account
+        {/* ---- Accounts Tab ---- */}
+        <TabsContent value="accounts">
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold">Connected Accounts</h3>
+                <Button size="sm" onClick={() => setConnectOpen(true)}>
+                  <Plus className="h-4 w-4 mr-1" />
+                  Connect Account
                 </Button>
-              </Box>
-            ) : (
-              <Grid container spacing={2}>
-                {accounts.map((account) => {
-                  const platformInfo = PLATFORM_OPTIONS.find((p) => p.id === account.platform);
-                  return (
-                    <Grid item xs={12} sm={6} md={4} key={account.id}>
-                      <Card variant="outlined">
-                        <CardContent>
-                          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                            <Box>
-                              <Chip
-                                label={platformInfo?.label || account.platform}
-                                size="small"
-                                sx={{ bgcolor: platformInfo?.color, color: '#fff', mb: 1 }}
-                              />
-                              <Typography variant="subtitle1">{account.account_name}</Typography>
-                              <Typography variant="caption" color="text.secondary">
+              </div>
+              {accountsLoading ? (
+                <Skeleton className="h-[200px] w-full" />
+              ) : !accounts?.length ? (
+                <div className="text-center py-12">
+                  <Unlink className="h-12 w-12 text-[var(--text-low)] mx-auto mb-2" />
+                  <p className="text-[var(--text-mid)]">No accounts connected</p>
+                  <Button variant="ghost" size="sm" onClick={() => setConnectOpen(true)} className="mt-2">
+                    Connect your first account
+                  </Button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                  {accounts.map((account) => {
+                    const platformInfo = PLATFORM_OPTIONS.find((p) => p.id === account.platform);
+                    return (
+                      <Card key={account.id}>
+                        <CardContent className="p-4">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <span
+                                className="inline-flex items-center rounded px-2 py-0.5 text-xs font-semibold text-white mb-2"
+                                style={{ backgroundColor: platformInfo?.color }}
+                              >
+                                {platformInfo?.label || account.platform}
+                              </span>
+                              <p className="text-sm font-semibold">{account.account_name}</p>
+                              <p className="text-xs text-[var(--text-low)]">
                                 Connected {new Date(account.created_at).toLocaleDateString()}
-                              </Typography>
-                            </Box>
-                            <Chip
-                              label={account.is_active ? 'Active' : 'Inactive'}
-                              size="small"
-                              color={account.is_active ? 'success' : 'default'}
-                            />
-                          </Box>
+                              </p>
+                            </div>
+                            <Badge variant={account.is_active ? 'success' : 'secondary'}>
+                              {account.is_active ? 'Active' : 'Inactive'}
+                            </Badge>
+                          </div>
                         </CardContent>
-                        <CardActions sx={{ justifyContent: 'flex-end' }}>
+                        <CardFooter className="justify-end px-4 pb-3 pt-0">
                           {account.is_active && (
                             <Button
-                              size="small"
-                              color="error"
-                              startIcon={<LinkOffIcon />}
+                              variant="destructive"
+                              size="sm"
                               onClick={() => disconnectMutation.mutate(account.id)}
                               disabled={disconnectMutation.isPending}
                             >
+                              <Unlink className="h-4 w-4 mr-1" />
                               Disconnect
                             </Button>
                           )}
-                        </CardActions>
+                        </CardFooter>
                       </Card>
-                    </Grid>
-                  );
-                })}
-              </Grid>
-            )}
-          </CardContent>
-        </Card>
-      )}
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
 
       {/* ---- Connect Account Dialog ---- */}
-      <Dialog open={connectOpen} onClose={() => setConnectOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Connect Social Account</DialogTitle>
+      <Dialog open={connectOpen} onOpenChange={setConnectOpen}>
         <DialogContent>
-          <FormControl fullWidth size="small" sx={{ mt: 1, mb: 2 }}>
-            <InputLabel>Platform</InputLabel>
-            <Select
-              value={connectPlatform}
-              label="Platform"
-              onChange={(e) => setConnectPlatform(e.target.value)}
+          <DialogHeader>
+            <DialogTitle>Connect Social Account</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 mt-2">
+            <div>
+              <label className="block text-sm font-medium mb-1 text-[var(--text-mid)]">Platform</label>
+              <Select value={connectPlatform} onValueChange={setConnectPlatform}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {PLATFORM_OPTIONS.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>{p.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1 text-[var(--text-mid)]">Account Name / Handle</label>
+              <Input
+                placeholder="@myaccount"
+                value={connectName}
+                onChange={(e) => setConnectName(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1 text-[var(--text-mid)]">Access Token</label>
+              <Input
+                type="password"
+                placeholder="OAuth access token"
+                value={connectToken}
+                onChange={(e) => setConnectToken(e.target.value)}
+              />
+              <p className="text-xs text-[var(--text-low)] mt-1">Your token is hashed before storage and never displayed again</p>
+            </div>
+          </div>
+          <DialogFooter className="mt-4">
+            <Button variant="ghost" onClick={() => setConnectOpen(false)}>Cancel</Button>
+            <Button
+              onClick={handleConnect}
+              disabled={!connectName.trim() || !connectToken.trim() || connectMutation.isPending}
             >
-              {PLATFORM_OPTIONS.map((p) => (
-                <MenuItem key={p.id} value={p.id}>{p.label}</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <TextField
-            fullWidth
-            size="small"
-            label="Account Name / Handle"
-            placeholder="@myaccount"
-            value={connectName}
-            onChange={(e) => setConnectName(e.target.value)}
-            sx={{ mb: 2 }}
-          />
-          <TextField
-            fullWidth
-            size="small"
-            type="password"
-            label="Access Token"
-            placeholder="OAuth access token"
-            value={connectToken}
-            onChange={(e) => setConnectToken(e.target.value)}
-            helperText="Your token is hashed before storage and never displayed again"
-          />
+              {connectMutation.isPending
+                ? <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                : <Plus className="h-4 w-4 mr-1" />}
+              Connect
+            </Button>
+          </DialogFooter>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setConnectOpen(false)}>Cancel</Button>
-          <Button
-            variant="contained"
-            onClick={handleConnect}
-            disabled={!connectName.trim() || !connectToken.trim() || connectMutation.isPending}
-            startIcon={connectMutation.isPending ? <CircularProgress size={16} color="inherit" /> : <AddIcon />}
-          >
-            Connect
-          </Button>
-        </DialogActions>
       </Dialog>
 
       {/* ---- Analytics Dialog ---- */}
-      <Dialog
-        open={!!analyticsPostId}
-        onClose={() => setAnalyticsPostId(null)}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle>Post Analytics</DialogTitle>
+      <Dialog open={!!analyticsPostId} onOpenChange={() => setAnalyticsPostId(null)}>
         <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Post Analytics</DialogTitle>
+          </DialogHeader>
           {!analytics ? (
-            <Box sx={{ textAlign: 'center', py: 4 }}>
-              <CircularProgress />
-            </Box>
+            <div className="text-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin mx-auto text-[var(--accent)]" />
+            </div>
           ) : (
             analytics.map((a) => {
               const platformInfo = PLATFORM_OPTIONS.find((p) => p.id === a.platform);
               return (
-                <Card key={a.platform} variant="outlined" sx={{ mb: 2 }}>
-                  <CardContent>
-                    <Chip
-                      label={platformInfo?.label || a.platform}
-                      size="small"
-                      sx={{ bgcolor: platformInfo?.color, color: '#fff', mb: 1.5 }}
-                    />
-                    <Grid container spacing={2}>
-                      <Grid item xs={3}>
-                        <Typography variant="h6" align="center">{a.impressions.toLocaleString()}</Typography>
-                        <Typography variant="caption" color="text.secondary" display="block" align="center">
-                          Impressions
-                        </Typography>
-                      </Grid>
-                      <Grid item xs={3}>
-                        <Typography variant="h6" align="center">{a.engagements.toLocaleString()}</Typography>
-                        <Typography variant="caption" color="text.secondary" display="block" align="center">
-                          Engagements
-                        </Typography>
-                      </Grid>
-                      <Grid item xs={3}>
-                        <Typography variant="h6" align="center">{a.clicks.toLocaleString()}</Typography>
-                        <Typography variant="caption" color="text.secondary" display="block" align="center">
-                          Clicks
-                        </Typography>
-                      </Grid>
-                      <Grid item xs={3}>
-                        <Typography variant="h6" align="center">{a.shares.toLocaleString()}</Typography>
-                        <Typography variant="caption" color="text.secondary" display="block" align="center">
-                          Shares
-                        </Typography>
-                      </Grid>
-                    </Grid>
+                <Card key={a.platform} className="mb-3">
+                  <CardContent className="p-4">
+                    <span
+                      className="inline-flex items-center rounded px-2 py-0.5 text-xs font-semibold text-white mb-3"
+                      style={{ backgroundColor: platformInfo?.color }}
+                    >
+                      {platformInfo?.label || a.platform}
+                    </span>
+                    <div className="grid grid-cols-4 gap-4">
+                      <div className="text-center">
+                        <p className="text-lg font-semibold">{a.impressions.toLocaleString()}</p>
+                        <p className="text-xs text-[var(--text-low)]">Impressions</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-lg font-semibold">{a.engagements.toLocaleString()}</p>
+                        <p className="text-xs text-[var(--text-low)]">Engagements</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-lg font-semibold">{a.clicks.toLocaleString()}</p>
+                        <p className="text-xs text-[var(--text-low)]">Clicks</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-lg font-semibold">{a.shares.toLocaleString()}</p>
+                        <p className="text-xs text-[var(--text-low)]">Shares</p>
+                      </div>
+                    </div>
                   </CardContent>
                 </Card>
               );
             })
           )}
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setAnalyticsPostId(null)}>Close</Button>
+          </DialogFooter>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setAnalyticsPostId(null)}>Close</Button>
-        </DialogActions>
       </Dialog>
 
       {/* Global mutation error/success feedback */}
       {publishMutation.isError && (
-        <Alert severity="error" sx={{ position: 'fixed', bottom: 16, right: 16, zIndex: 9999 }}>
-          Publish failed: {publishMutation.error?.message}
+        <Alert variant="destructive" className="fixed bottom-4 right-4 z-[9999] w-auto">
+          <AlertDescription>Publish failed: {publishMutation.error?.message}</AlertDescription>
         </Alert>
       )}
       {publishMutation.isSuccess && (
-        <Alert severity="success" sx={{ position: 'fixed', bottom: 16, right: 16, zIndex: 9999 }}>
-          Post published successfully!
+        <Alert variant="success" className="fixed bottom-4 right-4 z-[9999] w-auto">
+          <AlertDescription>Post published successfully!</AlertDescription>
         </Alert>
       )}
-    </Box>
+    </div>
   );
 }

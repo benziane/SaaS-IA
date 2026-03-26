@@ -1,12 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import {
-  Box, Button, Card, CardContent, Chip, CircularProgress,
-  Grid, TextField, Typography,
-} from '@mui/material';
-import SearchIcon from '@mui/icons-material/Search';
-import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
+import { Search, Sparkles, Loader2 } from 'lucide-react';
+
+import { Card, CardContent } from '@/lib/design-hub/components/Card';
+import { Badge } from '@/lib/design-hub/components/Badge';
+import { Button } from '@/lib/design-hub/components/Button';
+import { Input } from '@/lib/design-hub/components/Input';
+
 import apiClient from '@/lib/apiClient';
 
 interface SearchResultItem {
@@ -16,10 +17,13 @@ interface SearchResultItem {
 }
 
 const MODULE_ICONS: Record<string, string> = {
-  transcriptions: '🎤', knowledge: '📚', content: '✨', conversations: '💬',
+  transcriptions: '\uD83C\uDFA4', knowledge: '\uD83D\uDCDA', content: '\u2728', conversations: '\uD83D\uDCAC',
 };
 const MODULE_COLORS: Record<string, string> = {
-  transcriptions: '#e3f2fd', knowledge: '#e8f5e9', content: '#fce4ec', conversations: '#f3e5f5',
+  transcriptions: 'bg-blue-500/10 text-blue-400 border-blue-500/30',
+  knowledge: 'bg-green-500/10 text-green-400 border-green-500/30',
+  content: 'bg-pink-500/10 text-pink-400 border-pink-500/30',
+  conversations: 'bg-purple-500/10 text-purple-400 border-purple-500/30',
 };
 
 export default function SearchPage() {
@@ -58,94 +62,118 @@ export default function SearchPage() {
   };
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h4" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <SearchIcon color="primary" /> Universal Search
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
+    <div className="p-6">
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold flex items-center gap-2">
+          <Search className="h-6 w-6 text-[var(--accent)]" /> Universal Search
+        </h1>
+        <p className="text-sm text-[var(--text-mid)]">
           Search across all platform data: transcriptions, documents, content, conversations
-        </Typography>
-      </Box>
+        </p>
+      </div>
 
       {/* Search Bar */}
-      <Card sx={{ mb: 3 }}>
-        <CardContent>
-          <Box sx={{ display: 'flex', gap: 1 }}>
-            <TextField fullWidth placeholder="Search across all your platform data..."
-              value={query} onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') handleSearch(); }} />
-            <Button variant="contained" startIcon={loading ? <CircularProgress size={18} color="inherit" /> : <SearchIcon />}
-              onClick={handleSearch} disabled={!query.trim() || loading}>
+      <Card className="mb-6">
+        <CardContent className="p-6">
+          <div className="flex gap-2">
+            <Input
+              className="flex-1"
+              placeholder="Search across all your platform data..."
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleSearch(); }}
+            />
+            <Button
+              onClick={handleSearch}
+              disabled={!query.trim() || loading}
+            >
+              {loading
+                ? <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                : <Search className="h-4 w-4 mr-1" />}
               Search
             </Button>
-            <Button variant="outlined" startIcon={answerLoading ? <CircularProgress size={18} /> : <AutoAwesomeIcon />}
-              onClick={handleAskAnswer} disabled={!query.trim() || answerLoading}>
+            <Button
+              variant="outline"
+              onClick={handleAskAnswer}
+              disabled={!query.trim() || answerLoading}
+            >
+              {answerLoading
+                ? <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                : <Sparkles className="h-4 w-4 mr-1" />}
               Ask AI
             </Button>
-          </Box>
+          </div>
         </CardContent>
       </Card>
 
       {/* AI Answer */}
       {answer && (
-        <Card sx={{ mb: 3, bgcolor: 'action.hover' }}>
-          <CardContent>
-            <Typography variant="subtitle2" sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              <AutoAwesomeIcon fontSize="small" color="primary" /> AI Answer
-            </Typography>
-            <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>{answer}</Typography>
+        <Card className="mb-6 bg-[var(--bg-elevated)]">
+          <CardContent className="p-6">
+            <h4 className="text-sm font-semibold mb-2 flex items-center gap-1">
+              <Sparkles className="h-4 w-4 text-[var(--accent)]" /> AI Answer
+            </h4>
+            <p className="text-sm whitespace-pre-wrap">{answer}</p>
           </CardContent>
         </Card>
       )}
 
       {/* Facets + Results */}
       {total > 0 && (
-        <Grid container spacing={3}>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           {/* Facets */}
-          <Grid item xs={12} md={3}>
+          <div className="md:col-span-1">
             <Card>
-              <CardContent>
-                <Typography variant="subtitle2" sx={{ mb: 1 }}>Sources ({total} results)</Typography>
+              <CardContent className="p-6">
+                <h4 className="text-sm font-semibold mb-2">Sources ({total} results)</h4>
                 {Object.entries(facets).map(([module, count]) => (
-                  <Box key={module} sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                    <Chip label={`${MODULE_ICONS[module] || '📄'} ${module}`} size="small"
-                      sx={{ bgcolor: MODULE_COLORS[module] || '#f5f5f5' }} />
-                    <Typography variant="body2" fontWeight="bold">{count}</Typography>
-                  </Box>
+                  <div key={module} className="flex justify-between items-center mb-1.5">
+                    <Badge
+                      variant="outline"
+                      className={MODULE_COLORS[module] || 'bg-[var(--bg-elevated)]'}
+                    >
+                      {MODULE_ICONS[module] || '\uD83D\uDCC4'} {module}
+                    </Badge>
+                    <span className="text-sm font-bold">{count}</span>
+                  </div>
                 ))}
               </CardContent>
             </Card>
-          </Grid>
+          </div>
 
           {/* Results */}
-          <Grid item xs={12} md={9}>
+          <div className="md:col-span-3 space-y-2">
             {results.map((r, i) => (
-              <Card key={i} variant="outlined" sx={{ mb: 1 }}>
-                <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                    <Chip label={`${MODULE_ICONS[r._module] || '📄'} ${r._module}`} size="small"
-                      sx={{ bgcolor: MODULE_COLORS[r._module] || '#f5f5f5' }} />
-                    <Typography variant="subtitle2">{r.title}</Typography>
-                    <Chip label={`${(r.score * 100).toFixed(0)}%`} size="small" variant="outlined" sx={{ ml: 'auto' }} />
-                  </Box>
-                  <Typography variant="body2" color="text.secondary"
-                    sx={{ overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+              <Card key={i}>
+                <CardContent className="px-4 py-3">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Badge
+                      variant="outline"
+                      className={MODULE_COLORS[r._module] || 'bg-[var(--bg-elevated)]'}
+                    >
+                      {MODULE_ICONS[r._module] || '\uD83D\uDCC4'} {r._module}
+                    </Badge>
+                    <span className="text-sm font-semibold">{r.title}</span>
+                    <Badge variant="outline" className="ml-auto">
+                      {(r.score * 100).toFixed(0)}%
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-[var(--text-mid)] overflow-hidden text-ellipsis line-clamp-2">
                     {r.content}
-                  </Typography>
+                  </p>
                 </CardContent>
               </Card>
             ))}
-          </Grid>
-        </Grid>
+          </div>
+        </div>
       )}
 
       {!loading && total === 0 && query && (
-        <Box sx={{ textAlign: 'center', py: 8 }}>
-          <SearchIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
-          <Typography color="text.secondary">No results found. Try a different query.</Typography>
-        </Box>
+        <div className="text-center py-16">
+          <Search className="h-16 w-16 text-[var(--text-low)] mx-auto mb-4" />
+          <p className="text-[var(--text-mid)]">No results found. Try a different query.</p>
+        </div>
       )}
-    </Box>
+    </div>
   );
 }

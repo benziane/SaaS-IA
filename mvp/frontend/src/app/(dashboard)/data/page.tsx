@@ -1,23 +1,22 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import {
-  Alert, Box, Button, Card, CardContent, Chip, CircularProgress,
-  Divider, Grid, IconButton, Skeleton, TextField, Typography,
-} from '@mui/material';
-import BarChartIcon from '@mui/icons-material/BarChart';
-import UploadFileIcon from '@mui/icons-material/UploadFile';
-import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
-import DeleteIcon from '@mui/icons-material/Delete';
-import SendIcon from '@mui/icons-material/Send';
+import { BarChart3, Loader2, Upload, Sparkles, Trash2, Send } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/lib/design-hub/components/Button';
+import { Input } from '@/lib/design-hub/components/Input';
+import { Skeleton } from '@/lib/design-hub/components/Skeleton';
+import { Separator } from '@/lib/design-hub/components/Separator';
 
 import {
   useAnalyses, useAskData, useAutoAnalyze, useDatasets, useDeleteDataset, useUploadDataset,
 } from '@/features/data-analyst/hooks/useDataAnalyst';
 
-const STATUS_COLORS: Record<string, 'default' | 'info' | 'success' | 'error'> = {
-  uploading: 'default', processing: 'info', ready: 'success', failed: 'error',
-  pending: 'default', analyzing: 'info', completed: 'success',
+const STATUS_VARIANTS: Record<string, 'secondary' | 'default' | 'success' | 'destructive'> = {
+  uploading: 'secondary', processing: 'default', ready: 'success', failed: 'destructive',
+  pending: 'secondary', analyzing: 'default', completed: 'success',
 };
 
 export default function DataPage() {
@@ -46,119 +45,156 @@ export default function DataPage() {
   };
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h4" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <BarChartIcon color="primary" /> Data Analyst
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
+    <div className="p-6">
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-[var(--text-high)] flex items-center gap-2">
+          <BarChart3 className="h-7 w-7 text-[var(--accent)]" /> Data Analyst
+        </h1>
+        <p className="text-sm text-[var(--text-mid)]">
           Upload datasets, ask questions in natural language, get AI-powered insights and charts
-        </Typography>
-      </Box>
+        </p>
+      </div>
 
-      <Grid container spacing={3}>
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
         {/* Datasets */}
-        <Grid item xs={12} md={4}>
+        <div className="md:col-span-4">
           <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                <Typography variant="h6">Datasets</Typography>
-                <Button size="small" variant="outlined" startIcon={<UploadFileIcon />}
-                  onClick={() => fileRef.current?.click()}>Upload</Button>
-              </Box>
+            <CardContent className="p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold text-[var(--text-high)]">Datasets</h3>
+                <Button variant="outline" size="sm" onClick={() => fileRef.current?.click()}>
+                  <Upload className="h-4 w-4 mr-1" /> Upload
+                </Button>
+              </div>
               <input type="file" ref={fileRef} accept=".csv,.json,.xlsx,.tsv" onChange={handleUpload} style={{ display: 'none' }} />
-              {uploadMutation.isPending && <Alert severity="info" sx={{ mb: 1 }}>Uploading...</Alert>}
+              {uploadMutation.isPending && (
+                <Alert variant="info" className="mb-2">
+                  <AlertDescription>Uploading...</AlertDescription>
+                </Alert>
+              )}
 
-              {isLoading ? <Skeleton variant="rectangular" height={200} /> : !datasets?.length ? (
-                <Box sx={{ textAlign: 'center', py: 4 }}>
-                  <UploadFileIcon sx={{ fontSize: 48, color: 'text.disabled', mb: 1 }} />
-                  <Typography color="text.secondary">Upload a CSV, JSON, or Excel file</Typography>
-                </Box>
+              {isLoading ? <Skeleton className="h-[200px] w-full" /> : !datasets?.length ? (
+                <div className="text-center py-8">
+                  <Upload className="h-12 w-12 text-[var(--text-low)] mx-auto mb-2" />
+                  <p className="text-sm text-[var(--text-mid)]">Upload a CSV, JSON, or Excel file</p>
+                </div>
               ) : (
                 datasets.map((d) => (
-                  <Card key={d.id} variant="outlined" sx={{
-                    mb: 1, cursor: 'pointer',
-                    bgcolor: activeDataset === d.id ? 'action.selected' : 'transparent',
-                    '&:hover': { bgcolor: 'action.hover' },
-                  }} onClick={() => setActiveDataset(d.id)}>
-                    <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <Typography variant="subtitle2">{d.name}</Typography>
-                        <IconButton size="small" color="error" onClick={(e) => { e.stopPropagation(); deleteMutation.mutate(d.id); }}>
-                          <DeleteIcon fontSize="small" />
-                        </IconButton>
-                      </Box>
-                      <Box sx={{ display: 'flex', gap: 0.5, mt: 0.5 }}>
-                        <Chip label={d.file_type} size="small" variant="outlined" />
-                        <Chip label={`${d.row_count} rows`} size="small" variant="outlined" />
-                        <Chip label={`${d.column_count} cols`} size="small" variant="outlined" />
-                        <Chip label={d.status} size="small" color={STATUS_COLORS[d.status] || 'default'} />
-                      </Box>
+                  <Card
+                    key={d.id}
+                    className={`mb-2 border cursor-pointer transition-colors ${
+                      activeDataset === d.id
+                        ? 'border-[var(--accent)] bg-[var(--bg-elevated)]'
+                        : 'border-[var(--border)] hover:bg-[var(--bg-elevated)]'
+                    }`}
+                    onClick={() => setActiveDataset(d.id)}
+                  >
+                    <CardContent className="py-3 px-4">
+                      <div className="flex justify-between items-center">
+                        <h4 className="text-sm font-medium text-[var(--text-high)]">{d.name}</h4>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-red-400 hover:text-red-300"
+                          onClick={(e) => { e.stopPropagation(); deleteMutation.mutate(d.id); }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <div className="flex gap-1 mt-1">
+                        <Badge variant="outline">{d.file_type}</Badge>
+                        <Badge variant="outline">{d.row_count} rows</Badge>
+                        <Badge variant="outline">{d.column_count} cols</Badge>
+                        <Badge variant={STATUS_VARIANTS[d.status] || 'secondary'}>{d.status}</Badge>
+                      </div>
                     </CardContent>
                   </Card>
                 ))
               )}
             </CardContent>
           </Card>
-        </Grid>
+        </div>
 
         {/* Analysis */}
-        <Grid item xs={12} md={8}>
+        <div className="md:col-span-8">
           {activeDataset ? (
             <Card>
-              <CardContent>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                  <Typography variant="h6">Analysis</Typography>
-                  <Button size="small" variant="outlined" startIcon={
-                    autoMutation.isPending ? <CircularProgress size={14} /> : <AutoAwesomeIcon />
-                  } onClick={() => autoMutation.mutate('standard')} disabled={autoMutation.isPending}>
+              <CardContent className="p-6">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-semibold text-[var(--text-high)]">Analysis</h3>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => autoMutation.mutate('standard')}
+                    disabled={autoMutation.isPending}
+                  >
+                    {autoMutation.isPending
+                      ? <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                      : <Sparkles className="h-4 w-4 mr-1" />
+                    }
                     Auto-Analyze
                   </Button>
-                </Box>
+                </div>
 
-                <Box sx={{ display: 'flex', gap: 1, mb: 3 }}>
-                  <TextField fullWidth size="small" placeholder="Ask a question about your data..."
-                    value={question} onChange={(e) => setQuestion(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === 'Enter') handleAsk(); }} />
-                  <IconButton color="primary" onClick={handleAsk} disabled={!question.trim() || askMutation.isPending}>
-                    {askMutation.isPending ? <CircularProgress size={20} /> : <SendIcon />}
-                  </IconButton>
-                </Box>
+                <div className="flex gap-2 mb-6">
+                  <Input
+                    placeholder="Ask a question about your data..."
+                    value={question}
+                    onChange={(e) => setQuestion(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') handleAsk(); }}
+                    className="flex-1"
+                  />
+                  <Button
+                    variant="default"
+                    size="icon"
+                    onClick={handleAsk}
+                    disabled={!question.trim() || askMutation.isPending}
+                  >
+                    {askMutation.isPending
+                      ? <Loader2 className="h-4 w-4 animate-spin" />
+                      : <Send className="h-4 w-4" />
+                    }
+                  </Button>
+                </div>
 
-                <Divider sx={{ mb: 2 }} />
+                <Separator className="mb-4" />
 
                 {!analyses?.length ? (
-                  <Typography color="text.secondary" sx={{ textAlign: 'center', py: 4 }}>
-                    Ask a question or click "Auto-Analyze" to get started
-                  </Typography>
+                  <p className="text-sm text-[var(--text-mid)] text-center py-8">
+                    Ask a question or click &ldquo;Auto-Analyze&rdquo; to get started
+                  </p>
                 ) : (
                   analyses.map((a) => (
-                    <Card key={a.id} variant="outlined" sx={{ mb: 2 }}>
-                      <CardContent>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                          <Typography variant="subtitle2" color="primary">{a.question}</Typography>
-                          <Chip label={a.status} size="small" color={STATUS_COLORS[a.status] || 'default'} />
-                        </Box>
+                    <Card key={a.id} className="mb-4 border border-[var(--border)]">
+                      <CardContent className="p-4">
+                        <div className="flex justify-between items-center mb-2">
+                          <h4 className="text-sm font-medium text-[var(--accent)]">{a.question}</h4>
+                          <Badge variant={STATUS_VARIANTS[a.status] || 'secondary'}>{a.status}</Badge>
+                        </div>
                         {a.answer && (
-                          <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', mb: 1 }}>{a.answer}</Typography>
+                          <p className="text-sm text-[var(--text-high)] whitespace-pre-wrap mb-2">{a.answer}</p>
                         )}
                         {a.insights.length > 0 && (
-                          <Box sx={{ mb: 1 }}>
+                          <div className="mb-2 space-y-1">
                             {a.insights.map((ins, i) => (
-                              <Alert key={i} severity="info" sx={{ mb: 0.5, py: 0 }}>
-                                <Typography variant="caption">[{ins.category}] {ins.insight}</Typography>
+                              <Alert key={i} variant="info" className="py-2">
+                                <AlertDescription className="text-xs">[{ins.category}] {ins.insight}</AlertDescription>
                               </Alert>
                             ))}
-                          </Box>
+                          </div>
                         )}
                         {a.charts.length > 0 && (
-                          <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
+                          <div className="flex gap-1 flex-wrap">
                             {a.charts.map((c, i) => (
-                              <Chip key={i} label={`${c.type}: ${c.title}`} size="small" variant="outlined" />
+                              <Badge key={i} variant="outline">{c.type}: {c.title}</Badge>
                             ))}
-                          </Box>
+                          </div>
                         )}
-                        {a.error && <Alert severity="error" sx={{ mt: 1 }}>{a.error}</Alert>}
+                        {a.error && (
+                          <Alert variant="destructive" className="mt-2">
+                            <AlertDescription>{a.error}</AlertDescription>
+                          </Alert>
+                        )}
                       </CardContent>
                     </Card>
                   ))
@@ -167,15 +203,15 @@ export default function DataPage() {
             </Card>
           ) : (
             <Card>
-              <CardContent sx={{ textAlign: 'center', py: 8 }}>
-                <BarChartIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
-                <Typography variant="h6" color="text.secondary">Select a dataset to start analyzing</Typography>
-                <Typography variant="body2" color="text.secondary">Upload CSV, JSON, or Excel files and ask questions in natural language</Typography>
+              <CardContent className="text-center py-16 px-6">
+                <BarChart3 className="h-16 w-16 text-[var(--text-low)] mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-[var(--text-mid)]">Select a dataset to start analyzing</h3>
+                <p className="text-sm text-[var(--text-mid)]">Upload CSV, JSON, or Excel files and ask questions in natural language</p>
               </CardContent>
             </Card>
           )}
-        </Grid>
-      </Grid>
-    </Box>
+        </div>
+      </div>
+    </div>
   );
 }

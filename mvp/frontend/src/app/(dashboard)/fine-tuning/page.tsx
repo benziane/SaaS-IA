@@ -1,28 +1,44 @@
 'use client';
 
 import { useState } from 'react';
+import { Brain, Database, Rocket, BarChart3, Sparkles, Trash2, Loader2 } from 'lucide-react';
+
+import { Card, CardContent, CardFooter } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Progress } from '@/components/ui/progress';
+import { Button } from '@/lib/design-hub/components/Button';
+import { Input } from '@/lib/design-hub/components/Input';
+import { Skeleton } from '@/lib/design-hub/components/Skeleton';
 import {
-  Alert, Box, Button, Card, CardActions, CardContent, Chip, CircularProgress,
-  Dialog, DialogActions, DialogContent, DialogTitle,
-  FormControl, Grid, InputLabel, LinearProgress, MenuItem, Select,
-  Skeleton, TextField, Typography,
-} from '@mui/material';
-import ModelTrainingIcon from '@mui/icons-material/ModelTraining';
-import DatasetIcon from '@mui/icons-material/Dataset';
-import RocketLaunchIcon from '@mui/icons-material/RocketLaunch';
-import AssessmentIcon from '@mui/icons-material/Assessment';
-import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
-import DeleteIcon from '@mui/icons-material/Delete';
-import IconButton from '@mui/material/IconButton';
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/lib/design-hub/components/Select';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogFooter,
+  DialogTitle,
+} from '@/lib/design-hub/components/Dialog';
 
 import {
   useAssessQuality, useAvailableModels, useCreateFromSource,
   useCreateFTJob, useDeleteFTDataset, useFTDatasets, useFTJobs,
 } from '@/features/fine-tuning/hooks/useFineTuning';
 
-const STATUS_COLORS: Record<string, 'default' | 'info' | 'success' | 'error' | 'warning'> = {
-  draft: 'default', preparing: 'info', training: 'warning', evaluating: 'info',
-  completed: 'success', failed: 'error', ready: 'success', cancelled: 'default',
+const STATUS_VARIANTS: Record<string, 'secondary' | 'default' | 'success' | 'destructive' | 'warning' | 'outline'> = {
+  draft: 'secondary',
+  preparing: 'outline',
+  training: 'warning',
+  evaluating: 'outline',
+  completed: 'success',
+  failed: 'destructive',
+  ready: 'success',
+  cancelled: 'secondary',
 };
 
 const SOURCE_OPTIONS = [
@@ -69,123 +85,131 @@ export default function FineTuningPage() {
   };
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Box>
-          <Typography variant="h4" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <ModelTrainingIcon color="primary" /> Fine-Tuning Studio
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
+    <div className="p-6">
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h1 className="text-2xl font-bold flex items-center gap-2 text-[var(--text-high)]">
+            <Brain className="h-7 w-7 text-[var(--accent)]" /> Fine-Tuning Studio
+          </h1>
+          <p className="text-sm text-[var(--text-mid)]">
             Create datasets from your platform data, train custom AI models, evaluate and deploy
-          </Typography>
-        </Box>
-        <Box sx={{ display: 'flex', gap: 1 }}>
-          <Button variant="outlined" startIcon={<DatasetIcon />} onClick={() => setSourceOpen(true)}>
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setSourceOpen(true)}>
+            <Database className="h-4 w-4 mr-2" />
             Create Dataset
           </Button>
-          <Button variant="contained" startIcon={<RocketLaunchIcon />} onClick={() => setTrainOpen(true)}
+          <Button onClick={() => setTrainOpen(true)}
             disabled={!datasets?.some((d) => d.status === 'ready')}>
+            <Rocket className="h-4 w-4 mr-2" />
             Train Model
           </Button>
-        </Box>
-      </Box>
+        </div>
+      </div>
 
-      <Grid container spacing={3}>
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
         {/* Datasets */}
-        <Grid item xs={12} md={5}>
+        <div className="md:col-span-5">
           <Card>
-            <CardContent>
-              <Typography variant="h6" sx={{ mb: 2 }}>Training Datasets</Typography>
-              {dsLoading ? <Skeleton variant="rectangular" height={200} /> : !datasets?.length ? (
-                <Box sx={{ textAlign: 'center', py: 4 }}>
-                  <DatasetIcon sx={{ fontSize: 48, color: 'text.disabled', mb: 1 }} />
-                  <Typography color="text.secondary">No datasets yet</Typography>
-                  <Typography variant="caption" color="text.secondary">
+            <CardContent className="p-6">
+              <h2 className="text-lg font-semibold text-[var(--text-high)] mb-4">Training Datasets</h2>
+              {dsLoading ? <Skeleton className="h-[200px] w-full" /> : !datasets?.length ? (
+                <div className="text-center py-8">
+                  <Database className="h-12 w-12 text-[var(--text-low)] mb-2 mx-auto" />
+                  <p className="text-[var(--text-mid)]">No datasets yet</p>
+                  <p className="text-xs text-[var(--text-mid)]">
                     Create one from your transcriptions, conversations, or documents
-                  </Typography>
-                </Box>
+                  </p>
+                </div>
               ) : (
                 datasets.map((ds) => (
-                  <Card key={ds.id} variant="outlined" sx={{ mb: 1 }}>
-                    <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                        <Typography variant="subtitle2">{ds.name}</Typography>
-                        <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
-                          <Chip label={ds.status} size="small" color={STATUS_COLORS[ds.status] || 'default'} />
-                          <IconButton size="small" color="error" onClick={() => deleteDsMutation.mutate(ds.id)}>
-                            <DeleteIcon fontSize="small" />
-                          </IconButton>
-                        </Box>
-                      </Box>
-                      <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
-                        <Chip label={ds.source_type} size="small" variant="outlined" />
-                        <Chip label={`${ds.sample_count} samples`} size="small" variant="outlined" />
-                        <Chip label={ds.dataset_type} size="small" variant="outlined" />
+                  <Card key={ds.id} className="mb-2">
+                    <CardContent className="py-3 px-4">
+                      <div className="flex justify-between mb-1">
+                        <h4 className="text-sm font-semibold text-[var(--text-high)]">{ds.name}</h4>
+                        <div className="flex gap-1 items-center">
+                          <Badge variant={STATUS_VARIANTS[ds.status] || 'secondary'}>{ds.status}</Badge>
+                          <Button variant="ghost" size="icon" className="h-7 w-7 text-red-400 hover:text-red-300" onClick={() => deleteDsMutation.mutate(ds.id)}>
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      </div>
+                      <div className="flex gap-1 flex-wrap">
+                        <Badge variant="outline" className="text-xs">{ds.source_type}</Badge>
+                        <Badge variant="outline" className="text-xs">{ds.sample_count} samples</Badge>
+                        <Badge variant="outline" className="text-xs">{ds.dataset_type}</Badge>
                         {ds.quality_score !== null && (
-                          <Chip label={`Quality: ${(ds.quality_score * 100).toFixed(0)}%`} size="small"
-                            color={ds.quality_score > 0.7 ? 'success' : 'warning'} />
+                          <Badge variant={ds.quality_score > 0.7 ? 'success' : 'warning'} className="text-xs">
+                            Quality: {(ds.quality_score * 100).toFixed(0)}%
+                          </Badge>
                         )}
-                      </Box>
+                      </div>
                     </CardContent>
-                    <CardActions sx={{ pt: 0 }}>
-                      <Button size="small" startIcon={<AssessmentIcon />}
+                    <CardFooter className="pt-0 px-4 pb-3">
+                      <Button variant="ghost" size="sm"
                         onClick={() => assessMutation.mutate(ds.id)}
                         disabled={assessMutation.isPending || ds.status !== 'ready'}>
+                        <BarChart3 className="h-4 w-4 mr-1" />
                         Assess Quality
                       </Button>
-                    </CardActions>
+                    </CardFooter>
                   </Card>
                 ))
               )}
             </CardContent>
           </Card>
-        </Grid>
+        </div>
 
         {/* Training Jobs */}
-        <Grid item xs={12} md={7}>
+        <div className="md:col-span-7">
           <Card>
-            <CardContent>
-              <Typography variant="h6" sx={{ mb: 2 }}>Training Jobs</Typography>
-              {jobsLoading ? <Skeleton variant="rectangular" height={300} /> : !jobs?.length ? (
-                <Box sx={{ textAlign: 'center', py: 6 }}>
-                  <ModelTrainingIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
-                  <Typography variant="h6" color="text.secondary">No training jobs yet</Typography>
-                  <Typography variant="body2" color="text.secondary">
+            <CardContent className="p-6">
+              <h2 className="text-lg font-semibold text-[var(--text-high)] mb-4">Training Jobs</h2>
+              {jobsLoading ? <Skeleton className="h-[300px] w-full" /> : !jobs?.length ? (
+                <div className="text-center py-12">
+                  <Brain className="h-16 w-16 text-[var(--text-low)] mb-4 mx-auto" />
+                  <h3 className="text-lg font-semibold text-[var(--text-mid)]">No training jobs yet</h3>
+                  <p className="text-sm text-[var(--text-mid)]">
                     Create a dataset first, then start training
-                  </Typography>
-                </Box>
+                  </p>
+                </div>
               ) : (
                 jobs.map((job) => {
                   const metrics = JSON.parse(job.metrics_json || '{}');
                   return (
-                    <Card key={job.id} variant="outlined" sx={{ mb: 2 }}>
-                      <CardContent>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                          <Typography variant="subtitle1" fontWeight="bold">{job.name}</Typography>
-                          <Chip label={job.status} size="small" color={STATUS_COLORS[job.status] || 'default'} />
-                        </Box>
-                        <Box sx={{ display: 'flex', gap: 0.5, mb: 1.5 }}>
-                          <Chip label={job.base_model} size="small" variant="outlined" />
-                          <Chip label={job.provider} size="small" variant="outlined" />
-                          <Chip label={`${job.epochs_completed}/${job.total_epochs} epochs`} size="small" variant="outlined" />
+                    <Card key={job.id} className="mb-4">
+                      <CardContent className="p-4">
+                        <div className="flex justify-between mb-2">
+                          <h4 className="text-base font-bold text-[var(--text-high)]">{job.name}</h4>
+                          <Badge variant={STATUS_VARIANTS[job.status] || 'secondary'}>{job.status}</Badge>
+                        </div>
+                        <div className="flex gap-1 mb-3 flex-wrap">
+                          <Badge variant="outline">{job.base_model}</Badge>
+                          <Badge variant="outline">{job.provider}</Badge>
+                          <Badge variant="outline">{job.epochs_completed}/{job.total_epochs} epochs</Badge>
                           {job.estimated_cost_usd > 0 && (
-                            <Chip label={`~$${job.actual_cost_usd || job.estimated_cost_usd}`} size="small" variant="outlined" />
+                            <Badge variant="outline">~${job.actual_cost_usd || job.estimated_cost_usd}</Badge>
                           )}
-                        </Box>
+                        </div>
                         {(job.status === 'training' || job.status === 'preparing') && (
-                          <LinearProgress variant="determinate" value={(job.epochs_completed / job.total_epochs) * 100} sx={{ mb: 1 }} />
+                          <Progress value={(job.epochs_completed / job.total_epochs) * 100} className="mb-2" />
                         )}
                         {metrics.final_loss !== undefined && (
-                          <Typography variant="caption" color="text.secondary">
+                          <p className="text-xs text-[var(--text-mid)]">
                             Loss: {metrics.final_loss} | Eval Loss: {metrics.eval_loss}
-                          </Typography>
+                          </p>
                         )}
                         {job.result_model_id && (
-                          <Alert severity="success" sx={{ mt: 1, py: 0 }}>
-                            <Typography variant="caption">Model ID: {job.result_model_id}</Typography>
+                          <Alert variant="success" className="mt-2 py-1">
+                            <AlertDescription className="text-xs">Model ID: {job.result_model_id}</AlertDescription>
                           </Alert>
                         )}
-                        {job.error && <Alert severity="error" sx={{ mt: 1, py: 0 }}>{job.error}</Alert>}
+                        {job.error && (
+                          <Alert variant="destructive" className="mt-2 py-1">
+                            <AlertDescription>{job.error}</AlertDescription>
+                          </Alert>
+                        )}
                       </CardContent>
                     </Card>
                   );
@@ -196,92 +220,122 @@ export default function FineTuningPage() {
 
           {/* Available Models */}
           {models && (
-            <Card sx={{ mt: 2 }}>
-              <CardContent>
-                <Typography variant="h6" sx={{ mb: 1 }}>Available Base Models</Typography>
-                <Grid container spacing={1}>
+            <Card className="mt-4">
+              <CardContent className="p-6">
+                <h2 className="text-lg font-semibold text-[var(--text-high)] mb-2">Available Base Models</h2>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                   {models.map((m) => (
-                    <Grid item xs={6} sm={4} key={m.id}>
-                      <Card variant="outlined" sx={{ p: 1 }}>
-                        <Typography variant="subtitle2">{m.name}</Typography>
-                        <Typography variant="caption" color="text.secondary">{m.parameters} params</Typography>
-                        <Box sx={{ display: 'flex', gap: 0.3, mt: 0.5 }}>
-                          <Chip label={m.provider} size="small" variant="outlined" />
-                          {m.supports_lora && <Chip label="LoRA" size="small" color="success" variant="outlined" />}
-                        </Box>
-                      </Card>
-                    </Grid>
+                    <Card key={m.id} className="p-3">
+                      <h4 className="text-sm font-semibold text-[var(--text-high)]">{m.name}</h4>
+                      <p className="text-xs text-[var(--text-mid)]">{m.parameters} params</p>
+                      <div className="flex gap-1 mt-1">
+                        <Badge variant="outline" className="text-xs">{m.provider}</Badge>
+                        {m.supports_lora && <Badge variant="success" className="text-xs">LoRA</Badge>}
+                      </div>
+                    </Card>
                   ))}
-                </Grid>
+                </div>
               </CardContent>
             </Card>
           )}
-        </Grid>
-      </Grid>
+        </div>
+      </div>
 
       {/* Create Dataset from Source */}
-      <Dialog open={sourceOpen} onClose={() => setSourceOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Create Dataset from Platform Data</DialogTitle>
-        <DialogContent>
-          <TextField fullWidth label="Dataset Name" value={sourceName}
-            onChange={(e) => setSourceName(e.target.value)} sx={{ mt: 1, mb: 2 }} />
-          <Typography variant="subtitle2" sx={{ mb: 1 }}>Data Source</Typography>
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 2 }}>
-            {SOURCE_OPTIONS.map((s) => (
-              <Chip key={s.id} label={`${s.icon} ${s.label}`}
-                variant={sourceType === s.id ? 'filled' : 'outlined'}
-                color={sourceType === s.id ? 'primary' : 'default'}
-                onClick={() => setSourceType(s.id)} />
-            ))}
-          </Box>
-          <TextField fullWidth size="small" type="number" label="Max Samples"
-            value={maxSamples} onChange={(e) => setMaxSamples(Number(e.target.value))} />
+      <Dialog open={sourceOpen} onOpenChange={(v) => { if (!v) setSourceOpen(false); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Create Dataset from Platform Data</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium text-[var(--text-high)] mb-1 block">Dataset Name</label>
+              <Input value={sourceName} onChange={(e) => setSourceName(e.target.value)} placeholder="Dataset name" />
+            </div>
+            <div>
+              <label className="text-sm font-semibold text-[var(--text-high)] mb-2 block">Data Source</label>
+              <div className="flex flex-wrap gap-1">
+                {SOURCE_OPTIONS.map((s) => (
+                  <Badge
+                    key={s.id}
+                    variant={sourceType === s.id ? 'default' : 'outline'}
+                    className="cursor-pointer"
+                    onClick={() => setSourceType(s.id)}
+                  >
+                    {s.icon} {s.label}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-[var(--text-high)] mb-1 block">Max Samples</label>
+              <Input type="number" value={maxSamples} onChange={(e) => setMaxSamples(Number(e.target.value))} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setSourceOpen(false)}>Cancel</Button>
+            <Button onClick={handleCreateFromSource}
+              disabled={!sourceName.trim() || createFromSourceMutation.isPending}>
+              {createFromSourceMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Sparkles className="h-4 w-4 mr-1" />}
+              Create Dataset
+            </Button>
+          </DialogFooter>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setSourceOpen(false)}>Cancel</Button>
-          <Button variant="contained" onClick={handleCreateFromSource}
-            disabled={!sourceName.trim() || createFromSourceMutation.isPending}
-            startIcon={createFromSourceMutation.isPending ? <CircularProgress size={16} color="inherit" /> : <AutoAwesomeIcon />}>
-            Create Dataset
-          </Button>
-        </DialogActions>
       </Dialog>
 
       {/* Train Model */}
-      <Dialog open={trainOpen} onClose={() => setTrainOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Train Custom Model</DialogTitle>
-        <DialogContent>
-          <TextField fullWidth label="Model Name" value={trainName}
-            onChange={(e) => setTrainName(e.target.value)} sx={{ mt: 1, mb: 2 }} />
-          <FormControl fullWidth size="small" sx={{ mb: 2 }}>
-            <InputLabel>Dataset</InputLabel>
-            <Select value={trainDataset} label="Dataset" onChange={(e) => setTrainDataset(e.target.value)}>
-              {datasets?.filter((d) => d.status === 'ready').map((d) => (
-                <MenuItem key={d.id} value={d.id}>{d.name} ({d.sample_count} samples)</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <FormControl fullWidth size="small" sx={{ mb: 2 }}>
-            <InputLabel>Base Model</InputLabel>
-            <Select value={trainModel} label="Base Model" onChange={(e) => setTrainModel(e.target.value)}>
-              {models?.map((m) => (
-                <MenuItem key={m.id} value={m.id}>{m.name} ({m.parameters})</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <TextField fullWidth size="small" type="number" label="Epochs"
-            value={trainEpochs} onChange={(e) => setTrainEpochs(Number(e.target.value))}
-            inputProps={{ min: 1, max: 10 }} />
+      <Dialog open={trainOpen} onOpenChange={(v) => { if (!v) setTrainOpen(false); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Train Custom Model</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium text-[var(--text-high)] mb-1 block">Model Name</label>
+              <Input value={trainName} onChange={(e) => setTrainName(e.target.value)} placeholder="Model name" />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-[var(--text-high)] mb-1 block">Dataset</label>
+              <Select value={trainDataset} onValueChange={setTrainDataset}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a dataset" />
+                </SelectTrigger>
+                <SelectContent>
+                  {datasets?.filter((d) => d.status === 'ready').map((d) => (
+                    <SelectItem key={d.id} value={d.id}>{d.name} ({d.sample_count} samples)</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-[var(--text-high)] mb-1 block">Base Model</label>
+              <Select value={trainModel} onValueChange={setTrainModel}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a model" />
+                </SelectTrigger>
+                <SelectContent>
+                  {models?.map((m) => (
+                    <SelectItem key={m.id} value={m.id}>{m.name} ({m.parameters})</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-[var(--text-high)] mb-1 block">Epochs</label>
+              <Input type="number" value={trainEpochs} onChange={(e) => setTrainEpochs(Number(e.target.value))}
+                min={1} max={10} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setTrainOpen(false)}>Cancel</Button>
+            <Button onClick={handleTrain}
+              disabled={!trainName.trim() || !trainDataset || createJobMutation.isPending}>
+              {createJobMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Rocket className="h-4 w-4 mr-1" />}
+              Start Training
+            </Button>
+          </DialogFooter>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setTrainOpen(false)}>Cancel</Button>
-          <Button variant="contained" onClick={handleTrain}
-            disabled={!trainName.trim() || !trainDataset || createJobMutation.isPending}
-            startIcon={createJobMutation.isPending ? <CircularProgress size={16} color="inherit" /> : <RocketLaunchIcon />}>
-            Start Training
-          </Button>
-        </DialogActions>
       </Dialog>
-    </Box>
+    </div>
   );
 }

@@ -1,17 +1,15 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import {
-  Box, Button, Card, CardContent, Chip, CircularProgress,
-  Dialog, DialogActions, DialogContent, DialogTitle,
-  FormControl, Grid, IconButton, InputLabel, MenuItem, Select,
-  TextField, Typography,
-} from '@mui/material';
-import PsychologyIcon from '@mui/icons-material/Psychology';
-import AddIcon from '@mui/icons-material/Add';
-import DeleteIcon from '@mui/icons-material/Delete';
-import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
-import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
+import { Brain, Plus, Trash2, Sparkles, Loader2 } from 'lucide-react';
+
+import { Card, CardContent } from '@/lib/design-hub/components/Card';
+import { Badge } from '@/lib/design-hub/components/Badge';
+import { Button } from '@/lib/design-hub/components/Button';
+import { Textarea } from '@/lib/design-hub/components/Textarea';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/lib/design-hub/components/Select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/lib/design-hub/components/Dialog';
+
 import apiClient from '@/lib/apiClient';
 
 interface Memory {
@@ -21,10 +19,10 @@ interface Memory {
 }
 
 const TYPE_ICONS: Record<string, string> = {
-  preference: '⭐', fact: '📌', context: '🎯', instruction: '📋',
+  preference: '\u2B50', fact: '\uD83D\uDCCC', context: '\uD83C\uDFAF', instruction: '\uD83D\uDCCB',
 };
-const TYPE_COLORS: Record<string, 'primary' | 'success' | 'info' | 'warning'> = {
-  preference: 'primary', fact: 'success', context: 'info', instruction: 'warning',
+const TYPE_VARIANT: Record<string, 'default' | 'success' | 'secondary' | 'warning'> = {
+  preference: 'default', fact: 'success', context: 'secondary', instruction: 'warning',
 };
 
 export default function MemoryPage() {
@@ -82,121 +80,161 @@ export default function MemoryPage() {
   };
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Box>
-          <Typography variant="h4" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <PsychologyIcon color="primary" /> AI Memory
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
+    <div className="p-6">
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h1 className="text-2xl font-bold flex items-center gap-2">
+            <Brain className="h-6 w-6 text-[var(--accent)]" /> AI Memory
+          </h1>
+          <p className="text-sm text-[var(--text-mid)]">
             Your AI remembers preferences, facts, and context to personalize all responses
-          </Typography>
-        </Box>
-        <Box sx={{ display: 'flex', gap: 1 }}>
-          <Button variant="outlined" startIcon={<AutoAwesomeIcon />} onClick={() => setExtractOpen(true)}>
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setExtractOpen(true)}>
+            <Sparkles className="h-4 w-4 mr-1" />
             Auto-Extract
           </Button>
-          <Button variant="contained" startIcon={<AddIcon />} onClick={() => setAddOpen(true)}>
+          <Button onClick={() => setAddOpen(true)}>
+            <Plus className="h-4 w-4 mr-1" />
             Add Memory
           </Button>
-        </Box>
-      </Box>
+        </div>
+      </div>
 
       {/* Context Preview */}
       {context && (
-        <Card sx={{ mb: 3, bgcolor: 'action.hover' }}>
-          <CardContent>
-            <Typography variant="subtitle2" sx={{ mb: 1 }}>Context Injected into AI Prompts</Typography>
-            <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', fontFamily: 'monospace', fontSize: '0.85rem' }}>
+        <Card className="mb-6 bg-[var(--bg-elevated)]">
+          <CardContent className="p-6">
+            <h4 className="text-sm font-semibold mb-2">Context Injected into AI Prompts</h4>
+            <p className="text-sm whitespace-pre-wrap font-mono text-[0.85rem]">
               {context}
-            </Typography>
+            </p>
           </CardContent>
         </Card>
       )}
 
       {/* Memories */}
-      <Grid container spacing={2}>
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
         {loading ? (
-          <Grid item xs={12}><CircularProgress /></Grid>
+          <div className="col-span-full flex justify-center py-8">
+            <Loader2 className="h-8 w-8 animate-spin text-[var(--accent)]" />
+          </div>
         ) : memories.length === 0 ? (
-          <Grid item xs={12}>
-            <Card><CardContent sx={{ textAlign: 'center', py: 6 }}>
-              <PsychologyIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
-              <Typography color="text.secondary">No memories yet. Add one or auto-extract from text.</Typography>
-            </CardContent></Card>
-          </Grid>
+          <div className="col-span-full">
+            <Card>
+              <CardContent className="text-center py-12 p-6">
+                <Brain className="h-16 w-16 text-[var(--text-low)] mx-auto mb-4" />
+                <p className="text-[var(--text-mid)]">No memories yet. Add one or auto-extract from text.</p>
+              </CardContent>
+            </Card>
+          </div>
         ) : (
           memories.map((mem) => (
-            <Grid item xs={12} sm={6} md={4} key={mem.id}>
-              <Card variant="outlined">
-                <CardContent>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                    <Chip label={`${TYPE_ICONS[mem.memory_type] || '📌'} ${mem.memory_type}`}
-                      size="small" color={TYPE_COLORS[mem.memory_type] || 'default'} />
-                    <IconButton size="small" color="error" onClick={() => handleDelete(mem.id)}>
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
-                  </Box>
-                  <Typography variant="body2" sx={{ mb: 1 }}>{mem.content}</Typography>
-                  <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
-                    {mem.category && <Chip label={mem.category} size="small" variant="outlined" />}
-                    <Chip label={`${(mem.confidence * 100).toFixed(0)}%`} size="small" variant="outlined" />
-                    <Chip label={`used ${mem.use_count}x`} size="small" variant="outlined" />
-                    <Chip label={mem.source} size="small" variant="outlined" />
-                  </Box>
-                </CardContent>
-              </Card>
-            </Grid>
+            <Card key={mem.id}>
+              <CardContent className="p-4">
+                <div className="flex justify-between mb-2">
+                  <Badge variant={TYPE_VARIANT[mem.memory_type] || 'secondary'}>
+                    {TYPE_ICONS[mem.memory_type] || '\uD83D\uDCCC'} {mem.memory_type}
+                  </Badge>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-red-500 hover:text-red-600"
+                    onClick={() => handleDelete(mem.id)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+                <p className="text-sm mb-2">{mem.content}</p>
+                <div className="flex gap-1 flex-wrap">
+                  {mem.category && <Badge variant="outline">{mem.category}</Badge>}
+                  <Badge variant="outline">{(mem.confidence * 100).toFixed(0)}%</Badge>
+                  <Badge variant="outline">used {mem.use_count}x</Badge>
+                  <Badge variant="outline">{mem.source}</Badge>
+                </div>
+              </CardContent>
+            </Card>
           ))
         )}
-      </Grid>
+      </div>
 
       {memories.length > 0 && (
-        <Box sx={{ mt: 3, textAlign: 'center' }}>
-          <Button color="error" startIcon={<DeleteForeverIcon />} onClick={handleForgetAll}>
+        <div className="mt-6 text-center">
+          <Button variant="destructive" onClick={handleForgetAll}>
+            <Trash2 className="h-4 w-4 mr-1" />
             Forget All (RGPD)
           </Button>
-        </Box>
+        </div>
       )}
 
       {/* Add Memory Dialog */}
-      <Dialog open={addOpen} onClose={() => setAddOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Add Memory</DialogTitle>
+      <Dialog open={addOpen} onOpenChange={setAddOpen}>
         <DialogContent>
-          <TextField fullWidth label="Memory content" placeholder="e.g., I prefer formal tone..."
-            value={newContent} onChange={(e) => setNewContent(e.target.value)} sx={{ mt: 1, mb: 2 }} multiline rows={2} />
-          <FormControl fullWidth size="small">
-            <InputLabel>Type</InputLabel>
-            <Select value={newType} label="Type" onChange={(e) => setNewType(e.target.value)}>
-              <MenuItem value="preference">Preference</MenuItem>
-              <MenuItem value="fact">Fact</MenuItem>
-              <MenuItem value="context">Context</MenuItem>
-              <MenuItem value="instruction">Instruction</MenuItem>
-            </Select>
-          </FormControl>
+          <DialogHeader>
+            <DialogTitle>Add Memory</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 mt-2">
+            <div>
+              <label className="block text-sm font-medium mb-1 text-[var(--text-mid)]">Memory content</label>
+              <Textarea
+                placeholder="e.g., I prefer formal tone..."
+                value={newContent}
+                onChange={(e) => setNewContent(e.target.value)}
+                rows={2}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1 text-[var(--text-mid)]">Type</label>
+              <Select value={newType} onValueChange={setNewType}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="preference">Preference</SelectItem>
+                  <SelectItem value="fact">Fact</SelectItem>
+                  <SelectItem value="context">Context</SelectItem>
+                  <SelectItem value="instruction">Instruction</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter className="mt-4">
+            <Button variant="ghost" onClick={() => setAddOpen(false)}>Cancel</Button>
+            <Button onClick={handleAdd} disabled={!newContent.trim()}>Add</Button>
+          </DialogFooter>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setAddOpen(false)}>Cancel</Button>
-          <Button variant="contained" onClick={handleAdd} disabled={!newContent.trim()}>Add</Button>
-        </DialogActions>
       </Dialog>
 
       {/* Extract Dialog */}
-      <Dialog open={extractOpen} onClose={() => setExtractOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Auto-Extract Memories from Text</DialogTitle>
+      <Dialog open={extractOpen} onOpenChange={setExtractOpen}>
         <DialogContent>
-          <TextField fullWidth multiline rows={6} label="Paste any text"
-            placeholder="Paste a conversation, notes, or any text. AI will extract preferences, facts, and instructions..."
-            value={extractText} onChange={(e) => setExtractText(e.target.value)} sx={{ mt: 1 }} />
+          <DialogHeader>
+            <DialogTitle>Auto-Extract Memories from Text</DialogTitle>
+          </DialogHeader>
+          <div className="mt-2">
+            <label className="block text-sm font-medium mb-1 text-[var(--text-mid)]">Paste any text</label>
+            <Textarea
+              rows={6}
+              placeholder="Paste a conversation, notes, or any text. AI will extract preferences, facts, and instructions..."
+              value={extractText}
+              onChange={(e) => setExtractText(e.target.value)}
+            />
+          </div>
+          <DialogFooter className="mt-4">
+            <Button variant="ghost" onClick={() => setExtractOpen(false)}>Cancel</Button>
+            <Button
+              onClick={handleExtract}
+              disabled={!extractText.trim() || extracting}
+            >
+              {extracting
+                ? <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                : <Sparkles className="h-4 w-4 mr-1" />}
+              Extract
+            </Button>
+          </DialogFooter>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setExtractOpen(false)}>Cancel</Button>
-          <Button variant="contained" onClick={handleExtract} disabled={!extractText.trim() || extracting}
-            startIcon={extracting ? <CircularProgress size={16} color="inherit" /> : <AutoAwesomeIcon />}>
-            Extract
-          </Button>
-        </DialogActions>
       </Dialog>
-    </Box>
+    </div>
   );
 }

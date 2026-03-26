@@ -1,47 +1,37 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { Flag, Search, PowerOff, RotateCcw, Trash2, Users, Percent, ToggleLeft, Loader2 } from 'lucide-react';
+
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Slider } from '@/components/ui/slider';
+import { Button } from '@/lib/design-hub/components/Button';
+import { Input } from '@/lib/design-hub/components/Input';
+import { Textarea } from '@/lib/design-hub/components/Textarea';
+import { Switch } from '@/lib/design-hub/components/Switch';
+import { Separator } from '@/lib/design-hub/components/Separator';
 import {
-  Alert,
-  Box,
-  Button,
-  Card,
-  CardContent,
-  Chip,
-  CircularProgress,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  Divider,
-  FormControl,
-  Grid,
-  IconButton,
-  InputAdornment,
-  InputLabel,
-  MenuItem,
   Select,
-  Slider,
-  Snackbar,
-  Switch,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  TextField,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/lib/design-hub/components/Select';
+import {
   Tooltip,
-  Typography,
-} from '@mui/material';
-import FlagIcon from '@mui/icons-material/Flag';
-import SearchIcon from '@mui/icons-material/Search';
-import PowerOffIcon from '@mui/icons-material/PowerOff';
-import RestoreIcon from '@mui/icons-material/Restore';
-import DeleteIcon from '@mui/icons-material/Delete';
-import PeopleIcon from '@mui/icons-material/People';
-import PercentIcon from '@mui/icons-material/Percent';
-import ToggleOnIcon from '@mui/icons-material/ToggleOn';
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/lib/design-hub/components/Tooltip';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogFooter,
+  DialogTitle,
+} from '@/lib/design-hub/components/Dialog';
 
 import {
   useFeatureFlags,
@@ -72,7 +62,6 @@ function getModuleName(flagName: string): string | null {
 function isEffectivelyEnabled(flag: FeatureFlag): boolean {
   if (flag.effective === true || flag.effective === 'true') return true;
   if (flag.effective === false || flag.effective === 'false') return false;
-  // Percentage or whitelist - show as "partial"
   return true;
 }
 
@@ -99,17 +88,22 @@ export default function FeatureFlagsPage() {
     severity: 'success',
   });
 
+  // Auto-dismiss snackbar after 4 seconds
+  useEffect(() => {
+    if (!snackbar.open) return;
+    const timer = setTimeout(() => setSnackbar((s) => ({ ...s, open: false })), 4000);
+    return () => clearTimeout(timer);
+  }, [snackbar.open]);
+
   const flags = useMemo(() => {
     if (!data?.flags) return [];
     let entries = Object.values(data.flags);
 
-    // Filter by search
     if (search) {
       const s = search.toLowerCase();
       entries = entries.filter((f) => f.name.toLowerCase().includes(s));
     }
 
-    // Filter by category
     if (category === 'modules') {
       entries = entries.filter((f) => f.name.endsWith('_enabled') && !['websocket_enabled', 'multi_tenant_enabled', 'audit_log_enabled'].includes(f.name));
     } else if (category === 'enterprise') {
@@ -205,288 +199,307 @@ export default function FeatureFlagsPage() {
 
   if (isLoading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 10 }}>
-        <CircularProgress />
-      </Box>
+      <div className="flex justify-center mt-20">
+        <Loader2 className="h-8 w-8 animate-spin text-[var(--accent)]" />
+      </div>
     );
   }
 
   if (error) {
     return (
-      <Box sx={{ p: 3 }}>
-        <Alert severity="error">Failed to load feature flags: {error.message}</Alert>
-      </Box>
+      <div className="p-6">
+        <Alert variant="destructive">
+          <AlertDescription>Failed to load feature flags: {error.message}</AlertDescription>
+        </Alert>
+      </div>
     );
   }
 
   return (
-    <Box sx={{ p: 3 }}>
-      {/* Header */}
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h4" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <FlagIcon color="primary" /> Feature Flags
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          Runtime feature control -- toggle modules, percentage rollouts, and user whitelists without redeployment
-        </Typography>
-      </Box>
+    <TooltipProvider>
+      <div className="p-6">
+        {/* Header */}
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold flex items-center gap-2 text-[var(--text-high)]">
+            <Flag className="h-7 w-7 text-[var(--accent)]" /> Feature Flags
+          </h1>
+          <p className="text-sm text-[var(--text-mid)]">
+            Runtime feature control -- toggle modules, percentage rollouts, and user whitelists without redeployment
+          </p>
+        </div>
 
-      {/* Stats */}
-      <Grid container spacing={2} sx={{ mb: 3 }}>
-        {[
-          { label: 'Total Flags', value: stats.total, color: 'primary.main' },
-          { label: 'Enabled', value: stats.enabled, color: 'success.main' },
-          { label: 'Disabled', value: stats.disabled, color: 'error.main' },
-          { label: 'Overridden', value: stats.overridden, color: 'warning.main' },
-        ].map((stat) => (
-          <Grid item xs={6} sm={3} key={stat.label}>
-            <Card variant="outlined">
-              <CardContent sx={{ textAlign: 'center', py: 1.5, '&:last-child': { pb: 1.5 } }}>
-                <Typography variant="h4" sx={{ color: stat.color }}>{stat.value}</Typography>
-                <Typography variant="caption" color="text.secondary">{stat.label}</Typography>
+        {/* Stats */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+          {[
+            { label: 'Total Flags', value: stats.total, color: 'text-[var(--accent)]' },
+            { label: 'Enabled', value: stats.enabled, color: 'text-green-400' },
+            { label: 'Disabled', value: stats.disabled, color: 'text-red-400' },
+            { label: 'Overridden', value: stats.overridden, color: 'text-amber-400' },
+          ].map((stat) => (
+            <Card key={stat.label}>
+              <CardContent className="text-center py-3 px-4">
+                <p className={`text-2xl font-bold ${stat.color}`}>{stat.value}</p>
+                <p className="text-xs text-[var(--text-mid)]">{stat.label}</p>
               </CardContent>
             </Card>
-          </Grid>
-        ))}
-      </Grid>
+          ))}
+        </div>
 
-      {/* Filters */}
-      <Card sx={{ mb: 3 }}>
-        <CardContent sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
-          <TextField
-            size="small"
-            placeholder="Search flags..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon />
-                </InputAdornment>
-              ),
-            }}
-            sx={{ minWidth: 250 }}
-          />
-          <FormControl size="small" sx={{ minWidth: 150 }}>
-            <InputLabel>Category</InputLabel>
-            <Select
-              value={category}
-              label="Category"
-              onChange={(e) => setCategory(e.target.value as FlagCategory)}
-            >
-              <MenuItem value="all">All Flags</MenuItem>
-              <MenuItem value="modules">Modules</MenuItem>
-              <MenuItem value="enterprise">Enterprise</MenuItem>
-              <MenuItem value="overridden">Overridden</MenuItem>
-            </Select>
-          </FormControl>
-          <Typography variant="body2" color="text.secondary" sx={{ ml: 'auto' }}>
-            {flags.length} flag{flags.length !== 1 ? 's' : ''} shown
-          </Typography>
-        </CardContent>
-      </Card>
-
-      {/* Flags Table */}
-      <TableContainer component={Card}>
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell>Flag Name</TableCell>
-              <TableCell align="center">Status</TableCell>
-              <TableCell align="center">Type</TableCell>
-              <TableCell align="center">Override</TableCell>
-              <TableCell align="center">Default</TableCell>
-              <TableCell align="right">Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {flags.map((flag) => {
-              const enabled = isEffectivelyEnabled(flag);
-              const moduleName = getModuleName(flag.name);
-              const type = getFlagType(flag);
-
-              return (
-                <TableRow key={flag.name} hover>
-                  <TableCell>
-                    <Typography variant="body2" fontFamily="monospace">
-                      {flag.name}
-                    </Typography>
-                  </TableCell>
-                  <TableCell align="center">
-                    <Switch
-                      checked={enabled}
-                      onChange={() => handleToggle(flag)}
-                      size="small"
-                      color={enabled ? 'success' : 'default'}
-                    />
-                  </TableCell>
-                  <TableCell align="center">
-                    {type === 'percentage' && (
-                      <Chip icon={<PercentIcon />} label={flag.override} size="small" color="info" variant="outlined" />
-                    )}
-                    {type === 'whitelist' && (
-                      <Chip icon={<PeopleIcon />} label="Whitelist" size="small" color="secondary" variant="outlined" />
-                    )}
-                    {type === 'boolean' && (
-                      <Chip icon={<ToggleOnIcon />} label="Boolean" size="small" variant="outlined" />
-                    )}
-                    {type === 'default' && (
-                      <Chip label="Default" size="small" variant="outlined" color="default" />
-                    )}
-                  </TableCell>
-                  <TableCell align="center">
-                    {flag.override !== null ? (
-                      <Chip label={flag.override} size="small" color="warning" variant="filled" />
-                    ) : (
-                      <Typography variant="caption" color="text.secondary">--</Typography>
-                    )}
-                  </TableCell>
-                  <TableCell align="center">
-                    <Typography variant="caption">
-                      {flag.default === null ? '--' : flag.default ? 'true' : 'false'}
-                    </Typography>
-                  </TableCell>
-                  <TableCell align="right">
-                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 0.5 }}>
-                      <Tooltip title="Advanced edit">
-                        <IconButton size="small" onClick={() => openEditDialog(flag)}>
-                          <FlagIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                      {moduleName && enabled && (
-                        <Tooltip title={`Kill ${moduleName}`}>
-                          <IconButton size="small" color="error" onClick={() => handleKill(moduleName)}>
-                            <PowerOffIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                      )}
-                      {moduleName && !enabled && (
-                        <Tooltip title={`Restore ${moduleName}`}>
-                          <IconButton size="small" color="success" onClick={() => handleRestore(moduleName)}>
-                            <RestoreIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                      )}
-                      {flag.override !== null && (
-                        <Tooltip title="Reset to default">
-                          <IconButton size="small" onClick={() => handleDelete(flag.name)}>
-                            <DeleteIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                      )}
-                    </Box>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-      </TableContainer>
-
-      {/* Edit Dialog */}
-      <Dialog
-        open={editDialog.open}
-        onClose={() => setEditDialog({ open: false, flag: null })}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle>
-          Edit Flag: {editDialog.flag?.name}
-        </DialogTitle>
-        <DialogContent>
-          <Box sx={{ mt: 1 }}>
-            <FormControl fullWidth sx={{ mb: 3 }}>
-              <InputLabel>Mode</InputLabel>
-              <Select
-                value={editMode}
-                label="Mode"
-                onChange={(e) => setEditMode(e.target.value as 'boolean' | 'percentage' | 'whitelist')}
-              >
-                <MenuItem value="boolean">Boolean (on/off)</MenuItem>
-                <MenuItem value="percentage">Percentage Rollout</MenuItem>
-                <MenuItem value="whitelist">User Whitelist</MenuItem>
-              </Select>
-            </FormControl>
-
-            <Divider sx={{ mb: 2 }} />
-
-            {editMode === 'boolean' && (
-              <FormControl fullWidth>
-                <InputLabel>Value</InputLabel>
-                <Select
-                  value={editValue}
-                  label="Value"
-                  onChange={(e) => setEditValue(e.target.value)}
-                >
-                  <MenuItem value="true">Enabled (true)</MenuItem>
-                  <MenuItem value="false">Disabled (false)</MenuItem>
-                </Select>
-              </FormControl>
-            )}
-
-            {editMode === 'percentage' && (
-              <Box>
-                <Typography gutterBottom>
-                  Rollout: {percentValue}% of users
-                </Typography>
-                <Slider
-                  value={percentValue}
-                  onChange={(_, v) => setPercentValue(v as number)}
-                  min={0}
-                  max={100}
-                  step={1}
-                  marks={[
-                    { value: 0, label: '0%' },
-                    { value: 25, label: '25%' },
-                    { value: 50, label: '50%' },
-                    { value: 75, label: '75%' },
-                    { value: 100, label: '100%' },
-                  ]}
-                  valueLabelDisplay="auto"
-                />
-                <Typography variant="caption" color="text.secondary">
-                  Users are assigned deterministically based on their user ID hash.
-                  The same users always get the same result for a given flag.
-                </Typography>
-              </Box>
-            )}
-
-            {editMode === 'whitelist' && (
-              <TextField
-                fullWidth
-                multiline
-                rows={3}
-                label="User IDs (comma-separated)"
-                value={whitelistValue}
-                onChange={(e) => setWhitelistValue(e.target.value)}
-                helperText="Enter user UUIDs separated by commas. Only these users will see the feature enabled."
-                placeholder="550e8400-e29b-41d4-a716-446655440000, 6ba7b810-9dad-11d1-80b4-00c04fd430c8"
+        {/* Filters */}
+        <Card className="mb-6">
+          <CardContent className="flex gap-4 items-center flex-wrap p-4">
+            <div className="relative min-w-[250px]">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-low)]" />
+              <Input
+                placeholder="Search flags..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-9"
               />
-            )}
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setEditDialog({ open: false, flag: null })}>Cancel</Button>
-          <Button variant="contained" onClick={handleEditSave} disabled={setFlagMutation.isPending}>
-            {setFlagMutation.isPending ? 'Saving...' : 'Save'}
-          </Button>
-        </DialogActions>
-      </Dialog>
+            </div>
+            <Select value={category} onValueChange={(v) => setCategory(v as FlagCategory)}>
+              <SelectTrigger className="w-[160px]">
+                <SelectValue placeholder="Category" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Flags</SelectItem>
+                <SelectItem value="modules">Modules</SelectItem>
+                <SelectItem value="enterprise">Enterprise</SelectItem>
+                <SelectItem value="overridden">Overridden</SelectItem>
+              </SelectContent>
+            </Select>
+            <span className="text-sm text-[var(--text-mid)] ml-auto">
+              {flags.length} flag{flags.length !== 1 ? 's' : ''} shown
+            </span>
+          </CardContent>
+        </Card>
 
-      {/* Snackbar */}
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={4000}
-        onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
-      >
-        <Alert
-          severity={snackbar.severity}
-          onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
-          variant="filled"
+        {/* Flags Table */}
+        <Card>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-[var(--border)]">
+                  <th className="text-left py-3 px-4 font-medium text-[var(--text-mid)]">Flag Name</th>
+                  <th className="text-center py-3 px-4 font-medium text-[var(--text-mid)]">Status</th>
+                  <th className="text-center py-3 px-4 font-medium text-[var(--text-mid)]">Type</th>
+                  <th className="text-center py-3 px-4 font-medium text-[var(--text-mid)]">Override</th>
+                  <th className="text-center py-3 px-4 font-medium text-[var(--text-mid)]">Default</th>
+                  <th className="text-right py-3 px-4 font-medium text-[var(--text-mid)]">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {flags.map((flag) => {
+                  const enabled = isEffectivelyEnabled(flag);
+                  const moduleName = getModuleName(flag.name);
+                  const type = getFlagType(flag);
+
+                  return (
+                    <tr key={flag.name} className="border-b border-[var(--border)] hover:bg-[var(--bg-elevated)] transition-colors">
+                      <td className="py-3 px-4">
+                        <span className="font-mono text-sm text-[var(--text-high)]">
+                          {flag.name}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 text-center">
+                        <Switch
+                          checked={enabled}
+                          onCheckedChange={() => handleToggle(flag)}
+                        />
+                      </td>
+                      <td className="py-3 px-4 text-center">
+                        {type === 'percentage' && (
+                          <Badge variant="outline" className="gap-1">
+                            <Percent className="h-3 w-3" /> {flag.override}
+                          </Badge>
+                        )}
+                        {type === 'whitelist' && (
+                          <Badge variant="secondary" className="gap-1">
+                            <Users className="h-3 w-3" /> Whitelist
+                          </Badge>
+                        )}
+                        {type === 'boolean' && (
+                          <Badge variant="outline" className="gap-1">
+                            <ToggleLeft className="h-3 w-3" /> Boolean
+                          </Badge>
+                        )}
+                        {type === 'default' && (
+                          <Badge variant="outline">Default</Badge>
+                        )}
+                      </td>
+                      <td className="py-3 px-4 text-center">
+                        {flag.override !== null ? (
+                          <Badge variant="warning">{flag.override}</Badge>
+                        ) : (
+                          <span className="text-xs text-[var(--text-mid)]">--</span>
+                        )}
+                      </td>
+                      <td className="py-3 px-4 text-center">
+                        <span className="text-xs text-[var(--text-mid)]">
+                          {flag.default === null ? '--' : flag.default ? 'true' : 'false'}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 text-right">
+                        <div className="flex justify-end gap-1">
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEditDialog(flag)}>
+                                <Flag className="h-3.5 w-3.5" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Advanced edit</TooltipContent>
+                          </Tooltip>
+                          {moduleName && enabled && (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-7 w-7 text-red-400 hover:text-red-300" onClick={() => handleKill(moduleName)}>
+                                  <PowerOff className="h-3.5 w-3.5" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Kill {moduleName}</TooltipContent>
+                            </Tooltip>
+                          )}
+                          {moduleName && !enabled && (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-7 w-7 text-green-400 hover:text-green-300" onClick={() => handleRestore(moduleName)}>
+                                  <RotateCcw className="h-3.5 w-3.5" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Restore {moduleName}</TooltipContent>
+                            </Tooltip>
+                          )}
+                          {flag.override !== null && (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleDelete(flag.name)}>
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Reset to default</TooltipContent>
+                            </Tooltip>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+
+        {/* Edit Dialog */}
+        <Dialog
+          open={editDialog.open}
+          onOpenChange={(v) => { if (!v) setEditDialog({ open: false, flag: null }); }}
         >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
-    </Box>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Edit Flag: {editDialog.flag?.name}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium text-[var(--text-high)] mb-1 block">Mode</label>
+                <Select value={editMode} onValueChange={(v) => setEditMode(v as 'boolean' | 'percentage' | 'whitelist')}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="boolean">Boolean (on/off)</SelectItem>
+                    <SelectItem value="percentage">Percentage Rollout</SelectItem>
+                    <SelectItem value="whitelist">User Whitelist</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <Separator />
+
+              {editMode === 'boolean' && (
+                <div>
+                  <label className="text-sm font-medium text-[var(--text-high)] mb-1 block">Value</label>
+                  <Select value={editValue} onValueChange={setEditValue}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="true">Enabled (true)</SelectItem>
+                      <SelectItem value="false">Disabled (false)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {editMode === 'percentage' && (
+                <div>
+                  <p className="text-sm text-[var(--text-high)] mb-4">
+                    Rollout: {percentValue}% of users
+                  </p>
+                  <Slider
+                    value={[percentValue]}
+                    onValueChange={(v) => setPercentValue(v[0] ?? 0)}
+                    min={0}
+                    max={100}
+                    step={1}
+                  />
+                  <div className="flex justify-between text-xs text-[var(--text-mid)] mt-1">
+                    <span>0%</span>
+                    <span>25%</span>
+                    <span>50%</span>
+                    <span>75%</span>
+                    <span>100%</span>
+                  </div>
+                  <p className="text-xs text-[var(--text-mid)] mt-3">
+                    Users are assigned deterministically based on their user ID hash.
+                    The same users always get the same result for a given flag.
+                  </p>
+                </div>
+              )}
+
+              {editMode === 'whitelist' && (
+                <div>
+                  <label className="text-sm font-medium text-[var(--text-high)] mb-1 block">User IDs (comma-separated)</label>
+                  <Textarea
+                    rows={3}
+                    value={whitelistValue}
+                    onChange={(e) => setWhitelistValue(e.target.value)}
+                    placeholder="550e8400-e29b-41d4-a716-446655440000, 6ba7b810-9dad-11d1-80b4-00c04fd430c8"
+                  />
+                  <p className="text-xs text-[var(--text-mid)] mt-1">
+                    Enter user UUIDs separated by commas. Only these users will see the feature enabled.
+                  </p>
+                </div>
+              )}
+            </div>
+            <DialogFooter>
+              <Button variant="ghost" onClick={() => setEditDialog({ open: false, flag: null })}>Cancel</Button>
+              <Button onClick={handleEditSave} disabled={setFlagMutation.isPending}>
+                {setFlagMutation.isPending ? 'Saving...' : 'Save'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Snackbar / Toast */}
+        {snackbar.open && (
+          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 animate-in fade-in-0 slide-in-from-bottom-4">
+            <Alert
+              variant={snackbar.severity === 'error' ? 'destructive' : 'success'}
+              className="flex items-center gap-2 pr-10 shadow-lg"
+            >
+              <AlertDescription>{snackbar.message}</AlertDescription>
+              <button
+                type="button"
+                title="Dismiss"
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded hover:bg-white/10"
+                onClick={() => setSnackbar((s) => ({ ...s, open: false }))}
+              >
+                &times;
+              </button>
+            </Alert>
+          </div>
+        )}
+      </div>
+    </TooltipProvider>
   );
 }

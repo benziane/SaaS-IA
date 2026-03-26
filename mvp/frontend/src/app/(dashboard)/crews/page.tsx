@@ -1,17 +1,22 @@
 'use client';
 
 import { useState } from 'react';
+import { Users, Play, Trash2, Sparkles, Copy, Loader2 } from 'lucide-react';
+
+import { Card, CardContent, CardFooter } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/lib/design-hub/components/Button';
+import { Skeleton } from '@/lib/design-hub/components/Skeleton';
+import { Textarea } from '@/lib/design-hub/components/Textarea';
+import { Separator } from '@/lib/design-hub/components/Separator';
 import {
-  Alert, Box, Button, Card, CardActions, CardContent, Chip,
-  CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle,
-  Divider, Grid, IconButton, Skeleton, Step, StepLabel, Stepper,
-  TextField, Typography,
-} from '@mui/material';
-import GroupsIcon from '@mui/icons-material/Groups';
-import PlayArrowIcon from '@mui/icons-material/PlayArrow';
-import DeleteIcon from '@mui/icons-material/Delete';
-import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogFooter,
+  DialogTitle,
+} from '@/lib/design-hub/components/Dialog';
 
 import {
   useCreateFromTemplate, useCrewTemplates, useCrews,
@@ -24,9 +29,13 @@ const ROLE_ICONS: Record<string, string> = {
   coder: '💻', translator: '🌐', summarizer: '📋', creative: '🎨', custom: '⚙️',
 };
 
-const STATUS_COLORS: Record<string, 'default' | 'primary' | 'success' | 'error' | 'info'> = {
-  draft: 'default', active: 'primary', pending: 'default',
-  running: 'info', completed: 'success', failed: 'error',
+const STATUS_VARIANTS: Record<string, 'secondary' | 'default' | 'success' | 'destructive' | 'outline'> = {
+  draft: 'secondary',
+  active: 'default',
+  pending: 'secondary',
+  running: 'outline',
+  completed: 'success',
+  failed: 'destructive',
 };
 
 export default function CrewsPage() {
@@ -51,159 +60,190 @@ export default function CrewsPage() {
   };
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
-        <Box>
-          <Typography variant="h4" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <GroupsIcon color="primary" /> AI Agent Crews
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
+    <div className="p-6">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold flex items-center gap-2 text-[var(--text-high)]">
+            <Users className="h-7 w-7 text-[var(--accent)]" /> AI Agent Crews
+          </h1>
+          <p className="text-sm text-[var(--text-mid)]">
             Build collaborative teams of specialized AI agents
-          </Typography>
-        </Box>
-        <Button variant="outlined" startIcon={<AutoFixHighIcon />} onClick={() => setTemplatesOpen(true)}>
+          </p>
+        </div>
+        <Button variant="outline" onClick={() => setTemplatesOpen(true)}>
+          <Sparkles className="h-4 w-4 mr-2" />
           Templates
         </Button>
-      </Box>
+      </div>
 
       {/* Templates quick start */}
       {!crews?.length && templates && (
-        <Grid container spacing={2} sx={{ mb: 3 }}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           {templates.map((t) => (
-            <Grid item xs={12} sm={6} md={3} key={t.id}>
-              <Card variant="outlined" sx={{ cursor: 'pointer', '&:hover': { borderColor: 'primary.main' } }}
-                onClick={() => templateMutation.mutate({ templateId: t.id })}>
-                <CardContent>
-                  <Typography variant="subtitle2" fontWeight="bold">{t.name}</Typography>
-                  <Typography variant="caption" color="text.secondary">{t.description}</Typography>
-                  <Box sx={{ mt: 1, display: 'flex', gap: 0.5 }}>
-                    {t.agents.map((a) => (
-                      <Chip key={a.id} label={`${ROLE_ICONS[a.role] || '⚙️'} ${a.name}`} size="small" variant="outlined" />
-                    ))}
-                  </Box>
-                </CardContent>
-              </Card>
-            </Grid>
+            <Card key={t.id} className="cursor-pointer hover:border-[var(--accent)] transition-colors"
+              onClick={() => templateMutation.mutate({ templateId: t.id })}>
+              <CardContent className="p-4">
+                <h4 className="text-sm font-bold text-[var(--text-high)]">{t.name}</h4>
+                <p className="text-xs text-[var(--text-mid)]">{t.description}</p>
+                <div className="mt-2 flex flex-wrap gap-1">
+                  {t.agents.map((a) => (
+                    <Badge key={a.id} variant="outline" className="text-xs">
+                      {ROLE_ICONS[a.role] || '⚙️'} {a.name}
+                    </Badge>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
           ))}
-        </Grid>
+        </div>
       )}
 
       {isLoading ? (
-        <Skeleton variant="rectangular" height={300} />
+        <Skeleton className="h-[300px] w-full" />
       ) : !crews?.length ? (
-        <Card><CardContent sx={{ textAlign: 'center', py: 8 }}>
-          <GroupsIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
-          <Typography variant="h6" color="text.secondary">No crews yet</Typography>
-          <Button onClick={() => setTemplatesOpen(true)} sx={{ mt: 1 }}>Use a Template</Button>
-        </CardContent></Card>
+        <Card>
+          <CardContent className="text-center py-16">
+            <Users className="h-16 w-16 text-[var(--text-low)] mb-4 mx-auto" />
+            <h3 className="text-lg font-semibold text-[var(--text-mid)]">No crews yet</h3>
+            <Button variant="ghost" className="mt-2" onClick={() => setTemplatesOpen(true)}>Use a Template</Button>
+          </CardContent>
+        </Card>
       ) : (
-        <Grid container spacing={3}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
           {crews.map((crew) => (
-            <Grid item xs={12} sm={6} md={4} key={crew.id}>
-              <Card variant="outlined">
-                <CardContent>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                    <Typography variant="subtitle1" fontWeight="bold">{crew.name}</Typography>
-                    <Chip label={crew.status} size="small" color={STATUS_COLORS[crew.status] || 'default'} />
-                  </Box>
-                  {crew.goal && <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>{crew.goal}</Typography>}
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 1 }}>
-                    {crew.agents.map((a) => (
-                      <Chip key={a.id} label={`${ROLE_ICONS[a.role] || '⚙️'} ${a.name}`} size="small" variant="outlined" />
-                    ))}
-                  </Box>
-                  <Chip label={`${crew.process_type} | ${crew.run_count} runs`} size="small" variant="outlined" />
-                </CardContent>
-                <CardActions sx={{ justifyContent: 'space-between' }}>
-                  <IconButton size="small" color="error" onClick={() => deleteMutation.mutate(crew.id)}><DeleteIcon fontSize="small" /></IconButton>
-                  <Button size="small" variant="contained" startIcon={<PlayArrowIcon />}
-                    onClick={() => { setRunCrewId(crew.id); setInstruction(''); setRunOpen(true); }}>
-                    Run
-                  </Button>
-                </CardActions>
-              </Card>
-            </Grid>
+            <Card key={crew.id}>
+              <CardContent className="p-4">
+                <div className="flex justify-between mb-2">
+                  <h4 className="text-base font-bold text-[var(--text-high)]">{crew.name}</h4>
+                  <Badge variant={STATUS_VARIANTS[crew.status] || 'secondary'}>{crew.status}</Badge>
+                </div>
+                {crew.goal && <p className="text-sm text-[var(--text-mid)] mb-2">{crew.goal}</p>}
+                <div className="flex flex-wrap gap-1 mb-2">
+                  {crew.agents.map((a) => (
+                    <Badge key={a.id} variant="outline" className="text-xs">
+                      {ROLE_ICONS[a.role] || '⚙️'} {a.name}
+                    </Badge>
+                  ))}
+                </div>
+                <Badge variant="outline" className="text-xs">{crew.process_type} | {crew.run_count} runs</Badge>
+              </CardContent>
+              <CardFooter className="flex justify-between px-4 pb-4">
+                <Button variant="ghost" size="icon" className="text-red-400 hover:text-red-300" onClick={() => deleteMutation.mutate(crew.id)}>
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+                <Button size="sm" onClick={() => { setRunCrewId(crew.id); setInstruction(''); setRunOpen(true); }}>
+                  <Play className="h-4 w-4 mr-1" />
+                  Run
+                </Button>
+              </CardFooter>
+            </Card>
           ))}
-        </Grid>
+        </div>
       )}
 
       {/* Run Dialog */}
-      <Dialog open={runOpen} onClose={() => setRunOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Run Agent Crew</DialogTitle>
-        <DialogContent>
-          <TextField fullWidth multiline rows={4} label="Instruction" placeholder="What should the crew accomplish?"
-            value={instruction} onChange={(e) => setInstruction(e.target.value)} sx={{ mt: 1 }} />
+      <Dialog open={runOpen} onOpenChange={(v) => { if (!v) setRunOpen(false); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Run Agent Crew</DialogTitle>
+          </DialogHeader>
+          <Textarea
+            rows={4}
+            placeholder="What should the crew accomplish?"
+            value={instruction}
+            onChange={(e) => setInstruction(e.target.value)}
+            className="mt-2"
+          />
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setRunOpen(false)}>Cancel</Button>
+            <Button onClick={handleRun} disabled={!instruction.trim() || runMutation.isPending}>
+              {runMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Play className="h-4 w-4 mr-1" />}
+              Run Crew
+            </Button>
+          </DialogFooter>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setRunOpen(false)}>Cancel</Button>
-          <Button variant="contained" onClick={handleRun} disabled={!instruction.trim() || runMutation.isPending}
-            startIcon={runMutation.isPending ? <CircularProgress size={16} color="inherit" /> : <PlayArrowIcon />}>
-            Run Crew
-          </Button>
-        </DialogActions>
       </Dialog>
 
       {/* Result Dialog */}
-      <Dialog open={!!runResult} onClose={() => setRunResult(null)} maxWidth="md" fullWidth>
-        {runResult && (<>
-          <DialogTitle>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              Crew Run <Chip label={runResult.status} size="small" color={STATUS_COLORS[runResult.status] || 'default'} />
-              {runResult.duration_ms && <Chip label={`${(runResult.duration_ms / 1000).toFixed(1)}s`} size="small" variant="outlined" />}
-            </Box>
-          </DialogTitle>
-          <DialogContent dividers>
-            <Stepper orientation="vertical" activeStep={runResult.messages.length}>
-              {runResult.messages.map((msg, i) => (
-                <Step key={i} completed>
-                  <StepLabel>
-                    <Typography variant="subtitle2">{ROLE_ICONS[msg.role] || '⚙️'} {msg.agent_name} ({msg.role})</Typography>
-                    {msg.tool_used && <Chip label={`tool: ${msg.tool_used}`} size="small" sx={{ ml: 1 }} />}
-                  </StepLabel>
-                  <Box sx={{ ml: 4, mb: 2, p: 1.5, bgcolor: 'action.hover', borderRadius: 1, fontSize: '0.85rem', whiteSpace: 'pre-wrap', maxHeight: 200, overflow: 'auto', position: 'relative' }}>
-                    {msg.content.substring(0, 1500)}{msg.content.length > 1500 && '...'}
-                    <IconButton size="small" sx={{ position: 'absolute', top: 4, right: 4 }}
-                      onClick={() => navigator.clipboard.writeText(msg.content)}><ContentCopyIcon fontSize="small" /></IconButton>
-                  </Box>
-                </Step>
-              ))}
-            </Stepper>
-            {runResult.final_output && (<>
-              <Divider sx={{ my: 2 }} />
-              <Typography variant="subtitle2" sx={{ mb: 1 }}>Final Output</Typography>
-              <Box sx={{ p: 2, bgcolor: 'success.50', borderRadius: 1, whiteSpace: 'pre-wrap' }}>{runResult.final_output}</Box>
-            </>)}
-            {runResult.error && <Alert severity="error" sx={{ mt: 2 }}>{runResult.error}</Alert>}
-          </DialogContent>
-          <DialogActions><Button onClick={() => setRunResult(null)}>Close</Button></DialogActions>
-        </>)}
+      <Dialog open={!!runResult} onOpenChange={(v) => { if (!v) setRunResult(null); }}>
+        <DialogContent className="max-w-2xl">
+          {runResult && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  Crew Run
+                  <Badge variant={STATUS_VARIANTS[runResult.status] || 'secondary'}>{runResult.status}</Badge>
+                  {runResult.duration_ms && <Badge variant="outline">{(runResult.duration_ms / 1000).toFixed(1)}s</Badge>}
+                </DialogTitle>
+              </DialogHeader>
+              <div className="border-t border-[var(--border)] pt-4 max-h-[60vh] overflow-y-auto space-y-4">
+                {runResult.messages.map((msg, i) => (
+                  <div key={i} className="pl-4 border-l-2 border-[var(--accent)]">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h4 className="text-sm font-semibold text-[var(--text-high)]">
+                        {ROLE_ICONS[msg.role] || '⚙️'} {msg.agent_name} ({msg.role})
+                      </h4>
+                      {msg.tool_used && <Badge variant="outline" className="text-xs">tool: {msg.tool_used}</Badge>}
+                    </div>
+                    <div className="relative bg-[var(--bg-elevated)] rounded p-3 text-sm whitespace-pre-wrap max-h-[200px] overflow-auto">
+                      {msg.content.substring(0, 1500)}{msg.content.length > 1500 && '...'}
+                      <button type="button" title="Copy to clipboard" className="absolute top-2 right-2 p-1 rounded hover:bg-[var(--bg-surface)]"
+                        onClick={() => navigator.clipboard.writeText(msg.content)}>
+                        <Copy className="h-3 w-3 text-[var(--text-mid)]" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+                {runResult.final_output && (
+                  <>
+                    <Separator className="my-4" />
+                    <h4 className="text-sm font-semibold text-[var(--text-high)] mb-2">Final Output</h4>
+                    <div className="p-4 bg-green-500/10 rounded whitespace-pre-wrap text-sm">{runResult.final_output}</div>
+                  </>
+                )}
+                {runResult.error && (
+                  <Alert variant="destructive" className="mt-4">
+                    <AlertDescription>{runResult.error}</AlertDescription>
+                  </Alert>
+                )}
+              </div>
+              <DialogFooter>
+                <Button variant="ghost" onClick={() => setRunResult(null)}>Close</Button>
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
       </Dialog>
 
       {/* Templates Dialog */}
-      <Dialog open={templatesOpen} onClose={() => setTemplatesOpen(false)} maxWidth="md" fullWidth>
-        <DialogTitle>Crew Templates</DialogTitle>
-        <DialogContent>
-          <Grid container spacing={2} sx={{ mt: 0 }}>
+      <Dialog open={templatesOpen} onOpenChange={(v) => { if (!v) setTemplatesOpen(false); }}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Crew Templates</DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
             {templates?.map((t) => (
-              <Grid item xs={12} sm={6} key={t.id}>
-                <Card variant="outlined" sx={{ cursor: 'pointer', '&:hover': { borderColor: 'primary.main' } }}
-                  onClick={() => { templateMutation.mutate({ templateId: t.id }); setTemplatesOpen(false); }}>
-                  <CardContent>
-                    <Typography variant="subtitle1" fontWeight="bold">{t.name}</Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>{t.description}</Typography>
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                      {t.agents.map((a) => (
-                        <Chip key={a.id} label={`${ROLE_ICONS[a.role] || '⚙️'} ${a.name}`} size="small" variant="outlined" />
-                      ))}
-                    </Box>
-                  </CardContent>
-                </Card>
-              </Grid>
+              <Card key={t.id} className="cursor-pointer hover:border-[var(--accent)] transition-colors"
+                onClick={() => { templateMutation.mutate({ templateId: t.id }); setTemplatesOpen(false); }}>
+                <CardContent className="p-4">
+                  <h4 className="text-base font-bold text-[var(--text-high)]">{t.name}</h4>
+                  <p className="text-sm text-[var(--text-mid)] mb-2">{t.description}</p>
+                  <div className="flex flex-wrap gap-1">
+                    {t.agents.map((a) => (
+                      <Badge key={a.id} variant="outline" className="text-xs">
+                        {ROLE_ICONS[a.role] || '⚙️'} {a.name}
+                      </Badge>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
             ))}
-          </Grid>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setTemplatesOpen(false)}>Close</Button>
+          </DialogFooter>
         </DialogContent>
-        <DialogActions><Button onClick={() => setTemplatesOpen(false)}>Close</Button></DialogActions>
       </Dialog>
-    </Box>
+    </div>
   );
 }

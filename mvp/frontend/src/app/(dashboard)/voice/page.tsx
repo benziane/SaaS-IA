@@ -1,19 +1,20 @@
 'use client';
 
 import { useState } from 'react';
-import {
-  Alert, Box, Button, Card, CardContent, Chip, CircularProgress,
-  FormControl, Grid, InputLabel, MenuItem, Select, Skeleton,
-  Slider, TextField, Typography,
-} from '@mui/material';
-import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver';
-import VolumeUpIcon from '@mui/icons-material/VolumeUp';
-import TranslateIcon from '@mui/icons-material/Translate';
+import { Loader2, Mic, Volume2, Languages } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/lib/design-hub/components/Button';
+import { Textarea } from '@/lib/design-hub/components/Textarea';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/lib/design-hub/components/Select';
+import { Skeleton } from '@/lib/design-hub/components/Skeleton';
+import { Slider } from '@/components/ui/slider';
 
 import { useBuiltinVoices, useSynthesize, useSyntheses } from '@/features/voice/hooks/useVoice';
 
-const STATUS_COLORS: Record<string, 'default' | 'success' | 'error' | 'info'> = {
-  pending: 'default', processing: 'info', completed: 'success', failed: 'error',
+const STATUS_VARIANTS: Record<string, 'secondary' | 'success' | 'destructive' | 'default'> = {
+  pending: 'secondary', processing: 'default', completed: 'success', failed: 'destructive',
 };
 
 export default function VoicePage() {
@@ -37,120 +38,151 @@ export default function VoicePage() {
   const filteredVoices = voices?.filter((v) => v.provider === provider) || [];
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h4" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <RecordVoiceOverIcon color="primary" /> Voice Studio
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
+    <div className="p-6">
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-[var(--text-high)] flex items-center gap-2">
+          <Mic className="h-7 w-7 text-[var(--accent)]" /> Voice Studio
+        </h1>
+        <p className="text-sm text-[var(--text-mid)]">
           AI voice cloning, text-to-speech, and automatic dubbing
-        </Typography>
-      </Box>
+        </p>
+      </div>
 
-      <Grid container spacing={3}>
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
         {/* TTS Input */}
-        <Grid item xs={12} md={7}>
+        <div className="md:col-span-7">
           <Card>
-            <CardContent>
-              <Typography variant="h6" sx={{ mb: 2 }}>Text to Speech</Typography>
-              <TextField fullWidth multiline rows={6} label="Text to speak"
+            <CardContent className="p-6">
+              <h3 className="text-lg font-semibold text-[var(--text-high)] mb-4">Text to Speech</h3>
+              <Textarea
+                rows={6}
                 placeholder="Enter the text you want to convert to speech..."
-                value={text} onChange={(e) => setText(e.target.value)} sx={{ mb: 2 }} />
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                className="mb-4"
+              />
 
-              <Grid container spacing={2}>
-                <Grid item xs={4}>
-                  <FormControl fullWidth size="small">
-                    <InputLabel>Provider</InputLabel>
-                    <Select value={provider} label="Provider" onChange={(e) => setProvider(e.target.value)}>
-                      <MenuItem value="openai">OpenAI TTS</MenuItem>
-                      <MenuItem value="elevenlabs">ElevenLabs</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Grid>
-                <Grid item xs={4}>
-                  <FormControl fullWidth size="small">
-                    <InputLabel>Voice</InputLabel>
-                    <Select value={selectedVoice} label="Voice" onChange={(e) => setSelectedVoice(e.target.value)}>
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-[var(--text-mid)] mb-1.5">Provider</label>
+                  <Select value={provider} onValueChange={setProvider}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Provider" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="openai">OpenAI TTS</SelectItem>
+                      <SelectItem value="elevenlabs">ElevenLabs</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[var(--text-mid)] mb-1.5">Voice</label>
+                  <Select value={selectedVoice} onValueChange={setSelectedVoice}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Voice" />
+                    </SelectTrigger>
+                    <SelectContent>
                       {filteredVoices.map((v) => (
-                        <MenuItem key={v.id} value={v.id}>{v.name} ({v.gender})</MenuItem>
+                        <SelectItem key={v.id} value={v.id}>{v.name} ({v.gender})</SelectItem>
                       ))}
-                    </Select>
-                  </FormControl>
-                </Grid>
-                <Grid item xs={4}>
-                  <FormControl fullWidth size="small">
-                    <InputLabel>Language</InputLabel>
-                    <Select value={language} label="Language" onChange={(e) => setLanguage(e.target.value)}>
-                      <MenuItem value="auto">Auto</MenuItem>
-                      <MenuItem value="en">English</MenuItem>
-                      <MenuItem value="fr">French</MenuItem>
-                      <MenuItem value="es">Spanish</MenuItem>
-                      <MenuItem value="de">German</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Grid>
-              </Grid>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[var(--text-mid)] mb-1.5">Language</label>
+                  <Select value={language} onValueChange={setLanguage}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Language" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="auto">Auto</SelectItem>
+                      <SelectItem value="en">English</SelectItem>
+                      <SelectItem value="fr">French</SelectItem>
+                      <SelectItem value="es">Spanish</SelectItem>
+                      <SelectItem value="de">German</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
 
-              <Box sx={{ mt: 2, px: 1 }}>
-                <Typography variant="caption" color="text.secondary">Speed: {speed}x</Typography>
-                <Slider value={speed} onChange={(_, v) => setSpeed(v as number)}
-                  min={0.5} max={2.0} step={0.1} valueLabelDisplay="auto" />
-              </Box>
+              <div className="mt-4 px-1">
+                <span className="text-xs text-[var(--text-mid)]">Speed: {speed}x</span>
+                <Slider
+                  value={[speed]}
+                  onValueChange={(v) => setSpeed(v[0] ?? 1)}
+                  min={0.5}
+                  max={2.0}
+                  step={0.1}
+                  className="mt-2"
+                />
+              </div>
 
-              <Button variant="contained" fullWidth startIcon={
-                synthesizeMutation.isPending ? <CircularProgress size={18} color="inherit" /> : <VolumeUpIcon />
-              } onClick={handleSynthesize} disabled={!text.trim() || synthesizeMutation.isPending}
-                sx={{ mt: 2 }}>
-                {synthesizeMutation.isPending ? 'Generating...' : 'Generate Speech'}
+              <Button
+                className="w-full mt-4"
+                onClick={handleSynthesize}
+                disabled={!text.trim() || synthesizeMutation.isPending}
+              >
+                {synthesizeMutation.isPending
+                  ? <><Loader2 className="h-4 w-4 animate-spin" /> Generating...</>
+                  : <><Volume2 className="h-4 w-4" /> Generate Speech</>
+                }
               </Button>
 
               {synthesizeMutation.isError && (
-                <Alert severity="error" sx={{ mt: 2 }}>{synthesizeMutation.error.message}</Alert>
+                <Alert variant="destructive" className="mt-4">
+                  <AlertDescription>{synthesizeMutation.error.message}</AlertDescription>
+                </Alert>
               )}
               {synthesizeMutation.isSuccess && (
-                <Alert severity="success" sx={{ mt: 2 }}>
-                  Audio generated! Status: {synthesizeMutation.data.status}
-                  {synthesizeMutation.data.audio_url && (
-                    <Box sx={{ mt: 1 }}>
-                      <Chip label={`Duration: ~${synthesizeMutation.data.duration_s?.toFixed(1)}s`} size="small" />
-                    </Box>
-                  )}
+                <Alert variant="success" className="mt-4">
+                  <AlertDescription>
+                    Audio generated! Status: {synthesizeMutation.data.status}
+                    {synthesizeMutation.data.audio_url && (
+                      <div className="mt-1">
+                        <Badge variant="outline">Duration: ~{synthesizeMutation.data.duration_s?.toFixed(1)}s</Badge>
+                      </div>
+                    )}
+                  </AlertDescription>
                 </Alert>
               )}
             </CardContent>
           </Card>
-        </Grid>
+        </div>
 
         {/* History */}
-        <Grid item xs={12} md={5}>
+        <div className="md:col-span-5">
           <Card>
-            <CardContent>
-              <Typography variant="h6" sx={{ mb: 2 }}>Synthesis History</Typography>
-              {isLoading ? <Skeleton variant="rectangular" height={300} /> : !syntheses?.length ? (
-                <Typography color="text.secondary">No syntheses yet</Typography>
+            <CardContent className="p-6">
+              <h3 className="text-lg font-semibold text-[var(--text-high)] mb-4">Synthesis History</h3>
+              {isLoading ? <Skeleton className="h-[300px] w-full" /> : !syntheses?.length ? (
+                <p className="text-sm text-[var(--text-mid)]">No syntheses yet</p>
               ) : (
                 syntheses.map((s) => (
-                  <Card key={s.id} variant="outlined" sx={{ mb: 1 }}>
-                    <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <Box>
-                          <Chip label={s.status} size="small" color={STATUS_COLORS[s.status] || 'default'} sx={{ mr: 0.5 }} />
-                          <Chip label={s.provider} size="small" variant="outlined" sx={{ mr: 0.5 }} />
-                          {s.target_language && <Chip icon={<TranslateIcon />} label={s.target_language} size="small" variant="outlined" />}
-                        </Box>
-                        {s.duration_s && <Typography variant="caption">{s.duration_s.toFixed(1)}s</Typography>}
-                      </Box>
-                      <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+                  <Card key={s.id} className="mb-2 border border-[var(--border)]">
+                    <CardContent className="py-3 px-4">
+                      <div className="flex justify-between items-center">
+                        <div className="flex items-center gap-1">
+                          <Badge variant={STATUS_VARIANTS[s.status] || 'secondary'}>{s.status}</Badge>
+                          <Badge variant="outline">{s.provider}</Badge>
+                          {s.target_language && (
+                            <Badge variant="outline" className="flex items-center gap-1">
+                              <Languages className="h-3 w-3" />{s.target_language}
+                            </Badge>
+                          )}
+                        </div>
+                        {s.duration_s && <span className="text-xs text-[var(--text-mid)]">{s.duration_s.toFixed(1)}s</span>}
+                      </div>
+                      <span className="text-xs text-[var(--text-mid)] mt-1 block">
                         {new Date(s.created_at).toLocaleString()}
-                      </Typography>
+                      </span>
                     </CardContent>
                   </Card>
                 ))
               )}
             </CardContent>
           </Card>
-        </Grid>
-      </Grid>
-    </Box>
+        </div>
+      </div>
+    </div>
   );
 }

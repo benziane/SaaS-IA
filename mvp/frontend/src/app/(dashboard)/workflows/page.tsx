@@ -1,36 +1,24 @@
 'use client';
 
 import { useState } from 'react';
+import { GitBranch, Play, Plus, Trash2, Clock, Sparkles, Copy, Loader2, AlertCircle } from 'lucide-react';
+
+import { Card, CardContent, CardFooter } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Progress } from '@/components/ui/progress';
+import { Button } from '@/lib/design-hub/components/Button';
+import { Input } from '@/lib/design-hub/components/Input';
+import { Skeleton } from '@/lib/design-hub/components/Skeleton';
+import { Textarea } from '@/lib/design-hub/components/Textarea';
 import {
-  Alert,
-  Box,
-  Button,
-  Card,
-  CardActions,
-  CardContent,
-  Chip,
-  CircularProgress,
   Dialog,
-  DialogActions,
   DialogContent,
+  DialogHeader,
+  DialogFooter,
   DialogTitle,
-  Grid,
-  IconButton,
-  LinearProgress,
-  Skeleton,
-  Step,
-  StepLabel,
-  Stepper,
-  TextField,
-  Typography,
-} from '@mui/material';
-import AddIcon from '@mui/icons-material/Add';
-import PlayArrowIcon from '@mui/icons-material/PlayArrow';
-import DeleteIcon from '@mui/icons-material/Delete';
-import HistoryIcon from '@mui/icons-material/History';
-import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
-import AccountTreeIcon from '@mui/icons-material/AccountTree';
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+  DialogDescription,
+} from '@/lib/design-hub/components/Dialog';
 
 import {
   useCreateFromTemplate,
@@ -43,15 +31,15 @@ import {
 } from '@/features/workflows/hooks/useWorkflows';
 import type { WorkflowRun } from '@/features/workflows/types';
 
-const STATUS_COLORS: Record<string, 'default' | 'primary' | 'success' | 'error' | 'warning' | 'info'> = {
-  draft: 'default',
-  active: 'primary',
+const STATUS_VARIANTS: Record<string, 'secondary' | 'default' | 'success' | 'destructive' | 'warning' | 'outline'> = {
+  draft: 'secondary',
+  active: 'default',
   paused: 'warning',
-  archived: 'default',
-  pending: 'default',
-  running: 'info',
+  archived: 'secondary',
+  pending: 'secondary',
+  running: 'outline',
   completed: 'success',
-  failed: 'error',
+  failed: 'destructive',
   cancelled: 'warning',
 };
 
@@ -138,190 +126,174 @@ export default function WorkflowsPage() {
   };
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
-        <Box>
-          <Typography variant="h4" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <AccountTreeIcon color="primary" /> AI Workflows
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
+    <div className="p-6">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold flex items-center gap-2 text-[var(--text-high)]">
+            <GitBranch className="h-7 w-7 text-[var(--accent)]" /> AI Workflows
+          </h1>
+          <p className="text-sm text-[var(--text-mid)]">
             Build no-code AI automation workflows with triggers, actions, and templates
-          </Typography>
-        </Box>
-        <Box sx={{ display: 'flex', gap: 1 }}>
-          <Button variant="outlined" startIcon={<AutoFixHighIcon />} onClick={() => setTemplatesOpen(true)}>
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setTemplatesOpen(true)}>
+            <Sparkles className="h-4 w-4 mr-2" />
             Templates
           </Button>
-          <Button variant="contained" startIcon={<AddIcon />} onClick={() => setCreateOpen(true)}>
+          <Button onClick={() => setCreateOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
             New Workflow
           </Button>
-        </Box>
-      </Box>
+        </div>
+      </div>
 
       {/* Templates Section */}
       {templates && templates.length > 0 && !workflows?.length && (
-        <Box sx={{ mb: 3 }}>
-          <Typography variant="h6" sx={{ mb: 2 }}>Quick Start with Templates</Typography>
-          <Grid container spacing={2}>
+        <div className="mb-6">
+          <h2 className="text-lg font-semibold text-[var(--text-high)] mb-4">Quick Start with Templates</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {templates.slice(0, 3).map((template) => (
-              <Grid item xs={12} sm={4} key={template.id}>
-                <Card
-                  variant="outlined"
-                  sx={{ cursor: 'pointer', '&:hover': { borderColor: 'primary.main', bgcolor: 'action.hover' } }}
-                  onClick={() => handleUseTemplate(template.id)}
-                >
-                  <CardContent>
-                    <Typography variant="subtitle1" fontWeight="bold">{template.name}</Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, mb: 1 }}>
-                      {template.description}
-                    </Typography>
-                    <Box sx={{ display: 'flex', gap: 0.5 }}>
-                      <Chip label={template.category} size="small" color="primary" variant="outlined" />
-                      <Chip label={`${template.nodes.length} steps`} size="small" variant="outlined" />
-                    </Box>
-                  </CardContent>
-                </Card>
-              </Grid>
+              <Card
+                key={template.id}
+                className="cursor-pointer hover:border-[var(--accent)] hover:bg-[var(--bg-elevated)] transition-colors"
+                onClick={() => handleUseTemplate(template.id)}
+              >
+                <CardContent className="p-4">
+                  <h4 className="text-base font-bold text-[var(--text-high)]">{template.name}</h4>
+                  <p className="text-sm text-[var(--text-mid)] mt-1 mb-2">
+                    {template.description}
+                  </p>
+                  <div className="flex gap-1">
+                    <Badge variant="outline">{template.category}</Badge>
+                    <Badge variant="outline">{template.nodes.length} steps</Badge>
+                  </div>
+                </CardContent>
+              </Card>
             ))}
-          </Grid>
-        </Box>
+          </div>
+        </div>
       )}
 
       {/* Workflows Grid */}
       {isLoading ? (
-        <Grid container spacing={3}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
           {[1, 2, 3].map((i) => (
-            <Grid item xs={12} sm={6} md={4} key={i}>
-              <Skeleton variant="rectangular" height={220} sx={{ borderRadius: 1 }} />
-            </Grid>
+            <Skeleton key={i} className="h-[220px] w-full rounded" />
           ))}
-        </Grid>
+        </div>
       ) : !workflows?.length ? (
         <Card>
-          <CardContent sx={{ textAlign: 'center', py: 8 }}>
-            <AccountTreeIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
-            <Typography variant="h6" color="text.secondary">No workflows yet</Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 1, mb: 2 }}>
+          <CardContent className="text-center py-16">
+            <GitBranch className="h-16 w-16 text-[var(--text-low)] mb-4 mx-auto" />
+            <h3 className="text-lg font-semibold text-[var(--text-mid)]">No workflows yet</h3>
+            <p className="text-sm text-[var(--text-mid)] mt-2 mb-4">
               Create a workflow from scratch or use a template to get started
-            </Typography>
-            <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
-              <Button variant="outlined" onClick={() => setTemplatesOpen(true)}>Browse Templates</Button>
-              <Button variant="contained" onClick={() => setCreateOpen(true)}>Create Blank</Button>
-            </Box>
+            </p>
+            <div className="flex gap-2 justify-center">
+              <Button variant="outline" onClick={() => setTemplatesOpen(true)}>Browse Templates</Button>
+              <Button onClick={() => setCreateOpen(true)}>Create Blank</Button>
+            </div>
           </CardContent>
         </Card>
       ) : (
-        <Grid container spacing={3}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
           {workflows.map((workflow) => (
-            <Grid item xs={12} sm={6} md={4} key={workflow.id}>
-              <Card variant="outlined" sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-                <CardContent sx={{ flex: 1 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
-                    <Typography variant="subtitle1" fontWeight="bold" noWrap>
-                      {workflow.name}
-                    </Typography>
-                    <Chip
-                      label={workflow.status}
-                      size="small"
-                      color={STATUS_COLORS[workflow.status] || 'default'}
-                    />
-                  </Box>
-                  {workflow.description && (
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5, overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
-                      {workflow.description}
-                    </Typography>
-                  )}
+            <Card key={workflow.id} className="h-full flex flex-col">
+              <CardContent className="p-4 flex-1">
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="text-base font-bold text-[var(--text-high)] truncate">
+                    {workflow.name}
+                  </h4>
+                  <Badge variant={STATUS_VARIANTS[workflow.status] || 'secondary'}>
+                    {workflow.status}
+                  </Badge>
+                </div>
+                {workflow.description && (
+                  <p className="text-sm text-[var(--text-mid)] mb-3 line-clamp-2">
+                    {workflow.description}
+                  </p>
+                )}
 
-                  {/* Node flow preview */}
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 1.5 }}>
-                    {workflow.nodes.map((node, i) => (
-                      <Box key={node.id} sx={{ display: 'flex', alignItems: 'center', gap: 0.3 }}>
-                        <Chip
-                          label={`${ACTION_ICONS[node.action] || '⚙️'} ${node.label || node.action}`}
-                          size="small"
-                          variant="outlined"
-                        />
-                        {i < workflow.nodes.length - 1 && (
-                          <Typography variant="caption" color="text.disabled">→</Typography>
-                        )}
-                      </Box>
-                    ))}
-                  </Box>
-
-                  <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                    <Chip label={TRIGGER_LABELS[workflow.trigger_type] || workflow.trigger_type} size="small" variant="outlined" />
-                    <Chip label={`${workflow.run_count} runs`} size="small" variant="outlined" />
-                    {workflow.template_category && (
-                      <Chip label={workflow.template_category} size="small" color="primary" variant="outlined" />
-                    )}
-                  </Box>
-                </CardContent>
-                <CardActions sx={{ justifyContent: 'space-between', px: 2, pb: 2 }}>
-                  <Box>
-                    <IconButton
-                      size="small"
-                      color="error"
-                      onClick={() => deleteMutation.mutate(workflow.id)}
-                    >
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
-                    <IconButton
-                      size="small"
-                      onClick={() => setSelectedWorkflow(
-                        selectedWorkflow === workflow.id ? null : workflow.id
+                {/* Node flow preview */}
+                <div className="flex flex-wrap gap-1 mb-3">
+                  {workflow.nodes.map((node, i) => (
+                    <div key={node.id} className="flex items-center gap-1">
+                      <Badge variant="outline" className="text-xs">
+                        {ACTION_ICONS[node.action] || '⚙️'} {node.label || node.action}
+                      </Badge>
+                      {i < workflow.nodes.length - 1 && (
+                        <span className="text-xs text-[var(--text-low)]">&rarr;</span>
                       )}
-                    >
-                      <HistoryIcon fontSize="small" />
-                    </IconButton>
-                  </Box>
-                  <Button
-                    variant="contained"
-                    size="small"
-                    startIcon={triggerMutation.isPending ? <CircularProgress size={14} color="inherit" /> : <PlayArrowIcon />}
-                    onClick={() => handleTrigger(workflow.id)}
-                    disabled={triggerMutation.isPending || workflow.nodes.length === 0}
-                  >
-                    Run
+                    </div>
+                  ))}
+                </div>
+
+                <div className="flex gap-1 flex-wrap">
+                  <Badge variant="outline">{TRIGGER_LABELS[workflow.trigger_type] || workflow.trigger_type}</Badge>
+                  <Badge variant="outline">{workflow.run_count} runs</Badge>
+                  {workflow.template_category && (
+                    <Badge variant="default">{workflow.template_category}</Badge>
+                  )}
+                </div>
+              </CardContent>
+              <CardFooter className="flex justify-between px-4 pb-4">
+                <div className="flex gap-1">
+                  <Button variant="ghost" size="icon" className="text-red-400 hover:text-red-300" onClick={() => deleteMutation.mutate(workflow.id)}>
+                    <Trash2 className="h-4 w-4" />
                   </Button>
-                </CardActions>
-              </Card>
-            </Grid>
+                  <Button variant="ghost" size="icon" onClick={() => setSelectedWorkflow(selectedWorkflow === workflow.id ? null : workflow.id)}>
+                    <Clock className="h-4 w-4" />
+                  </Button>
+                </div>
+                <Button
+                  size="sm"
+                  onClick={() => handleTrigger(workflow.id)}
+                  disabled={triggerMutation.isPending || workflow.nodes.length === 0}
+                >
+                  {triggerMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Play className="h-4 w-4 mr-1" />}
+                  Run
+                </Button>
+              </CardFooter>
+            </Card>
           ))}
-        </Grid>
+        </div>
       )}
 
       {/* Run History Panel */}
       {selectedWorkflow && runs && (
-        <Card sx={{ mt: 3 }}>
-          <CardContent>
-            <Typography variant="h6" sx={{ mb: 2 }}>Run History</Typography>
+        <Card className="mt-6">
+          <CardContent className="p-6">
+            <h2 className="text-lg font-semibold text-[var(--text-high)] mb-4">Run History</h2>
             {runs.length === 0 ? (
-              <Typography color="text.secondary">No runs yet</Typography>
+              <p className="text-[var(--text-mid)]">No runs yet</p>
             ) : (
               runs.map((run) => (
-                <Card key={run.id} variant="outlined" sx={{ mb: 1, cursor: 'pointer' }} onClick={() => setRunResult(run)}>
-                  <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Chip label={run.status} size="small" color={STATUS_COLORS[run.status] || 'default'} />
-                        <Typography variant="body2">
+                <Card key={run.id} className="mb-2 cursor-pointer hover:border-[var(--accent)] transition-colors" onClick={() => setRunResult(run)}>
+                  <CardContent className="py-3 px-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Badge variant={STATUS_VARIANTS[run.status] || 'secondary'}>{run.status}</Badge>
+                        <span className="text-sm text-[var(--text-high)]">
                           {run.current_node}/{run.total_nodes} nodes
-                        </Typography>
+                        </span>
                         {run.duration_ms && (
-                          <Typography variant="caption" color="text.secondary">
+                          <span className="text-xs text-[var(--text-mid)]">
                             {(run.duration_ms / 1000).toFixed(1)}s
-                          </Typography>
+                          </span>
                         )}
-                      </Box>
-                      <Typography variant="caption" color="text.secondary">
+                      </div>
+                      <span className="text-xs text-[var(--text-mid)]">
                         {new Date(run.created_at).toLocaleString()}
-                      </Typography>
-                    </Box>
+                      </span>
+                    </div>
                     {run.status === 'running' && (
-                      <LinearProgress sx={{ mt: 1 }} variant="determinate" value={(run.current_node / run.total_nodes) * 100} />
+                      <Progress className="mt-2" value={(run.current_node / run.total_nodes) * 100} />
                     )}
                     {run.error && (
-                      <Alert severity="error" sx={{ mt: 1, py: 0 }}>{run.error}</Alert>
+                      <Alert variant="destructive" className="mt-2 py-1">
+                        <AlertDescription>{run.error}</AlertDescription>
+                      </Alert>
                     )}
                   </CardContent>
                 </Card>
@@ -332,193 +304,187 @@ export default function WorkflowsPage() {
       )}
 
       {/* Run Input Dialog */}
-      <Dialog open={runOpen} onClose={() => setRunOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Run Workflow</DialogTitle>
-        <DialogContent>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Optionally provide input text/data for the first node of the workflow.
-          </Typography>
-          <TextField
-            fullWidth
-            multiline
+      <Dialog open={runOpen} onOpenChange={(v) => { if (!v) setRunOpen(false); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Run Workflow</DialogTitle>
+            <DialogDescription>
+              Optionally provide input text/data for the first node of the workflow.
+            </DialogDescription>
+          </DialogHeader>
+          <Textarea
             rows={4}
-            label="Input Text (optional)"
             placeholder="Enter text, URL, or data to process..."
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
           />
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setRunOpen(false)}>Cancel</Button>
+            <Button
+              onClick={handleRunConfirm}
+              disabled={triggerMutation.isPending}
+            >
+              {triggerMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Play className="h-4 w-4 mr-1" />}
+              Run Now
+            </Button>
+          </DialogFooter>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setRunOpen(false)}>Cancel</Button>
-          <Button
-            variant="contained"
-            onClick={handleRunConfirm}
-            startIcon={triggerMutation.isPending ? <CircularProgress size={16} color="inherit" /> : <PlayArrowIcon />}
-            disabled={triggerMutation.isPending}
-          >
-            Run Now
-          </Button>
-        </DialogActions>
       </Dialog>
 
       {/* Run Result Dialog */}
-      <Dialog open={!!runResult} onClose={() => setRunResult(null)} maxWidth="md" fullWidth>
-        {runResult && (
-          <>
-            <DialogTitle>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Typography variant="h6">Workflow Run</Typography>
-                <Chip label={runResult.status} size="small" color={STATUS_COLORS[runResult.status] || 'default'} />
-                {runResult.duration_ms && (
-                  <Chip label={`${(runResult.duration_ms / 1000).toFixed(1)}s`} size="small" variant="outlined" />
+      <Dialog open={!!runResult} onOpenChange={(v) => { if (!v) setRunResult(null); }}>
+        <DialogContent className="max-w-2xl">
+          {runResult && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  Workflow Run
+                  <Badge variant={STATUS_VARIANTS[runResult.status] || 'secondary'}>{runResult.status}</Badge>
+                  {runResult.duration_ms && (
+                    <Badge variant="outline">{(runResult.duration_ms / 1000).toFixed(1)}s</Badge>
+                  )}
+                </DialogTitle>
+              </DialogHeader>
+              <div className="border-t border-[var(--border)] pt-4 max-h-[60vh] overflow-y-auto space-y-4">
+                {runResult.results.length > 0 ? (
+                  runResult.results.map((result: Record<string, unknown>, i: number) => (
+                    <div key={i} className="pl-4 border-l-2 border-[var(--accent)]">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h4 className="text-sm font-semibold text-[var(--text-high)]">
+                          {ACTION_ICONS[(result.action as string) || ''] || '⚙️'}{' '}
+                          {(result.label as string) || (result.action as string) || `Step ${i + 1}`}
+                        </h4>
+                        {Boolean(result.error) && <Badge variant="destructive">error</Badge>}
+                      </div>
+                      {Boolean(result.output) && (
+                        <div className="relative">
+                          <div className="bg-[var(--bg-elevated)] rounded p-3 text-sm whitespace-pre-wrap max-h-[200px] overflow-auto break-words">
+                            {(result.output as string).substring(0, 1000)}
+                            {(result.output as string).length > 1000 && '...'}
+                          </div>
+                          <button
+                            type="button"
+                            title="Copy to clipboard"
+                            className="absolute top-2 right-2 p-1 rounded hover:bg-[var(--bg-surface)]"
+                            onClick={() => navigator.clipboard.writeText(result.output as string)}
+                          >
+                            <Copy className="h-3 w-3 text-[var(--text-mid)]" />
+                          </button>
+                        </div>
+                      )}
+                      {Boolean(result.error) && (
+                        <Alert variant="destructive" className="mt-2">
+                          <AlertDescription>{result.error as string}</AlertDescription>
+                        </Alert>
+                      )}
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-[var(--text-mid)]">No results yet</p>
                 )}
-              </Box>
-            </DialogTitle>
-            <DialogContent dividers>
-              {runResult.results.length > 0 ? (
-                <Stepper orientation="vertical" activeStep={runResult.results.length}>
-                  {runResult.results.map((result: Record<string, unknown>, i: number) => (
-                    <Step key={i} completed>
-                      <StepLabel>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <Typography variant="subtitle2">
-                            {ACTION_ICONS[(result.action as string) || ''] || '⚙️'}{' '}
-                            {(result.label as string) || (result.action as string) || `Step ${i + 1}`}
-                          </Typography>
-                          {Boolean(result.error) && <Chip label="error" size="small" color="error" />}
-                        </Box>
-                      </StepLabel>
-                      <Box sx={{ ml: 4, mb: 2 }}>
-                        {Boolean(result.output) && (
-                          <Box sx={{ position: 'relative' }}>
-                            <Box
-                              sx={{
-                                p: 1.5,
-                                bgcolor: 'action.hover',
-                                borderRadius: 1,
-                                fontSize: '0.85rem',
-                                whiteSpace: 'pre-wrap',
-                                maxHeight: 200,
-                                overflow: 'auto',
-                                wordBreak: 'break-word',
-                              }}
-                            >
-                              {(result.output as string).substring(0, 1000)}
-                              {(result.output as string).length > 1000 && '...'}
-                            </Box>
-                            <IconButton
-                              size="small"
-                              sx={{ position: 'absolute', top: 4, right: 4 }}
-                              onClick={() => navigator.clipboard.writeText(result.output as string)}
-                            >
-                              <ContentCopyIcon fontSize="small" />
-                            </IconButton>
-                          </Box>
-                        )}
-                        {Boolean(result.error) && (
-                          <Alert severity="error" sx={{ mt: 1 }}>{result.error as string}</Alert>
-                        )}
-                      </Box>
-                    </Step>
-                  ))}
-                </Stepper>
-              ) : (
-                <Typography color="text.secondary">No results yet</Typography>
-              )}
-              {runResult.error && (
-                <Alert severity="error" sx={{ mt: 2 }}>{runResult.error}</Alert>
-              )}
-            </DialogContent>
-            <DialogActions>
-              <Button onClick={() => setRunResult(null)}>Close</Button>
-            </DialogActions>
-          </>
-        )}
+                {runResult.error && (
+                  <Alert variant="destructive" className="mt-4">
+                    <AlertDescription>{runResult.error}</AlertDescription>
+                  </Alert>
+                )}
+              </div>
+              <DialogFooter>
+                <Button variant="ghost" onClick={() => setRunResult(null)}>Close</Button>
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
       </Dialog>
 
       {/* Templates Dialog */}
-      <Dialog open={templatesOpen} onClose={() => setTemplatesOpen(false)} maxWidth="md" fullWidth>
-        <DialogTitle>Workflow Templates</DialogTitle>
-        <DialogContent>
-          <Grid container spacing={2} sx={{ mt: 0 }}>
+      <Dialog open={templatesOpen} onOpenChange={(v) => { if (!v) setTemplatesOpen(false); }}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Workflow Templates</DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
             {templates?.map((template) => (
-              <Grid item xs={12} sm={6} key={template.id}>
-                <Card
-                  variant="outlined"
-                  sx={{ cursor: 'pointer', '&:hover': { borderColor: 'primary.main', bgcolor: 'action.hover' } }}
-                  onClick={() => handleUseTemplate(template.id)}
-                >
-                  <CardContent>
-                    <Typography variant="subtitle1" fontWeight="bold">{template.name}</Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, mb: 1.5 }}>
-                      {template.description}
-                    </Typography>
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 1 }}>
-                      {template.nodes.map((node, i) => (
-                        <Box key={node.id} sx={{ display: 'flex', alignItems: 'center', gap: 0.3 }}>
-                          <Chip
-                            label={`${ACTION_ICONS[node.action] || '⚙️'} ${node.label}`}
-                            size="small"
-                            variant="outlined"
-                          />
-                          {i < template.nodes.length - 1 && (
-                            <Typography variant="caption" color="text.disabled">→</Typography>
-                          )}
-                        </Box>
-                      ))}
-                    </Box>
-                    <Chip label={template.category} size="small" color="primary" variant="outlined" />
-                  </CardContent>
-                </Card>
-              </Grid>
+              <Card
+                key={template.id}
+                className="cursor-pointer hover:border-[var(--accent)] hover:bg-[var(--bg-elevated)] transition-colors"
+                onClick={() => handleUseTemplate(template.id)}
+              >
+                <CardContent className="p-4">
+                  <h4 className="text-base font-bold text-[var(--text-high)]">{template.name}</h4>
+                  <p className="text-sm text-[var(--text-mid)] mt-1 mb-3">
+                    {template.description}
+                  </p>
+                  <div className="flex flex-wrap gap-1 mb-2">
+                    {template.nodes.map((node, i) => (
+                      <div key={node.id} className="flex items-center gap-1">
+                        <Badge variant="outline" className="text-xs">
+                          {ACTION_ICONS[node.action] || '⚙️'} {node.label}
+                        </Badge>
+                        {i < template.nodes.length - 1 && (
+                          <span className="text-xs text-[var(--text-low)]">&rarr;</span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  <Badge variant="default">{template.category}</Badge>
+                </CardContent>
+              </Card>
             ))}
-          </Grid>
+          </div>
           {createFromTemplateMutation.isPending && (
-            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
-              <CircularProgress />
-            </Box>
+            <div className="flex justify-center mt-4">
+              <Loader2 className="h-6 w-6 animate-spin text-[var(--accent)]" />
+            </div>
           )}
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setTemplatesOpen(false)}>Close</Button>
+          </DialogFooter>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setTemplatesOpen(false)}>Close</Button>
-        </DialogActions>
       </Dialog>
 
       {/* Create Blank Dialog */}
-      <Dialog open={createOpen} onClose={() => setCreateOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>New Workflow</DialogTitle>
-        <DialogContent>
-          <TextField
-            fullWidth
-            label="Workflow Name"
-            value={newName}
-            onChange={(e) => setNewName(e.target.value)}
-            sx={{ mt: 1, mb: 2 }}
-          />
-          <TextField
-            fullWidth
-            multiline
-            rows={2}
-            label="Description (optional)"
-            value={newDesc}
-            onChange={(e) => setNewDesc(e.target.value)}
-          />
+      <Dialog open={createOpen} onOpenChange={(v) => { if (!v) setCreateOpen(false); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>New Workflow</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium text-[var(--text-high)] mb-1 block">Workflow Name</label>
+              <Input
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                placeholder="Workflow name"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-[var(--text-high)] mb-1 block">Description (optional)</label>
+              <Textarea
+                rows={2}
+                value={newDesc}
+                onChange={(e) => setNewDesc(e.target.value)}
+                placeholder="Description"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setCreateOpen(false)}>Cancel</Button>
+            <Button
+              onClick={handleCreateBlank}
+              disabled={!newName.trim() || createMutation.isPending}
+            >
+              Create
+            </Button>
+          </DialogFooter>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setCreateOpen(false)}>Cancel</Button>
-          <Button
-            variant="contained"
-            onClick={handleCreateBlank}
-            disabled={!newName.trim() || createMutation.isPending}
-          >
-            Create
-          </Button>
-        </DialogActions>
       </Dialog>
 
       {triggerMutation.isError && (
-        <Alert severity="error" sx={{ mt: 2 }}>{triggerMutation.error?.message}</Alert>
+        <Alert variant="destructive" className="mt-4">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{triggerMutation.error?.message}</AlertDescription>
+        </Alert>
       )}
-    </Box>
+    </div>
   );
 }

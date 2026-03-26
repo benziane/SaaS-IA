@@ -1,15 +1,15 @@
 'use client';
 
 import { useState } from 'react';
-import {
-  Alert, Box, Button, Card, CardContent, Chip, CircularProgress,
-  FormControl, Grid, InputLabel, MenuItem, Select,
-  Skeleton, TextField, Typography,
-} from '@mui/material';
-import ImageIcon from '@mui/icons-material/Image';
-import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
-import DeleteIcon from '@mui/icons-material/Delete';
-import IconButton from '@mui/material/IconButton';
+import { ImageIcon, Loader2, Sparkles, Trash2 } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/lib/design-hub/components/Button';
+import { Textarea } from '@/lib/design-hub/components/Textarea';
+import { Input } from '@/lib/design-hub/components/Input';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/lib/design-hub/components/Select';
+import { Skeleton } from '@/lib/design-hub/components/Skeleton';
 
 import { useDeleteImage, useGenerateImage, useImages } from '@/features/image-gen/hooks/useImageGen';
 
@@ -24,8 +24,8 @@ const STYLES = [
   { id: 'watercolor', label: 'Watercolor', icon: '🌊' },
 ];
 
-const STATUS_COLORS: Record<string, 'default' | 'info' | 'success' | 'error'> = {
-  pending: 'default', generating: 'info', completed: 'success', failed: 'error',
+const STATUS_VARIANTS: Record<string, 'secondary' | 'default' | 'success' | 'destructive'> = {
+  pending: 'secondary', generating: 'default', completed: 'success', failed: 'destructive',
 };
 
 export default function ImagesPage() {
@@ -45,106 +45,141 @@ export default function ImagesPage() {
   };
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h4" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <ImageIcon color="primary" /> Image Studio
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
+    <div className="p-6">
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-[var(--text-high)] flex items-center gap-2">
+          <ImageIcon className="h-7 w-7 text-[var(--accent)]" /> Image Studio
+        </h1>
+        <p className="text-sm text-[var(--text-mid)]">
           Generate AI images, thumbnails, and visual content
-        </Typography>
-      </Box>
+        </p>
+      </div>
 
-      <Grid container spacing={3}>
-        <Grid item xs={12} md={5}>
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+        <div className="md:col-span-5">
           <Card>
-            <CardContent>
-              <Typography variant="h6" sx={{ mb: 2 }}>Generate Image</Typography>
-              <TextField fullWidth multiline rows={4} label="Prompt" placeholder="Describe the image you want to create..."
-                value={prompt} onChange={(e) => setPrompt(e.target.value)} sx={{ mb: 2 }} />
-              <TextField fullWidth size="small" label="Negative prompt (optional)" placeholder="What to avoid..."
-                value={negPrompt} onChange={(e) => setNegPrompt(e.target.value)} sx={{ mb: 2 }} />
+            <CardContent className="p-6">
+              <h3 className="text-lg font-semibold text-[var(--text-high)] mb-4">Generate Image</h3>
+              <Textarea
+                rows={4}
+                placeholder="Describe the image you want to create..."
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                className="mb-4"
+              />
+              <Input
+                placeholder="Negative prompt — what to avoid... (optional)"
+                value={negPrompt}
+                onChange={(e) => setNegPrompt(e.target.value)}
+                className="mb-4"
+              />
 
-              <Typography variant="subtitle2" sx={{ mb: 1 }}>Style</Typography>
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 2 }}>
+              <h4 className="text-sm font-medium text-[var(--text-high)] mb-2">Style</h4>
+              <div className="flex flex-wrap gap-1.5 mb-4">
                 {STYLES.map((s) => (
-                  <Chip key={s.id} label={`${s.icon} ${s.label}`} size="small"
-                    variant={style === s.id ? 'filled' : 'outlined'}
-                    color={style === s.id ? 'primary' : 'default'}
-                    onClick={() => setStyle(s.id)} />
+                  <Badge
+                    key={s.id}
+                    variant={style === s.id ? 'default' : 'outline'}
+                    className="cursor-pointer"
+                    onClick={() => setStyle(s.id)}
+                  >
+                    {s.icon} {s.label}
+                  </Badge>
                 ))}
-              </Box>
+              </div>
 
-              <Grid container spacing={1} sx={{ mb: 2 }}>
-                <Grid item xs={6}>
-                  <FormControl fullWidth size="small">
-                    <InputLabel>Width</InputLabel>
-                    <Select value={width} label="Width" onChange={(e) => setWidth(Number(e.target.value))}>
-                      {[512, 768, 1024, 1280, 1536, 1920].map((w) => <MenuItem key={w} value={w}>{w}px</MenuItem>)}
-                    </Select>
-                  </FormControl>
-                </Grid>
-                <Grid item xs={6}>
-                  <FormControl fullWidth size="small">
-                    <InputLabel>Height</InputLabel>
-                    <Select value={height} label="Height" onChange={(e) => setHeight(Number(e.target.value))}>
-                      {[512, 768, 1024, 1280, 1536, 1920].map((h) => <MenuItem key={h} value={h}>{h}px</MenuItem>)}
-                    </Select>
-                  </FormControl>
-                </Grid>
-              </Grid>
+              <div className="grid grid-cols-2 gap-2 mb-4">
+                <div>
+                  <label className="block text-sm font-medium text-[var(--text-mid)] mb-1.5">Width</label>
+                  <Select value={String(width)} onValueChange={(v) => setWidth(Number(v))}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Width" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {[512, 768, 1024, 1280, 1536, 1920].map((w) => (
+                        <SelectItem key={w} value={String(w)}>{w}px</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[var(--text-mid)] mb-1.5">Height</label>
+                  <Select value={String(height)} onValueChange={(v) => setHeight(Number(v))}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Height" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {[512, 768, 1024, 1280, 1536, 1920].map((h) => (
+                        <SelectItem key={h} value={String(h)}>{h}px</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
 
-              <Button variant="contained" fullWidth onClick={handleGenerate}
+              <Button
+                className="w-full"
+                onClick={handleGenerate}
                 disabled={!prompt.trim() || genMutation.isPending}
-                startIcon={genMutation.isPending ? <CircularProgress size={18} color="inherit" /> : <AutoAwesomeIcon />}>
-                {genMutation.isPending ? 'Generating...' : 'Generate Image'}
+              >
+                {genMutation.isPending
+                  ? <><Loader2 className="h-4 w-4 animate-spin" /> Generating...</>
+                  : <><Sparkles className="h-4 w-4" /> Generate Image</>
+                }
               </Button>
-              {genMutation.isError && <Alert severity="error" sx={{ mt: 2 }}>{genMutation.error.message}</Alert>}
-            </CardContent>
-          </Card>
-        </Grid>
-
-        <Grid item xs={12} md={7}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" sx={{ mb: 2 }}>Gallery</Typography>
-              {isLoading ? <Skeleton variant="rectangular" height={400} /> : !images?.length ? (
-                <Box sx={{ textAlign: 'center', py: 6 }}>
-                  <ImageIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 1 }} />
-                  <Typography color="text.secondary">No images yet. Generate your first one!</Typography>
-                </Box>
-              ) : (
-                <Grid container spacing={1.5}>
-                  {images.map((img) => (
-                    <Grid item xs={6} sm={4} key={img.id}>
-                      <Card variant="outlined" sx={{ position: 'relative' }}>
-                        <Box sx={{ height: 160, bgcolor: 'action.hover', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          {img.status === 'completed' ? (
-                            <Typography variant="caption" sx={{ p: 1, textAlign: 'center' }}>{img.prompt.substring(0, 60)}...</Typography>
-                          ) : img.status === 'generating' ? (
-                            <CircularProgress size={24} />
-                          ) : (
-                            <Typography color="error" variant="caption">Failed</Typography>
-                          )}
-                        </Box>
-                        <Box sx={{ p: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <Box sx={{ display: 'flex', gap: 0.5 }}>
-                            <Chip label={img.style} size="small" variant="outlined" />
-                            <Chip label={img.status} size="small" color={STATUS_COLORS[img.status] || 'default'} />
-                          </Box>
-                          <IconButton size="small" color="error" onClick={() => deleteMutation.mutate(img.id)}>
-                            <DeleteIcon fontSize="small" />
-                          </IconButton>
-                        </Box>
-                      </Card>
-                    </Grid>
-                  ))}
-                </Grid>
+              {genMutation.isError && (
+                <Alert variant="destructive" className="mt-4">
+                  <AlertDescription>{genMutation.error.message}</AlertDescription>
+                </Alert>
               )}
             </CardContent>
           </Card>
-        </Grid>
-      </Grid>
-    </Box>
+        </div>
+
+        <div className="md:col-span-7">
+          <Card>
+            <CardContent className="p-6">
+              <h3 className="text-lg font-semibold text-[var(--text-high)] mb-4">Gallery</h3>
+              {isLoading ? <Skeleton className="h-[400px] w-full" /> : !images?.length ? (
+                <div className="text-center py-12">
+                  <ImageIcon className="h-16 w-16 text-[var(--text-low)] mx-auto mb-2" />
+                  <p className="text-sm text-[var(--text-mid)]">No images yet. Generate your first one!</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {images.map((img) => (
+                    <Card key={img.id} className="border border-[var(--border)] relative">
+                      <div className="h-40 bg-[var(--bg-elevated)] flex items-center justify-center">
+                        {img.status === 'completed' ? (
+                          <span className="text-xs text-[var(--text-mid)] p-2 text-center">{img.prompt.substring(0, 60)}...</span>
+                        ) : img.status === 'generating' ? (
+                          <Loader2 className="h-6 w-6 animate-spin text-[var(--accent)]" />
+                        ) : (
+                          <span className="text-xs text-red-400">Failed</span>
+                        )}
+                      </div>
+                      <div className="p-2 flex justify-between items-center">
+                        <div className="flex gap-1">
+                          <Badge variant="outline">{img.style}</Badge>
+                          <Badge variant={STATUS_VARIANTS[img.status] || 'secondary'}>{img.status}</Badge>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-red-400 hover:text-red-300"
+                          onClick={() => deleteMutation.mutate(img.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
   );
 }
