@@ -211,19 +211,26 @@ class TestBillingServiceConsumeQuota:
 
     @pytest.mark.asyncio
     async def test_consume_quota_increments_usage(self):
-        """consume_quota should increment the correct counter."""
+        """consume_quota should issue an atomic SQL UPDATE for the correct column."""
         user_id = uuid4()
         plan = _make_plan("free")
         quota = _make_quota(user_id, plan.id, transcriptions_used=3)
 
         session = AsyncMock()
         session.commit = AsyncMock()
+        session.execute = AsyncMock()
 
         from app.modules.billing.service import BillingService
         with patch.object(BillingService, "get_user_quota", new_callable=AsyncMock, return_value=(quota, plan)):
             await BillingService.consume_quota(user_id, "transcription", 1, session)
 
-        assert quota.transcriptions_used == 4
+        session.execute.assert_awaited()
+        update_call = session.execute.call_args[0][0]
+        compiled = update_call.compile(compile_kwargs={"literal_binds": True})
+        compiled_str = str(compiled)
+        assert "user_quotas" in compiled_str
+        assert "transcriptions_used" in compiled_str
+        session.commit.assert_awaited()
 
 
 class TestPlanFeatures:
@@ -379,16 +386,23 @@ class TestBillingPlanUpgrade:
 
     @pytest.mark.asyncio
     async def test_consume_quota_audio_minutes(self):
-        """consume_quota increments audio_minutes_used."""
+        """consume_quota issues an atomic SQL UPDATE for audio_minutes_used."""
         user_id = uuid4()
         plan = _make_plan("pro")
         quota = _make_quota(user_id, plan.id, audio_minutes_used=100)
 
         session = AsyncMock()
         session.commit = AsyncMock()
+        session.execute = AsyncMock()
 
         from app.modules.billing.service import BillingService
         with patch.object(BillingService, "get_user_quota", new_callable=AsyncMock, return_value=(quota, plan)):
             await BillingService.consume_quota(user_id, "audio_minutes", 15, session)
 
-        assert quota.audio_minutes_used == 115
+        session.execute.assert_awaited()
+        update_call = session.execute.call_args[0][0]
+        compiled = update_call.compile(compile_kwargs={"literal_binds": True})
+        compiled_str = str(compiled)
+        assert "user_quotas" in compiled_str
+        assert "audio_minutes_used" in compiled_str
+        session.commit.assert_awaited()

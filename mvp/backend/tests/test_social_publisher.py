@@ -67,13 +67,16 @@ class TestSocialPublisherService:
             session=session,
         )
 
+        from app.modules.social_publisher.service import decrypt_token
+
         assert account.platform == "twitter"
         assert account.account_name == "@testaccount"
         assert account.user_id == user_id
         assert account.is_active is True
-        # Token should be hashed, not stored as plaintext
+        # Token should be encrypted, not stored as plaintext
         assert account.access_token_hash != "oauth_token_12345"
-        assert len(account.access_token_hash) == 64  # SHA-256 hex digest
+        # Encrypted token can be decrypted back to the original
+        assert decrypt_token(account.access_token_hash) == "oauth_token_12345"
 
     async def test_connect_account_invalid_platform(self, session):
         from app.modules.social_publisher.service import SocialPublisherService
