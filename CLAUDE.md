@@ -112,7 +112,7 @@ social_publisher (multi-platform publishing, scheduling, analytics), integration
 presentation_gen (AI slides, 5 templates, export HTML/MD/PDF), code_sandbox (secure execution, AI code gen/debug), ai_forms (conversational forms, AI generation, scoring)
 
 ### Tools (1)
-skill_seekers (GitHub repo scraper + Claude AI packager, mock mode, async CLI execution)
+skill_seekers (GitHub repo scraper + Claude AI packager, mock mode, async CLI, 13 endpoints, Celery support, HMAC signed downloads, auto-index KB, catalogue UI, retry/cancel/preview)
 
 ### New (3)
 repo_analyzer (git CLI analysis, code metrics), pdf_processor (PyMuPDF + pdfplumber, text/table extraction), audio_studio (pydub + noisereduce, audio editing)

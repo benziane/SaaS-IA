@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "WebFetch(domain:oneuptime.com)",
+      "WebFetch(domain:medium.com)",
+      "WebFetch(domain:nataliamalesa.com)",
+      "WebFetch(domain:dev.to)"
+    ]
+  }
+}

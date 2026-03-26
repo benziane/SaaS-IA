@@ -554,12 +554,19 @@
 
 | Method | Path | Description | Auth | Rate Limit |
 |--------|------|-------------|------|------------|
-| POST | `/api/skill-seekers/jobs` | Create scrape job | Yes | 5/min |
-| GET | `/api/skill-seekers/jobs` | List jobs (paginated) | Yes | 30/min |
+| POST | `/api/skill-seekers/jobs` | Create scrape job (max 5 concurrent) | Yes | 5/min |
+| GET | `/api/skill-seekers/jobs` | List jobs (paginated, ?status= filter) | Yes | 30/min |
+| GET | `/api/skill-seekers/jobs/stats` | User statistics (total, completed, failed, repos) | Yes | 20/min |
 | GET | `/api/skill-seekers/jobs/{id}` | Get job detail | Yes | 30/min |
-| DELETE | `/api/skill-seekers/jobs/{id}` | Delete job | Yes | 5/min |
-| GET | `/api/skill-seekers/jobs/{id}/download/{filename}` | Download output file | Yes | 30/min |
-| GET | `/api/skill-seekers/status` | Check CLI status | No | 30/min |
+| DELETE | `/api/skill-seekers/jobs/{id}` | Delete job + cleanup files | Yes | 5/min |
+| POST | `/api/skill-seekers/jobs/{id}/retry` | Retry a failed job (clones + re-launches) | Yes | 5/min |
+| POST | `/api/skill-seekers/jobs/{id}/cancel` | Cancel a running/pending job | Yes | 5/min |
+| GET | `/api/skill-seekers/jobs/{id}/preview/{filename}` | Preview first N chars of output file | Yes | 30/min |
+| GET | `/api/skill-seekers/jobs/{id}/download/{filename}` | Download output file (JWT auth) | Yes | 30/min |
+| GET | `/api/skill-seekers/jobs/{id}/download-token/{filename}` | Generate signed download token (5 min TTL) | Yes | 30/min |
+| GET | `/api/skill-seekers/jobs/{id}/dl/{filename}?token=` | Download with signed token (no JWT) | No | 30/min |
+| GET | `/api/skill-seekers/status` | Check CLI status + version | No | 30/min |
+| POST | `/api/skill-seekers/cleanup` | Cleanup old jobs (admin only) | Yes | 2/min |
 
 ---
 

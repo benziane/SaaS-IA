@@ -1,0 +1,30 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(tee /dev/null)",
+      "Bash(git add:*)",
+      "Bash(*)",
+      "Write(*)",
+      "Read(//c/Users/ibzpc/AppData/Roaming/Python/Python313/site-packages/slowapi/**)",
+      "Read(//c/Users/ibzpc/Git/design-hub/**)",
+      "Read(//c/Users/ibzpc/Git/design-hub/catalog/**)",
+      "Read(//c/Users/ibzpc/Git/design-system/**)",
+      "Read(//c/Users/ibzpc/Git/cockpit-ui/**)",
+      "Read(//c/Users/ibzpc/Git/WeLAB/frontend/**)",
+      "Read(//c/Users/ibzpc/Git/lab-saas/frontend/**)",
+      "Read(//c/Users/ibzpc/Git/ai-coos/frontend/**)",
+      "Read(//c/Users/ibzpc/Git/TRT-AI-Hub/trt-ai-hub-monorepo/packages/design-system/**)",
+      "Read(//c/Users/ibzpc/Git/TRT-AI-Hub/trt-ai-hub-monorepo/**)",
+      "Read(//c/Users/ibzpc/Git/design/materio-ds/**)",
+      "Read(//c/Users/ibzpc/Git/sifate-voyage-design/**)",
+      "Read(//c/Users/ibzpc/Git/sifate-voyage/**)",
+      "Read(//c/Users/ibzpc/Git/automation_tool/design-system/**)",
+      "Edit(/.claude/skills/ai-provider/**)",
+      "Edit(/.claude/skills/security-audit/**)",
+      "Edit(/.claude/skills/module-scaffold/**)"
+    ],
+    "additionalDirectories": [
+      "\\tmp"
+    ]
+  }
+}

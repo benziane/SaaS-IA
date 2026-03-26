@@ -116,7 +116,7 @@ Les migrations Alembic dans `mvp/backend/alembic/versions/`.
 
 | Module | Pattern | Source d'inspiration | Libs utilisees | Fallback | Pourquoi cette approche | Alternative possible |
 |--------|---------|---------------------|----------------|----------|------------------------|---------------------|
-| **skill_seekers** | C | skill-seekers CLI (GitHub) | `skill-seekers` (CLI) | Mock mode (donnees simulees) | Scraping de repos GitHub + packaging IA via CLI externe | - |
+| **skill_seekers** | C | skill-seekers CLI (GitHub) | `skill-seekers` (CLI) | Mock mode (donnees simulees) | Scraping de repos GitHub + packaging IA via CLI externe, auto-index KB, Celery support, signed downloads | repomix, gitingest |
 
 ### New (3 modules)
 
@@ -186,6 +186,7 @@ class ModuleService:
 | unified_search | `HAS_MEILISEARCH` | meilisearch | PostgreSQL ILIKE |
 | ai_memory | `HAS_MEM0` | mem0ai | DB queries |
 | code_sandbox | `HAS_DOCKER` | docker | Subprocess restreint |
+| skill_seekers | `HAS_SKILL_SEEKERS` | skill-seekers (CLI) | Mock mode (donnees simulees) |
 | compression (middleware) | `HAS_BROTLI` | brotli | Gzip seul |
 
 ---
