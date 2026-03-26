@@ -111,8 +111,12 @@ export default async function RootLayout({ children }: RootLayoutProps): Promise
   return (
     <html lang="en" dir={direction} className={`${inter.variable} ${jetbrainsMono.variable}`} suppressHydrationWarning>
       <head>
-        {/* Boxicons for theme switcher and icons */}
+        {/* Boxicons for theme switcher */}
         <link rel="stylesheet" href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" />
+        {/* Iconify API for Tabler Icons (sidebar menu icons) */}
+        <script src="https://code.iconify.design/iconify-icon/2.3.0/iconify-icon.min.js" defer />
+        {/* Tabler Icons CSS for className-based rendering */}
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css" />
 
         {/* Theme initialization script - prevents flash */}
         <script

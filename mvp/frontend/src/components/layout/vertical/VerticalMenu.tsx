@@ -35,20 +35,21 @@ type Props = {
 
 const RenderExpandIcon = ({ open, transitionDuration }: RenderExpandIconProps) => (
   <StyledVerticalNavExpandIcon open={open} transitionDuration={transitionDuration}>
-    <i className='tabler-chevron-right' />
+    <i className='ti ti-chevron-right' />
   </StyledVerticalNavExpandIcon>
 )
 
 /**
  * Convert icon string (e.g. 'tabler:smart-home') to a React element
+ * Uses @tabler/icons-webfont CSS classes (ti ti-{name})
  */
 const renderIcon = (iconStr?: string) => {
   if (!iconStr) return undefined
 
-  // Convert 'tabler:smart-home' to 'tabler-smart-home'
-  const className = iconStr.replace(':', '-')
+  // Convert 'tabler:smart-home' to 'ti ti-smart-home'
+  const name = iconStr.replace('tabler:', '')
 
-  return <i className={className} />
+  return <i className={`ti ti-${name}`} style={{ fontSize: '1.375rem' }} />
 }
 
 /**
@@ -120,7 +121,7 @@ const VerticalMenu = ({ scrollMenu }: Props) => {
         popoutMenuOffset={{ mainAxis: 27 }}
         menuItemStyles={menuItemStyles(verticalNavOptions, theme)}
         renderExpandIcon={({ open }) => <RenderExpandIcon open={open} transitionDuration={transitionDuration} />}
-        renderExpandedMenuItemIcon={{ icon: <i className='tabler-circle-filled' style={{ fontSize: 6 }} /> }}
+        renderExpandedMenuItemIcon={{ icon: <i className='ti ti-circle-filled text-[6px]' /> }}
         menuSectionStyles={menuSectionStyles(verticalNavOptions, theme)}
       >
         {renderMenuItems(menuData)}

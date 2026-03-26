@@ -52,7 +52,7 @@ export type Config = {
 const themeConfig: Config = {
   templateName: 'sneat',
   homePageUrl: '/home',
-  settingsCookieName: 'sneat-mui-next-demo-1',
+  settingsCookieName: 'saas-ia-mui-template-settings',
   mode: 'system', // 'system', 'light', 'dark'
   skin: 'default', // 'default', 'bordered'
   semiDark: false, // true, false
@@ -61,12 +61,12 @@ const themeConfig: Config = {
   compactContentWidth: 1440, // in px
   navbar: {
     type: 'fixed', // 'fixed', 'static'
-    contentWidth: 'compact', // 'compact', 'wide'
-    floating: true, //! true, false (This will not work in the Horizontal Layout)
-    detached: true, //! true, false (This will not work in the Horizontal Layout or floating navbar is enabled)
+    contentWidth: 'wide', // 'compact', 'wide'
+    floating: false, //! true, false (This will not work in the Horizontal Layout)
+    detached: false, //! true, false (This will not work in the Horizontal Layout or floating navbar is enabled)
     blur: true // true, false
   },
-  contentWidth: 'compact', // 'compact', 'wide'
+  contentWidth: 'wide', // 'compact', 'wide'
   footer: {
     type: 'static', // 'fixed', 'static'
     contentWidth: 'compact', // 'compact', 'wide'
