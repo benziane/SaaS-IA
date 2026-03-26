@@ -1,29 +1,21 @@
 'use client';
 
 import { useRef, useState } from 'react';
+import { Loader2 } from 'lucide-react';
+
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/lib/design-hub/components/Alert';
+import { Button } from '@/lib/design-hub/components/Button';
+import { Input } from '@/lib/design-hub/components/Input';
+import { Skeleton } from '@/lib/design-hub/components/Skeleton';
+import { Separator } from '@/lib/design-hub/components/Separator';
 import {
-  Alert,
-  Box,
-  Button,
-  Card,
-  CardContent,
-  Chip,
-  CircularProgress,
   Dialog,
   DialogContent,
+  DialogHeader,
   DialogTitle,
-  Divider,
-  Grid,
-  IconButton,
-  List,
-  ListItem,
-  ListItemButton,
-  ListItemText,
-  Skeleton,
-  TextField,
-  Typography,
-} from '@mui/material';
-import CloseIcon from '@mui/icons-material/Close';
+} from '@/lib/design-hub/components/Dialog';
 
 import {
   useAsk,
@@ -34,11 +26,11 @@ import {
   useUploadDocument,
 } from '@/features/knowledge/hooks/useKnowledge';
 
-const STATUS_COLORS: Record<string, 'default' | 'primary' | 'success' | 'error' | 'warning'> = {
-  pending: 'default',
-  processing: 'primary',
+const STATUS_VARIANTS: Record<string, 'outline' | 'default' | 'success' | 'destructive' | 'warning'> = {
+  pending: 'outline',
+  processing: 'default',
   indexed: 'success',
-  failed: 'error',
+  failed: 'destructive',
 };
 
 export default function KnowledgePage() {
@@ -73,215 +65,210 @@ export default function KnowledgePage() {
   };
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Typography variant="h4" sx={{ mb: 3 }}>
+    <div className="p-6">
+      <h1 className="text-2xl font-bold text-[var(--text-high)] mb-6">
         Knowledge Base
-      </Typography>
+      </h1>
 
       {/* Upload Section */}
-      <Card sx={{ mb: 3 }}>
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Upload Document</CardTitle>
+        </CardHeader>
         <CardContent>
-          <Typography variant="h6" sx={{ mb: 2 }}>Upload Document</Typography>
           <input
             type="file"
             ref={fileRef}
             accept=".txt,.md,.csv"
             onChange={handleUpload}
-            style={{ display: 'none' }}
+            className="hidden"
           />
-          <Button
-            variant="contained"
-            onClick={() => fileRef.current?.click()}
-            disabled={uploadMutation.isPending}
-          >
-            {uploadMutation.isPending ? (
-              <><CircularProgress size={20} sx={{ mr: 1 }} color="inherit" />Uploading...</>
-            ) : 'Upload File'}
-          </Button>
-          <Typography variant="caption" color="text.secondary" sx={{ ml: 2 }}>
-            Supported: TXT, MD, CSV (max 10 MB)
-          </Typography>
+          <div className="flex items-center gap-3">
+            <Button
+              onClick={() => fileRef.current?.click()}
+              disabled={uploadMutation.isPending}
+            >
+              {uploadMutation.isPending ? (
+                <><Loader2 className="h-4 w-4 animate-spin mr-2" />Uploading...</>
+              ) : 'Upload File'}
+            </Button>
+            <span className="text-xs text-[var(--text-low)]">
+              Supported: TXT, MD, CSV (max 10 MB)
+            </span>
+          </div>
           {uploadMutation.isError && (
-            <Alert severity="error" sx={{ mt: 1 }}>{uploadMutation.error?.message}</Alert>
+            <Alert variant="destructive" className="mt-3">
+              <AlertDescription>{uploadMutation.error?.message}</AlertDescription>
+            </Alert>
           )}
           {uploadMutation.isSuccess && (
-            <Alert severity="success" sx={{ mt: 1 }}>Document uploaded and indexed.</Alert>
+            <Alert variant="success" className="mt-3">
+              <AlertDescription>Document uploaded and indexed.</AlertDescription>
+            </Alert>
           )}
         </CardContent>
       </Card>
 
-      <Grid container spacing={3}>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Documents List */}
-        <Grid item xs={12} md={6}>
-          <Card sx={{ height: '100%' }}>
-            <CardContent>
-              <Typography variant="h6" sx={{ mb: 2 }}>Documents</Typography>
-              {isLoading ? (
-                <Skeleton variant="rectangular" height={200} />
-              ) : !documents?.length ? (
-                <Typography variant="body2" color="text.secondary">
-                  No documents uploaded yet.
-                </Typography>
-              ) : (
-                <List dense>
-                  {documents.map((doc) => (
-                    <ListItem
-                      key={doc.id}
-                      disablePadding
-                      secondaryAction={
-                        <Button
-                          size="small"
-                          color="error"
-                          onClick={() => deleteMutation.mutate(doc.id)}
-                          disabled={deleteMutation.isPending}
-                        >
-                          Delete
-                        </Button>
-                      }
+        <Card className="h-full">
+          <CardHeader>
+            <CardTitle>Documents</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <Skeleton className="h-[200px] w-full" />
+            ) : !documents?.length ? (
+              <p className="text-sm text-[var(--text-low)]">
+                No documents uploaded yet.
+              </p>
+            ) : (
+              <ul className="space-y-1">
+                {documents.map((doc) => (
+                  <li key={doc.id} className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleViewChunks(doc.id, doc.filename)}
+                      disabled={doc.status !== 'indexed'}
+                      className="flex-1 flex items-center gap-2 rounded-[var(--radius-md,6px)] px-3 py-2 text-left text-sm text-[var(--text-high)] transition-colors hover:bg-[var(--bg-elevated)] disabled:opacity-50 disabled:pointer-events-none"
                     >
-                      <ListItemButton
-                        onClick={() => handleViewChunks(doc.id, doc.filename)}
-                        disabled={doc.status !== 'indexed'}
-                        sx={{ pr: 10 }}
-                      >
-                        <ListItemText
-                          primary={doc.filename}
-                          secondary={`${doc.total_chunks} chunks — cliquer pour voir`}
-                        />
-                        <Chip
-                          label={doc.status}
-                          size="small"
-                          color={STATUS_COLORS[doc.status] || 'default'}
-                          sx={{ mr: 1 }}
-                        />
-                      </ListItemButton>
-                    </ListItem>
-                  ))}
-                </List>
-              )}
-            </CardContent>
-          </Card>
-        </Grid>
+                      <span className="flex-1">
+                        <span className="block font-medium">{doc.filename}</span>
+                        <span className="block text-xs text-[var(--text-low)]">
+                          {doc.total_chunks} chunks — cliquer pour voir
+                        </span>
+                      </span>
+                      <Badge variant={STATUS_VARIANTS[doc.status] || 'outline'}>
+                        {doc.status}
+                      </Badge>
+                    </button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => deleteMutation.mutate(doc.id)}
+                      disabled={deleteMutation.isPending}
+                    >
+                      Delete
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Search + Ask */}
-        <Grid item xs={12} md={6}>
-          <Card sx={{ mb: 3 }}>
+        <div className="flex flex-col gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Search</CardTitle>
+            </CardHeader>
             <CardContent>
-              <Typography variant="h6" sx={{ mb: 2 }}>Search</Typography>
-              <Box sx={{ display: 'flex', gap: 1 }}>
-                <TextField
-                  fullWidth
-                  size="small"
+              <div className="flex gap-2">
+                <Input
                   placeholder="Search your documents..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
                 <Button
-                  variant="outlined"
+                  variant="outline"
                   onClick={() => searchMutation.mutate(searchQuery)}
                   disabled={!searchQuery.trim() || searchMutation.isPending}
                 >
                   Search
                 </Button>
-              </Box>
+              </div>
               {searchMutation.data && (
-                <Box sx={{ mt: 2 }}>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                <div className="mt-4">
+                  <p className="text-sm text-[var(--text-low)] mb-2">
                     {searchMutation.data.total} results
-                  </Typography>
+                  </p>
                   {searchMutation.data.results.map((r, i) => (
-                    <Card key={i} variant="outlined" sx={{ mb: 1, p: 1 }}>
-                      <Typography variant="caption" color="primary">{r.filename} (score: {r.score})</Typography>
-                      <Typography variant="body2" sx={{ mt: 0.5 }}>
+                    <div
+                      key={i}
+                      className="mb-2 rounded-[var(--radius-md,6px)] border border-[var(--border)] p-3"
+                    >
+                      <span className="text-xs text-[var(--accent)]">
+                        {r.filename} (score: {r.score})
+                      </span>
+                      <p className="text-sm text-[var(--text-high)] mt-1">
                         {r.content.substring(0, 200)}...
-                      </Typography>
-                    </Card>
+                      </p>
+                    </div>
                   ))}
-                </Box>
+                </div>
               )}
             </CardContent>
           </Card>
 
           <Card>
+            <CardHeader>
+              <CardTitle>Ask a Question (RAG)</CardTitle>
+            </CardHeader>
             <CardContent>
-              <Typography variant="h6" sx={{ mb: 2 }}>Ask a Question (RAG)</Typography>
-              <Box sx={{ display: 'flex', gap: 1 }}>
-                <TextField
-                  fullWidth
-                  size="small"
+              <div className="flex gap-2">
+                <Input
                   placeholder="Ask a question about your documents..."
                   value={question}
                   onChange={(e) => setQuestion(e.target.value)}
                 />
                 <Button
-                  variant="contained"
                   onClick={() => askMutation.mutate(question)}
                   disabled={!question.trim() || askMutation.isPending}
                 >
-                  {askMutation.isPending ? <CircularProgress size={20} color="inherit" /> : 'Ask'}
+                  {askMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Ask'}
                 </Button>
-              </Box>
+              </div>
               {askMutation.data && (
-                <Box sx={{ mt: 2 }}>
-                  <Typography variant="body1" sx={{ mb: 1, whiteSpace: 'pre-wrap' }}>
+                <div className="mt-4">
+                  <p className="text-sm text-[var(--text-high)] whitespace-pre-wrap mb-2">
                     {askMutation.data.answer}
-                  </Typography>
-                  <Divider sx={{ my: 1 }} />
-                  <Typography variant="caption" color="text.secondary">
+                  </p>
+                  <Separator className="my-2" />
+                  <span className="text-xs text-[var(--text-low)]">
                     Provider: {askMutation.data.provider} | Sources: {askMutation.data.sources.length}
-                  </Typography>
-                </Box>
+                  </span>
+                </div>
               )}
             </CardContent>
           </Card>
-        </Grid>
-      </Grid>
+        </div>
+      </div>
 
       {/* Document Chunks Viewer Modal */}
-      <Dialog open={!!selectedDocId} onClose={handleCloseModal} maxWidth="md" fullWidth>
-        <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Box>
-            <Typography variant="h6">{selectedDocName}</Typography>
+      <Dialog open={!!selectedDocId} onOpenChange={(open) => !open && handleCloseModal()}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{selectedDocName}</DialogTitle>
             {chunks && (
-              <Typography variant="caption" color="text.secondary">
+              <p className="text-xs text-[var(--text-low)]">
                 {chunks.length} chunk(s)
-              </Typography>
+              </p>
             )}
-          </Box>
-          <IconButton onClick={handleCloseModal} size="small">
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent dividers sx={{ maxHeight: '70vh', overflowY: 'auto' }}>
-          {chunksLoading ? (
-            <CircularProgress />
-          ) : !chunks?.length ? (
-            <Typography color="text.secondary">Aucun chunk disponible.</Typography>
-          ) : (
-            chunks.map((chunk) => (
-              <Box key={chunk.id} sx={{ mb: 2 }}>
-                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
-                  Chunk #{chunk.chunk_index + 1}
-                </Typography>
-                <Box
-                  sx={{
-                    p: 1.5,
-                    bgcolor: 'action.hover',
-                    borderRadius: 1,
-                    fontFamily: 'monospace',
-                    fontSize: '0.8rem',
-                    whiteSpace: 'pre-wrap',
-                    wordBreak: 'break-word',
-                  }}
-                >
-                  {chunk.content}
-                </Box>
-                {chunk.chunk_index < chunks.length - 1 && <Divider sx={{ mt: 2 }} />}
-              </Box>
-            ))
-          )}
+          </DialogHeader>
+          <div className="max-h-[70vh] overflow-y-auto">
+            {chunksLoading ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-[var(--accent)]" />
+              </div>
+            ) : !chunks?.length ? (
+              <p className="text-sm text-[var(--text-low)]">Aucun chunk disponible.</p>
+            ) : (
+              chunks.map((chunk) => (
+                <div key={chunk.id} className="mb-4">
+                  <span className="block text-xs text-[var(--text-low)] mb-1">
+                    Chunk #{chunk.chunk_index + 1}
+                  </span>
+                  <div className="p-3 bg-[var(--bg-elevated)] rounded-[var(--radius-md,6px)] font-mono text-xs whitespace-pre-wrap break-words text-[var(--text-high)]">
+                    {chunk.content}
+                  </div>
+                  {chunk.chunk_index < chunks.length - 1 && <Separator className="mt-4" />}
+                </div>
+              ))
+            )}
+          </div>
         </DialogContent>
       </Dialog>
-    </Box>
+    </div>
   );
 }

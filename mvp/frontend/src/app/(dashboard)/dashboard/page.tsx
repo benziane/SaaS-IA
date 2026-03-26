@@ -1,23 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import {
-  Avatar,
-  Box,
-  Button,
-  Card,
-  CardContent,
-  Chip,
-  Grid,
-  List,
-  ListItem,
-  ListItemAvatar,
-  ListItemText,
-  Skeleton,
-  Tooltip,
-  Typography,
-} from '@mui/material';
-import { useTheme } from '@mui/material/styles';
+import Link from 'next/link';
 import {
   AreaChart,
   Area,
@@ -30,6 +14,13 @@ import {
   Tooltip as RechartsTooltip,
   ResponsiveContainer,
 } from 'recharts';
+
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/lib/design-hub/components/Button';
+import { Skeleton } from '@/lib/design-hub/components/Skeleton';
+import { Avatar, AvatarFallback } from '@/lib/design-hub/components/Avatar';
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/lib/design-hub/components/Tooltip';
 
 import { useCurrentUser } from '@/features/auth/hooks/useAuth';
 import { useTranscriptions } from '@/features/transcription/hooks/useTranscriptions';
@@ -52,45 +43,40 @@ function StatCard({
   trend?: { value: number; label: string };
 }) {
   return (
-    <Card sx={{ height: '100%', position: 'relative', overflow: 'visible' }}>
-      <CardContent sx={{ pb: '16px !important' }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-          <Box>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5, fontWeight: 500 }}>
+    <Card className="h-full relative overflow-visible">
+      <CardContent className="p-6">
+        <div className="flex justify-between items-start">
+          <div>
+            <p className="text-sm text-[var(--text-mid)] mb-1 font-medium">
               {title}
-            </Typography>
-            <Typography variant="h4" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
+            </p>
+            <h4 className="text-3xl font-bold leading-tight text-[var(--text-high)]">
               {value}
-            </Typography>
+            </h4>
             {subtitle && (
-              <Typography variant="caption" color="text.secondary">
+              <span className="text-xs text-[var(--text-mid)]">
                 {subtitle}
-              </Typography>
+              </span>
             )}
-          </Box>
-          <Avatar
-            sx={{
-              bgcolor: `${color}15`,
-              color: color,
-              width: 48,
-              height: 48,
-            }}
-          >
-            <i className={`tabler-${icon}`} style={{ fontSize: 24 }} />
+          </div>
+          <Avatar className="w-12 h-12" style={{ backgroundColor: `${color}15` }}>
+            <AvatarFallback className="bg-transparent" style={{ color }}>
+              <i className={`tabler-${icon}`} style={{ fontSize: 24 }} />
+            </AvatarFallback>
           </Avatar>
-        </Box>
+        </div>
         {trend && (
-          <Box sx={{ display: 'flex', alignItems: 'center', mt: 1, gap: 0.5 }}>
-            <Chip
-              label={`${trend.value > 0 ? '+' : ''}${trend.value}%`}
-              size="small"
-              color={trend.value >= 0 ? 'success' : 'error'}
-              sx={{ height: 22, fontSize: '0.75rem', fontWeight: 600 }}
-            />
-            <Typography variant="caption" color="text.secondary">
+          <div className="flex items-center mt-2 gap-1">
+            <Badge
+              variant={trend.value >= 0 ? 'success' : 'destructive'}
+              className="h-[22px] text-xs font-semibold"
+            >
+              {trend.value > 0 ? '+' : ''}{trend.value}%
+            </Badge>
+            <span className="text-xs text-[var(--text-mid)]">
               {trend.label}
-            </Typography>
-          </Box>
+            </span>
+          </div>
         )}
       </CardContent>
     </Card>
@@ -103,47 +89,39 @@ function WelcomeBanner({ userName, role }: { userName: string; role: string }) {
   const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
 
   return (
-    <Card
-      sx={{
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-        color: 'white',
-        mb: 3,
-        position: 'relative',
-        overflow: 'hidden',
-      }}
-    >
-      <CardContent sx={{ py: 3, position: 'relative', zIndex: 1 }}>
-        <Typography variant="h5" sx={{ fontWeight: 700, mb: 0.5 }}>
+    <Card className="mb-6 relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}>
+      <CardContent className="py-6 px-6 relative z-10">
+        <h5 className="text-xl font-bold text-white mb-1">
           {greeting}, {userName}
-        </Typography>
-        <Typography variant="body2" sx={{ opacity: 0.85, mb: 2 }}>
+        </h5>
+        <p className="text-sm text-white/85 mb-4">
           Here&apos;s what&apos;s happening on your AI platform today
-        </Typography>
-        <Box sx={{ display: 'flex', gap: 1 }}>
-          <Chip label={role.toUpperCase()} size="small" sx={{ bgcolor: 'rgba(255,255,255,0.2)', color: 'white', fontWeight: 600 }} />
-        </Box>
+        </p>
+        <div className="flex gap-2">
+          <Badge className="bg-white/20 text-white border-none font-semibold">
+            {role.toUpperCase()}
+          </Badge>
+        </div>
       </CardContent>
       {/* Decorative circles */}
-      <Box
-        sx={{
-          position: 'absolute',
+      <div
+        className="absolute rounded-full"
+        style={{
           top: -40,
           right: -20,
           width: 160,
           height: 160,
-          borderRadius: '50%',
-          bgcolor: 'rgba(255,255,255,0.08)',
+          backgroundColor: 'rgba(255,255,255,0.08)',
         }}
       />
-      <Box
-        sx={{
-          position: 'absolute',
+      <div
+        className="absolute rounded-full"
+        style={{
           bottom: -60,
           right: 60,
           width: 200,
           height: 200,
-          borderRadius: '50%',
-          bgcolor: 'rgba(255,255,255,0.05)',
+          backgroundColor: 'rgba(255,255,255,0.05)',
         }}
       />
     </Card>
@@ -165,11 +143,11 @@ function ActivityFeed() {
     }));
   }, [transcriptions]);
 
-  const statusColors: Record<string, 'success' | 'warning' | 'error' | 'info' | 'default'> = {
+  const statusVariants: Record<string, 'success' | 'warning' | 'destructive' | 'default' | 'outline'> = {
     completed: 'success',
     processing: 'warning',
-    failed: 'error',
-    pending: 'info',
+    failed: 'destructive',
+    pending: 'default',
   };
 
   const sourceIcons: Record<string, string> = {
@@ -180,39 +158,40 @@ function ActivityFeed() {
   };
 
   return (
-    <Card sx={{ height: '100%' }}>
-      <CardContent>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-          <Typography variant="h6" sx={{ fontWeight: 600 }}>Recent Activity</Typography>
-          <Button size="small" href="/transcription">View all</Button>
-        </Box>
-        <List disablePadding>
+    <Card className="h-full">
+      <CardContent className="p-6">
+        <div className="flex justify-between items-center mb-4">
+          <h6 className="text-base font-semibold text-[var(--text-high)]">Recent Activity</h6>
+          <Button variant="ghost" size="sm" asChild>
+            <Link href="/transcription">View all</Link>
+          </Button>
+        </div>
+        <div>
           {activities.length === 0 ? (
-            <Typography variant="body2" color="text.secondary" sx={{ py: 2, textAlign: 'center' }}>
+            <p className="text-sm text-[var(--text-mid)] py-4 text-center">
               No recent activity
-            </Typography>
+            </p>
           ) : (
             activities.map((activity) => (
-              <ListItem key={activity.id} sx={{ px: 0, py: 1 }} divider>
-                <ListItemAvatar>
-                  <Avatar sx={{ bgcolor: 'action.hover', width: 36, height: 36 }}>
+              <div key={activity.id} className="flex items-center gap-3 py-2 border-b border-[var(--border)] last:border-b-0">
+                <Avatar className="w-9 h-9">
+                  <AvatarFallback className="text-[var(--text-mid)]">
                     <i className={`tabler-${sourceIcons[activity.source] || 'file'}`} style={{ fontSize: 18 }} />
-                  </Avatar>
-                </ListItemAvatar>
-                <ListItemText
-                  primary={
-                    <Typography variant="body2" noWrap sx={{ maxWidth: 200, fontWeight: 500 }}>
-                      {activity.title}
-                    </Typography>
-                  }
-                  secondary={activity.time}
-                  secondaryTypographyProps={{ variant: 'caption' }}
-                />
-                <Chip label={activity.status} size="small" color={statusColors[activity.status] || 'default'} variant="outlined" />
-              </ListItem>
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-[var(--text-high)] truncate max-w-[200px]">
+                    {activity.title}
+                  </p>
+                  <span className="text-xs text-[var(--text-mid)]">{activity.time}</span>
+                </div>
+                <Badge variant={statusVariants[activity.status] || 'outline'} className="shrink-0">
+                  {activity.status}
+                </Badge>
+              </div>
             ))
           )}
-        </List>
+        </div>
       </CardContent>
     </Card>
   );
@@ -232,46 +211,40 @@ function QuickActions() {
   ];
 
   return (
-    <Card>
-      <CardContent>
-        <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>Quick Actions</Typography>
-        <Grid container spacing={1.5}>
-          {actions.map((action) => (
-            <Grid item xs={3} key={action.label}>
-              <Tooltip title={action.label}>
-                <Button
-                  href={action.href}
-                  sx={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    gap: 0.5,
-                    p: 1.5,
-                    borderRadius: 2,
-                    width: '100%',
-                    minWidth: 0,
-                    '&:hover': { bgcolor: `${action.color}10` },
-                  }}
-                >
-                  <Avatar sx={{ bgcolor: `${action.color}15`, color: action.color, width: 40, height: 40 }}>
-                    <i className={`tabler-${action.icon}`} style={{ fontSize: 20 }} />
-                  </Avatar>
-                  <Typography variant="caption" color="text.secondary" noWrap sx={{ fontWeight: 500 }}>
-                    {action.label}
-                  </Typography>
-                </Button>
+    <TooltipProvider>
+      <Card>
+        <CardContent className="p-6">
+          <h6 className="text-base font-semibold text-[var(--text-high)] mb-4">Quick Actions</h6>
+          <div className="grid grid-cols-4 gap-3">
+            {actions.map((action) => (
+              <Tooltip key={action.label}>
+                <TooltipTrigger asChild>
+                  <Link
+                    href={action.href}
+                    className="flex flex-col items-center gap-1 p-3 rounded-lg w-full hover:bg-[var(--bg-elevated)] transition-colors"
+                  >
+                    <Avatar className="w-10 h-10" style={{ backgroundColor: `${action.color}15` }}>
+                      <AvatarFallback className="bg-transparent" style={{ color: action.color }}>
+                        <i className={`tabler-${action.icon}`} style={{ fontSize: 20 }} />
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="text-xs text-[var(--text-mid)] font-medium truncate">
+                      {action.label}
+                    </span>
+                  </Link>
+                </TooltipTrigger>
+                <TooltipContent>{action.label}</TooltipContent>
               </Tooltip>
-            </Grid>
-          ))}
-        </Grid>
-      </CardContent>
-    </Card>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    </TooltipProvider>
   );
 }
 
 // --- Usage Chart ---
 function UsageChart() {
-  const theme = useTheme();
   const { data: stats } = useStats();
 
   const pieData = useMemo(() => {
@@ -295,14 +268,14 @@ function UsageChart() {
   }, []);
 
   return (
-    <Card sx={{ height: '100%' }}>
-      <CardContent>
-        <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>Platform Usage</Typography>
-        <Grid container spacing={3}>
-          <Grid item xs={12} md={7}>
-            <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
+    <Card className="h-full">
+      <CardContent className="p-6">
+        <h6 className="text-base font-semibold text-[var(--text-high)] mb-4">Platform Usage</h6>
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+          <div className="md:col-span-7">
+            <p className="text-sm font-medium text-[var(--text-mid)] mb-2">
               Weekly Activity
-            </Typography>
+            </p>
             <ResponsiveContainer width="100%" height={200}>
               <AreaChart data={weeklyData}>
                 <defs>
@@ -315,13 +288,13 @@ function UsageChart() {
                     <stop offset="95%" stopColor="#28c76f" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
-                <XAxis dataKey="day" tick={{ fontSize: 12 }} stroke={theme.palette.text.secondary} />
-                <YAxis tick={{ fontSize: 12 }} stroke={theme.palette.text.secondary} />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                <XAxis dataKey="day" tick={{ fontSize: 12 }} stroke="var(--text-mid)" />
+                <YAxis tick={{ fontSize: 12 }} stroke="var(--text-mid)" />
                 <RechartsTooltip
                   contentStyle={{
-                    backgroundColor: theme.palette.background.paper,
-                    border: `1px solid ${theme.palette.divider}`,
+                    backgroundColor: 'var(--bg-surface)',
+                    border: '1px solid var(--border)',
                     borderRadius: 8,
                   }}
                 />
@@ -329,11 +302,11 @@ function UsageChart() {
                 <Area type="monotone" dataKey="aiCalls" stroke="#28c76f" fill="url(#colorAiCalls)" strokeWidth={2} />
               </AreaChart>
             </ResponsiveContainer>
-          </Grid>
-          <Grid item xs={12} md={5}>
-            <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
+          </div>
+          <div className="md:col-span-5">
+            <p className="text-sm font-medium text-[var(--text-mid)] mb-2">
               Status Distribution
-            </Typography>
+            </p>
             {pieData.length > 0 ? (
               <ResponsiveContainer width="100%" height={200}>
                 <PieChart>
@@ -346,20 +319,20 @@ function UsageChart() {
                 </PieChart>
               </ResponsiveContainer>
             ) : (
-              <Box sx={{ height: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Typography variant="body2" color="text.secondary">No data yet</Typography>
-              </Box>
+              <div className="h-[200px] flex items-center justify-center">
+                <p className="text-sm text-[var(--text-mid)]">No data yet</p>
+              </div>
             )}
-            <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mt: 1 }}>
+            <div className="flex justify-center gap-4 mt-2">
               {pieData.map((d) => (
-                <Box key={d.name} sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                  <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: d.color }} />
-                  <Typography variant="caption">{d.name}: {d.value}</Typography>
-                </Box>
+                <div key={d.name} className="flex items-center gap-1">
+                  <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: d.color }} />
+                  <span className="text-xs text-[var(--text-high)]">{d.name}: {d.value}</span>
+                </div>
               ))}
-            </Box>
-          </Grid>
-        </Grid>
+            </div>
+          </div>
+        </div>
       </CardContent>
     </Card>
   );
@@ -382,24 +355,19 @@ function PlatformStatsBar() {
 
   return (
     <Card>
-      <CardContent sx={{ py: 2 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
-          <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>Active Modules</Typography>
-          <Chip label={`${modules.length} modules`} size="small" color="primary" variant="outlined" />
-        </Box>
-        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+      <CardContent className="py-4 px-6">
+        <div className="flex justify-between items-center mb-3">
+          <p className="text-sm font-semibold text-[var(--text-high)]">Active Modules</p>
+          <Badge variant="outline">{modules.length} modules</Badge>
+        </div>
+        <div className="flex gap-2 flex-wrap">
           {modules.map((m) => (
-            <Chip
-              key={m.name}
-              icon={<i className={`tabler-${m.icon}`} style={{ fontSize: 14 }} />}
-              label={m.name}
-              size="small"
-              variant="outlined"
-              color="success"
-              sx={{ fontSize: '0.75rem' }}
-            />
+            <Badge key={m.name} variant="success" className="gap-1">
+              <i className={`tabler-${m.icon}`} style={{ fontSize: 14 }} />
+              {m.name}
+            </Badge>
           ))}
-        </Box>
+        </div>
       </CardContent>
     </Card>
   );
@@ -412,16 +380,14 @@ export default function DashboardPage() {
 
   if (userLoading || statsLoading) {
     return (
-      <Box sx={{ p: 3 }}>
-        <Skeleton variant="rounded" height={120} sx={{ mb: 3 }} />
-        <Grid container spacing={3}>
+      <div className="p-6">
+        <Skeleton className="h-[120px] mb-6 w-full" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
           {[1, 2, 3, 4].map((i) => (
-            <Grid item xs={12} sm={6} md={3} key={i}>
-              <Skeleton variant="rounded" height={120} />
-            </Grid>
+            <Skeleton key={i} className="h-[120px] w-full" />
           ))}
-        </Grid>
-      </Box>
+        </div>
+      </div>
     );
   }
 
@@ -431,67 +397,55 @@ export default function DashboardPage() {
   const minutes = Math.floor((Number(totalDuration) % 3600) / 60);
 
   return (
-    <Box sx={{ p: 3 }}>
+    <div className="p-6">
       {/* Welcome Banner */}
       <WelcomeBanner userName={userName} role={user?.role || 'user'} />
 
       {/* Stat Cards */}
-      <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid item xs={12} sm={6} md={3}>
-          <StatCard
-            title="Total Transcriptions"
-            value={stats?.total_transcriptions || 0}
-            icon="file-text"
-            color="#667eea"
-            trend={{ value: 12, label: 'vs last month' }}
-          />
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <StatCard
-            title="Completed"
-            value={stats?.completed || 0}
-            subtitle={`${stats?.total_transcriptions ? Math.round((Number(stats.completed || 0) / Number(stats.total_transcriptions)) * 100) : 0}% success rate`}
-            icon="circle-check"
-            color="#28c76f"
-          />
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <StatCard
-            title="Failed"
-            value={stats?.failed || 0}
-            icon="alert-triangle"
-            color="#ea5455"
-          />
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <StatCard
-            title="Audio Processed"
-            value={hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`}
-            icon="clock"
-            color="#ff9f43"
-          />
-        </Grid>
-      </Grid>
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-6">
+        <StatCard
+          title="Total Transcriptions"
+          value={stats?.total_transcriptions || 0}
+          icon="file-text"
+          color="#667eea"
+          trend={{ value: 12, label: 'vs last month' }}
+        />
+        <StatCard
+          title="Completed"
+          value={stats?.completed || 0}
+          subtitle={`${stats?.total_transcriptions ? Math.round((Number(stats.completed || 0) / Number(stats.total_transcriptions)) * 100) : 0}% success rate`}
+          icon="circle-check"
+          color="#28c76f"
+        />
+        <StatCard
+          title="Failed"
+          value={stats?.failed || 0}
+          icon="alert-triangle"
+          color="#ea5455"
+        />
+        <StatCard
+          title="Audio Processed"
+          value={hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`}
+          icon="clock"
+          color="#ff9f43"
+        />
+      </div>
 
       {/* Charts + Activity */}
-      <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid item xs={12} lg={8}>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
+        <div className="lg:col-span-8">
           <UsageChart />
-        </Grid>
-        <Grid item xs={12} lg={4}>
+        </div>
+        <div className="lg:col-span-4">
           <ActivityFeed />
-        </Grid>
-      </Grid>
+        </div>
+      </div>
 
       {/* Quick Actions + Modules */}
-      <Grid container spacing={3}>
-        <Grid item xs={12} md={6}>
-          <QuickActions />
-        </Grid>
-        <Grid item xs={12} md={6}>
-          <PlatformStatsBar />
-        </Grid>
-      </Grid>
-    </Box>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <QuickActions />
+        <PlatformStatsBar />
+      </div>
+    </div>
   );
 }

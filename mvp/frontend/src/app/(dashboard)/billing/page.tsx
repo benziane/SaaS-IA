@@ -1,17 +1,11 @@
 'use client';
 
-import {
-  Alert,
-  Box,
-  Button,
-  Card,
-  CardContent,
-  Chip,
-  Grid,
-  LinearProgress,
-  Skeleton,
-  Typography,
-} from '@mui/material';
+import { Card, CardContent } from '@/lib/design-hub/components/Card';
+import { Button } from '@/lib/design-hub/components/Button';
+import { Badge } from '@/lib/design-hub/components/Badge';
+import { Skeleton } from '@/lib/design-hub/components/Skeleton';
+import { Alert, AlertDescription } from '@/lib/design-hub/components/Alert';
+import { Progress } from '@/components/ui/progress';
 import { useSearchParams } from 'next/navigation';
 
 import { useCheckout, usePlans, usePortal, useQuota } from '@/features/billing/hooks/useBilling';
@@ -36,59 +30,52 @@ function QuotaBar({
   const isExceeded = percent >= 100;
 
   return (
-    <Box sx={{ mb: 2 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-        <Typography variant="body2" fontWeight={500}>
+    <div className="mb-4">
+      <div className="flex justify-between mb-1">
+        <span className="text-sm font-medium text-[var(--text-high)]">
           {label}
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
+        </span>
+        <span className="text-sm text-[var(--text-mid)]">
           {used.toLocaleString()} / {limit >= 999999 ? 'Unlimited' : limit.toLocaleString()}
-        </Typography>
-      </Box>
-      <LinearProgress
-        variant="determinate"
+        </span>
+      </div>
+      <Progress
         value={percent}
-        color={isExceeded ? 'error' : isWarning ? 'warning' : 'primary'}
-        sx={{ height: 8, borderRadius: 4 }}
+        className={`h-2 ${isExceeded ? '[&>div]:bg-red-500' : isWarning ? '[&>div]:bg-amber-500' : ''}`}
       />
-    </Box>
+    </div>
   );
 }
 
 function PlanCard({ plan, isCurrent, onUpgrade }: { plan: Plan; isCurrent: boolean; onUpgrade?: () => void }) {
   return (
     <Card
-      variant={isCurrent ? 'elevation' : 'outlined'}
-      sx={{
-        height: '100%',
-        border: isCurrent ? '2px solid' : undefined,
-        borderColor: isCurrent ? 'primary.main' : undefined,
-      }}
+      className={`h-full ${isCurrent ? 'border-2 border-[var(--accent)]' : ''}`}
     >
-      <CardContent>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-          <Typography variant="h6">{plan.display_name}</Typography>
-          {isCurrent && <Chip label="Current" color="primary" size="small" />}
-        </Box>
-        <Typography variant="h4" sx={{ mb: 2 }}>
+      <CardContent className="p-6">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-semibold text-[var(--text-high)]">{plan.display_name}</h3>
+          {isCurrent && <Badge>Current</Badge>}
+        </div>
+        <p className="text-3xl font-bold text-[var(--text-high)] mb-4">
           {formatPrice(plan.price_cents)}
-        </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+        </p>
+        <p className="text-sm text-[var(--text-mid)] mb-1">
           {plan.max_transcriptions_month >= 999999 ? 'Unlimited' : plan.max_transcriptions_month} transcriptions/month
-        </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+        </p>
+        <p className="text-sm text-[var(--text-mid)] mb-1">
           {plan.max_audio_minutes_month >= 999999 ? 'Unlimited' : plan.max_audio_minutes_month} audio minutes/month
-        </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+        </p>
+        <p className="text-sm text-[var(--text-mid)] mb-4">
           {plan.max_ai_calls_month >= 999999 ? 'Unlimited' : plan.max_ai_calls_month} AI calls/month
-        </Typography>
+        </p>
         {!isCurrent && plan.price_cents > 0 && onUpgrade && (
-          <Button variant="contained" fullWidth onClick={onUpgrade}>
+          <Button className="w-full" onClick={onUpgrade}>
             Upgrade to {plan.display_name}
           </Button>
         )}
         {isCurrent && plan.price_cents > 0 && (
-          <Typography variant="caption" color="success.main">Active subscription</Typography>
+          <p className="text-xs text-green-400">Active subscription</p>
         )}
       </CardContent>
     </Card>
@@ -107,66 +94,64 @@ export default function BillingPage() {
 
   if (quotaLoading || plansLoading) {
     return (
-      <Box sx={{ p: 3 }}>
-        <Skeleton variant="text" width={200} height={40} sx={{ mb: 2 }} />
-        <Skeleton variant="rectangular" height={200} sx={{ mb: 3 }} />
-        <Grid container spacing={3}>
+      <div className="p-6">
+        <Skeleton className="h-10 w-48 mb-4" />
+        <Skeleton className="h-[200px] w-full mb-6" />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {[1, 2, 3].map((i) => (
-            <Grid item xs={12} md={4} key={i}>
-              <Skeleton variant="rectangular" height={200} />
-            </Grid>
+            <Skeleton key={i} className="h-[200px] w-full" />
           ))}
-        </Grid>
-      </Box>
+        </div>
+      </div>
     );
   }
 
   if (quotaError) {
     return (
-      <Box sx={{ p: 3 }}>
-        <Alert severity="error">Failed to load billing information. Please try again later.</Alert>
-      </Box>
+      <div className="p-6">
+        <Alert variant="destructive">
+          <AlertDescription>Failed to load billing information. Please try again later.</AlertDescription>
+        </Alert>
+      </div>
     );
   }
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Typography variant="h4" sx={{ mb: 3 }}>
+    <div className="p-6">
+      <h1 className="text-2xl font-bold text-[var(--text-high)] mb-6">
         Billing & Usage
-      </Typography>
+      </h1>
 
       {success && (
-        <Alert severity="success" sx={{ mb: 3 }}>
-          Payment successful! Your plan has been upgraded.
+        <Alert variant="success" className="mb-6">
+          <AlertDescription>Payment successful! Your plan has been upgraded.</AlertDescription>
         </Alert>
       )}
       {canceled && (
-        <Alert severity="info" sx={{ mb: 3 }}>
-          Checkout was canceled. No changes were made.
+        <Alert variant="info" className="mb-6">
+          <AlertDescription>Checkout was canceled. No changes were made.</AlertDescription>
         </Alert>
       )}
 
       {/* Current Usage */}
       {quota && (
-        <Card sx={{ mb: 4 }}>
-          <CardContent>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-              <Typography variant="h6">Current Usage</Typography>
-              <Chip
-                label={quota.plan.display_name}
-                color="primary"
-                variant="outlined"
-              />
-            </Box>
+        <Card className="mb-8">
+          <CardContent className="p-6">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-lg font-semibold text-[var(--text-high)]">Current Usage</h2>
+              <Badge variant="outline">{quota.plan.display_name}</Badge>
+            </div>
 
             {quota.usage_percent >= 80 && (
               <Alert
-                severity={quota.usage_percent >= 100 ? 'error' : 'warning'}
-                sx={{ mb: 2 }}
+                variant={quota.usage_percent >= 100 ? 'destructive' : 'warning'}
+                className="mb-4"
               >
-                {quota.usage_percent >= 100
-                  ? 'You have exceeded your quota. Please upgrade your plan to continue.'
-                  : 'You are approaching your usage limit. Consider upgrading your plan.'}
+                <AlertDescription>
+                  {quota.usage_percent >= 100
+                    ? 'You have exceeded your quota. Please upgrade your plan to continue.'
+                    : 'You are approaching your usage limit. Consider upgrading your plan.'}
+                </AlertDescription>
               </Alert>
             )}
 
@@ -186,14 +171,14 @@ export default function BillingPage() {
               limit={quota.ai_calls_limit}
             />
 
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+            <p className="text-sm text-[var(--text-mid)] mt-4">
               Billing period: {quota.period_start} to {quota.period_end}
-            </Typography>
+            </p>
             {quota.plan.price_cents > 0 && (
               <Button
-                variant="outlined"
-                size="small"
-                sx={{ mt: 2 }}
+                variant="outline"
+                size="sm"
+                className="mt-4"
                 onClick={() => portalMutation.mutate()}
                 disabled={portalMutation.isPending}
               >
@@ -205,20 +190,19 @@ export default function BillingPage() {
       )}
 
       {/* Plans Comparison */}
-      <Typography variant="h6" sx={{ mb: 2 }}>
+      <h2 className="text-lg font-semibold text-[var(--text-high)] mb-4">
         Available Plans
-      </Typography>
-      <Grid container spacing={3}>
+      </h2>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {plans?.map((plan) => (
-          <Grid item xs={12} md={4} key={plan.id}>
-            <PlanCard
-              plan={plan}
-              isCurrent={quota?.plan.id === plan.id}
-              onUpgrade={() => checkoutMutation.mutate(plan.name)}
-            />
-          </Grid>
+          <PlanCard
+            key={plan.id}
+            plan={plan}
+            isCurrent={quota?.plan.id === plan.id}
+            onUpgrade={() => checkoutMutation.mutate(plan.name)}
+          />
         ))}
-      </Grid>
-    </Box>
+      </div>
+    </div>
   );
 }

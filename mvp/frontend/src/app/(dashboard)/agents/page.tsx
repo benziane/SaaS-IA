@@ -1,36 +1,32 @@
 'use client';
 
 import { useState } from 'react';
+
+
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Progress } from '@/components/ui/progress';
+import { Spinner } from '@/components/ui/spinner';
+import { Button } from '@/lib/design-hub/components/Button';
+import { Skeleton } from '@/lib/design-hub/components/Skeleton';
+import { Textarea } from '@/lib/design-hub/components/Textarea';
 import {
-  Alert,
-  Box,
-  Button,
-  Card,
-  CardContent,
-  Chip,
-  CircularProgress,
   Dialog,
   DialogContent,
+  DialogHeader,
   DialogTitle,
-  IconButton,
-  LinearProgress,
-  List,
-  ListItem,
-  ListItemText,
-  Skeleton,
-  TextField,
-  Typography,
-} from '@mui/material';
-import CloseIcon from '@mui/icons-material/Close';
+  DialogDescription,
+} from '@/lib/design-hub/components/Dialog';
 
 import { useAgentRuns, useRunAgent } from '@/features/agents/hooks/useAgents';
 import type { AgentRun, AgentStep } from '@/features/agents/types';
 
-const STATUS_COLORS: Record<string, 'default' | 'primary' | 'success' | 'error' | 'warning'> = {
-  planning: 'default',
-  executing: 'primary',
+const STATUS_VARIANTS: Record<string, 'secondary' | 'default' | 'success' | 'destructive' | 'warning'> = {
+  planning: 'secondary',
+  executing: 'default',
   completed: 'success',
-  failed: 'error',
+  failed: 'destructive',
   cancelled: 'warning',
 };
 
@@ -59,21 +55,17 @@ function StepOutputDialog({ step, open, onClose }: { step: AgentStep | null; ope
     }
   }
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <Box>
-          <Typography variant="h6">{ACTION_LABELS[step.action] || step.action}</Typography>
-          <Typography variant="caption" color="text.secondary">{step.description}</Typography>
-        </Box>
-        <IconButton onClick={onClose} size="small"><CloseIcon /></IconButton>
-      </DialogTitle>
-      <DialogContent dividers sx={{ maxHeight: '70vh', overflowY: 'auto' }}>
-        <Typography
-          variant="body2"
-          sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontFamily: 'monospace', fontSize: '0.82rem' }}
-        >
-          {output || 'Pas de résultat disponible.'}
-        </Typography>
+    <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>{ACTION_LABELS[step.action] || step.action}</DialogTitle>
+          <DialogDescription>{step.description}</DialogDescription>
+        </DialogHeader>
+        <div className="max-h-[70vh] overflow-y-auto border-t border-[var(--border)] pt-4">
+          <p className="whitespace-pre-wrap break-words font-mono text-sm text-[var(--text-high)]">
+            {output || 'Pas de résultat disponible.'}
+          </p>
+        </div>
       </DialogContent>
     </Dialog>
   );
@@ -84,25 +76,25 @@ function RunCard({ run }: { run: AgentRun }) {
   const progress = run.total_steps > 0 ? (run.current_step / run.total_steps) * 100 : 0;
 
   return (
-    <Card variant="outlined" sx={{ mb: 2 }}>
-      <CardContent>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-          <Typography variant="subtitle1" sx={{ fontWeight: 600 }} noWrap>
+    <Card className="mb-4 border border-[var(--border)]">
+      <CardContent className="p-6">
+        <div className="flex justify-between items-start mb-2">
+          <h6 className="text-base font-semibold text-[var(--text-high)] truncate">
             {run.instruction.substring(0, 80)}{run.instruction.length > 80 ? '...' : ''}
-          </Typography>
-          <Chip label={run.status} size="small" color={STATUS_COLORS[run.status] || 'default'} />
-        </Box>
+          </h6>
+          <Badge variant={STATUS_VARIANTS[run.status] || 'secondary'}>{run.status}</Badge>
+        </div>
 
         {run.status === 'executing' && (
-          <LinearProgress variant="determinate" value={progress} sx={{ mb: 1, height: 6, borderRadius: 3 }} />
+          <Progress value={progress} className="mb-2 h-1.5" />
         )}
 
-        <Typography variant="caption" color="text.secondary">
+        <span className="text-xs text-[var(--text-mid)]">
           {run.total_steps} steps | {new Date(run.created_at).toLocaleString()}
-        </Typography>
+        </span>
 
         {run.steps.length > 0 && (
-          <List dense sx={{ mt: 1 }}>
+          <div className="mt-2 space-y-0">
             {run.steps.map((step) => {
               let stepOutput = '';
               if (step.output_json) {
@@ -114,51 +106,41 @@ function RunCard({ run }: { run: AgentRun }) {
                 }
               }
               return (
-                <ListItem key={step.id} sx={{ py: 0, flexDirection: 'column', alignItems: 'stretch' }}>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <ListItemText
-                      primary={`${step.step_index + 1}. ${ACTION_LABELS[step.action] || step.action}`}
-                      secondary={step.description}
-                      primaryTypographyProps={{ variant: 'body2' }}
-                      secondaryTypographyProps={{ variant: 'caption' }}
-                    />
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <div key={step.id} className="py-1 flex flex-col">
+                  <div className="flex justify-between items-center">
+                    <div className="min-w-0">
+                      <p className="text-sm text-[var(--text-high)]">
+                        {step.step_index + 1}. {ACTION_LABELS[step.action] || step.action}
+                      </p>
+                      <span className="text-xs text-[var(--text-mid)]">{step.description}</span>
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0">
                       {stepOutput && (
-                        <Button size="small" variant="text" onClick={() => setSelectedStep(step)} sx={{ minWidth: 0, fontSize: '0.7rem' }}>
+                        <Button variant="ghost" size="sm" onClick={() => setSelectedStep(step)} className="text-xs px-2">
                           Voir
                         </Button>
                       )}
-                      <Chip label={step.status} size="small" color={STATUS_COLORS[step.status] || 'default'} variant="outlined" />
-                    </Box>
-                  </Box>
+                      <Badge variant={STATUS_VARIANTS[step.status] || 'outline'}>{step.status}</Badge>
+                    </div>
+                  </div>
                   {stepOutput && (
-                    <Typography
-                      variant="caption"
-                      sx={{
-                        mt: 0.5,
-                        mb: 1,
-                        p: 1,
-                        bgcolor: 'action.hover',
-                        borderRadius: 1,
-                        whiteSpace: 'pre-wrap',
-                        maxHeight: 80,
-                        overflow: 'hidden',
-                        display: 'block',
-                        cursor: 'pointer',
-                      }}
+                    <p
+                      className="mt-1 mb-2 p-2 bg-[var(--bg-elevated)] rounded text-xs whitespace-pre-wrap max-h-20 overflow-hidden block cursor-pointer text-[var(--text-mid)]"
                       onClick={() => setSelectedStep(step)}
                     >
                       {stepOutput.substring(0, 200)}{stepOutput.length > 200 ? '… (cliquer pour voir tout)' : ''}
-                    </Typography>
+                    </p>
                   )}
-                </ListItem>
+                </div>
               );
             })}
-          </List>
+          </div>
         )}
 
         {run.error && (
-          <Alert severity="error" sx={{ mt: 1 }}>{run.error}</Alert>
+          <Alert variant="destructive" className="mt-2">
+            <AlertDescription>{run.error}</AlertDescription>
+          </Alert>
         )}
       </CardContent>
       <StepOutputDialog step={selectedStep} open={!!selectedStep} onClose={() => setSelectedStep(null)} />
@@ -179,68 +161,72 @@ export default function AgentsPage() {
   };
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Typography variant="h4" sx={{ mb: 3 }}>AI Agents</Typography>
+    <div className="p-6">
+      <h4 className="text-2xl font-bold text-[var(--text-high)] mb-6">AI Agents</h4>
 
-      <Card sx={{ mb: 3 }}>
-        <CardContent>
-          <Typography variant="h6" sx={{ mb: 2 }}>New Agent Task</Typography>
-          <TextField
-            fullWidth
-            multiline
-            rows={3}
+      <Card className="mb-6">
+        <CardContent className="p-6">
+          <h6 className="text-base font-semibold text-[var(--text-high)] mb-4">New Agent Task</h6>
+          <Textarea
             value={instruction}
             onChange={(e) => setInstruction(e.target.value)}
             placeholder="Describe what you want the agent to do..."
-            sx={{ mb: 2 }}
+            rows={3}
+            className="mb-4"
           />
-          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2 }}>
-            <Typography variant="caption" color="text.secondary" sx={{ width: '100%' }}>Try:</Typography>
+          <div className="flex gap-2 flex-wrap mb-4">
+            <span className="text-xs text-[var(--text-mid)] w-full">Try:</span>
             {[
               'Summarize my latest transcription',
               'Search knowledge base for meeting notes',
               'Analyze sentiment of a text about customer feedback',
               'Compare AI models on: explain quantum computing',
             ].map((suggestion) => (
-              <Chip
+              <Badge
                 key={suggestion}
-                label={suggestion}
-                size="small"
-                variant="outlined"
+                variant="outline"
+                className="cursor-pointer hover:bg-[var(--bg-elevated)]"
                 onClick={() => setInstruction(suggestion)}
-                sx={{ cursor: 'pointer' }}
-              />
+              >
+                {suggestion}
+              </Badge>
             ))}
-          </Box>
+          </div>
           <Button
-            variant="contained"
             onClick={handleRun}
             disabled={!instruction.trim() || runMutation.isPending}
           >
-            {runMutation.isPending ? <><CircularProgress size={20} sx={{ mr: 1 }} color="inherit" />Running...</> : 'Run Agent'}
+            {runMutation.isPending ? (
+              <span className="flex items-center gap-2">
+                <Spinner size={16} className="text-current" />
+                Running...
+              </span>
+            ) : 'Run Agent'}
           </Button>
 
           {runMutation.isError && (
-            <Alert severity="error" sx={{ mt: 2 }}>{runMutation.error?.message}</Alert>
+            <Alert variant="destructive" className="mt-4">
+              <AlertDescription>{runMutation.error?.message}</AlertDescription>
+            </Alert>
           )}
         </CardContent>
       </Card>
 
       {runMutation.data && (
-        <Box sx={{ mb: 3 }}>
-          <Typography variant="h6" sx={{ mb: 1 }}>Latest Result</Typography>
+        <div className="mb-6">
+          <h6 className="text-base font-semibold text-[var(--text-high)] mb-2">Latest Result</h6>
           <RunCard run={runMutation.data} />
-        </Box>
+        </div>
       )}
 
-      <Typography variant="h6" sx={{ mb: 2 }}>History</Typography>
+      <h6 className="text-base font-semibold text-[var(--text-high)] mb-4">History</h6>
       {isLoading ? (
-        <Skeleton variant="rectangular" height={200} />
+        <Skeleton className="h-[200px] w-full" />
       ) : !runs?.length ? (
-        <Typography variant="body2" color="text.secondary">No agent runs yet.</Typography>
+        <p className="text-sm text-[var(--text-mid)]">No agent runs yet.</p>
       ) : (
         runs.map((run) => <RunCard key={run.id} run={run} />)
       )}
-    </Box>
+    </div>
   );
 }

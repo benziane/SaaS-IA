@@ -1,19 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import {
-  Alert,
-  Box,
-  Button,
-  Card,
-  CardContent,
-  Chip,
-  CircularProgress,
-  Grid,
-  LinearProgress,
-  TextField,
-  Typography,
-} from '@mui/material';
+import { Loader2 } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/lib/design-hub/components/Button';
+import { Textarea } from '@/lib/design-hub/components/Textarea';
 
 import { useAnalyzeSentiment } from '@/features/agents/hooks/useAgents';
 import type { SentimentResponse } from '@/features/agents/types';
@@ -24,93 +17,117 @@ const SENTIMENT_COLORS: Record<string, string> = {
   neutral: '#9e9e9e',
 };
 
-const EMOTION_COLORS: Record<string, 'primary' | 'success' | 'error' | 'warning' | 'info' | 'default'> = {
+const EMOTION_BADGE_VARIANTS: Record<string, 'default' | 'success' | 'destructive' | 'warning' | 'outline' | 'secondary'> = {
   joy: 'success',
-  anger: 'error',
-  sadness: 'info',
+  anger: 'destructive',
+  sadness: 'outline',
   fear: 'warning',
-  surprise: 'primary',
+  surprise: 'default',
   trust: 'success',
-  anticipation: 'primary',
-  disgust: 'error',
+  anticipation: 'default',
+  disgust: 'destructive',
 };
+
+function ProgressBar({ value, color }: { value: number; color: string }) {
+  return (
+    <div className="relative h-2 w-full overflow-hidden rounded-full bg-[var(--bg-base)]">
+      <div
+        className="h-full transition-all duration-300 ease-in-out rounded-full"
+        style={{ width: `${Math.max(0, Math.min(100, value))}%`, backgroundColor: color }}
+      />
+    </div>
+  );
+}
 
 function SentimentResult({ data }: { data: SentimentResponse }) {
   return (
-    <Box>
-      <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid item xs={12} md={4}>
-          <Card>
-            <CardContent sx={{ textAlign: 'center' }}>
-              <Typography variant="h3" sx={{ color: SENTIMENT_COLORS[data.overall_sentiment], fontWeight: 700 }}>
-                {data.overall_sentiment.toUpperCase()}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Score: {data.overall_score.toFixed(2)}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} md={8}>
-          <Card>
-            <CardContent>
-              <Typography variant="subtitle2" sx={{ mb: 1 }}>Distribution</Typography>
-              <Box sx={{ mb: 1 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography variant="body2">Positive</Typography>
-                  <Typography variant="body2">{data.positive_percent}%</Typography>
-                </Box>
-                <LinearProgress variant="determinate" value={data.positive_percent} color="success" sx={{ height: 8, borderRadius: 4 }} />
-              </Box>
-              <Box sx={{ mb: 1 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography variant="body2">Negative</Typography>
-                  <Typography variant="body2">{data.negative_percent}%</Typography>
-                </Box>
-                <LinearProgress variant="determinate" value={data.negative_percent} color="error" sx={{ height: 8, borderRadius: 4 }} />
-              </Box>
-              <Box>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography variant="body2">Neutral</Typography>
-                  <Typography variant="body2">{data.neutral_percent}%</Typography>
-                </Box>
-                <LinearProgress variant="determinate" value={data.neutral_percent} sx={{ height: 8, borderRadius: 4 }} />
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
+    <div>
+      <div className="grid grid-cols-1 md:grid-cols-[1fr_2fr] gap-6 mb-6">
+        <Card>
+          <CardContent className="p-6 text-center">
+            <h2
+              className="text-3xl font-bold mb-1"
+              style={{ color: SENTIMENT_COLORS[data.overall_sentiment] }}
+            >
+              {data.overall_sentiment.toUpperCase()}
+            </h2>
+            <p className="text-sm text-[var(--text-mid)]">
+              Score: {data.overall_score.toFixed(2)}
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6">
+            <h3 className="text-sm font-semibold text-[var(--text-high)] mb-3">Distribution</h3>
+            <div className="mb-3">
+              <div className="flex justify-between mb-1">
+                <span className="text-sm text-[var(--text-high)]">Positive</span>
+                <span className="text-sm text-[var(--text-high)]">{data.positive_percent}%</span>
+              </div>
+              <ProgressBar value={data.positive_percent} color="#4caf50" />
+            </div>
+            <div className="mb-3">
+              <div className="flex justify-between mb-1">
+                <span className="text-sm text-[var(--text-high)]">Negative</span>
+                <span className="text-sm text-[var(--text-high)]">{data.negative_percent}%</span>
+              </div>
+              <ProgressBar value={data.negative_percent} color="#f44336" />
+            </div>
+            <div>
+              <div className="flex justify-between mb-1">
+                <span className="text-sm text-[var(--text-high)]">Neutral</span>
+                <span className="text-sm text-[var(--text-high)]">{data.neutral_percent}%</span>
+              </div>
+              <ProgressBar value={data.neutral_percent} color="#9e9e9e" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       {Object.keys(data.emotion_summary).length > 0 && (
-        <Card sx={{ mb: 3 }}>
-          <CardContent>
-            <Typography variant="subtitle2" sx={{ mb: 1 }}>Emotions Detected</Typography>
-            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+        <Card className="mb-6">
+          <CardContent className="p-6">
+            <h3 className="text-sm font-semibold text-[var(--text-high)] mb-3">Emotions Detected</h3>
+            <div className="flex gap-2 flex-wrap">
               {Object.entries(data.emotion_summary)
                 .sort(([, a], [, b]) => b - a)
                 .map(([emotion, count]) => (
-                  <Chip key={emotion} label={`${emotion} (${count})`} color={EMOTION_COLORS[emotion] || 'default'} variant="outlined" />
+                  <Badge
+                    key={emotion}
+                    variant={EMOTION_BADGE_VARIANTS[emotion] || 'outline'}
+                  >
+                    {emotion} ({count})
+                  </Badge>
                 ))}
-            </Box>
+            </div>
           </CardContent>
         </Card>
       )}
 
       <Card>
-        <CardContent>
-          <Typography variant="subtitle2" sx={{ mb: 2 }}>Segment Analysis</Typography>
+        <CardContent className="p-6">
+          <h3 className="text-sm font-semibold text-[var(--text-high)] mb-4">Segment Analysis</h3>
           {data.segments.map((seg, i) => (
-            <Box key={i} sx={{ mb: 1.5, p: 1, borderLeft: `4px solid ${SENTIMENT_COLORS[seg.sentiment]}`, bgcolor: 'grey.50', borderRadius: 1 }}>
-              <Typography variant="body2">{seg.text}</Typography>
-              <Box sx={{ display: 'flex', gap: 1, mt: 0.5 }}>
-                <Chip label={seg.sentiment} size="small" sx={{ bgcolor: SENTIMENT_COLORS[seg.sentiment], color: 'white' }} />
-                <Typography variant="caption" color="text.secondary">Score: {seg.score.toFixed(2)}</Typography>
-              </Box>
-            </Box>
+            <div
+              key={i}
+              className="mb-3 p-3 bg-[var(--bg-elevated)] rounded-[var(--radius-md,6px)]"
+              style={{ borderLeft: `4px solid ${SENTIMENT_COLORS[seg.sentiment]}` }}
+            >
+              <p className="text-sm text-[var(--text-high)]">{seg.text}</p>
+              <div className="flex gap-2 mt-1.5 items-center">
+                <Badge
+                  className="text-white"
+                  style={{ backgroundColor: SENTIMENT_COLORS[seg.sentiment] }}
+                >
+                  {seg.sentiment}
+                </Badge>
+                <span className="text-xs text-[var(--text-mid)]">Score: {seg.score.toFixed(2)}</span>
+              </div>
+            </div>
           ))}
         </CardContent>
       </Card>
-    </Box>
+    </div>
   );
 }
 
@@ -119,32 +136,40 @@ export default function SentimentPage() {
   const mutation = useAnalyzeSentiment();
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Typography variant="h4" sx={{ mb: 3 }}>Sentiment Analysis</Typography>
+    <div className="p-6">
+      <h1 className="text-2xl font-bold text-[var(--text-high)] mb-6">Sentiment Analysis</h1>
 
-      <Card sx={{ mb: 3 }}>
-        <CardContent>
-          <TextField
-            fullWidth
-            multiline
+      <Card className="mb-6">
+        <CardContent className="p-6">
+          <Textarea
             rows={5}
             value={text}
             onChange={(e) => setText(e.target.value)}
             placeholder="Paste text to analyze sentiment..."
-            sx={{ mb: 2 }}
+            className="mb-4"
           />
           <Button
-            variant="contained"
             onClick={() => mutation.mutate(text)}
             disabled={!text.trim() || mutation.isPending}
           >
-            {mutation.isPending ? <><CircularProgress size={20} sx={{ mr: 1 }} color="inherit" />Analyzing...</> : 'Analyze Sentiment'}
+            {mutation.isPending ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Analyzing...
+              </>
+            ) : (
+              'Analyze Sentiment'
+            )}
           </Button>
-          {mutation.isError && <Alert severity="error" sx={{ mt: 2 }}>{mutation.error?.message}</Alert>}
+          {mutation.isError && (
+            <Alert variant="destructive" className="mt-4">
+              <AlertDescription>{mutation.error?.message}</AlertDescription>
+            </Alert>
+          )}
         </CardContent>
       </Card>
 
       {mutation.data && <SentimentResult data={mutation.data} />}
-    </Box>
+    </div>
   );
 }

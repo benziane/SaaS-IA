@@ -1,26 +1,22 @@
 'use client';
 
 import { useState } from 'react';
+import { Copy, X } from 'lucide-react';
+
+import { Card, CardContent } from '@/lib/design-hub/components/Card';
+import { Button } from '@/lib/design-hub/components/Button';
+import { Badge } from '@/lib/design-hub/components/Badge';
+import { Skeleton } from '@/lib/design-hub/components/Skeleton';
+import { Alert, AlertTitle, AlertDescription } from '@/lib/design-hub/components/Alert';
+import { Input } from '@/lib/design-hub/components/Input';
+import { Separator } from '@/lib/design-hub/components/Separator';
 import {
-  Alert,
-  Box,
-  Button,
-  Card,
-  CardContent,
-  Chip,
   Dialog,
-  DialogActions,
   DialogContent,
+  DialogHeader,
+  DialogFooter,
   DialogTitle,
-  Divider,
-  Grid,
-  List,
-  ListItem,
-  ListItemText,
-  Skeleton,
-  TextField,
-  Typography,
-} from '@mui/material';
+} from '@/lib/design-hub/components/Dialog';
 
 import { useAPIKeys, useCreateAPIKey, useRevokeAPIKey } from '@/features/api-keys/hooks/useAPIKeys';
 import type { APIKeyCreated } from '@/features/api-keys/types';
@@ -85,146 +81,146 @@ export default function APIDocsPage() {
   };
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Typography variant="h4" sx={{ mb: 3 }}>
+    <div className="p-6">
+      <h1 className="text-2xl font-bold text-[var(--text-high)] mb-6">
         API Documentation & Keys
-      </Typography>
+      </h1>
 
       {/* Created Key Alert */}
       {createdKey && (
-        <Alert severity="warning" sx={{ mb: 3 }} onClose={() => setCreatedKey(null)}>
-          <Typography variant="subtitle2" sx={{ mb: 1 }}>
-            Your API key (save it now - it won't be shown again):
-          </Typography>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <code style={{ fontSize: '0.9rem', wordBreak: 'break-all' }}>{createdKey.key}</code>
-            <Button size="small" onClick={handleCopy}>
-              {copied ? 'Copied!' : 'Copy'}
-            </Button>
-          </Box>
+        <Alert variant="warning" className="mb-6 relative">
+          <button
+            type="button"
+            onClick={() => setCreatedKey(null)}
+            className="absolute right-3 top-3 text-[var(--text-low)] hover:text-[var(--text-high)]"
+            aria-label="Dismiss"
+          >
+            <X className="h-4 w-4" />
+          </button>
+          <AlertTitle>Your API key (save it now - it won&apos;t be shown again):</AlertTitle>
+          <AlertDescription>
+            <div className="flex items-center gap-2 mt-1">
+              <code className="text-sm break-all">{createdKey.key}</code>
+              <Button size="sm" variant="outline" onClick={handleCopy}>
+                <Copy className="h-3 w-3 mr-1" />
+                {copied ? 'Copied!' : 'Copy'}
+              </Button>
+            </div>
+          </AlertDescription>
         </Alert>
       )}
 
-      <Grid container spacing={3}>
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
         {/* API Keys Management */}
-        <Grid item xs={12} md={5}>
+        <div className="md:col-span-5">
           <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                <Typography variant="h6">API Keys</Typography>
-                <Button variant="contained" size="small" onClick={() => setCreateOpen(true)}>
+            <CardContent className="p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-lg font-semibold text-[var(--text-high)]">API Keys</h2>
+                <Button size="sm" onClick={() => setCreateOpen(true)}>
                   Create Key
                 </Button>
-              </Box>
+              </div>
 
               {isLoading ? (
-                <Skeleton variant="rectangular" height={150} />
+                <Skeleton className="h-[150px] w-full" />
               ) : !keys?.length ? (
-                <Typography variant="body2" color="text.secondary">
+                <p className="text-sm text-[var(--text-mid)]">
                   No API keys created yet.
-                </Typography>
+                </p>
               ) : (
-                <List dense>
+                <div className="space-y-1">
                   {keys.map((key) => (
-                    <ListItem
+                    <div
                       key={key.id}
-                      secondaryAction={
-                        key.is_active ? (
-                          <Button
-                            size="small"
-                            color="error"
-                            onClick={() => revokeMutation.mutate(key.id)}
-                          >
-                            Revoke
-                          </Button>
-                        ) : (
-                          <Chip label="Revoked" size="small" color="default" />
-                        )
-                      }
+                      className="flex items-center justify-between py-2 px-1"
                     >
-                      <ListItemText
-                        primary={key.name}
-                        secondary={
-                          <>
-                            {key.key_prefix}... |{' '}
-                            {key.last_used_at
-                              ? `Last used: ${new Date(key.last_used_at).toLocaleDateString()}`
-                              : 'Never used'}
-                          </>
-                        }
-                      />
-                    </ListItem>
+                      <div>
+                        <p className="text-sm font-medium text-[var(--text-high)]">{key.name}</p>
+                        <p className="text-xs text-[var(--text-mid)]">
+                          {key.key_prefix}... |{' '}
+                          {key.last_used_at
+                            ? `Last used: ${new Date(key.last_used_at).toLocaleDateString()}`
+                            : 'Never used'}
+                        </p>
+                      </div>
+                      {key.is_active ? (
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => revokeMutation.mutate(key.id)}
+                        >
+                          Revoke
+                        </Button>
+                      ) : (
+                        <Badge variant="secondary">Revoked</Badge>
+                      )}
+                    </div>
                   ))}
-                </List>
+                </div>
               )}
             </CardContent>
           </Card>
-        </Grid>
+        </div>
 
         {/* API Documentation */}
-        <Grid item xs={12} md={7}>
+        <div className="md:col-span-7">
           <Card>
-            <CardContent>
-              <Typography variant="h6" sx={{ mb: 2 }}>
+            <CardContent className="p-6">
+              <h2 className="text-lg font-semibold text-[var(--text-high)] mb-4">
                 Public API v1
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                Authenticate using the <code>X-API-Key</code> header with your API key.
-              </Typography>
+              </h2>
+              <p className="text-sm text-[var(--text-mid)] mb-6">
+                Authenticate using the <code className="bg-[var(--bg-elevated)] px-1 rounded text-xs">X-API-Key</code> header with your API key.
+              </p>
 
               {API_EXAMPLES.map((example, idx) => (
-                <Box key={idx} sx={{ mb: 3 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                    <Chip label={example.method} size="small" color="primary" />
-                    <Typography variant="subtitle2">{example.endpoint}</Typography>
-                  </Box>
-                  <Typography variant="body2" sx={{ mb: 1 }}>{example.title}</Typography>
-                  <Box
-                    sx={{
-                      bgcolor: 'grey.900',
-                      color: 'grey.100',
-                      p: 2,
-                      borderRadius: 1,
-                      fontFamily: 'monospace',
-                      fontSize: '0.8rem',
-                      whiteSpace: 'pre-wrap',
-                      overflow: 'auto',
-                    }}
-                  >
+                <div key={idx} className="mb-6">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Badge variant="default">{example.method}</Badge>
+                    <span className="text-sm font-semibold text-[var(--text-high)]">{example.endpoint}</span>
+                  </div>
+                  <p className="text-sm text-[var(--text-mid)] mb-2">{example.title}</p>
+                  <div className="bg-gray-900 text-gray-100 p-4 rounded-md font-mono text-xs whitespace-pre-wrap overflow-auto">
                     {example.curl}
-                  </Box>
-                  {idx < API_EXAMPLES.length - 1 && <Divider sx={{ mt: 2 }} />}
-                </Box>
+                  </div>
+                  {idx < API_EXAMPLES.length - 1 && <Separator className="mt-4" />}
+                </div>
               ))}
             </CardContent>
           </Card>
-        </Grid>
-      </Grid>
+        </div>
+      </div>
 
       {/* Create Key Dialog */}
-      <Dialog open={createOpen} onClose={() => setCreateOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Create API Key</DialogTitle>
+      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent>
-          <TextField
-            fullWidth
-            label="Key Name"
-            value={keyName}
-            onChange={(e) => setKeyName(e.target.value)}
-            placeholder="e.g., Production, Testing"
-            sx={{ mt: 1 }}
-          />
+          <DialogHeader>
+            <DialogTitle>Create API Key</DialogTitle>
+          </DialogHeader>
+          <div className="py-2">
+            <label className="text-sm font-medium text-[var(--text-mid)] mb-1.5 block">
+              Key Name
+            </label>
+            <Input
+              value={keyName}
+              onChange={(e) => setKeyName(e.target.value)}
+              placeholder="e.g., Production, Testing"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setCreateOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleCreate}
+              disabled={!keyName.trim() || createMutation.isPending}
+            >
+              {createMutation.isPending ? 'Creating...' : 'Create'}
+            </Button>
+          </DialogFooter>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setCreateOpen(false)}>Cancel</Button>
-          <Button
-            variant="contained"
-            onClick={handleCreate}
-            disabled={!keyName.trim() || createMutation.isPending}
-          >
-            {createMutation.isPending ? 'Creating...' : 'Create'}
-          </Button>
-        </DialogActions>
       </Dialog>
-    </Box>
+    </div>
   );
 }

@@ -9,14 +9,11 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import {
-  Alert,
-  Box,
-  Card,
-  Typography,
-} from '@mui/material';
-import { Forum } from '@mui/icons-material';
+import { MessageSquare, X } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
+
+import { Card } from '@/components/ui/card';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 import { useConversations, useConversation } from '@/features/conversation/hooks';
 import {
@@ -202,16 +199,11 @@ export default function ChatPage(): JSX.Element {
   );
 
   return (
-    <Box sx={{ height: 'calc(100vh - 120px)', display: 'flex', gap: 2 }}>
+    <div className="flex gap-4" style={{ height: 'calc(100vh - 120px)' }}>
       {/* Left Panel: Conversation List */}
       <Card
-        sx={{
-          width: SIDEBAR_WIDTH,
-          minWidth: SIDEBAR_WIDTH,
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden',
-        }}
+        className="flex flex-col overflow-hidden shrink-0"
+        style={{ width: SIDEBAR_WIDTH, minWidth: SIDEBAR_WIDTH }}
       >
         <ConversationList
           conversations={conversations}
@@ -224,53 +216,37 @@ export default function ChatPage(): JSX.Element {
       </Card>
 
       {/* Right Panel: Active Chat */}
-      <Card
-        sx={{
-          flex: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden',
-        }}
-      >
+      <Card className="flex-1 flex flex-col overflow-hidden">
         {activeConversationId ? (
           <>
             {/* Chat Header */}
-            <Box
-              sx={{
-                px: 2,
-                py: 1.5,
-                borderBottom: '1px solid',
-                borderColor: 'divider',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 1,
-              }}
-            >
-              <Forum fontSize="small" color="primary" />
-              <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+            <div className="px-4 py-3 border-b border-[var(--border)] flex items-center gap-2">
+              <MessageSquare className="w-5 h-5 text-[var(--accent)]" />
+              <h6 className="text-base font-semibold text-[var(--text-high)]">
                 {activeConversation?.title || 'New Conversation'}
-              </Typography>
+              </h6>
               {activeConversation?.transcription_id && (
-                <Typography
-                  variant="caption"
-                  color="text.secondary"
-                  sx={{
-                    ml: 'auto',
-                    bgcolor: 'action.hover',
-                    px: 1,
-                    py: 0.25,
-                    borderRadius: 1,
-                  }}
-                >
+                <span className="ml-auto text-xs text-[var(--text-mid)] bg-[var(--bg-elevated)] px-2 py-0.5 rounded">
                   Linked to transcription
-                </Typography>
+                </span>
               )}
-            </Box>
+            </div>
 
             {/* Stream Error */}
             {streamError && (
-              <Alert severity="error" sx={{ mx: 2, mt: 1 }} onClose={() => setStreamError(null)}>
-                {streamError}
+              <Alert variant="destructive" className="mx-4 mt-2">
+                <div className="flex items-center justify-between">
+                  <AlertDescription>{streamError}</AlertDescription>
+                  <button
+                    type="button"
+                    title="Dismiss error"
+                    onClick={() => setStreamError(null)}
+                    className="text-red-400 hover:text-red-300 shrink-0 ml-2"
+                  >
+                    <X className="w-4 h-4" />
+                    <span className="sr-only">Dismiss error</span>
+                  </button>
+                </div>
               </Alert>
             )}
 
@@ -293,28 +269,18 @@ export default function ChatPage(): JSX.Element {
           </>
         ) : (
           /* No conversation selected */
-          <Box
-            sx={{
-              flex: 1,
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'center',
-              alignItems: 'center',
-              gap: 2,
-              color: 'text.secondary',
-            }}
-          >
-            <Forum sx={{ fontSize: 64, opacity: 0.15 }} />
-            <Typography variant="h6" color="text.secondary">
+          <div className="flex-1 flex flex-col justify-center items-center gap-4 text-[var(--text-mid)]">
+            <MessageSquare className="w-16 h-16 opacity-15" />
+            <h6 className="text-base font-semibold text-[var(--text-mid)]">
               Select a conversation or create a new one
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
+            </h6>
+            <p className="text-sm text-[var(--text-mid)]">
               Chat with AI about your transcriptions and more.
-            </Typography>
-          </Box>
+            </p>
+          </div>
         )}
       </Card>
 
-    </Box>
+    </div>
   );
 }

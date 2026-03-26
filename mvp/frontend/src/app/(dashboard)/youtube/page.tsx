@@ -1,25 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import {
-  Alert,
-  Box,
-  Button,
-  Card,
-  CardContent,
-  CardMedia,
-  Chip,
-  CircularProgress,
-  Divider,
-  Grid,
-  List,
-  ListItem,
-  ListItemText,
-  Tab,
-  Tabs,
-  TextField,
-  Typography,
-} from '@mui/material';
+import { Loader2 } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/lib/design-hub/components/Button';
+import { Input } from '@/lib/design-hub/components/Input';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/lib/design-hub/components/Tabs';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/lib/design-hub/components/Select';
 import { useMutation } from '@tanstack/react-query';
 
 import { autoChapter, getMetadata, smartTranscribe, transcribePlaylist, checkStreamStatus, captureStream, analyzeVideo } from '@/features/transcription/api';
@@ -40,10 +29,10 @@ function formatNumber(n: number): string {
   return String(n);
 }
 
-function ProviderChip({ provider }: { provider: string }) {
-  const colors: Record<string, 'success' | 'primary' | 'warning' | 'default'> = {
+function ProviderBadge({ provider }: { provider: string }) {
+  const variants: Record<string, 'success' | 'default' | 'warning'> = {
     youtube_subtitles: 'success',
-    whisper: 'primary',
+    whisper: 'default',
     assemblyai: 'warning',
   };
   const labels: Record<string, string> = {
@@ -51,63 +40,65 @@ function ProviderChip({ provider }: { provider: string }) {
     whisper: 'Whisper (Local)',
     assemblyai: 'AssemblyAI (Paid)',
   };
-  return <Chip label={labels[provider] || provider} size="small" color={colors[provider] || 'default'} />;
+  return <Badge variant={variants[provider] || 'outline'}>{labels[provider] || provider}</Badge>;
 }
 
 function MetadataCard({ data }: { data: YouTubeMetadata }) {
   return (
     <Card>
-      <Grid container>
+      <div className="grid grid-cols-1 md:grid-cols-[1fr_2fr]">
         {data.thumbnail && (
-          <Grid item xs={12} md={4}>
-            <CardMedia component="img" image={data.thumbnail} alt={data.title} sx={{ height: '100%', minHeight: 200, objectFit: 'cover' }} />
-          </Grid>
+          <div className="relative min-h-[200px]">
+            <img
+              src={data.thumbnail}
+              alt={data.title}
+              className="w-full h-full object-cover rounded-l-[var(--radius-lg,8px)]"
+            />
+          </div>
         )}
-        <Grid item xs={12} md={data.thumbnail ? 8 : 12}>
-          <CardContent>
-            <Typography variant="h6" sx={{ fontWeight: 700, mb: 1 }}>{data.title}</Typography>
-            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2 }}>
-              <Chip label={data.uploader} size="small" variant="outlined" />
-              <Chip label={formatDuration(data.duration_seconds)} size="small" />
-              <Chip label={`${formatNumber(data.view_count)} views`} size="small" />
-              <Chip label={`${formatNumber(data.like_count)} likes`} size="small" />
-              {data.is_live && <Chip label="LIVE" size="small" color="error" />}
-            </Box>
-            {data.description && (
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 2, maxHeight: 100, overflow: 'auto', whiteSpace: 'pre-wrap' }}>
-                {data.description.substring(0, 500)}{data.description.length > 500 ? '...' : ''}
-              </Typography>
-            )}
-            {data.tags.length > 0 && (
-              <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', mb: 1 }}>
-                {data.tags.slice(0, 10).map((tag) => (
-                  <Chip key={tag} label={tag} size="small" variant="outlined" sx={{ fontSize: '0.7rem' }} />
-                ))}
-              </Box>
-            )}
-            {data.chapters.length > 0 && (
-              <Box sx={{ mt: 1 }}>
-                <Typography variant="subtitle2" sx={{ mb: 0.5 }}>{data.chapters.length} Chapters</Typography>
-                {data.chapters.slice(0, 5).map((ch, i) => (
-                  <Typography key={i} variant="caption" display="block" color="text.secondary">
-                    {formatDuration(Math.round(ch.start_time))} - {ch.title}
-                  </Typography>
-                ))}
-                {data.chapters.length > 5 && (
-                  <Typography variant="caption" color="text.secondary">+{data.chapters.length - 5} more</Typography>
-                )}
-              </Box>
-            )}
-          </CardContent>
-        </Grid>
-      </Grid>
+        <CardContent className="p-6">
+          <h3 className="text-lg font-bold text-[var(--text-high)] mb-2">{data.title}</h3>
+          <div className="flex gap-1.5 flex-wrap mb-4">
+            <Badge variant="outline">{data.uploader}</Badge>
+            <Badge variant="secondary">{formatDuration(data.duration_seconds)}</Badge>
+            <Badge variant="secondary">{formatNumber(data.view_count)} views</Badge>
+            <Badge variant="secondary">{formatNumber(data.like_count)} likes</Badge>
+            {data.is_live && <Badge variant="destructive">LIVE</Badge>}
+          </div>
+          {data.description && (
+            <p className="text-sm text-[var(--text-mid)] mb-4 max-h-[100px] overflow-auto whitespace-pre-wrap">
+              {data.description.substring(0, 500)}{data.description.length > 500 ? '...' : ''}
+            </p>
+          )}
+          {data.tags.length > 0 && (
+            <div className="flex gap-1 flex-wrap mb-2">
+              {data.tags.slice(0, 10).map((tag) => (
+                <Badge key={tag} variant="outline" className="text-[0.7rem]">{tag}</Badge>
+              ))}
+            </div>
+          )}
+          {data.chapters.length > 0 && (
+            <div className="mt-2">
+              <h4 className="text-sm font-semibold text-[var(--text-high)] mb-1">{data.chapters.length} Chapters</h4>
+              {data.chapters.slice(0, 5).map((ch, i) => (
+                <span key={i} className="block text-xs text-[var(--text-mid)]">
+                  {formatDuration(Math.round(ch.start_time))} - {ch.title}
+                </span>
+              ))}
+              {data.chapters.length > 5 && (
+                <span className="text-xs text-[var(--text-mid)]">+{data.chapters.length - 5} more</span>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </div>
     </Card>
   );
 }
 
 export default function YouTubePage() {
   const [url, setUrl] = useState('');
-  const [tab, setTab] = useState(0);
+  const [tab, setTab] = useState('smart');
   const [language, setLanguage] = useState('auto');
 
   const smartMutation = useMutation<SmartTranscribeResponse, Error, void>({
@@ -135,185 +126,185 @@ export default function YouTubePage() {
   const isLoading = smartMutation.isPending || metadataMutation.isPending || playlistMutation.isPending || chapterMutation.isPending || captureMutation.isPending || videoAnalyzeMutation.isPending;
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Typography variant="h4" sx={{ mb: 1 }}>YouTube Studio</Typography>
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+    <div className="p-6">
+      <h1 className="text-2xl font-bold text-[var(--text-high)] mb-1">YouTube Studio</h1>
+      <p className="text-sm text-[var(--text-mid)] mb-6">
         Smart transcription, metadata extraction, playlist processing, auto-chaptering, live stream capture, and video analysis
-      </Typography>
+      </p>
 
-      <Card sx={{ mb: 3 }}>
-        <CardContent>
-          <Grid container spacing={2} sx={{ mb: 2 }}>
-            <Grid item xs={12} md={8}>
-              <TextField fullWidth value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://youtube.com/watch?v=... or playlist URL" label="YouTube URL" />
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <TextField fullWidth select value={language} onChange={(e) => setLanguage(e.target.value)} label="Language" SelectProps={{ native: true }}>
-                <option value="auto">Auto-detect</option>
-                <option value="fr">French</option>
-                <option value="en">English</option>
-                <option value="es">Spanish</option>
-                <option value="de">German</option>
-                <option value="ar">Arabic</option>
-              </TextField>
-            </Grid>
-          </Grid>
+      <Card className="mb-6">
+        <CardContent className="p-6">
+          <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr] gap-4 mb-4">
+            <div>
+              <label className="block text-sm font-medium text-[var(--text-mid)] mb-1.5">YouTube URL</label>
+              <Input
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                placeholder="https://youtube.com/watch?v=... or playlist URL"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[var(--text-mid)] mb-1.5">Language</label>
+              <Select value={language} onValueChange={setLanguage}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="auto">Auto-detect</SelectItem>
+                  <SelectItem value="fr">French</SelectItem>
+                  <SelectItem value="en">English</SelectItem>
+                  <SelectItem value="es">Spanish</SelectItem>
+                  <SelectItem value="de">German</SelectItem>
+                  <SelectItem value="ar">Arabic</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
 
-          <Tabs value={tab} onChange={(_, v: number) => setTab(v)} sx={{ mb: 2 }}>
-            <Tab label="Smart Transcribe" />
-            <Tab label="Metadata" />
-            <Tab label="Playlist Bulk" />
-            <Tab label="Auto-Chapter" />
-            <Tab label="Live Stream" />
-            <Tab label="Video Analysis" />
-          </Tabs>
+          <Tabs value={tab} onValueChange={setTab}>
+            <TabsList className="mb-4">
+              <TabsTrigger value="smart">Smart Transcribe</TabsTrigger>
+              <TabsTrigger value="metadata">Metadata</TabsTrigger>
+              <TabsTrigger value="playlist">Playlist Bulk</TabsTrigger>
+              <TabsTrigger value="chapter">Auto-Chapter</TabsTrigger>
+              <TabsTrigger value="stream">Live Stream</TabsTrigger>
+              <TabsTrigger value="analysis">Video Analysis</TabsTrigger>
+            </TabsList>
 
-          {tab === 0 && (
-            <Box>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            <TabsContent value="smart">
+              <p className="text-sm text-[var(--text-mid)] mb-4">
                 Automatically uses the best provider: YouTube subtitles (free) &gt; Whisper (local) &gt; AssemblyAI
-              </Typography>
-              <Button variant="contained" onClick={() => smartMutation.mutate()} disabled={!url.trim() || isLoading}>
-                {smartMutation.isPending ? <><CircularProgress size={20} sx={{ mr: 1 }} color="inherit" />Transcribing...</> : 'Smart Transcribe'}
+              </p>
+              <Button onClick={() => smartMutation.mutate()} disabled={!url.trim() || isLoading}>
+                {smartMutation.isPending ? <><Loader2 className="h-4 w-4 animate-spin" />Transcribing...</> : 'Smart Transcribe'}
               </Button>
-            </Box>
-          )}
+            </TabsContent>
 
-          {tab === 1 && (
-            <Button variant="contained" onClick={() => metadataMutation.mutate()} disabled={!url.trim() || isLoading}>
-              {metadataMutation.isPending ? <><CircularProgress size={20} sx={{ mr: 1 }} color="inherit" />Extracting...</> : 'Extract Metadata'}
-            </Button>
-          )}
+            <TabsContent value="metadata">
+              <Button onClick={() => metadataMutation.mutate()} disabled={!url.trim() || isLoading}>
+                {metadataMutation.isPending ? <><Loader2 className="h-4 w-4 animate-spin" />Extracting...</> : 'Extract Metadata'}
+              </Button>
+            </TabsContent>
 
-          {tab === 2 && (
-            <Box>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            <TabsContent value="playlist">
+              <p className="text-sm text-[var(--text-mid)] mb-4">
                 Transcribe all videos in a playlist or channel (max 100 videos)
-              </Typography>
-              <Button variant="contained" color="secondary" onClick={() => playlistMutation.mutate()} disabled={!url.trim() || isLoading}>
-                {playlistMutation.isPending ? <><CircularProgress size={20} sx={{ mr: 1 }} color="inherit" />Processing...</> : 'Transcribe Playlist'}
+              </p>
+              <Button variant="secondary" onClick={() => playlistMutation.mutate()} disabled={!url.trim() || isLoading}>
+                {playlistMutation.isPending ? <><Loader2 className="h-4 w-4 animate-spin" />Processing...</> : 'Transcribe Playlist'}
               </Button>
-            </Box>
-          )}
+            </TabsContent>
 
-          {tab === 3 && (
-            <Box>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            <TabsContent value="chapter">
+              <p className="text-sm text-[var(--text-mid)] mb-4">
                 Combine YouTube chapters with AI summaries for each section
-              </Typography>
-              <Button variant="contained" color="warning" onClick={() => chapterMutation.mutate()} disabled={!url.trim() || isLoading}>
-                {chapterMutation.isPending ? <><CircularProgress size={20} sx={{ mr: 1 }} color="inherit" />Analyzing...</> : 'Auto-Chapter'}
+              </p>
+              <Button onClick={() => chapterMutation.mutate()} disabled={!url.trim() || isLoading}>
+                {chapterMutation.isPending ? <><Loader2 className="h-4 w-4 animate-spin" />Analyzing...</> : 'Auto-Chapter'}
               </Button>
-            </Box>
-          )}
+            </TabsContent>
 
-          {tab === 4 && (
-            <Box>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            <TabsContent value="stream">
+              <p className="text-sm text-[var(--text-mid)] mb-4">
                 Capture a segment of a live stream (YouTube Live, Twitch) and auto-transcribe it
-              </Typography>
-              <Box sx={{ display: 'flex', gap: 2 }}>
-                <Button variant="outlined" onClick={() => streamStatusMutation.mutate()} disabled={!url.trim() || isLoading}>
+              </p>
+              <div className="flex gap-4">
+                <Button variant="outline" onClick={() => streamStatusMutation.mutate()} disabled={!url.trim() || isLoading}>
                   {streamStatusMutation.isPending ? 'Checking...' : 'Check Status'}
                 </Button>
-                <Button variant="contained" color="error" onClick={() => captureMutation.mutate()} disabled={!url.trim() || isLoading}>
-                  {captureMutation.isPending ? <><CircularProgress size={20} sx={{ mr: 1 }} color="inherit" />Recording 5 min...</> : 'Capture Stream (5 min)'}
+                <Button variant="destructive" onClick={() => captureMutation.mutate()} disabled={!url.trim() || isLoading}>
+                  {captureMutation.isPending ? <><Loader2 className="h-4 w-4 animate-spin" />Recording 5 min...</> : 'Capture Stream (5 min)'}
                 </Button>
-              </Box>
-            </Box>
-          )}
+              </div>
+            </TabsContent>
 
-          {tab === 5 && (
-            <Box>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            <TabsContent value="analysis">
+              <p className="text-sm text-[var(--text-mid)] mb-4">
                 Download video, extract frames, and analyze each with AI Vision
-              </Typography>
-              <Button variant="contained" color="info" onClick={() => videoAnalyzeMutation.mutate()} disabled={!url.trim() || isLoading}>
-                {videoAnalyzeMutation.isPending ? <><CircularProgress size={20} sx={{ mr: 1 }} color="inherit" />Analyzing...</> : 'Analyze Video Frames'}
+              </p>
+              <Button onClick={() => videoAnalyzeMutation.mutate()} disabled={!url.trim() || isLoading}>
+                {videoAnalyzeMutation.isPending ? <><Loader2 className="h-4 w-4 animate-spin" />Analyzing...</> : 'Analyze Video Frames'}
               </Button>
-            </Box>
-          )}
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
 
       {/* Smart Transcribe Result */}
       {smartMutation.data && (
-        <Card sx={{ mb: 3 }}>
-          <CardContent>
-            <Box sx={{ display: 'flex', gap: 1, mb: 2, alignItems: 'center' }}>
-              <Typography variant="h6">Transcription Result</Typography>
-              <ProviderChip provider={smartMutation.data.provider} />
-              {smartMutation.data.is_manual && <Chip label="Manual subs" size="small" color="info" />}
-              <Chip label={`${formatDuration(smartMutation.data.duration_seconds)}`} size="small" variant="outlined" />
-              <Chip label={`${smartMutation.data.language}`} size="small" variant="outlined" />
-            </Box>
-            <Box sx={{ bgcolor: 'grey.50', p: 2, borderRadius: 1, maxHeight: 400, overflow: 'auto' }}>
-              <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', lineHeight: 1.8 }}>
+        <Card className="mb-6">
+          <CardContent className="p-6">
+            <div className="flex gap-2 mb-4 items-center flex-wrap">
+              <h2 className="text-lg font-semibold text-[var(--text-high)]">Transcription Result</h2>
+              <ProviderBadge provider={smartMutation.data.provider} />
+              {smartMutation.data.is_manual && <Badge variant="outline">Manual subs</Badge>}
+              <Badge variant="outline">{formatDuration(smartMutation.data.duration_seconds)}</Badge>
+              <Badge variant="outline">{smartMutation.data.language}</Badge>
+            </div>
+            <div className="bg-[var(--bg-elevated)] p-4 rounded-[var(--radius-md,6px)] max-h-[400px] overflow-auto">
+              <p className="text-sm text-[var(--text-high)] whitespace-pre-wrap leading-relaxed">
                 {smartMutation.data.text}
-              </Typography>
-            </Box>
+              </p>
+            </div>
           </CardContent>
         </Card>
       )}
 
       {/* Metadata Result */}
-      {metadataMutation.data && <Box sx={{ mb: 3 }}><MetadataCard data={metadataMutation.data} /></Box>}
+      {metadataMutation.data && <div className="mb-6"><MetadataCard data={metadataMutation.data} /></div>}
 
       {/* Playlist Result */}
       {playlistMutation.data?.success && (
-        <Card sx={{ mb: 3 }}>
-          <CardContent>
-            <Box sx={{ display: 'flex', gap: 2, mb: 2, alignItems: 'center' }}>
-              <Typography variant="h6">Playlist Results</Typography>
-              <Chip label={`${playlistMutation.data.transcribed}/${playlistMutation.data.total} transcribed`} color="primary" />
-            </Box>
-            <List>
+        <Card className="mb-6">
+          <CardContent className="p-6">
+            <div className="flex gap-4 mb-4 items-center">
+              <h2 className="text-lg font-semibold text-[var(--text-high)]">Playlist Results</h2>
+              <Badge>{playlistMutation.data.transcribed}/{playlistMutation.data.total} transcribed</Badge>
+            </div>
+            <div className="divide-y divide-[var(--border)]">
               {playlistMutation.data.results.map((r) => (
-                <ListItem key={r.video_id} divider sx={{ alignItems: 'flex-start' }}>
-                  <ListItemText
-                    primary={
-                      <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                        <Typography variant="body2" sx={{ fontWeight: 600 }}>{r.title || r.video_id}</Typography>
-                        <ProviderChip provider={r.provider} />
-                        {r.success ? <Chip label="OK" size="small" color="success" /> : <Chip label="Failed" size="small" color="error" />}
-                      </Box>
-                    }
-                    secondary={r.success ? r.transcript : r.error}
-                    secondaryTypographyProps={{ variant: 'caption', sx: { maxHeight: 60, overflow: 'hidden' } }}
-                  />
-                </ListItem>
+                <div key={r.video_id} className="py-3">
+                  <div className="flex gap-2 items-center mb-1">
+                    <span className="text-sm font-semibold text-[var(--text-high)]">{r.title || r.video_id}</span>
+                    <ProviderBadge provider={r.provider} />
+                    {r.success ? <Badge variant="success">OK</Badge> : <Badge variant="destructive">Failed</Badge>}
+                  </div>
+                  <p className="text-xs text-[var(--text-mid)] max-h-[60px] overflow-hidden">
+                    {r.success ? r.transcript : r.error}
+                  </p>
+                </div>
               ))}
-            </List>
+            </div>
           </CardContent>
         </Card>
       )}
 
       {/* Chapter Result */}
       {chapterMutation.data && (
-        <Card sx={{ mb: 3 }}>
-          <CardContent>
-            <Typography variant="h6" sx={{ mb: 1 }}>{chapterMutation.data.title}</Typography>
-            <ProviderChip provider={chapterMutation.data.provider} />
+        <Card className="mb-6">
+          <CardContent className="p-6">
+            <h2 className="text-lg font-semibold text-[var(--text-high)] mb-2">{chapterMutation.data.title}</h2>
+            <ProviderBadge provider={chapterMutation.data.provider} />
 
             {chapterMutation.data.full_summary && (
-              <Box sx={{ mt: 2, p: 2, bgcolor: 'primary.50', borderRadius: 1, border: '1px solid', borderColor: 'primary.200' }}>
-                <Typography variant="subtitle2" sx={{ mb: 1 }}>Overall Summary</Typography>
-                <Typography variant="body2">{chapterMutation.data.full_summary}</Typography>
-              </Box>
+              <div className="mt-4 p-4 bg-[var(--accent)]/10 rounded-[var(--radius-md,6px)] border border-[var(--accent)]/20">
+                <h3 className="text-sm font-semibold text-[var(--text-high)] mb-2">Overall Summary</h3>
+                <p className="text-sm text-[var(--text-high)]">{chapterMutation.data.full_summary}</p>
+              </div>
             )}
 
-            <Divider sx={{ my: 2 }} />
+            <hr className="border-[var(--border)] my-4" />
 
             {chapterMutation.data.chapters.map((ch, i) => (
-              <Box key={i} sx={{ mb: 2, p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 1 }}>
-                <Box sx={{ display: 'flex', gap: 1, mb: 1, alignItems: 'center' }}>
-                  <Chip label={formatDuration(Math.round(ch.start_time))} size="small" variant="outlined" />
-                  <Typography variant="subtitle2">{ch.title}</Typography>
-                </Box>
+              <div key={i} className="mb-4 p-4 border border-[var(--border)] rounded-[var(--radius-md,6px)]">
+                <div className="flex gap-2 mb-2 items-center">
+                  <Badge variant="outline">{formatDuration(Math.round(ch.start_time))}</Badge>
+                  <h4 className="text-sm font-semibold text-[var(--text-high)]">{ch.title}</h4>
+                </div>
                 {ch.summary && (
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>{ch.summary}</Typography>
+                  <p className="text-sm text-[var(--text-mid)]">{ch.summary}</p>
                 )}
-              </Box>
+              </div>
             ))}
           </CardContent>
         </Card>
@@ -321,41 +312,41 @@ export default function YouTubePage() {
 
       {/* Stream Status */}
       {streamStatusMutation.data && (
-        <Card sx={{ mb: 3 }}>
-          <CardContent>
-            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', mb: 1 }}>
-              <Typography variant="h6">Stream Status</Typography>
+        <Card className="mb-6">
+          <CardContent className="p-6">
+            <div className="flex gap-2 items-center mb-2">
+              <h2 className="text-lg font-semibold text-[var(--text-high)]">Stream Status</h2>
               {streamStatusMutation.data.is_live ? (
-                <Chip label="LIVE" color="error" size="small" />
+                <Badge variant="destructive">LIVE</Badge>
               ) : (
-                <Chip label="OFFLINE" size="small" />
+                <Badge variant="secondary">OFFLINE</Badge>
               )}
-            </Box>
-            <Typography variant="body2">{streamStatusMutation.data.title}</Typography>
-            <Typography variant="caption" color="text.secondary">
+            </div>
+            <p className="text-sm text-[var(--text-high)]">{streamStatusMutation.data.title}</p>
+            <span className="text-xs text-[var(--text-mid)]">
               {streamStatusMutation.data.uploader}
               {streamStatusMutation.data.concurrent_viewers != null && ` | ${formatNumber(streamStatusMutation.data.concurrent_viewers)} viewers`}
-            </Typography>
+            </span>
           </CardContent>
         </Card>
       )}
 
       {/* Stream Capture Result */}
       {captureMutation.data?.success && (
-        <Card sx={{ mb: 3 }}>
-          <CardContent>
-            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', mb: 2 }}>
-              <Typography variant="h6">Stream Captured</Typography>
-              <Chip label={captureMutation.data.capture_method} size="small" color="primary" />
-              <Chip label={formatDuration(captureMutation.data.duration_seconds)} size="small" variant="outlined" />
-            </Box>
+        <Card className="mb-6">
+          <CardContent className="p-6">
+            <div className="flex gap-2 items-center mb-4 flex-wrap">
+              <h2 className="text-lg font-semibold text-[var(--text-high)]">Stream Captured</h2>
+              <Badge>{captureMutation.data.capture_method}</Badge>
+              <Badge variant="outline">{formatDuration(captureMutation.data.duration_seconds)}</Badge>
+            </div>
             {captureMutation.data.transcript && (
-              <Box sx={{ bgcolor: 'grey.50', p: 2, borderRadius: 1, maxHeight: 300, overflow: 'auto' }}>
-                <Typography variant="subtitle2" sx={{ mb: 1 }}>Auto-Transcription (Whisper)</Typography>
-                <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
+              <div className="bg-[var(--bg-elevated)] p-4 rounded-[var(--radius-md,6px)] max-h-[300px] overflow-auto">
+                <h3 className="text-sm font-semibold text-[var(--text-high)] mb-2">Auto-Transcription (Whisper)</h3>
+                <p className="text-sm text-[var(--text-high)] whitespace-pre-wrap">
                   {captureMutation.data.transcript}
-                </Typography>
-              </Box>
+                </p>
+              </div>
             )}
           </CardContent>
         </Card>
@@ -363,35 +354,35 @@ export default function YouTubePage() {
 
       {/* Video Analysis Result */}
       {videoAnalyzeMutation.data && (
-        <Card sx={{ mb: 3 }}>
-          <CardContent>
-            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', mb: 2 }}>
-              <Typography variant="h6">{videoAnalyzeMutation.data.title || 'Video Analysis'}</Typography>
-              <Chip label={`${videoAnalyzeMutation.data.frames_analyzed} frames`} size="small" color="info" />
-            </Box>
+        <Card className="mb-6">
+          <CardContent className="p-6">
+            <div className="flex gap-2 items-center mb-4 flex-wrap">
+              <h2 className="text-lg font-semibold text-[var(--text-high)]">{videoAnalyzeMutation.data.title || 'Video Analysis'}</h2>
+              <Badge variant="outline">{videoAnalyzeMutation.data.frames_analyzed} frames</Badge>
+            </div>
             {videoAnalyzeMutation.data.summary && (
-              <Box sx={{ p: 2, bgcolor: 'info.50', borderRadius: 1, border: '1px solid', borderColor: 'info.200', mb: 2 }}>
-                <Typography variant="subtitle2" sx={{ mb: 1 }}>Video Summary</Typography>
-                <Typography variant="body2">{videoAnalyzeMutation.data.summary}</Typography>
-              </Box>
+              <div className="p-4 bg-[var(--accent)]/10 rounded-[var(--radius-md,6px)] border border-[var(--accent)]/20 mb-4">
+                <h3 className="text-sm font-semibold text-[var(--text-high)] mb-2">Video Summary</h3>
+                <p className="text-sm text-[var(--text-high)]">{videoAnalyzeMutation.data.summary}</p>
+              </div>
             )}
             {videoAnalyzeMutation.data.analyses.map((frame, i) => (
-              <Box key={i} sx={{ mb: 1.5, p: 1.5, border: '1px solid', borderColor: 'divider', borderRadius: 1 }}>
-                <Chip label={`${formatDuration(Math.round(frame.timestamp))}`} size="small" variant="outlined" sx={{ mr: 1 }} />
-                <Typography variant="body2" component="span">{frame.description}</Typography>
-              </Box>
+              <div key={i} className="mb-3 p-3 border border-[var(--border)] rounded-[var(--radius-md,6px)]">
+                <Badge variant="outline" className="mr-2">{formatDuration(Math.round(frame.timestamp))}</Badge>
+                <span className="text-sm text-[var(--text-high)]">{frame.description}</span>
+              </div>
             ))}
           </CardContent>
         </Card>
       )}
 
       {/* Errors */}
-      {smartMutation.isError && <Alert severity="error" sx={{ mb: 2 }}>{smartMutation.error.message}</Alert>}
-      {metadataMutation.isError && <Alert severity="error" sx={{ mb: 2 }}>{metadataMutation.error.message}</Alert>}
-      {playlistMutation.isError && <Alert severity="error" sx={{ mb: 2 }}>{playlistMutation.error.message}</Alert>}
-      {chapterMutation.isError && <Alert severity="error" sx={{ mb: 2 }}>{chapterMutation.error.message}</Alert>}
-      {captureMutation.isError && <Alert severity="error" sx={{ mb: 2 }}>{captureMutation.error.message}</Alert>}
-      {videoAnalyzeMutation.isError && <Alert severity="error" sx={{ mb: 2 }}>{videoAnalyzeMutation.error.message}</Alert>}
-    </Box>
+      {smartMutation.isError && <Alert variant="destructive" className="mb-4"><AlertDescription>{smartMutation.error.message}</AlertDescription></Alert>}
+      {metadataMutation.isError && <Alert variant="destructive" className="mb-4"><AlertDescription>{metadataMutation.error.message}</AlertDescription></Alert>}
+      {playlistMutation.isError && <Alert variant="destructive" className="mb-4"><AlertDescription>{playlistMutation.error.message}</AlertDescription></Alert>}
+      {chapterMutation.isError && <Alert variant="destructive" className="mb-4"><AlertDescription>{chapterMutation.error.message}</AlertDescription></Alert>}
+      {captureMutation.isError && <Alert variant="destructive" className="mb-4"><AlertDescription>{captureMutation.error.message}</AlertDescription></Alert>}
+      {videoAnalyzeMutation.isError && <Alert variant="destructive" className="mb-4"><AlertDescription>{videoAnalyzeMutation.error.message}</AlertDescription></Alert>}
+    </div>
   );
 }
