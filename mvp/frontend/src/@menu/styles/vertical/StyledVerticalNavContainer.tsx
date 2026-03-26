@@ -13,7 +13,7 @@ const StyledVerticalNavContainer = styled.div<StyledVerticalNavContainerProps>`
   position: relative;
   block-size: 100%;
   inline-size: 100%;
-  border-inline-end: 1px solid #efefef;
+  border-inline-end: 1px solid var(--border);
   .${verticalNavClasses.hovered} &,
   .${verticalNavClasses.expanding} & {
     inline-size: ${({ width }) => `${width}px`};

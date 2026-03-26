@@ -39,24 +39,24 @@ export const menuButtonStyles = (props: MenuButtonStylesProps) => {
     paddingInlineStart: `${level === 0 ? 20 : (isPopoutWhenCollapsed && isCollapsed ? level : level + 1) * 20}px`,
 
     '&:hover, &[aria-expanded="true"]': {
-      backgroundColor: '#f3f3f3'
+      backgroundColor: 'var(--bg-elevated)'
     },
 
     '&:focus-visible': {
       outline: 'none',
-      backgroundColor: '#f3f3f3'
+      backgroundColor: 'var(--bg-elevated)'
     },
 
     ...(disabled && {
       pointerEvents: 'none',
       cursor: 'default',
-      color: '#adadad'
+      color: 'var(--text-low)'
     }),
 
     // All the active styles are applied to the button including menu items or submenu
     [`&.${menuClasses.active}`]: {
-      ...(!children && { color: 'white' }),
-      backgroundColor: children ? '#f3f3f3' : '#765feb'
+      ...(!children && { color: 'var(--bg-app)' }),
+      backgroundColor: children ? 'var(--bg-elevated)' : 'var(--accent)'
     }
   })
 }
