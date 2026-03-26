@@ -5,6 +5,7 @@ Supports sequential, parallel, and hierarchical process types,
 inter-agent communication, and tool usage.
 """
 
+import asyncio
 import json
 import time
 from datetime import UTC, datetime
@@ -203,32 +204,51 @@ class MultiAgentCrewService:
 
         total_tokens = 0
 
-        try:
-            for i, agent_def in enumerate(agents):
-                run.current_agent = i + 1
-                session.add(run)
-                await session.commit()
+        process_type = crew.process_type or "sequential"
+        if process_type == "hierarchical":
+            logger.warning(
+                "hierarchical_not_implemented",
+                run_id=str(run.id),
+                fallback="sequential",
+            )
+            process_type = "sequential"
 
-                agent_result = await MultiAgentCrewService._run_agent(
-                    agent_def=agent_def,
+        try:
+            if process_type == "parallel":
+                messages, total_tokens = await MultiAgentCrewService._run_parallel(
+                    agents=agents,
                     context=context,
                     crew_goal=crew.goal or "",
-                    previous_messages=messages,
                     user_id=user_id,
+                    run=run,
+                    session=session,
                 )
+            else:
+                for i, agent_def in enumerate(agents):
+                    run.current_agent = i + 1
+                    session.add(run)
+                    await session.commit()
 
-                msg = {
-                    "agent_id": agent_def["id"],
-                    "agent_name": agent_def.get("name", agent_def["role"]),
-                    "role": agent_def["role"],
-                    "content": agent_result.get("output", ""),
-                    "tool_used": agent_result.get("tool_used"),
-                    "iteration": agent_result.get("iterations", 1),
-                    "timestamp": datetime.now(UTC).isoformat(),
-                }
-                messages.append(msg)
-                context = agent_result.get("output", context)
-                total_tokens += agent_result.get("tokens", 0)
+                    agent_result = await MultiAgentCrewService._run_agent(
+                        agent_def=agent_def,
+                        context=context,
+                        crew_goal=crew.goal or "",
+                        previous_messages=messages,
+                        user_id=user_id,
+                    )
+
+                    msg = {
+                        "agent_id": agent_def["id"],
+                        "agent_name": agent_def.get("name", agent_def["role"]),
+                        "role": agent_def["role"],
+                        "content": agent_result.get("output", ""),
+                        "tool_used": agent_result.get("tool_used"),
+                        "iteration": agent_result.get("iterations", 1),
+                        "timestamp": datetime.now(UTC).isoformat(),
+                    }
+                    messages.append(msg)
+                    context = agent_result.get("output", context)
+                    total_tokens += agent_result.get("tokens", 0)
 
             run.status = CrewRunStatus.COMPLETED
             run.final_output = messages[-1]["content"] if messages else ""
@@ -256,6 +276,61 @@ class MultiAgentCrewService:
             status=run.status.value, duration_ms=elapsed_ms,
         )
         return run
+
+    @staticmethod
+    async def _run_parallel(
+        agents: list[dict], context: str, crew_goal: str,
+        user_id: UUID, run: "CrewRun", session: AsyncSession,
+    ) -> tuple[list[dict], int]:
+        run.current_agent = len(agents)
+        session.add(run)
+        await session.commit()
+
+        async def _safe_run(agent_def: dict) -> dict:
+            try:
+                result = await MultiAgentCrewService._run_agent(
+                    agent_def=agent_def,
+                    context=context,
+                    crew_goal=crew_goal,
+                    previous_messages=[],
+                    user_id=user_id,
+                )
+                return {"ok": True, "agent_def": agent_def, "result": result}
+            except Exception as exc:
+                logger.error(
+                    "parallel_agent_failed",
+                    agent_id=agent_def.get("id"),
+                    error=str(exc),
+                )
+                return {"ok": False, "agent_def": agent_def, "error": str(exc)}
+
+        raw_results = await asyncio.gather(*[_safe_run(a) for a in agents])
+
+        messages: list[dict] = []
+        total_tokens = 0
+        for item in raw_results:
+            agent_def = item["agent_def"]
+            if item["ok"]:
+                agent_result = item["result"]
+                content = agent_result.get("output", "")
+                total_tokens += agent_result.get("tokens", 0)
+                tool_used = agent_result.get("tool_used")
+                iteration = agent_result.get("iterations", 1)
+            else:
+                content = f"[Agent error: {item['error'][:500]}]"
+                tool_used = None
+                iteration = 0
+            messages.append({
+                "agent_id": agent_def["id"],
+                "agent_name": agent_def.get("name", agent_def["role"]),
+                "role": agent_def["role"],
+                "content": content,
+                "tool_used": tool_used,
+                "iteration": iteration,
+                "timestamp": datetime.now(UTC).isoformat(),
+            })
+
+        return messages, total_tokens
 
     @staticmethod
     async def _run_agent(
@@ -366,11 +441,14 @@ Respond with your output directly. Be thorough and specific."""
         }
 
     @staticmethod
-    async def list_runs(crew_id: UUID, user_id: UUID, session: AsyncSession) -> list[CrewRun]:
+    async def list_runs(
+        crew_id: UUID, user_id: UUID, session: AsyncSession,
+        skip: int = 0, limit: int = 20,
+    ) -> list[CrewRun]:
         result = await session.execute(
             select(CrewRun).where(
                 CrewRun.crew_id == crew_id, CrewRun.user_id == user_id,
-            ).order_by(CrewRun.created_at.desc()).limit(20)
+            ).order_by(CrewRun.created_at.desc()).offset(skip).limit(limit)
         )
         return list(result.scalars().all())
 

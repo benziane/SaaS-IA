@@ -113,10 +113,14 @@ class MarketplaceService:
         result = await self.session.execute(base)
         return list(result.scalars().all()), total
 
-    async def get_listing(self, listing_id: UUID) -> Optional[MarketplaceListing]:
+    async def get_listing(
+        self, listing_id: UUID, user_id: Optional[UUID] = None
+    ) -> Optional[MarketplaceListing]:
         """Get a listing by ID (must be published or not deleted for public)."""
         listing = await self.session.get(MarketplaceListing, listing_id)
         if not listing or listing.is_deleted:
+            return None
+        if not listing.is_published and (user_id is None or listing.author_id != user_id):
             return None
         return listing
 
@@ -394,3 +398,19 @@ class MarketplaceService:
         if user:
             return user.full_name or user.email.split("@")[0]
         return "Unknown"
+
+    async def _get_user_names(self, user_ids: list[UUID]) -> dict[UUID, str]:
+        """Batch-fetch display names for multiple users in a single query."""
+        if not user_ids:
+            return {}
+        unique_ids = list(set(user_ids))
+        result = await self.session.execute(
+            select(User.id, User.full_name, User.email).where(User.id.in_(unique_ids))
+        )
+        names: dict[UUID, str] = {}
+        for uid, full_name, email in result.all():
+            names[uid] = full_name or email.split("@")[0]
+        for uid in unique_ids:
+            if uid not in names:
+                names[uid] = "Unknown"
+        return names

@@ -166,10 +166,8 @@ class PipelineService:
             started_at=datetime.now(UTC),
         )
         session.add(execution)
-        await session.commit()
-        await session.refresh(execution)
+        await session.flush()
 
-        # Process steps sequentially
         results = []
         previous_output = None
 
@@ -177,10 +175,10 @@ class PipelineService:
             for i, step in enumerate(steps):
                 execution.current_step = i + 1
                 session.add(execution)
-                await session.commit()
+                await session.flush()
 
                 step_result = await PipelineService._execute_step(
-                    step, previous_output, pipeline=pipeline
+                    step, previous_output, pipeline=pipeline, session=session
                 )
                 results.append(step_result)
                 previous_output = step_result.get("output", "")
@@ -188,20 +186,23 @@ class PipelineService:
             execution.status = ExecutionStatus.COMPLETED
             execution.results_json = json.dumps(results, ensure_ascii=False)
             execution.completed_at = datetime.now(UTC)
+            session.add(execution)
+            await session.commit()
 
         except Exception as e:
+            await session.rollback()
             execution.status = ExecutionStatus.FAILED
             execution.error = str(e)[:2000]
             execution.results_json = json.dumps(results, ensure_ascii=False)
             execution.completed_at = datetime.now(UTC)
+            session.add(execution)
+            await session.commit()
             logger.error(
                 "pipeline_execution_failed",
                 execution_id=str(execution.id),
                 error=str(e),
             )
 
-        session.add(execution)
-        await session.commit()
         await session.refresh(execution)
 
         logger.info(
@@ -218,6 +219,7 @@ class PipelineService:
         step: dict,
         previous_output: Optional[str],
         pipeline: Optional["Pipeline"] = None,
+        session: Optional[AsyncSession] = None,
     ) -> dict:
         """Execute a single pipeline step."""
         step_type = step.get("type", "unknown")
@@ -270,14 +272,12 @@ class PipelineService:
             query = config.get("query", previous_output or "")
             if query and pipeline:
                 from app.modules.knowledge.service import KnowledgeService
-                from app.database import get_session_context
-                async with get_session_context() as kb_session:
-                    results = await KnowledgeService.search(
-                        user_id=pipeline.user_id,
-                        query=query[:500],
-                        session=kb_session,
-                        limit=config.get("limit", 5),
-                    )
+                results = await KnowledgeService.search(
+                    user_id=pipeline.user_id,
+                    query=query[:500],
+                    session=session,
+                    limit=config.get("limit", 5),
+                )
                 if results:
                     step_output = "\n\n".join(
                         f"[{r.get('filename', '')}] {r.get('content', '')}"
@@ -294,13 +294,11 @@ class PipelineService:
             question = config.get("question", previous_output or "")
             if question and pipeline:
                 from app.modules.knowledge.service import KnowledgeService
-                from app.database import get_session_context
-                async with get_session_context() as kb_session:
-                    result = await KnowledgeService.rag_query(
-                        user_id=pipeline.user_id,
-                        question=question[:1000],
-                        session=kb_session,
-                    )
+                result = await KnowledgeService.rag_query(
+                    user_id=pipeline.user_id,
+                    question=question[:1000],
+                    session=session,
+                )
                 step_output = result.get("answer", "") if result else "No answer found"
             else:
                 step_output = "No question provided" if not question else "No pipeline context"
@@ -312,14 +310,12 @@ class PipelineService:
             providers = config.get("providers", ["gemini", "groq"])
             if prompt and pipeline:
                 from app.modules.compare.service import CompareService
-                from app.database import get_session_context
-                async with get_session_context() as cmp_session:
-                    _, results = await CompareService.run_comparison(
-                        user_id=pipeline.user_id,
-                        prompt=prompt[:5000],
-                        providers=providers,
-                        session=cmp_session,
-                    )
+                _, results = await CompareService.run_comparison(
+                    user_id=pipeline.user_id,
+                    prompt=prompt[:5000],
+                    providers=providers,
+                    session=session,
+                )
                 if results:
                     step_output = "\n\n".join(
                         f"[{r.get('provider', '?')}] ({r.get('response_time_ms', 0)}ms)\n{r.get('response', '')}"
@@ -336,16 +332,14 @@ class PipelineService:
             url = config.get("url", previous_output or "")
             if url and url.startswith("http") and pipeline:
                 from app.modules.web_crawler.service import WebCrawlerService
-                from app.database import get_session_context
-                async with get_session_context() as idx_session:
-                    result = await WebCrawlerService.index_to_knowledge_base(
-                        url=url,
-                        user_id=pipeline.user_id,
-                        crawl_subpages=config.get("crawl_subpages", False),
-                        max_pages=config.get("max_pages", 3),
-                        include_images=True,
-                        session=idx_session,
-                    )
+                result = await WebCrawlerService.index_to_knowledge_base(
+                    url=url,
+                    user_id=pipeline.user_id,
+                    crawl_subpages=config.get("crawl_subpages", False),
+                    max_pages=config.get("max_pages", 3),
+                    include_images=True,
+                    session=session,
+                )
                 if result.get("success"):
                     step_output = f"Indexed {result.get('pages_crawled', 0)} pages, {result.get('chunks_indexed', 0)} chunks"
                 else:
@@ -390,14 +384,12 @@ class PipelineService:
             if prompt and pipeline:
                 try:
                     from app.modules.image_gen.service import ImageGenService
-                    from app.database import get_session_context
-                    async with get_session_context() as img_session:
-                        image = await ImageGenService.generate_image(
-                            user_id=pipeline.user_id, prompt=prompt[:2000], style=style,
-                            provider=config.get("provider", "gemini"),
-                            width=config.get("width", 1024), height=config.get("height", 1024),
-                            session=img_session,
-                        )
+                    image = await ImageGenService.generate_image(
+                        user_id=pipeline.user_id, prompt=prompt[:2000], style=style,
+                        provider=config.get("provider", "gemini"),
+                        width=config.get("width", 1024), height=config.get("height", 1024),
+                        session=session,
+                    )
                     step_output = f"Image generated: {image.image_url or 'processing'} (style: {style})"
                 except Exception as e:
                     step_output = f"Image generation failed: {str(e)[:500]}"
@@ -411,17 +403,15 @@ class PipelineService:
             if prompt and pipeline:
                 try:
                     from app.modules.video_gen.service import VideoGenService
-                    from app.database import get_session_context
-                    async with get_session_context() as vid_session:
-                        video = await VideoGenService.generate_video(
-                            user_id=pipeline.user_id,
-                            title=config.get("title", "Pipeline Video"),
-                            prompt=prompt[:2000],
-                            video_type=config.get("video_type", "text_to_video"),
-                            provider=config.get("provider", "gemini"),
-                            duration_s=config.get("duration_s", 10),
-                            width=1920, height=1080, session=vid_session,
-                        )
+                    video = await VideoGenService.generate_video(
+                        user_id=pipeline.user_id,
+                        title=config.get("title", "Pipeline Video"),
+                        prompt=prompt[:2000],
+                        video_type=config.get("video_type", "text_to_video"),
+                        provider=config.get("provider", "gemini"),
+                        duration_s=config.get("duration_s", 10),
+                        width=1920, height=1080, session=session,
+                    )
                     step_output = f"Video generated: {video.video_url or 'processing'}"
                 except Exception as e:
                     step_output = f"Video generation failed: {str(e)[:500]}"
@@ -435,15 +425,13 @@ class PipelineService:
             if text and pipeline:
                 try:
                     from app.modules.voice_clone.service import VoiceCloneService
-                    from app.database import get_session_context
-                    async with get_session_context() as tts_session:
-                        synthesis = await VoiceCloneService.synthesize(
-                            user_id=pipeline.user_id, text=text[:5000],
-                            voice_id=config.get("voice_id"),
-                            provider=config.get("provider", "openai"),
-                            output_format="mp3", language=config.get("language", "auto"),
-                            session=tts_session,
-                        )
+                    synthesis = await VoiceCloneService.synthesize(
+                        user_id=pipeline.user_id, text=text[:5000],
+                        voice_id=config.get("voice_id"),
+                        provider=config.get("provider", "openai"),
+                        output_format="mp3", language=config.get("language", "auto"),
+                        session=session,
+                    )
                     step_output = f"Audio generated: {synthesis.audio_url or 'processing'} ({synthesis.duration_s}s)"
                 except Exception as e:
                     step_output = f"TTS failed: {str(e)[:500]}"
@@ -477,20 +465,18 @@ class PipelineService:
             if text and pipeline:
                 try:
                     from app.modules.social_publisher.service import SocialPublisherService
-                    from app.database import get_session_context
-                    async with get_session_context() as sp_session:
-                        post = await SocialPublisherService.create_post(
-                            user_id=pipeline.user_id,
-                            content=text[:5000],
-                            platforms=platforms,
-                            session=sp_session,
-                            hashtags=config.get("hashtags"),
-                        )
-                        published = await SocialPublisherService.publish_post(
-                            user_id=pipeline.user_id,
-                            post_id=post.id,
-                            session=sp_session,
-                        )
+                    post = await SocialPublisherService.create_post(
+                        user_id=pipeline.user_id,
+                        content=text[:5000],
+                        platforms=platforms,
+                        session=session,
+                        hashtags=config.get("hashtags"),
+                    )
+                    published = await SocialPublisherService.publish_post(
+                        user_id=pipeline.user_id,
+                        post_id=post.id,
+                        session=session,
+                    )
                     step_output = f"Published to {', '.join(platforms)} (post_id: {published.id})"
                 except Exception as e:
                     step_output = f"Social publish failed: {str(e)[:500]}"
@@ -504,14 +490,12 @@ class PipelineService:
             if query:
                 try:
                     from app.modules.marketplace.service import MarketplaceService
-                    from app.database import get_session_context
-                    async with get_session_context() as mp_session:
-                        svc = MarketplaceService(mp_session)
-                        listings, total = await svc.list_listings(
-                            search=query[:200],
-                            category=config.get("category"),
-                            limit=config.get("limit", 5),
-                        )
+                    svc = MarketplaceService(session)
+                    listings, total = await svc.list_listings(
+                        search=query[:200],
+                        category=config.get("category"),
+                        limit=config.get("limit", 5),
+                    )
                     if listings:
                         step_output = f"Found {total} result(s):\n" + "\n".join(
                             f"- {l.title} ({l.type}/{l.category}) v{l.version}" for l in listings
@@ -531,23 +515,21 @@ class PipelineService:
             if text and pipeline:
                 try:
                     from app.modules.ai_chatbot_builder.service import ChatbotBuilderService
-                    from app.database import get_session_context
-                    async with get_session_context() as cb_session:
-                        svc = ChatbotBuilderService(cb_session)
-                        chatbot = await svc.create_chatbot(
-                            user_id=pipeline.user_id,
-                            data={
-                                "name": name,
-                                "system_prompt": text[:10000],
-                                "model": config.get("model", "gemini"),
-                                "personality": config.get("personality", "professional"),
-                                "welcome_message": config.get("welcome_message"),
-                            },
-                        )
-                        published = await svc.publish_chatbot(
-                            user_id=pipeline.user_id,
-                            chatbot_id=chatbot.id,
-                        )
+                    svc = ChatbotBuilderService(session)
+                    chatbot = await svc.create_chatbot(
+                        user_id=pipeline.user_id,
+                        data={
+                            "name": name,
+                            "system_prompt": text[:10000],
+                            "model": config.get("model", "gemini"),
+                            "personality": config.get("personality", "professional"),
+                            "welcome_message": config.get("welcome_message"),
+                        },
+                    )
+                    published = await svc.publish_chatbot(
+                        user_id=pipeline.user_id,
+                        chatbot_id=chatbot.id,
+                    )
                     step_output = f"Chatbot deployed: {published.name} (token: {published.embed_token})"
                 except Exception as e:
                     step_output = f"Chatbot deploy failed: {str(e)[:500]}"
@@ -561,23 +543,21 @@ class PipelineService:
             if url and url.startswith("http") and pipeline:
                 try:
                     from app.modules.integration_hub.service import IntegrationHubService
-                    from app.database import get_session_context
-                    async with get_session_context() as ih_session:
-                        svc = IntegrationHubService(ih_session)
-                        connector = await svc.create_connector(
-                            user_id=pipeline.user_id,
-                            data={
-                                "name": config.get("name", "Pipeline Webhook"),
-                                "type": "webhook",
-                                "provider": "custom",
-                                "config": {
-                                    "url": url,
-                                    "method": config.get("method", "POST"),
-                                    "headers": config.get("headers", {}),
-                                },
-                                "enabled": True,
+                    svc = IntegrationHubService(session)
+                    connector = await svc.create_connector(
+                        user_id=pipeline.user_id,
+                        data={
+                            "name": config.get("name", "Pipeline Webhook"),
+                            "type": "webhook",
+                            "provider": "custom",
+                            "config": {
+                                "url": url,
+                                "method": config.get("method", "POST"),
+                                "headers": config.get("headers", {}),
                             },
-                        )
+                            "enabled": True,
+                        },
+                    )
                     step_output = f"Webhook created: {connector.name} (id: {connector.id})"
                 except Exception as e:
                     step_output = f"Webhook creation failed: {str(e)[:500]}"
@@ -623,15 +603,13 @@ class PipelineService:
                 try:
                     from uuid import UUID as _UUID
                     from app.modules.image_gen.service import ImageGenService
-                    from app.database import get_session_context
                     parsed_id = _UUID(str(image_id).strip())
-                    async with get_session_context() as img_session:
-                        result = await ImageGenService.upscale_image(
-                            user_id=pipeline.user_id,
-                            image_id=parsed_id,
-                            scale=scale,
-                            session=img_session,
-                        )
+                    result = await ImageGenService.upscale_image(
+                        user_id=pipeline.user_id,
+                        image_id=parsed_id,
+                        scale=scale,
+                        session=session,
+                    )
                     if isinstance(result, dict) and result.get("error"):
                         step_output = f"Upscale failed: {result['error']}"
                     else:
@@ -649,19 +627,17 @@ class PipelineService:
             if text and pipeline:
                 try:
                     from app.modules.presentation_gen.service import PresentationGenService
-                    from app.database import get_session_context
-                    async with get_session_context() as pres_session:
-                        svc = PresentationGenService(pres_session)
-                        presentation = await svc.generate_presentation(
-                            user_id=pipeline.user_id,
-                            title=title,
-                            topic=text[:2000],
-                            num_slides=config.get("num_slides", 10),
-                            style=config.get("style", "professional"),
-                            template=config.get("template", "default"),
-                            language=config.get("language", "fr"),
-                            source_text=text[:12000],
-                        )
+                    svc = PresentationGenService(session)
+                    presentation = await svc.generate_presentation(
+                        user_id=pipeline.user_id,
+                        title=title,
+                        topic=text[:2000],
+                        num_slides=config.get("num_slides", 10),
+                        style=config.get("style", "professional"),
+                        template=config.get("template", "default"),
+                        language=config.get("language", "fr"),
+                        source_text=text[:12000],
+                    )
                     step_output = f"Presentation generated: {presentation.title} ({presentation.num_slides} slides, id: {presentation.id})"
                 except Exception as e:
                     step_output = f"Presentation generation failed: {str(e)[:500]}"
@@ -675,25 +651,23 @@ class PipelineService:
             if code and pipeline:
                 try:
                     from app.modules.code_sandbox.service import CodeSandboxService
-                    from app.database import get_session_context
-                    async with get_session_context() as cs_session:
-                        sandbox = await CodeSandboxService.create_sandbox(
-                            user_id=pipeline.user_id,
-                            data={"name": config.get("name", "Pipeline Sandbox"), "language": "python"},
-                            session=cs_session,
-                        )
-                        cell = await CodeSandboxService.add_cell(
-                            user_id=pipeline.user_id,
-                            sandbox_id=sandbox.id,
-                            data={"source": code[:50000], "cell_type": "code"},
-                            session=cs_session,
-                        )
-                        result = await CodeSandboxService.execute_cell(
-                            user_id=pipeline.user_id,
-                            sandbox_id=sandbox.id,
-                            cell_id=cell["id"],
-                            session=cs_session,
-                        )
+                    sandbox = await CodeSandboxService.create_sandbox(
+                        user_id=pipeline.user_id,
+                        data={"name": config.get("name", "Pipeline Sandbox"), "language": "python"},
+                        session=session,
+                    )
+                    cell = await CodeSandboxService.add_cell(
+                        user_id=pipeline.user_id,
+                        sandbox_id=sandbox.id,
+                        data={"source": code[:50000], "cell_type": "code"},
+                        session=session,
+                    )
+                    result = await CodeSandboxService.execute_cell(
+                        user_id=pipeline.user_id,
+                        sandbox_id=sandbox.id,
+                        cell_id=cell["id"],
+                        session=session,
+                    )
                     if result and result.get("status") == "success":
                         step_output = result.get("output") or "Code executed successfully (no output)"
                     else:
@@ -710,14 +684,12 @@ class PipelineService:
             if prompt and pipeline:
                 try:
                     from app.modules.ai_forms.service import AIFormsService
-                    from app.database import get_session_context
-                    async with get_session_context() as form_session:
-                        svc = AIFormsService(form_session)
-                        form = await svc.generate_form(
-                            user_id=pipeline.user_id,
-                            prompt=prompt[:5000],
-                            num_fields=config.get("num_fields", 5),
-                        )
+                    svc = AIFormsService(session)
+                    form = await svc.generate_form(
+                        user_id=pipeline.user_id,
+                        prompt=prompt[:5000],
+                        num_fields=config.get("num_fields", 5),
+                    )
                     step_output = f"Form generated: {form.title} ({len(json.loads(form.fields_json))} fields, id: {form.id})"
                 except Exception as e:
                     step_output = f"Form generation failed: {str(e)[:500]}"
@@ -734,22 +706,16 @@ class PipelineService:
             if repos and pipeline:
                 try:
                     from app.modules.skill_seekers.service import SkillSeekersService
-                    from app.database import get_session_context
                     svc = SkillSeekersService()
-                    async with get_session_context() as ss_session:
-                        job = await SkillSeekersService.create_job(
-                            user_id=pipeline.user_id,
-                            repos=repos,
-                            targets=targets,
-                            enhance=config.get("enhance", False),
-                            session=ss_session,
-                        )
+                    job = await SkillSeekersService.create_job(
+                        user_id=pipeline.user_id,
+                        repos=repos,
+                        targets=targets,
+                        enhance=config.get("enhance", False),
+                        session=session,
+                    )
                     await svc.run_job(job.id)
-                    async with get_session_context() as ss_session:
-                        job = await ss_session.get(
-                            __import__("app.models.skill_seekers", fromlist=["ScrapeJob"]).ScrapeJob,
-                            job.id,
-                        )
+                    await session.refresh(job)
                     output_files = json.loads(job.output_files_json) if job.output_files_json else []
                     filenames = [__import__("os").path.basename(f) for f in output_files]
                     step_output = f"Scraped {len(repos)} repo(s) for {', '.join(targets)}: {', '.join(filenames)}" if filenames else "Scrape completed but no output files"
@@ -768,21 +734,16 @@ class PipelineService:
                 try:
                     from app.modules.repo_analyzer.service import RepoAnalyzerService
                     from app.modules.repo_analyzer.schemas import AnalysisCreate
-                    from app.database import get_session_context
                     svc = RepoAnalyzerService()
-                    async with get_session_context() as ra_session:
-                        data = AnalysisCreate(
-                            repo_url=repo_url,
-                            analysis_types=analysis_types,
-                            depth=depth,
-                        )
-                        analysis = await svc.create_analysis(pipeline.user_id, data, ra_session)
+                    data = AnalysisCreate(
+                        repo_url=repo_url,
+                        analysis_types=analysis_types,
+                        depth=depth,
+                    )
+                    analysis = await svc.create_analysis(pipeline.user_id, data, session)
                     await svc.run_analysis(analysis.id)
-                    async with get_session_context() as ra_session:
-                        refreshed = await ra_session.get(
-                            __import__("app.models.repo_analyzer", fromlist=["RepoAnalysis"]).RepoAnalysis,
-                            analysis.id,
-                        )
+                    await session.refresh(analysis)
+                    refreshed = analysis
                     if refreshed and refreshed.results_json:
                         results = json.loads(refreshed.results_json)
                         quality = results.get("quality", {})
@@ -806,32 +767,30 @@ class PipelineService:
                 try:
                     from uuid import UUID as _UUID
                     from app.modules.pdf_processor.service import PDFProcessorService
-                    from app.database import get_session_context
                     parsed_id = _UUID(str(pdf_id).strip())
-                    async with get_session_context() as pdf_session:
-                        if action == "query":
-                            question = config.get("question", previous_output or "")
-                            result = await PDFProcessorService.query_pdf(
-                                pipeline.user_id, parsed_id, question, pdf_session,
-                            )
-                            step_output = result.get("answer", "") if result else "PDF query failed"
-                        elif action == "keywords":
-                            result = await PDFProcessorService.extract_keywords(
-                                pipeline.user_id, parsed_id, pdf_session,
-                            )
-                            step_output = ", ".join(result.get("keywords", [])) if result else "Keyword extraction failed"
-                        elif action == "export":
-                            fmt = config.get("format", "markdown")
-                            result = await PDFProcessorService.export_pdf(
-                                pipeline.user_id, parsed_id, fmt, pdf_session,
-                            )
-                            step_output = result.get("content", "")[:3000] if result else "Export failed"
-                        else:
-                            style = config.get("style", "executive")
-                            result = await PDFProcessorService.summarize_pdf(
-                                pipeline.user_id, parsed_id, pdf_session, style=style,
-                            )
-                            step_output = result.get("summary", "") if result else "Summarization failed"
+                    if action == "query":
+                        question = config.get("question", previous_output or "")
+                        result = await PDFProcessorService.query_pdf(
+                            pipeline.user_id, parsed_id, question, session,
+                        )
+                        step_output = result.get("answer", "") if result else "PDF query failed"
+                    elif action == "keywords":
+                        result = await PDFProcessorService.extract_keywords(
+                            pipeline.user_id, parsed_id, session,
+                        )
+                        step_output = ", ".join(result.get("keywords", [])) if result else "Keyword extraction failed"
+                    elif action == "export":
+                        fmt = config.get("format", "markdown")
+                        result = await PDFProcessorService.export_pdf(
+                            pipeline.user_id, parsed_id, fmt, session,
+                        )
+                        step_output = result.get("content", "")[:3000] if result else "Export failed"
+                    else:
+                        style = config.get("style", "executive")
+                        result = await PDFProcessorService.summarize_pdf(
+                            pipeline.user_id, parsed_id, session, style=style,
+                        )
+                        step_output = result.get("summary", "") if result else "Summarization failed"
                 except Exception as e:
                     step_output = f"PDF processing failed: {str(e)[:500]}"
             else:
@@ -846,12 +805,10 @@ class PipelineService:
                 try:
                     from uuid import UUID as _UUID
                     from app.modules.audio_studio.service import AudioStudioService
-                    from app.database import get_session_context
                     parsed_id = _UUID(str(audio_id).strip())
-                    async with get_session_context() as audio_session:
-                        service = AudioStudioService(audio_session)
-                        result = await service.edit_audio(pipeline.user_id, parsed_id, operations)
-                        step_output = f"Audio edited: {result.original_filename} ({result.duration_seconds}s)"
+                    service = AudioStudioService(session)
+                    result = await service.edit_audio(pipeline.user_id, parsed_id, operations)
+                    step_output = f"Audio edited: {result.original_filename} ({result.duration_seconds}s)"
                 except Exception as e:
                     step_output = f"Audio edit failed: {str(e)[:500]}"
             else:
@@ -865,12 +822,10 @@ class PipelineService:
                 try:
                     from uuid import UUID as _UUID
                     from app.modules.audio_studio.service import AudioStudioService
-                    from app.database import get_session_context
                     parsed_id = _UUID(str(audio_id).strip())
-                    async with get_session_context() as audio_session:
-                        service = AudioStudioService(audio_session)
-                        result = await service.transcribe_audio(pipeline.user_id, parsed_id)
-                        step_output = result.transcript or "Transcription empty"
+                    service = AudioStudioService(session)
+                    result = await service.transcribe_audio(pipeline.user_id, parsed_id)
+                    step_output = result.transcript or "Transcription empty"
                 except Exception as e:
                     step_output = f"Audio transcription failed: {str(e)[:500]}"
             else:
@@ -885,20 +840,18 @@ class PipelineService:
                 try:
                     from uuid import UUID as _UUID
                     from app.modules.audio_studio.service import AudioStudioService
-                    from app.database import get_session_context
                     parsed_id = _UUID(str(audio_id).strip())
-                    async with get_session_context() as audio_session:
-                        service = AudioStudioService(audio_session)
-                        await service.generate_chapters(pipeline.user_id, parsed_id)
-                        notes = await service.generate_show_notes(pipeline.user_id, parsed_id)
-                        import json as _json
-                        episode = await service.create_podcast_episode(pipeline.user_id, {
-                            "audio_id": str(parsed_id),
-                            "title": title,
-                            "description": config.get("description", ""),
-                            "show_notes": _json.dumps(notes.get("show_notes", {}), ensure_ascii=False),
-                        })
-                        step_output = f"Podcast episode '{episode.title}' created (ID: {episode.id})"
+                    service = AudioStudioService(session)
+                    await service.generate_chapters(pipeline.user_id, parsed_id)
+                    notes = await service.generate_show_notes(pipeline.user_id, parsed_id)
+                    import json as _json
+                    episode = await service.create_podcast_episode(pipeline.user_id, {
+                        "audio_id": str(parsed_id),
+                        "title": title,
+                        "description": config.get("description", ""),
+                        "show_notes": _json.dumps(notes.get("show_notes", {}), ensure_ascii=False),
+                    })
+                    step_output = f"Podcast episode '{episode.title}' created (ID: {episode.id})"
                 except Exception as e:
                     step_output = f"Podcast generation failed: {str(e)[:500]}"
             else:

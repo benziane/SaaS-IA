@@ -65,6 +65,9 @@ async def init_db() -> None:
         from app.models.cost_tracking import AIUsageLog  # noqa: F401
         from app.models.skill_seekers import ScrapeJob, ScrapeJobStatus  # noqa: F401
         from app.models.notification import Notification  # noqa: F401
+        from app.models.outbox import OutboxEvent  # noqa: F401
+        from app.models.audit_log import AuditLogEntry  # noqa: F401
+        from app.models.secrets_manager import SecretRegistration  # noqa: F401
 
         # Create all tables
         await conn.run_sync(SQLModel.metadata.create_all)

@@ -26,15 +26,14 @@ from app.rate_limit import limiter
 router = APIRouter()
 
 
-async def _listing_to_read(
-    listing, service: MarketplaceService
+def _listing_to_read(
+    listing, names: dict,
 ) -> ListingRead:
     """Convert a MarketplaceListing model to ListingRead schema."""
-    author_name = await service._get_user_name(listing.author_id)
     return ListingRead(
         id=listing.id,
         author_id=listing.author_id,
-        author_name=author_name,
+        author_name=names.get(listing.author_id, "Unknown"),
         title=listing.title,
         description=listing.description,
         type=listing.type,
@@ -53,15 +52,14 @@ async def _listing_to_read(
     )
 
 
-async def _review_to_read(
-    review, service: MarketplaceService
+def _review_to_read(
+    review, names: dict,
 ) -> ReviewRead:
     """Convert a MarketplaceReview model to ReviewRead schema."""
-    user_name = await service._get_user_name(review.user_id)
     return ReviewRead(
         id=review.id,
         user_id=review.user_id,
-        user_name=user_name,
+        user_name=names.get(review.user_id, "Unknown"),
         listing_id=review.listing_id,
         rating=review.rating,
         comment=review.comment,
@@ -98,7 +96,8 @@ async def browse_listings(
         limit=limit,
         offset=offset,
     )
-    return [await _listing_to_read(l, service) for l in listings]
+    names = await service._get_user_names([l.author_id for l in listings])
+    return [_listing_to_read(l, names) for l in listings]
 
 
 @router.get("/listings/{listing_id}", response_model=ListingRead)
@@ -120,7 +119,8 @@ async def get_listing(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Listing not found",
         )
-    return await _listing_to_read(listing, service)
+    names = await service._get_user_names([listing.author_id])
+    return _listing_to_read(listing, names)
 
 
 @router.get("/categories")
@@ -148,7 +148,8 @@ async def get_featured(
     """
     service = MarketplaceService(session)
     listings = await service.get_featured(limit)
-    return [await _listing_to_read(l, service) for l in listings]
+    names = await service._get_user_names([l.author_id for l in listings])
+    return [_listing_to_read(l, names) for l in listings]
 
 
 @router.get("/listings/{listing_id}/reviews", response_model=list[ReviewRead])
@@ -167,7 +168,8 @@ async def get_reviews(
     """
     service = MarketplaceService(session)
     reviews = await service.get_reviews(listing_id, limit, offset)
-    return [await _review_to_read(r, service) for r in reviews]
+    names = await service._get_user_names([r.user_id for r in reviews])
+    return [_review_to_read(r, names) for r in reviews]
 
 
 # ─── Authenticated endpoints ─────────────────────────────────────────────────
@@ -197,7 +199,8 @@ async def create_listing(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e),
         )
-    return await _listing_to_read(listing, service)
+    names = await service._get_user_names([listing.author_id])
+    return _listing_to_read(listing, names)
 
 
 @router.put("/listings/{listing_id}", response_model=ListingRead)
@@ -225,7 +228,8 @@ async def update_listing(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Listing not found or not authorized",
         )
-    return await _listing_to_read(listing, service)
+    names = await service._get_user_names([listing.author_id])
+    return _listing_to_read(listing, names)
 
 
 @router.post("/listings/{listing_id}/publish", response_model=ListingRead)
@@ -248,7 +252,8 @@ async def publish_listing(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Listing not found or not authorized",
         )
-    return await _listing_to_read(listing, service)
+    names = await service._get_user_names([listing.author_id])
+    return _listing_to_read(listing, names)
 
 
 @router.post("/listings/{listing_id}/unpublish", response_model=ListingRead)
@@ -271,7 +276,8 @@ async def unpublish_listing(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Listing not found or not authorized",
         )
-    return await _listing_to_read(listing, service)
+    names = await service._get_user_names([listing.author_id])
+    return _listing_to_read(listing, names)
 
 
 @router.delete("/listings/{listing_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -406,7 +412,8 @@ async def add_review(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Listing not found or not published",
         )
-    return await _review_to_read(review, service)
+    names = await service._get_user_names([review.user_id])
+    return _review_to_read(review, names)
 
 
 @router.get("/my-listings", response_model=list[ListingRead])
@@ -423,4 +430,5 @@ async def get_my_listings(
     """
     service = MarketplaceService(session)
     listings = await service.get_my_listings(current_user.id)
-    return [await _listing_to_read(l, service) for l in listings]
+    names = await service._get_user_names([l.author_id for l in listings])
+    return [_listing_to_read(l, names) for l in listings]

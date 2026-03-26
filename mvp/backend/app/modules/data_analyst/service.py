@@ -319,7 +319,7 @@ Provide meaningful charts when relevant. Respond ONLY with the JSON object."""
             f"Q: {a.question}\nA: {a.answer[:500]}" for a in prev_analyses
         )
 
-        report_question = f"Generate a comprehensive data report titled '{title or dataset.name} Analysis Report}'. Previous analyses:\n{analyses_summary[:5000]}"
+        report_question = f"Generate a comprehensive data report titled '{title or dataset.name} Analysis Report'. Previous analyses:\n{analyses_summary[:5000]}"
 
         return await DataAnalystService.ask_question(
             dataset_id, user_id, report_question, "general", provider, session,
@@ -336,7 +336,7 @@ Provide meaningful charts when relevant. Respond ONLY with the JSON object."""
     @staticmethod
     async def get_dataset(dataset_id: UUID, user_id: UUID, session: AsyncSession) -> Optional[Dataset]:
         d = await session.get(Dataset, dataset_id)
-        if d and d.user_id != user_id:
+        if not d or d.user_id != user_id:
             return None
         return d
 

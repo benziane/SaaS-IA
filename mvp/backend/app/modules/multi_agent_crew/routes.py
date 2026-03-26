@@ -175,9 +175,10 @@ async def run_crew(
 @limiter.limit("20/minute")
 async def list_runs(
     request: Request, crew_id: UUID,
+    skip: int = Query(0, ge=0), limit: int = Query(20, ge=1, le=100),
     current_user: User = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
 ):
     """List crew runs. Rate limit: 20/min"""
-    runs = await MultiAgentCrewService.list_runs(crew_id, current_user.id, session)
+    runs = await MultiAgentCrewService.list_runs(crew_id, current_user.id, session, skip, limit)
     return [_run_to_read(r) for r in runs]

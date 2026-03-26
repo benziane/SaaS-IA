@@ -84,7 +84,11 @@ async def upload_pdf(
     if not file.filename:
         raise HTTPException(status_code=400, detail="File must have a filename")
 
-    _, ext = os.path.splitext(file.filename)
+    safe_filename = os.path.basename(file.filename)
+    if not safe_filename:
+        raise HTTPException(status_code=400, detail="Invalid filename")
+
+    _, ext = os.path.splitext(safe_filename)
     if ext.lower() != ".pdf":
         raise HTTPException(status_code=400, detail="Only PDF files are accepted")
 
@@ -98,7 +102,7 @@ async def upload_pdf(
     doc = await PDFProcessorService.upload_pdf(
         user_id=current_user.id,
         file_content=content,
-        filename=file.filename,
+        filename=safe_filename,
         session=session,
     )
     return _doc_to_upload_response(doc)

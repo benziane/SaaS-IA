@@ -12,7 +12,7 @@ from typing import Optional
 from uuid import UUID
 
 import structlog
-from sqlalchemy import func
+from sqlalchemy import case, func
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
@@ -142,8 +142,12 @@ class SecurityGuardianService:
         severity = None
         if findings:
             severity_order = {"low": 0, "medium": 1, "high": 2, "critical": 3}
-            max_severity = max(findings, key=lambda f: severity_order.get(f.get("severity", "low"), 0))
-            severity = max_severity.get("severity")
+            max_finding = max(
+                findings,
+                key=lambda f: severity_order.get(f.get("severity", "low"), 0),
+                default=None,
+            )
+            severity = max_finding.get("severity") if max_finding else None
 
         scan.findings_json = json.dumps(findings, ensure_ascii=False)
         scan.findings_count = len(findings)
@@ -414,18 +418,18 @@ Respond ONLY with the JSON array.""",
     @staticmethod
     async def get_dashboard(user_id: UUID, session: AsyncSession) -> dict:
         """Get security dashboard overview."""
-        # Count scans
-        total_scans = (await session.execute(
-            select(func.count()).select_from(SecurityScan).where(SecurityScan.user_id == user_id)
-        )).scalar_one()
+        # Count scans + issues in a single query using CASE/WHEN
+        scan_counts = (await session.execute(
+            select(
+                func.count().label("total"),
+                func.count(case(
+                    (SecurityScan.status == ScanStatus.ISSUES_FOUND, 1),
+                )).label("issues"),
+            ).select_from(SecurityScan).where(SecurityScan.user_id == user_id)
+        )).one()
+        total_scans = scan_counts.total
+        issues_found = scan_counts.issues
 
-        issues_found = (await session.execute(
-            select(func.count()).select_from(SecurityScan).where(
-                SecurityScan.user_id == user_id, SecurityScan.status == ScanStatus.ISSUES_FOUND
-            )
-        )).scalar_one()
-
-        # Count audit entries
         audit_entries = (await session.execute(
             select(func.count()).select_from(AuditLog).where(AuditLog.user_id == user_id)
         )).scalar_one()

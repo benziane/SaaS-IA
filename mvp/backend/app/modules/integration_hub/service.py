@@ -423,6 +423,16 @@ class IntegrationHubService:
 
         for trigger in triggers:
             try:
+                action_config = json.loads(trigger.action_config_json or "{}")
+                payload = json.loads(event.payload_json or "{}")
+
+                exec_result = await self._execute_trigger_action(
+                    trigger.action_module,
+                    action_config,
+                    payload,
+                    trigger.user_id,
+                )
+
                 trigger.executions += 1
                 self.session.add(trigger)
 
@@ -431,6 +441,7 @@ class IntegrationHubService:
                     trigger_id=str(trigger.id),
                     action_module=trigger.action_module,
                     event_type=event.event_type,
+                    result_success=exec_result.get("success", False),
                 )
             except Exception as e:
                 logger.error(
@@ -444,3 +455,115 @@ class IntegrationHubService:
         event.processed_at = datetime.now(UTC)
         self.session.add(event)
         await self.session.commit()
+
+    async def _execute_trigger_action(
+        self,
+        action_module: str,
+        action_config: dict,
+        event_payload: dict,
+        user_id: UUID,
+    ) -> dict:
+        """Dispatch a trigger action to the appropriate module service."""
+        try:
+            if action_module == "transcription":
+                return await self._action_transcription(action_config, event_payload, user_id)
+            elif action_module == "knowledge":
+                return await self._action_knowledge(action_config, event_payload, user_id)
+            elif action_module == "content_studio":
+                return await self._action_content_studio(action_config, event_payload, user_id)
+            elif action_module == "ai_workflows":
+                return await self._action_ai_workflows(action_config, event_payload, user_id)
+            else:
+                logger.warning(
+                    "trigger_action_module_unsupported",
+                    action_module=action_module,
+                )
+                return {"success": False, "error": f"Unsupported action module: {action_module}"}
+        except Exception as e:
+            logger.error(
+                "trigger_action_execution_error",
+                action_module=action_module,
+                error=str(e),
+            )
+            return {"success": False, "error": str(e)}
+
+    async def _action_transcription(
+        self, config: dict, payload: dict, user_id: UUID
+    ) -> dict:
+        from app.modules.transcription.service import TranscriptionService
+
+        video_url = config.get("video_url") or payload.get("video_url", "")
+        language = config.get("language", "auto")
+        if not video_url:
+            return {"success": False, "error": "No video_url in config or payload"}
+
+        svc = TranscriptionService()
+        job = await svc.create_job(
+            video_url=video_url,
+            user_id=user_id,
+            language=language,
+            session=self.session,
+        )
+        return {"success": True, "job_id": str(job.id)}
+
+    async def _action_knowledge(
+        self, config: dict, payload: dict, user_id: UUID
+    ) -> dict:
+        from app.modules.knowledge.service import KnowledgeService
+
+        text_content = config.get("text") or payload.get("text", "")
+        filename = config.get("filename", "webhook_import.txt")
+        content_type = config.get("content_type", "text/plain")
+        if not text_content:
+            return {"success": False, "error": "No text in config or payload"}
+
+        doc = await KnowledgeService.upload_document(
+            user_id=user_id,
+            filename=filename,
+            content_type=content_type,
+            text_content=text_content,
+            session=self.session,
+        )
+        return {"success": True, "document_id": str(doc.id)}
+
+    async def _action_content_studio(
+        self, config: dict, payload: dict, user_id: UUID
+    ) -> dict:
+        from app.modules.content_studio.service import ContentStudioService
+
+        title = config.get("title", "Triggered content")
+        source_text = config.get("source_text") or payload.get("text", "")
+        source_type = config.get("source_type", "text")
+        if not source_text:
+            return {"success": False, "error": "No source_text in config or payload"}
+
+        project = await ContentStudioService.create_project(
+            user_id=user_id,
+            title=title,
+            source_type=source_type,
+            source_text=source_text,
+            source_id=None,
+            session=self.session,
+        )
+        return {"success": True, "project_id": str(project.id)}
+
+    async def _action_ai_workflows(
+        self, config: dict, payload: dict, user_id: UUID
+    ) -> dict:
+        from app.modules.ai_workflows.service import WorkflowService
+
+        workflow_id_str = config.get("workflow_id", "")
+        if not workflow_id_str:
+            return {"success": False, "error": "No workflow_id in config"}
+
+        from uuid import UUID as _UUID
+        workflow_id = _UUID(workflow_id_str)
+        run = await WorkflowService.execute_workflow(
+            workflow_id=workflow_id,
+            user_id=user_id,
+            session=self.session,
+            input_data=payload,
+        )
+        if not run:
+            return {"success": False, "error": "Workflow not found or not owned by user"}
+        return {"success": True, "run_id": str(run.id)}

@@ -6,6 +6,9 @@ Falls back to mock mode when API keys are not configured.
 """
 
 import json
+import os
+import tempfile
+import time
 from datetime import UTC, datetime
 from typing import Optional
 from uuid import UUID
@@ -18,6 +21,8 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from app.models.voice_clone import SpeechSynthesis, SynthesisStatus, VoiceProfile, VoiceStatus
 
 logger = structlog.get_logger()
+
+TEMP_FILE_MAX_AGE_SECONDS = 24 * 60 * 60
 
 BUILTIN_VOICES = [
     {"id": "alloy", "name": "Alloy", "language": "multi", "gender": "neutral", "provider": "openai"},
@@ -35,6 +40,33 @@ BUILTIN_VOICES = [
 
 class VoiceCloneService:
     """Service for voice cloning and TTS."""
+
+    _temp_files: dict[str, float] = {}
+
+    @classmethod
+    def _track_temp_file(cls, file_path: str) -> None:
+        cls._temp_files[file_path] = time.time()
+
+    @classmethod
+    def cleanup_temp_files(cls, max_age_seconds: int = TEMP_FILE_MAX_AGE_SECONDS) -> int:
+        now = time.time()
+        removed = 0
+        expired = [
+            path for path, created_at in cls._temp_files.items()
+            if now - created_at > max_age_seconds
+        ]
+        for path in expired:
+            try:
+                if os.path.exists(path):
+                    os.unlink(path)
+                    removed += 1
+                    logger.debug("temp_file_cleaned", path=path)
+            except OSError as e:
+                logger.warning("temp_file_cleanup_failed", path=path, error=str(e))
+            cls._temp_files.pop(path, None)
+        if removed:
+            logger.info("temp_files_cleanup_done", removed=removed, remaining=len(cls._temp_files))
+        return removed
 
     @staticmethod
     async def create_voice_profile(
@@ -128,6 +160,7 @@ class VoiceCloneService:
         session.add(synthesis)
         await session.commit()
         await session.refresh(synthesis)
+        VoiceCloneService.cleanup_temp_files()
         return synthesis
 
     @staticmethod
@@ -177,7 +210,9 @@ class VoiceCloneService:
         voice_id: Optional[str], provider: str, session: AsyncSession,
     ) -> SpeechSynthesis:
         """Dub audio/video to another language (transcribe -> translate -> TTS)."""
-        # Get original text
+        if source_type == "url" and not source_url:
+            raise ValueError("source_url is required when source_type is 'url'")
+
         text = ""
         if source_type == "transcription" and source_id:
             from app.models.transcription import Transcription
@@ -244,6 +279,7 @@ class VoiceCloneService:
         session.add(synthesis)
         await session.commit()
         await session.refresh(synthesis)
+        VoiceCloneService.cleanup_temp_files()
         return synthesis
 
     @staticmethod
@@ -275,11 +311,10 @@ class VoiceCloneService:
                         response_format=output_format,
                         speed=speed,
                     )
-                    # Save to file and return path
-                    import tempfile, os
                     fd, path = tempfile.mkstemp(suffix=f".{output_format}", prefix="tts_")
                     os.close(fd)
                     response.stream_to_file(path)
+                    VoiceCloneService._track_temp_file(path)
                     return f"/api/voice/audio/{os.path.basename(path)}"
                 except Exception as e:
                     logger.warning("openai_tts_failed", error=str(e))
@@ -293,7 +328,7 @@ class VoiceCloneService:
                     output_format="wav", speed=speed,
                 )
                 if audio_path:
-                    import os
+                    VoiceCloneService._track_temp_file(audio_path)
                     logger.info("coqui_tts_used", language=language, text_length=len(text))
                     return f"/api/voice/audio/{os.path.basename(audio_path)}"
         except Exception as e:

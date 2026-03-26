@@ -48,6 +48,9 @@ class Settings(BaseSettings):
     STRIPE_WEBHOOK_SECRET: str = ""
     STRIPE_PRICE_PRO_MONTHLY: str = ""
 
+    # Social Publisher token encryption key (Fernet-compatible base64 key, or any string)
+    SOCIAL_TOKEN_KEY: str = ""
+
     # CORS
     CORS_ORIGINS: str = "http://localhost:3002,http://localhost:8004"
     

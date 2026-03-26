@@ -8,6 +8,7 @@ from typing import Optional
 from uuid import UUID
 
 import structlog
+from sqlalchemy import update
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
@@ -151,15 +152,22 @@ class BillingService:
         """
         quota, _ = await BillingService.get_user_quota(user_id, session)
 
-        if resource_type == "transcription":
-            quota.transcriptions_used += amount
-        elif resource_type == "audio_minutes":
-            quota.audio_minutes_used += amount
-        elif resource_type == "ai_call":
-            quota.ai_calls_used += amount
+        column_map = {
+            "transcription": "transcriptions_used",
+            "audio_minutes": "audio_minutes_used",
+            "ai_call": "ai_calls_used",
+        }
+        column_name = column_map.get(resource_type)
+        if column_name is None:
+            logger.warning("unknown_resource_type", resource_type=resource_type)
+            return
 
-        quota.updated_at = datetime.now(UTC)
-        session.add(quota)
+        column = getattr(UserQuota, column_name)
+        await session.execute(
+            update(UserQuota)
+            .where(UserQuota.id == quota.id)
+            .values(**{column_name: column + amount, "updated_at": datetime.now(UTC)})
+        )
         await session.commit()
 
         logger.info(

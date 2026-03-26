@@ -139,6 +139,18 @@ async def lifespan(app):
     except Exception as exc:
         logger.debug("skill_seekers_recovery_skipped", error=str(exc))
 
+    # Seed default secrets for rotation tracking
+    try:
+        from app.core.secrets_manager import seed_default_secrets
+        from app.database import get_session_context
+
+        async with get_session_context() as session:
+            seeded = await seed_default_secrets(session)
+            if seeded:
+                logger.info("secrets_defaults_seeded", count=seeded)
+    except Exception as exc:
+        logger.debug("secrets_seed_skipped", error=str(exc))
+
     # Install signal handlers for graceful shutdown
     loop = asyncio.get_running_loop()
 

@@ -143,13 +143,39 @@ class RepoAnalyzerService:
             return f"{parts[-2]}/{name}"
         return parts[-1] if parts else url
 
+    ALLOWED_HOSTS = {"github.com", "gitlab.com", "bitbucket.org"}
+
+    @staticmethod
+    def _validate_repo_url(url: str) -> None:
+        """Validate that a repo URL points to an allowed Git hosting domain.
+
+        Raises ValueError for disallowed or malformed URLs to prevent SSRF.
+        """
+        parsed = urlparse(url)
+        if parsed.scheme != "https":
+            raise ValueError(
+                f"Only HTTPS URLs are allowed, got scheme '{parsed.scheme}'"
+            )
+        hostname = (parsed.hostname or "").lower()
+        if hostname not in RepoAnalyzerService.ALLOWED_HOSTS:
+            allowed = ", ".join(sorted(RepoAnalyzerService.ALLOWED_HOSTS))
+            raise ValueError(
+                f"Repository host '{hostname}' is not allowed. "
+                f"Allowed hosts: {allowed}"
+            )
+
     @staticmethod
     def _normalize_repo_url(repo_url: str) -> str:
         """Normalize repo URL to a clonable HTTPS URL."""
         url = repo_url.strip().rstrip("/")
         if not url.startswith("http"):
-            # owner/repo format -> GitHub URL
+            if not re.match(r"^[\w.\-]+/[\w.\-]+$", url):
+                raise ValueError(
+                    "Short-form repo URLs must be in 'owner/repo' format "
+                    "(only GitHub is supported for short-form)"
+                )
             url = f"https://github.com/{url}"
+        RepoAnalyzerService._validate_repo_url(url)
         if url.endswith(".git"):
             return url
         return url + ".git"
@@ -1136,7 +1162,7 @@ class RepoAnalyzerService:
         if not analysis or analysis.user_id != user_id:
             return False
 
-        await session.delete(analysis)
+        session.delete(analysis)
         await session.commit()
 
         logger.info("repo_analysis_deleted", analysis_id=str(analysis_id))

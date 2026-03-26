@@ -5,11 +5,14 @@ Supports Gemini Imagen, DALL-E 3, and Stable Diffusion.
 Falls back to placeholder generation in mock mode.
 """
 
+import ipaddress
 import json
+import socket
 import tempfile
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
+from urllib.parse import urlparse
 from uuid import UUID
 
 import structlog
@@ -43,6 +46,38 @@ STYLE_PROMPTS = {
     "flat_design": "flat design, vector style, clean lines, modern minimalist",
     "minimalist": "minimalist, simple, clean, lots of negative space, elegant",
 }
+
+
+def _validate_url_for_ssrf(url: str) -> None:
+    """Validate that a URL is safe to fetch (prevent SSRF attacks).
+
+    Raises ValueError if the URL targets internal/private network resources.
+    """
+    parsed = urlparse(url)
+
+    if parsed.scheme != "https":
+        raise ValueError(f"Only HTTPS URLs are allowed, got: {parsed.scheme}")
+
+    hostname = parsed.hostname
+    if not hostname:
+        raise ValueError("URL has no hostname")
+
+    blocked_hostnames = {"localhost", "localhost.localdomain", "ip6-localhost", "ip6-loopback"}
+    if hostname.lower() in blocked_hostnames:
+        raise ValueError(f"Blocked hostname: {hostname}")
+
+    try:
+        resolved_ips = socket.getaddrinfo(hostname, None)
+    except socket.gaierror:
+        raise ValueError(f"Could not resolve hostname: {hostname}")
+
+    for family, _type, _proto, _canonname, sockaddr in resolved_ips:
+        ip_str = sockaddr[0]
+        ip = ipaddress.ip_address(ip_str)
+        if ip.is_private or ip.is_loopback or ip.is_reserved or ip.is_link_local:
+            raise ValueError(f"URL resolves to private/reserved IP: {ip_str}")
+
+    return None
 
 
 class ImageGenService:
@@ -266,6 +301,7 @@ class ImageGenService:
             # Load the source image (handle local paths and URLs)
             img_path = source.image_url
             if img_path.startswith(("http://", "https://")):
+                _validate_url_for_ssrf(img_path)
                 import urllib.request
                 tmp = tempfile.NamedTemporaryFile(suffix=".png", delete=False)
                 urllib.request.urlretrieve(img_path, tmp.name)

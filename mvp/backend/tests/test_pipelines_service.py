@@ -533,6 +533,8 @@ class TestExecutePipeline:
         session.get = AsyncMock(return_value=mock_pipeline)
         session.add = MagicMock()
         session.commit = AsyncMock()
+        session.flush = AsyncMock()
+        session.rollback = AsyncMock()
         session.refresh = AsyncMock()
 
         mock_ai_result = {"processed_text": "Summary of content.", "provider": "gemini"}
@@ -594,6 +596,8 @@ class TestExecutePipeline:
         session.get = AsyncMock(return_value=mock_pipeline)
         session.add = MagicMock()
         session.commit = AsyncMock()
+        session.flush = AsyncMock()
+        session.rollback = AsyncMock()
         session.refresh = AsyncMock()
 
         with patch.object(
@@ -631,11 +635,13 @@ class TestExecutePipeline:
         session.get = AsyncMock(return_value=mock_pipeline)
         session.add = MagicMock()
         session.commit = AsyncMock()
+        session.flush = AsyncMock()
+        session.rollback = AsyncMock()
         session.refresh = AsyncMock()
 
         call_args_collector = []
 
-        async def mock_execute_step(step, previous_output, pipeline=None):
+        async def mock_execute_step(step, previous_output, pipeline=None, session=None):
             call_args_collector.append({"step_type": step["type"], "previous_output": previous_output})
             return {"type": step["type"], "output": f"output_of_{step['type']}"}
 

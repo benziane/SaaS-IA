@@ -14,6 +14,7 @@ from typing import Optional
 from uuid import UUID
 
 import structlog
+from sqlalchemy import update
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
@@ -309,11 +310,12 @@ class AIMemoryService:
             }.get(mem.memory_type.value if hasattr(mem.memory_type, 'value') else mem.memory_type, "Note")
             parts.append(f"- {prefix}: {mem.content}")
 
-        # Update usage stats
-        for mem in sorted_mems:
-            mem.use_count += 1
-            mem.last_used_at = datetime.now(UTC)
-            session.add(mem)
+        # Update usage stats in bulk
+        await session.execute(
+            update(UserMemory)
+            .where(UserMemory.id.in_([m.id for m in sorted_mems]))
+            .values(use_count=UserMemory.use_count + 1, last_used_at=datetime.now(UTC))
+        )
         await session.commit()
 
         return "User profile & context:\n" + "\n".join(parts)

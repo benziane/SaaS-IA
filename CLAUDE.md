@@ -2,7 +2,7 @@
 
 ## Projet
 
-Plateforme SaaS modulaire d'intelligence artificielle - 33 modules backend auto-decouverts, 41 pages frontend, ~280 endpoints API. Architecture enterprise S+++ (v4.0.0).
+Plateforme SaaS modulaire d'intelligence artificielle - 37 modules backend auto-decouverts, 41 pages frontend, ~280 endpoints API. Architecture enterprise S+++ (v4.0.0).
 
 ## Stack technique
 
@@ -85,7 +85,7 @@ Ce qui est interdit c'est de **supprimer un module entier ou remplacer une techn
 - Pour ajouter un embedding a un chunk, utiliser raw SQL : `UPDATE document_chunks SET embedding = :emb WHERE id = :cid`
 - Toujours garder le TF-IDF comme fallback - ne jamais le supprimer
 
-## Modules existants (33)
+## Modules existants (37)
 
 ### Core (12)
 transcription, conversation, knowledge (hybrid search: pgvector + TF-IDF), compare, pipelines, agents, sentiment, web_crawler, workspaces, billing, api_keys, cost_tracker
@@ -113,6 +113,12 @@ presentation_gen (AI slides, 5 templates, export HTML/MD/PDF), code_sandbox (sec
 
 ### Tools (1)
 skill_seekers (GitHub repo scraper + Claude AI packager, mock mode, async CLI execution)
+
+### New (3)
+repo_analyzer (git CLI analysis, code metrics), pdf_processor (PyMuPDF + pdfplumber, text/table extraction), audio_studio (pydub + noisereduce, audio editing)
+
+### Enterprise (1)
+tenants (multi-tenant isolation, PostgreSQL RLS, contextvars middleware)
 
 ## Integrations open-source (30 libs)
 
@@ -142,6 +148,16 @@ skill_seekers (GitHub repo scraper + Claude AI packager, mock mode, async CLI ex
 | skill-seekers | skill_seekers | mock mode |
 
 Toutes les integrations suivent la regle : **auto-detection + fallback gracieux** (pattern `HAS_XXX`).
+
+## Approche d'integration
+
+Chaque module suit un des 3 patterns :
+- **Pattern A (Lib wrappee)** : package pip installe, API Python appelee dans le service (12 modules)
+- **Pattern B (From scratch)** : code maison inspire par les concepts d'un repo/produit de reference (23 modules)
+- **Pattern C (CLI wrappee)** : outil CLI appele via `asyncio.create_subprocess_exec` (2 modules)
+
+Toutes les libs optionnelles utilisent le pattern `HAS_XXX` (auto-detection + fallback gracieux).
+Voir `mvp/docs/MODULE_ARCHITECTURE.md` pour le detail module par module.
 
 ## Interconnexions
 
@@ -175,4 +191,5 @@ cd mvp/backend && alembic upgrade head
 - [README.md](mvp/README.md) - Vue d'ensemble et modules
 - [ROADMAP.md](mvp/ROADMAP.md) - Roadmap complete, changelog, endpoints API, connectivite
 - [TECH_AUDIT_ROADMAP.md](mvp/TECH_AUDIT_ROADMAP.md) - Audit open-source : libs a integrer, priorites, checkboxes de suivi
+- [MODULE_ARCHITECTURE.md](mvp/docs/MODULE_ARCHITECTURE.md) - Architecture detaillee des 37 modules : patterns, sources, libs, fallbacks
 - [backend/MIGRATIONS_GUIDE.md](mvp/backend/MIGRATIONS_GUIDE.md) - Guide migrations Alembic

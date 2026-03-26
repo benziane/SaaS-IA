@@ -5,6 +5,7 @@ Supports text-to-video, highlight clips from transcriptions,
 talking avatars, and explainer videos.
 """
 
+import asyncio
 import json
 import os
 import tempfile
@@ -84,8 +85,8 @@ class VideoGenService:
                     project.video_count += 1
                     project.total_duration_s += video.duration_s or 0
                     session.add(project)
-            except (ValueError, Exception):
-                pass
+            except (ValueError, Exception) as e:
+                logger.warning("project_id_parse_failed", project_id=project_id, error=str(e))
 
         await session.commit()
         await session.refresh(video)
@@ -295,13 +296,13 @@ Respond with a JSON array: [{{"title": "...", "visual_prompt": "...", "reason": 
             return video_path
         try:
             escaped_srt = srt_path.replace("\\", "/").replace(":", "\\:")
-            (
+            stream = (
                 ffmpeg
                 .input(video_path)
                 .output(output_path, vf=f"subtitles={escaped_srt}")
                 .overwrite_output()
-                .run(quiet=True)
             )
+            await asyncio.to_thread(stream.run, quiet=True)
             logger.info("subtitles_added", video=video_path, srt=srt_path, output=output_path)
             return output_path
         except Exception as e:
@@ -315,13 +316,13 @@ Respond with a JSON array: [{{"title": "...", "visual_prompt": "...", "reason": 
             logger.warning("ffmpeg_not_available", method="_extract_clip")
             return video_path
         try:
-            (
+            stream = (
                 ffmpeg
                 .input(video_path, ss=start_s, t=duration_s)
                 .output(output_path, c="copy")
                 .overwrite_output()
-                .run(quiet=True)
             )
+            await asyncio.to_thread(stream.run, quiet=True)
             logger.info("clip_extracted", video=video_path, start=start_s, duration=duration_s, output=output_path)
             return output_path
         except Exception as e:
@@ -335,20 +336,23 @@ Respond with a JSON array: [{{"title": "...", "visual_prompt": "...", "reason": 
             logger.warning("ffmpeg_not_available", method="_concat_clips")
             return clip_paths[0] if clip_paths else ""
         try:
-            # Write concat list file
             concat_file = os.path.join(tempfile.gettempdir(), "ffmpeg_concat_list.txt")
-            with open(concat_file, "w") as f:
-                for path in clip_paths:
-                    safe = path.replace("\\", "/").replace("'", "'\\''")
-                    f.write(f"file '{safe}'\n")
-            (
-                ffmpeg
-                .input(concat_file, format="concat", safe=0)
-                .output(output_path, c="copy")
-                .overwrite_output()
-                .run(quiet=True)
-            )
-            os.remove(concat_file)
+
+            def _run_concat():
+                with open(concat_file, "w") as f:
+                    for path in clip_paths:
+                        safe = path.replace("\\", "/").replace("'", "'\\''")
+                        f.write(f"file '{safe}'\n")
+                (
+                    ffmpeg
+                    .input(concat_file, format="concat", safe=0)
+                    .output(output_path, c="copy")
+                    .overwrite_output()
+                    .run(quiet=True)
+                )
+                os.remove(concat_file)
+
+            await asyncio.to_thread(_run_concat)
             logger.info("clips_concatenated", count=len(clip_paths), output=output_path)
             return output_path
         except Exception as e:
@@ -364,12 +368,12 @@ Respond with a JSON array: [{{"title": "...", "visual_prompt": "...", "reason": 
         try:
             video_in = ffmpeg.input(video_path)
             audio_in = ffmpeg.input(audio_path)
-            (
+            stream = (
                 ffmpeg
                 .output(video_in.video, audio_in.audio, output_path, vcodec="copy", acodec="aac", shortest=None)
                 .overwrite_output()
-                .run(quiet=True)
             )
+            await asyncio.to_thread(stream.run, quiet=True)
             logger.info("audio_track_added", video=video_path, audio=audio_path, output=output_path)
             return output_path
         except Exception as e:
@@ -383,7 +387,7 @@ Respond with a JSON array: [{{"title": "...", "visual_prompt": "...", "reason": 
             logger.warning("ffmpeg_not_available", method="_get_video_info")
             return {}
         try:
-            probe = ffmpeg.probe(video_path)
+            probe = await asyncio.to_thread(ffmpeg.probe, video_path)
             video_stream = next(
                 (s for s in probe.get("streams", []) if s.get("codec_type") == "video"),
                 {},

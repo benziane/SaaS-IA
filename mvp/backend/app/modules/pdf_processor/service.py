@@ -220,6 +220,9 @@ class PDFProcessorService:
         await session.flush()
 
         file_dir = PDFProcessorService._get_file_dir(user_id, pdf_doc.id)
+        filename = os.path.basename(filename)
+        if not filename:
+            raise ValueError("Invalid filename after sanitization")
         file_path = os.path.join(file_dir, filename)
 
         try:

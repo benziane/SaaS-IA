@@ -79,32 +79,7 @@ class AIMonitoringService:
         """Get comprehensive monitoring dashboard data."""
         since = datetime.now(UTC) - timedelta(days=days)
 
-        # Total calls
-        total = (await session.execute(
-            select(func.count()).select_from(AIUsageLog)
-            .where(AIUsageLog.user_id == user_id, AIUsageLog.created_at >= since)
-        )).scalar_one()
-
-        # Success rate
-        success_count = (await session.execute(
-            select(func.count()).select_from(AIUsageLog)
-            .where(AIUsageLog.user_id == user_id, AIUsageLog.created_at >= since, AIUsageLog.success == True)
-        )).scalar_one()
-
-        # Total tokens & cost
-        agg = await session.execute(
-            select(
-                func.coalesce(func.sum(AIUsageLog.total_tokens), 0),
-                func.coalesce(func.sum(AIUsageLog.cost_cents), 0),
-                func.coalesce(func.avg(AIUsageLog.latency_ms), 0),
-            ).where(AIUsageLog.user_id == user_id, AIUsageLog.created_at >= since)
-        )
-        row = agg.one()
-        total_tokens = int(row[0])
-        total_cost_cents = float(row[1])
-        avg_latency = float(row[2])
-
-        # Per-provider stats
+        # Query 1: Provider breakdown (derives totals + per-provider stats)
         provider_stats = await session.execute(
             select(
                 AIUsageLog.provider,
@@ -117,18 +92,33 @@ class AIMonitoringService:
             .group_by(AIUsageLog.provider)
         )
         providers = []
+        total = 0
+        success_count = 0
+        total_tokens = 0
+        total_cost_cents = 0.0
+        latency_weighted_sum = 0.0
         for r in provider_stats:
             calls = int(r[1])
+            tokens = int(r[2])
+            cost = float(r[3])
+            avg_lat = float(r[4])
+            successes = int(r[5] or 0)
+            total += calls
+            success_count += successes
+            total_tokens += tokens
+            total_cost_cents += cost
+            latency_weighted_sum += avg_lat * calls
             providers.append({
                 "provider": r[0],
                 "calls": calls,
-                "tokens": int(r[2]),
-                "cost_cents": round(float(r[3]), 2),
-                "avg_latency_ms": round(float(r[4])),
-                "success_rate": round(int(r[5] or 0) / max(calls, 1) * 100, 1),
+                "tokens": tokens,
+                "cost_cents": round(cost, 2),
+                "avg_latency_ms": round(avg_lat),
+                "success_rate": round(successes / max(calls, 1) * 100, 1),
             })
+        avg_latency = latency_weighted_sum / max(total, 1)
 
-        # Per-module stats
+        # Query 2: Module breakdown (top 10)
         module_stats = await session.execute(
             select(
                 AIUsageLog.module,
@@ -141,32 +131,58 @@ class AIMonitoringService:
         )
         modules = [{"module": r[0], "calls": int(r[1]), "cost_cents": round(float(r[2]), 2)} for r in module_stats]
 
-        # Recent errors
-        errors = await session.execute(
-            select(AIUsageLog)
-            .where(AIUsageLog.user_id == user_id, AIUsageLog.success == False, AIUsageLog.created_at >= since)
-            .order_by(AIUsageLog.created_at.desc())
-            .limit(10)
-        )
-        recent_errors = [
-            {"provider": e.provider, "module": e.module, "action": e.action, "error": e.error, "created_at": e.created_at.isoformat()}
-            for e in errors.scalars().all()
-        ]
-
-        # Daily trend (last N days)
-        daily = await session.execute(
+        # Query 3: Daily trend + recent errors (single raw SQL)
+        combined = await session.execute(
             text("""
-                SELECT DATE(created_at) as day, COUNT(*) as calls,
-                       COALESCE(SUM(total_tokens), 0) as tokens,
-                       COALESCE(SUM(cost_cents), 0) as cost
-                FROM ai_usage_logs
-                WHERE user_id = :uid AND created_at >= :since
-                GROUP BY DATE(created_at)
-                ORDER BY day
+                WITH trend AS (
+                    SELECT DATE(created_at) as day, COUNT(*) as calls,
+                           COALESCE(SUM(total_tokens), 0) as tokens,
+                           COALESCE(SUM(cost_cents), 0) as cost
+                    FROM ai_usage_logs
+                    WHERE user_id = :uid AND created_at >= :since
+                    GROUP BY DATE(created_at)
+                    ORDER BY day
+                ),
+                errors AS (
+                    SELECT provider, module, action, error,
+                           to_char(created_at, 'YYYY-MM-DD"T"HH24:MI:SS.US') as created_at_iso
+                    FROM ai_usage_logs
+                    WHERE user_id = :uid AND success = false AND created_at >= :since
+                    ORDER BY created_at DESC
+                    LIMIT 10
+                )
+                SELECT
+                    COALESCE((SELECT json_agg(json_build_object(
+                        'day', t.day::text,
+                        'calls', t.calls,
+                        'tokens', t.tokens,
+                        'cost_cents', ROUND(t.cost::numeric, 2)
+                    )) FROM trend t), '[]'::json) as daily_trend,
+                    COALESCE((SELECT json_agg(json_build_object(
+                        'provider', e.provider,
+                        'module', e.module,
+                        'action', e.action,
+                        'error', e.error,
+                        'created_at', e.created_at_iso
+                    )) FROM errors e), '[]'::json) as recent_errors
             """),
             {"uid": str(user_id), "since": since.isoformat()},
         )
-        daily_trend = [{"day": str(r[0]), "calls": int(r[1]), "tokens": int(r[2]), "cost_cents": round(float(r[3]), 2)} for r in daily]
+        combined_row = combined.one()
+        raw_trend = combined_row[0] if combined_row[0] else []
+        raw_errors = combined_row[1] if combined_row[1] else []
+        if isinstance(raw_trend, str):
+            raw_trend = json.loads(raw_trend)
+        if isinstance(raw_errors, str):
+            raw_errors = json.loads(raw_errors)
+        daily_trend = [
+            {"day": r["day"], "calls": int(r["calls"]), "tokens": int(r["tokens"]), "cost_cents": float(r["cost_cents"])}
+            for r in raw_trend
+        ]
+        recent_errors = [
+            {"provider": r["provider"], "module": r["module"], "action": r["action"], "error": r["error"], "created_at": r["created_at"]}
+            for r in raw_errors
+        ]
 
         return {
             "period_days": days,

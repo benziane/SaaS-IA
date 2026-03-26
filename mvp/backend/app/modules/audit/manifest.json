@@ -1,0 +1,9 @@
+{
+  "name": "audit",
+  "version": "1.0.0",
+  "description": "Immutable audit log — compliance-grade (SOC2/HIPAA/RGPD). Hash-chained, append-only event trail with query, export, and integrity verification.",
+  "prefix": "/api/audit",
+  "tags": ["audit"],
+  "enabled": true,
+  "dependencies": []
+}

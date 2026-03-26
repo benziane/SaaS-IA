@@ -6,6 +6,7 @@ Supports optional tweepy integration for real Twitter/X publishing.
 Falls back to mock publishing when tweepy is not available.
 """
 
+import base64
 import hashlib
 import json
 import random
@@ -14,6 +15,12 @@ from typing import Optional
 from uuid import UUID
 
 import structlog
+
+try:
+    from cryptography.fernet import Fernet
+    HAS_FERNET = True
+except ImportError:
+    HAS_FERNET = False
 
 try:
     import tweepy
@@ -34,6 +41,45 @@ from app.models.social_publisher import (
 
 logger = structlog.get_logger()
 
+
+def _get_fernet() -> "Fernet | None":
+    """Build a Fernet cipher from SOCIAL_TOKEN_KEY or SECRET_KEY.
+
+    Returns None (with a warning) when the cryptography library is missing.
+    """
+    if not HAS_FERNET:
+        logger.warning("social_publisher_fernet_unavailable",
+                        hint="Install cryptography for token encryption; tokens stored in plain text")
+        return None
+
+    from app.config import settings
+
+    raw_key = settings.SOCIAL_TOKEN_KEY or settings.SECRET_KEY
+    key_bytes = hashlib.sha256(raw_key.encode()).digest()
+    fernet_key = base64.urlsafe_b64encode(key_bytes)
+    return Fernet(fernet_key)
+
+
+def encrypt_token(plain_token: str) -> str:
+    """Encrypt an access token. Falls back to plain text if Fernet unavailable."""
+    fernet = _get_fernet()
+    if fernet is None:
+        return plain_token
+    return fernet.encrypt(plain_token.encode()).decode()
+
+
+def decrypt_token(encrypted_token: str) -> str:
+    """Decrypt an access token. Falls back to returning the value as-is."""
+    fernet = _get_fernet()
+    if fernet is None:
+        return encrypted_token
+    try:
+        return fernet.decrypt(encrypted_token.encode()).decode()
+    except Exception:
+        logger.warning("social_publisher_token_decrypt_failed",
+                        hint="Token may have been stored before encryption was enabled")
+        return encrypted_token
+
 VALID_PLATFORMS = {p.value for p in SocialPlatform}
 
 
@@ -52,17 +98,17 @@ class SocialPublisherService:
         account_name: str,
         session: AsyncSession,
     ) -> SocialAccount:
-        """Store social account credentials (token is hashed)."""
+        """Store social account credentials (token is encrypted)."""
         if platform not in VALID_PLATFORMS:
             raise ValueError(f"Invalid platform '{platform}'. Must be one of: {', '.join(sorted(VALID_PLATFORMS))}")
 
-        token_hash = hashlib.sha256(access_token.encode()).hexdigest()
+        encrypted = encrypt_token(access_token)
 
         account = SocialAccount(
             user_id=user_id,
             platform=platform,
             account_name=account_name,
-            access_token_hash=token_hash,
+            access_token_hash=encrypted,
         )
         session.add(account)
         await session.commit()
@@ -454,21 +500,36 @@ class SocialPublisherService:
                 "platform": "twitter",
             }
 
-        # In production, the access_token would be decrypted and used here.
-        # For now we log the intent since we only store a hash.
-        logger.info(
-            "twitter_publish_attempt",
-            account_name=account.account_name,
-            content_length=len(content),
-        )
+        access_token = decrypt_token(account.access_token_hash)
 
-        return {
-            "success": True,
-            "platform": "twitter",
-            "account": account.account_name,
-            "post_id": f"tw_{account.id}_{datetime.now(UTC).timestamp():.0f}",
-            "note": "tweepy available - production publish ready (credentials required)",
-        }
+        try:
+            client = tweepy.Client(bearer_token=access_token)
+            response = client.create_tweet(text=content[:280])
+            tweet_id = response.data["id"] if response.data else "unknown"
+
+            logger.info(
+                "twitter_publish_success",
+                account_name=account.account_name,
+                tweet_id=tweet_id,
+            )
+            return {
+                "success": True,
+                "platform": "twitter",
+                "account": account.account_name,
+                "post_id": str(tweet_id),
+            }
+        except Exception as e:
+            logger.error(
+                "twitter_publish_error",
+                account_name=account.account_name,
+                error=str(e),
+            )
+            return {
+                "success": False,
+                "platform": "twitter",
+                "account": account.account_name,
+                "error": str(e)[:500],
+            }
 
     @staticmethod
     async def _publish_mock(

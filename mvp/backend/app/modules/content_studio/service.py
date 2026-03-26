@@ -6,6 +6,7 @@ Twitter threads, LinkedIn posts, newsletters, and more.
 Includes readability scoring via textstat when available.
 """
 
+import asyncio
 import json
 from datetime import UTC, datetime
 from typing import Optional
@@ -224,14 +225,18 @@ class ContentStudioService:
         if not source_text:
             return []
 
-        generated = []
+        valid_formats = []
         for fmt_str in formats:
             try:
-                fmt = ContentFormat(fmt_str)
+                valid_formats.append(ContentFormat(fmt_str))
             except ValueError:
                 logger.warning("content_studio_unknown_format", format=fmt_str)
-                continue
 
+        if not valid_formats:
+            return []
+
+        content_objects = []
+        for fmt in valid_formats:
             content_obj = GeneratedContent(
                 project_id=project_id,
                 user_id=user_id,
@@ -240,21 +245,36 @@ class ContentStudioService:
                 provider=provider or "gemini",
             )
             session.add(content_obj)
-            await session.flush()
+            content_objects.append(content_obj)
+        await session.flush()
 
-            try:
-                result = await ContentStudioService._generate_single(
-                    source_text=source_text,
-                    fmt=fmt,
-                    tone=project.tone,
-                    target_audience=project.target_audience,
-                    keywords=project.keywords,
-                    language=project.language,
-                    provider=provider,
-                    custom_instructions=custom_instructions,
-                    user_id=user_id,
+        tasks = [
+            ContentStudioService._generate_single(
+                source_text=source_text,
+                fmt=fmt,
+                tone=project.tone,
+                target_audience=project.target_audience,
+                keywords=project.keywords,
+                language=project.language,
+                provider=provider,
+                custom_instructions=custom_instructions,
+                user_id=user_id,
+            )
+            for fmt in valid_formats
+        ]
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+
+        generated = []
+        for content_obj, fmt, result in zip(content_objects, valid_formats, results):
+            if isinstance(result, Exception):
+                content_obj.status = ContentStatus.FAILED
+                content_obj.content = f"Generation failed: {str(result)[:500]}"
+                logger.error(
+                    "content_generation_failed",
+                    format=fmt.value,
+                    error=str(result),
                 )
-
+            else:
                 content_obj.content = result.get("content", "")
                 content_obj.title = result.get("title", "")
                 metadata = result.get("metadata", {})
@@ -266,15 +286,6 @@ class ContentStudioService:
                 content_obj.word_count = len(content_obj.content.split())
                 content_obj.status = ContentStatus.GENERATED
                 content_obj.provider = result.get("provider", provider or "gemini")
-
-            except Exception as e:
-                content_obj.status = ContentStatus.FAILED
-                content_obj.content = f"Generation failed: {str(e)[:500]}"
-                logger.error(
-                    "content_generation_failed",
-                    format=fmt.value,
-                    error=str(e),
-                )
 
             session.add(content_obj)
             generated.append(content_obj)

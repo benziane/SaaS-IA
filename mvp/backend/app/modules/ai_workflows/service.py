@@ -314,6 +314,9 @@ class WorkflowService:
         executed = set()
         queue = list(start_nodes)
 
+        commit_batch_size = 5
+        nodes_since_commit = 0
+
         try:
             while queue:
                 node_id = queue.pop(0)
@@ -336,7 +339,11 @@ class WorkflowService:
 
                 run.current_node = len(executed) + 1
                 session.add(run)
-                await session.commit()
+                nodes_since_commit += 1
+
+                if nodes_since_commit >= commit_batch_size:
+                    await session.commit()
+                    nodes_since_commit = 0
 
                 node_result = await WorkflowService._execute_node(
                     node, previous_output, user_id
@@ -853,6 +860,18 @@ class WorkflowService:
         except Exception as e:
             return {"output": "", "error": str(e)[:500], "action": "deploy_chatbot"}
 
+    _SAFE_WEBHOOK_HEADERS = frozenset({
+        "content-type", "authorization", "x-api-key", "x-webhook-secret",
+        "accept", "user-agent",
+    })
+
+    @staticmethod
+    def _filter_webhook_headers(raw_headers: dict) -> dict:
+        return {
+            k: v for k, v in raw_headers.items()
+            if k.lower() in WorkflowService._SAFE_WEBHOOK_HEADERS
+        }
+
     @staticmethod
     async def _node_send_webhook(text: str, config: dict) -> dict:
         """Send data to a webhook URL."""
@@ -864,12 +883,15 @@ class WorkflowService:
         try:
             method = config.get("method", "POST").upper()
             payload = {"content": text[:5000], "source": "saas-ia-workflow"}
+            safe_headers = WorkflowService._filter_webhook_headers(
+                config.get("headers", {})
+            )
             async with httpx.AsyncClient(timeout=30) as client:
                 if method == "GET":
-                    resp = await client.get(url, headers=config.get("headers", {}))
+                    resp = await client.get(url, headers=safe_headers)
                 else:
                     resp = await client.post(
-                        url, json=payload, headers=config.get("headers", {}),
+                        url, json=payload, headers=safe_headers,
                     )
             return {
                 "output": f"Webhook sent: {resp.status_code}",

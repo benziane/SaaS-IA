@@ -248,6 +248,18 @@ async def add_comment(
     session: AsyncSession = Depends(get_session),
 ):
     """Add a comment to a shared item."""
+    from app.models.workspace import SharedItem
+
+    shared_item = await session.get(SharedItem, item_id)
+    if not shared_item:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Shared item not found")
+
+    is_member = await WorkspaceService.is_member(
+        shared_item.workspace_id, current_user.id, session
+    )
+    if not is_member:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+
     comment = await WorkspaceService.add_comment(
         item_id, current_user.id, body.content, session
     )
@@ -297,4 +309,16 @@ async def list_comments(
     session: AsyncSession = Depends(get_session),
 ):
     """List comments on a shared item."""
+    from app.models.workspace import SharedItem
+
+    shared_item = await session.get(SharedItem, item_id)
+    if not shared_item:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Shared item not found")
+
+    is_member = await WorkspaceService.is_member(
+        shared_item.workspace_id, current_user.id, session
+    )
+    if not is_member:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+
     return await WorkspaceService.list_comments(item_id, session)

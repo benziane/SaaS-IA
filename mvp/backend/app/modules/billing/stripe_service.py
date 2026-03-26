@@ -67,27 +67,35 @@ class StripeService:
         # Create or reuse Stripe customer
         customer_id = quota.stripe_customer_id
         if not customer_id:
-            customer = stripe.Customer.create(
-                email=user_email,
-                metadata={"user_id": str(user_id)},
-            )
+            try:
+                customer = stripe.Customer.create(
+                    email=user_email,
+                    metadata={"user_id": str(user_id)},
+                )
+            except stripe.error.StripeError as e:
+                logger.error("stripe_customer_create_failed", error=str(e), user_id=str(user_id))
+                raise ValueError(f"Payment service unavailable: {str(e)}")
             customer_id = customer.id
             quota.stripe_customer_id = customer_id
             session.add(quota)
             await session.commit()
 
         # Create checkout session
-        checkout_session = stripe.checkout.Session.create(
-            customer=customer_id,
-            mode="subscription",
-            line_items=[{"price": price_id, "quantity": 1}],
-            success_url=f"{settings.CORS_ORIGINS.split(',')[0]}/billing?success=true",
-            cancel_url=f"{settings.CORS_ORIGINS.split(',')[0]}/billing?canceled=true",
-            metadata={
-                "user_id": str(user_id),
-                "plan_name": plan_name,
-            },
-        )
+        try:
+            checkout_session = stripe.checkout.Session.create(
+                customer=customer_id,
+                mode="subscription",
+                line_items=[{"price": price_id, "quantity": 1}],
+                success_url=f"{settings.CORS_ORIGINS.split(',')[0]}/billing?success=true",
+                cancel_url=f"{settings.CORS_ORIGINS.split(',')[0]}/billing?canceled=true",
+                metadata={
+                    "user_id": str(user_id),
+                    "plan_name": plan_name,
+                },
+            )
+        except stripe.error.StripeError as e:
+            logger.error("stripe_checkout_create_failed", error=str(e), user_id=str(user_id))
+            raise ValueError(f"Payment service unavailable: {str(e)}")
 
         logger.info(
             "stripe_checkout_created",
@@ -117,10 +125,14 @@ class StripeService:
         if not quota.stripe_customer_id:
             raise ValueError("No Stripe customer found. Subscribe to a plan first.")
 
-        portal_session = stripe.billing_portal.Session.create(
-            customer=quota.stripe_customer_id,
-            return_url=f"{settings.CORS_ORIGINS.split(',')[0]}/billing",
-        )
+        try:
+            portal_session = stripe.billing_portal.Session.create(
+                customer=quota.stripe_customer_id,
+                return_url=f"{settings.CORS_ORIGINS.split(',')[0]}/billing",
+            )
+        except stripe.error.StripeError as e:
+            logger.error("stripe_portal_create_failed", error=str(e), user_id=str(user_id))
+            raise ValueError(f"Payment service unavailable: {str(e)}")
 
         return {"portal_url": portal_session.url}
 

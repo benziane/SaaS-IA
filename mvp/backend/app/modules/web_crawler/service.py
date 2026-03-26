@@ -347,21 +347,30 @@ class WebCrawlerService:
                 images_found = len(main_result.get("images", []))
 
             # Index in knowledge base
-            if content.strip() and session:
+            if content.strip():
                 try:
                     from app.modules.knowledge.service import KnowledgeService
-                    indexed = await KnowledgeService.index_text_content(
-                        user_id=user_id,
-                        filename=f"web_{title[:50]}.md",
-                        content=content,
-                        content_type="text/markdown",
-                        session=session,
-                    )
+
+                    async def _index_main(s):
+                        return await KnowledgeService.index_text_content(
+                            user_id=user_id,
+                            filename=f"web_{title[:50]}.md",
+                            content=content,
+                            content_type="text/markdown",
+                            session=s,
+                        )
+
+                    if session is not None:
+                        indexed = await _index_main(session)
+                    else:
+                        from app.database import get_session_context
+                        async with get_session_context() as new_session:
+                            indexed = await _index_main(new_session)
+
                     if indexed:
                         chunks_indexed = indexed.get("total_chunks", 0)
                 except Exception as e:
                     logger.warning("knowledge_index_failed", error=str(e))
-                    # Fallback: just report we crawled but couldn't index
                     chunks_indexed = 0
 
             pages_crawled = 1
@@ -384,20 +393,29 @@ class WebCrawlerService:
                             sub_content = sub_result["markdown"]
                             sub_title = sub_result.get("title", sub_url)
 
-                            if session:
-                                try:
-                                    from app.modules.knowledge.service import KnowledgeService
-                                    indexed = await KnowledgeService.index_text_content(
+                            try:
+                                from app.modules.knowledge.service import KnowledgeService
+
+                                async def _index_sub(s):
+                                    return await KnowledgeService.index_text_content(
                                         user_id=user_id,
                                         filename=f"web_{sub_title[:50]}.md",
                                         content=sub_content,
                                         content_type="text/markdown",
-                                        session=session,
+                                        session=s,
                                     )
-                                    if indexed:
-                                        chunks_indexed += indexed.get("total_chunks", 0)
-                                except Exception:
-                                    pass
+
+                                if session is not None:
+                                    indexed = await _index_sub(session)
+                                else:
+                                    from app.database import get_session_context
+                                    async with get_session_context() as new_session:
+                                        indexed = await _index_sub(new_session)
+
+                                if indexed:
+                                    chunks_indexed += indexed.get("total_chunks", 0)
+                            except Exception:
+                                pass
 
                             pages_crawled += 1
                             images_found += len(sub_result.get("images", []))

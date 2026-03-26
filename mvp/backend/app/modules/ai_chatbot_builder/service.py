@@ -61,6 +61,12 @@ class ChatbotBuilderService:
         chatbot = await self.session.get(Chatbot, chatbot_id)
         if not chatbot or chatbot.user_id != user_id or chatbot.is_deleted:
             return None
+
+        chatbot.conversations_count = await self._count_conversations(chatbot_id)
+        self.session.add(chatbot)
+        await self.session.commit()
+        await self.session.refresh(chatbot)
+
         return chatbot
 
     async def update_chatbot(self, user_id: UUID, chatbot_id: UUID, data: dict) -> Optional[Chatbot]:
@@ -282,13 +288,13 @@ class ChatbotBuilderService:
         messages.append(user_msg)
         messages.append(assistant_msg)
 
+        MAX_MESSAGES = 200
+        if len(messages) > MAX_MESSAGES:
+            messages = [messages[0]] + messages[-(MAX_MESSAGES - 1):]
+
         conversation.messages = json.dumps(messages)
         conversation.updated_at = datetime.now(UTC)
         self.session.add(conversation)
-
-        # Update conversation count
-        chatbot.conversations_count = await self._count_conversations(chatbot_id)
-        self.session.add(chatbot)
         await self.session.commit()
 
         return {

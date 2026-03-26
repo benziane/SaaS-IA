@@ -200,7 +200,9 @@ class FineTuningService:
         from app.models.knowledge import DocumentChunk
 
         result = await session.execute(
-            select(DocumentChunk).limit(max_samples)
+            select(DocumentChunk)
+            .where(DocumentChunk.user_id == user_id)
+            .limit(max_samples)
         )
         chunks = list(result.scalars().all())
 

@@ -1,12 +1,13 @@
 """Unified Search API routes."""
 
 from typing import Optional
-from fastapi import APIRouter, Body, Depends, Query, Request
+from fastapi import APIRouter, Body, Depends, HTTPException, Query, Request
 from sqlmodel.ext.asyncio.session import AsyncSession
+from starlette import status
 
 from app.auth import get_current_user
 from app.database import get_session
-from app.models.user import User
+from app.models.user import Role, User
 from app.modules.unified_search.service import UnifiedSearchService, is_meilisearch_available
 from app.rate_limit import limiter
 
@@ -79,5 +80,10 @@ async def reindex_module(
     session: AsyncSession = Depends(get_session),
 ):
     """Rebuild Meilisearch index for a specific module from PostgreSQL data."""
+    if current_user.role != Role.ADMIN:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Reindex is restricted to admin users.",
+        )
     result = await UnifiedSearchService.reindex_module(module_name, session)
     return result

@@ -2,7 +2,7 @@
 SaaS-IA MVP - FastAPI Application (Enterprise S+++)
 
 Main entry point for the API.
-Middleware stack: CORS -> RequestID -> ShutdownGuard -> Sentry -> RateLimit -> Logging -> Security -> Compression -> Prometheus
+Middleware stack: CORS -> RequestID -> ShutdownGuard -> Sentry -> RateLimit -> Logging -> Security -> Compression -> AuditLog -> Prometheus
 """
 
 import structlog
@@ -63,8 +63,12 @@ app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)
 # First added = last executed on request, first on response
 # ============================================================
 
-# 8. Prometheus metrics (outermost - wraps everything)
+# 9. Prometheus metrics (outermost - wraps everything)
 app.add_middleware(PrometheusMiddleware)
+
+# 8. Audit Log (immutable compliance trail — fire-and-forget, needs tenant context from 5c)
+from app.middleware.audit_middleware import AuditMiddleware
+app.add_middleware(AuditMiddleware)
 
 # 7. Compression (compresses final response, skips SSE/metrics)
 from app.middleware.compression import SelectiveCompressionMiddleware
@@ -77,6 +81,10 @@ app.add_middleware(SecurityHeadersMiddleware)
 # 5c. Tenant Context (extracts tenant_id from JWT/header, sets contextvars for RLS)
 from app.middleware.tenant_middleware import TenantMiddleware
 app.add_middleware(TenantMiddleware)
+
+# 5bc. Feature Flag Gate (blocks requests to disabled modules with 503)
+from app.middleware.feature_flag_middleware import FeatureFlagMiddleware
+app.add_middleware(FeatureFlagMiddleware)
 
 # 5b. Sliding Window Rate Limiter (global, coexists with per-endpoint slowapi)
 from app.middleware.rate_limiter import RateLimitMiddleware

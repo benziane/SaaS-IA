@@ -1,0 +1,9 @@
+{
+  "name": "feature_flags",
+  "version": "1.0.0",
+  "description": "Runtime feature flag management with percentage rollout and kill switches",
+  "prefix": "/api/feature-flags",
+  "tags": ["feature_flags"],
+  "enabled": true,
+  "dependencies": []
+}
