@@ -163,7 +163,8 @@ class AIAssistantService:
                     "model_name": provider.model_name,
                     "priority": metadata.get("priority", 999)
                 })
-            except Exception:
+            except Exception as e:
+                logger.warning("provider_availability_check_failed", provider=name, error=str(e))
                 is_free = metadata.get("is_free", False)
                 providers.append({
                     "name": name,
@@ -183,7 +184,8 @@ class AIAssistantService:
         text: str,
         task: str,
         provider_name: str = "gemini",
-        language: Optional[str] = None
+        language: Optional[str] = None,
+        user_id: Optional[UUID] = None,
     ) -> dict:
         """
         Process text using AI (correction, formatting, etc.).
@@ -499,7 +501,7 @@ Contenu restructuré :"""
             try:
                 from app.modules.cost_tracker.tracker import track_ai_usage
                 await track_ai_usage(
-                    user_id=UUID("00000000-0000-0000-0000-000000000000"),
+                    user_id=user_id,
                     provider=provider_name,
                     model=provider.model_name,
                     module="text_processing",
@@ -742,7 +744,7 @@ Contenu restructuré :"""
             try:
                 from app.modules.cost_tracker.tracker import track_ai_usage
                 await track_ai_usage(
-                    user_id=user_id or UUID("00000000-0000-0000-0000-000000000000"),
+                    user_id=user_id,
                     provider=provider_name,
                     model=provider.model_name,
                     module=module,
@@ -768,7 +770,8 @@ Contenu restructuré :"""
         text: str,
         task: str,
         target_language: Optional[str] = None,
-        strategy: SelectionStrategy = SelectionStrategy.BALANCED
+        strategy: SelectionStrategy = SelectionStrategy.BALANCED,
+        user_id: Optional[UUID] = None
     ) -> AsyncGenerator[Dict[str, Any], None]:
         """
         Stream text processing using the AI Router pipeline.
@@ -874,7 +877,7 @@ Contenu restructuré :"""
             try:
                 from app.modules.cost_tracker.tracker import track_ai_usage
                 await track_ai_usage(
-                    user_id=UUID("00000000-0000-0000-0000-000000000000"),
+                    user_id=user_id,
                     provider=provider_name,
                     model=provider.model_name,
                     module="stream_processing",

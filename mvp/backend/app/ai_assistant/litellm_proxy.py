@@ -90,7 +90,8 @@ async def complete(
         # LiteLLM cost calculation (exact, not estimated)
         try:
             cost_usd = litellm.completion_cost(completion_response=response)
-        except Exception:
+        except Exception as e:
+            logger.warning("litellm_cost_calculation_failed", model=model, error=str(e))
             cost_usd = 0.0
 
         # Track cost
@@ -180,10 +181,11 @@ def get_model_costs() -> dict:
                     "output_per_1m": info.get("output_cost_per_token", 0) * 1_000_000,
                     "label": "litellm",
                 }
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning("litellm_model_cost_lookup_failed", model=name, error=str(e))
         return costs if costs else None
-    except Exception:
+    except Exception as e:
+        logger.warning("litellm_get_model_costs_failed", error=str(e))
         return None
 
 

@@ -14,6 +14,7 @@ class AgentStatus(str, Enum):
     PLANNING = "planning"
     EXECUTING = "executing"
     COMPLETED = "completed"
+    PARTIAL_FAILURE = "partial_failure"
     FAILED = "failed"
     CANCELLED = "cancelled"
 

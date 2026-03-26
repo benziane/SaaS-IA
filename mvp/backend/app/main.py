@@ -5,10 +5,12 @@ Main entry point for the API.
 Middleware stack: CORS -> RequestID -> ShutdownGuard -> Sentry -> RateLimit -> Logging -> Security -> Compression -> AuditLog -> Prometheus
 """
 
+import asyncio
+
 import structlog
 from fastapi import Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import PlainTextResponse
+from fastapi.responses import JSONResponse, PlainTextResponse
 from slowapi.errors import RateLimitExceeded
 from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
 
@@ -169,15 +171,57 @@ app.include_router(
 async def health_check(request: Request):
     """
     Health check endpoint
-    
+
     Returns the health status of the application
-    
+
     Rate limit: 100 requests/minute
     """
-    return {
-        "status": "healthy",
-        "version": "1.0.0",
+    from app.api.health import _check_postgres, _check_redis
+
+    try:
+        pg_result, redis_result = await asyncio.wait_for(
+            asyncio.gather(
+                _check_postgres(),
+                _check_redis(),
+            ),
+            timeout=2.0,
+        )
+    except asyncio.TimeoutError:
+        return JSONResponse(
+            status_code=503,
+            content={
+                "status": "unhealthy",
+                "version": "1.0.0",
+                "details": {"error": "health check timed out"},
+            },
+        )
+
+    checks = {
+        "postgres": pg_result,
+        "redis": redis_result,
     }
+
+    pg_up = pg_result["status"] == "up"
+    redis_up = redis_result["status"] == "up"
+
+    if pg_up and redis_up:
+        status = "healthy"
+        status_code = 200
+    elif not pg_up and not redis_up:
+        status = "unhealthy"
+        status_code = 503
+    else:
+        status = "degraded"
+        status_code = 200
+
+    return JSONResponse(
+        status_code=status_code,
+        content={
+            "status": status,
+            "version": "1.0.0",
+            "dependencies": checks,
+        },
+    )
 
 
 # Registered modules endpoint (HIGH-05: require authentication)
@@ -223,7 +267,7 @@ async def metrics(request: Request):
 async def root():
     """
     Root endpoint
-    
+
     Returns basic information about the API
     """
     return {
@@ -236,11 +280,10 @@ async def root():
 
 if __name__ == "__main__":
     import uvicorn
-    
+
     uvicorn.run(
         "app.main:app",
         host="0.0.0.0",
         port=8000,
         reload=settings.debug_enabled
     )
-

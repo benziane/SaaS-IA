@@ -29,6 +29,9 @@ REPO_NAME_PATTERN = re.compile(r"^[a-zA-Z0-9_\-\.]+/[a-zA-Z0-9_\-\.]+$")
 # Auto-detect CLI availability
 HAS_SKILL_SEEKERS = shutil.which("skill-seekers") is not None
 
+# Set of job IDs that have been cancelled — checked between steps in run_job
+_cancelled_job_ids: set[UUID] = set()
+
 # Persistent output directory (survives restarts, isolated per user/job)
 SKILL_SEEKERS_DATA_DIR = Path(
     os.environ.get("SKILL_SEEKERS_DATA_DIR", "")
@@ -182,8 +185,13 @@ class SkillSeekersService:
             try:
                 job.status = ScrapeJobStatus.RUNNING
                 job.current_step = "starting"
-                job.updated_at = datetime.utcnow()
+                job.updated_at = datetime.now(UTC)
                 await session.commit()
+
+                # Check cancellation between steps
+                if self._check_cancelled(job_id):
+                    logger.info("scrape_job_cancelled_before_start", job_id=str(job_id))
+                    return
 
                 repos = json.loads(job.repos_json)
                 targets = json.loads(job.targets_json)
@@ -204,7 +212,7 @@ class SkillSeekersService:
                 job.progress = 100
                 job.current_step = "done"
                 job.output_files_json = json.dumps(output_files)
-                job.updated_at = datetime.utcnow()
+                job.updated_at = datetime.now(UTC)
                 await session.commit()
 
                 # Auto-index completed scrape results into Knowledge Base
@@ -237,7 +245,7 @@ class SkillSeekersService:
                 job.status = ScrapeJobStatus.FAILED
                 job.error = str(e)[:2000]
                 job.current_step = "failed"
-                job.updated_at = datetime.utcnow()
+                job.updated_at = datetime.now(UTC)
                 await session.commit()
 
                 logger.error(
@@ -268,9 +276,12 @@ class SkillSeekersService:
                 job.current_step = f"scraping {repo}"
                 step += 1
                 job.progress = int((step / total_steps) * 100)
-                job.updated_at = datetime.utcnow()
+                job.updated_at = datetime.now(UTC)
                 session.add(job)
                 await session.commit()
+
+                if self._check_cancelled(job.id):
+                    raise RuntimeError("Job cancelled by user")
 
                 proc = await asyncio.create_subprocess_exec(
                     "skill-seekers", "create", repo,
@@ -296,7 +307,7 @@ class SkillSeekersService:
                     job.current_step = f"enhancing {repo}"
                     step += 1
                     job.progress = int((step / total_steps) * 100)
-                    job.updated_at = datetime.utcnow()
+                    job.updated_at = datetime.now(UTC)
                     session.add(job)
                     await session.commit()
 
@@ -324,9 +335,12 @@ class SkillSeekersService:
                     job.current_step = f"packaging {repo} for {target}"
                     step += 1
                     job.progress = int((step / total_steps) * 100)
-                    job.updated_at = datetime.utcnow()
+                    job.updated_at = datetime.now(UTC)
                     session.add(job)
                     await session.commit()
+
+                    if self._check_cancelled(job.id):
+                        raise RuntimeError("Job cancelled by user")
 
                     out_filename = f"{slug}_{target}.md"
                     out_path = os.path.join(output_dir, out_filename)
@@ -381,7 +395,7 @@ class SkillSeekersService:
             # Simulate scraping
             job.current_step = f"scraping {repo} (mock)"
             job.progress = int(((step + 0.5) / total_steps) * 80)
-            job.updated_at = datetime.utcnow()
+            job.updated_at = datetime.now(UTC)
             session.add(job)
             await session.commit()
             await asyncio.sleep(1.5)
@@ -389,7 +403,7 @@ class SkillSeekersService:
             # Simulate enhance
             if job.enhance:
                 job.current_step = f"enhancing {repo} (mock)"
-                job.updated_at = datetime.utcnow()
+                job.updated_at = datetime.now(UTC)
                 session.add(job)
                 await session.commit()
                 await asyncio.sleep(1.0)
@@ -398,10 +412,13 @@ class SkillSeekersService:
                 job.current_step = f"packaging {repo} for {target} (mock)"
                 step += 1
                 job.progress = int((step / total_steps) * 90)
-                job.updated_at = datetime.utcnow()
+                job.updated_at = datetime.now(UTC)
                 session.add(job)
                 await session.commit()
                 await asyncio.sleep(0.5)
+
+                if self._check_cancelled(job.id):
+                    raise RuntimeError("Job cancelled by user")
 
                 out_filename = f"{slug}_{target}.md"
                 out_path = os.path.join(output_dir, out_filename)
@@ -419,7 +436,7 @@ class SkillSeekersService:
                     f"## Key Files\n\n"
                     f"Mock data for {repo}. Real scraping requires the CLI.\n\n"
                     f"---\n"
-                    f"Generated: {datetime.utcnow().isoformat()}\n"
+                    f"Generated: {datetime.now(UTC).isoformat()}\n"
                 )
 
                 with open(out_path, "w", encoding="utf-8") as f:
@@ -460,18 +477,20 @@ class SkillSeekersService:
 
     @staticmethod
     def generate_download_token(job_id: UUID, filename: str, expires_seconds: int = 300) -> str:
-        """Generate a signed token for authenticated file downloads."""
+        """Generate a HMAC-signed token for authenticated file downloads."""
+        import hmac
         import hashlib
         import time
         from app.config import settings
         expiry = int(time.time()) + expires_seconds
         payload = f"{job_id}:{filename}:{expiry}"
-        sig = hashlib.sha256(f"{settings.SECRET_KEY}:{payload}".encode()).hexdigest()[:32]
+        sig = hmac.new(settings.SECRET_KEY.encode(), payload.encode(), hashlib.sha256).hexdigest()[:32]
         return f"{expiry}.{sig}"
 
     @staticmethod
     def verify_download_token(job_id: UUID, filename: str, token: str) -> bool:
-        """Verify a signed download token."""
+        """Verify a HMAC-signed download token."""
+        import hmac
         import hashlib
         import time
         from app.config import settings
@@ -481,8 +500,8 @@ class SkillSeekersService:
             if time.time() > expiry:
                 return False
             payload = f"{job_id}:{filename}:{expiry}"
-            expected = hashlib.sha256(f"{settings.SECRET_KEY}:{payload}".encode()).hexdigest()[:32]
-            return sig == expected
+            expected = hmac.new(settings.SECRET_KEY.encode(), payload.encode(), hashlib.sha256).hexdigest()[:32]
+            return hmac.compare_digest(sig, expected)
         except Exception:
             return False
 
@@ -645,6 +664,9 @@ class SkillSeekersService:
         if job.status not in (ScrapeJobStatus.PENDING, ScrapeJobStatus.RUNNING):
             return False
 
+        # Signal the background task to stop
+        _cancelled_job_ids.add(job_id)
+
         job.status = ScrapeJobStatus.FAILED
         job.error = "Cancelled by user"
         job.current_step = "cancelled"
@@ -654,6 +676,14 @@ class SkillSeekersService:
 
         logger.info("scrape_job_cancelled", job_id=str(job_id))
         return True
+
+    @staticmethod
+    def _check_cancelled(job_id: UUID) -> bool:
+        """Check if a job has been cancelled. If so, remove from set and return True."""
+        if job_id in _cancelled_job_ids:
+            _cancelled_job_ids.discard(job_id)
+            return True
+        return False
 
     @staticmethod
     def get_file_preview(job: ScrapeJob, filename: str, max_chars: int = 5000) -> Optional[str]:

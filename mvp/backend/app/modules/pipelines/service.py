@@ -858,6 +858,28 @@ class PipelineService:
                 step_output = "No audio_id provided" if not audio_id else "No pipeline context"
             return {"type": "generate_podcast", "output": step_output}
 
+
+        # ---- Fine-tune model step ----
+        elif step_type == "fine_tune":
+            dataset_id = config.get("dataset_id", "")
+            if dataset_id and pipeline:
+                try:
+                    from app.modules.fine_tuning.service import FineTuningService
+                    job = await FineTuningService.create_job(
+                        user_id=pipeline.user_id,
+                        name=config.get("name", "Pipeline Fine-Tune"),
+                        dataset_id=dataset_id,
+                        base_model=config.get("base_model", "unsloth/tinyllama-bnb-4bit"),
+                        provider=config.get("provider", "local"),
+                        hyperparams=config.get("hyperparams", {}),
+                        session=session,
+                    )
+                    step_output = f"Fine-tuning job created: {job.name} (ID: {job.id}, status: {job.status})"
+                except Exception as e:
+                    step_output = f"Fine-tuning failed: {str(e)[:500]}"
+            else:
+                step_output = "No dataset_id provided" if not dataset_id else "No pipeline context"
+            return {"type": "fine_tune", "output": step_output}
         else:
             return {"type": step_type, "output": previous_output or "", "note": "Unknown step type"}
 

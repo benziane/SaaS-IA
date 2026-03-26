@@ -3,19 +3,19 @@
 > Document de reference permanent. Decrit COMMENT chaque module a ete construit,
 > sa source d'inspiration, et son approche d'integration.
 >
-> Derniere mise a jour : 2026-03-26 | v4.0.0 | 37 modules
+> Derniere mise a jour : 2026-03-26 | v4.3.0 | 40 modules
 
 ---
 
 ## Vue d'ensemble
 
-La plateforme SaaS-IA contient **37 modules backend** auto-decouverts par le `ModuleRegistry`.
+La plateforme SaaS-IA contient **40 modules backend** auto-decouverts par le `ModuleRegistry`.
 Chaque module suit un des 3 patterns d'integration :
 
 | Pattern | Description | Nombre |
 |---------|-------------|--------|
 | **A. Lib Python wrappee** | On installe un package pip et on appelle son API Python dans notre service | 12 modules |
-| **B. Developpe from scratch** | Code 100% maison, inspire par les concepts d'un repo/produit de reference | 23 modules |
+| **B. Developpe from scratch** | Code 100% maison, inspire par les concepts d'un repo/produit de reference | 26 modules |
 | **C. CLI wrappee** | On appelle un outil en ligne de commande via `asyncio.create_subprocess_exec` | 2 modules |
 
 Certains modules combinent plusieurs patterns (note A+B ou B+C dans les tableaux).
@@ -126,11 +126,14 @@ Les migrations Alembic dans `mvp/backend/alembic/versions/`.
 | **pdf_processor** | A | ChatPDF / unstructured patterns | `PyMuPDF`, `pdfplumber` | pdfplumber si PyMuPDF absent | Extraction de texte/tables/images depuis PDF, deux backends pour robustesse | unstructured (8K stars) |
 | **audio_studio** | A+B | Descript / Audacity concepts | `pydub`, `noisereduce` | Pydub seul si noisereduce absent | Edition audio (trim, merge, noise reduction) sans interface lourde | librosa, pedalboard |
 
-### Enterprise (1 module)
+### Enterprise (4 modules)
 
 | Module | Pattern | Source d'inspiration | Libs utilisees | Fallback | Pourquoi cette approche | Alternative possible |
 |--------|---------|---------------------|----------------|----------|------------------------|---------------------|
 | **tenants** | B | Stripe multi-tenant + PostgreSQL RLS docs | Aucune | - | Isolation multi-tenant par tenant_id avec middleware contextvars | django-tenants pattern |
+| **audit** | B | SOC2 audit trail patterns | Aucune (SHA-256 stdlib `hashlib`) | - | Hash chain immutable pour compliance-grade audit log, zero dependance | auditlog (django), sqlalchemy-continuum |
+| **feature_flags** | B | LaunchDarkly / Unleash | `redis` | In-memory dict | Kill switches + percentage rollout avec evaluation Redis-backed | unleash-client-python, flagsmith |
+| **secrets** | B | HashiCorp Vault metadata patterns | Aucune | - | Rotation tracking + expiry alerts + health score, metadata seulement (pas de stockage de secrets) | python-dotenv, vault hvac |
 
 ---
 
@@ -187,7 +190,7 @@ class ModuleService:
 
 ---
 
-## Enterprise Infrastructure (12 composants)
+## Enterprise Infrastructure (16 composants)
 
 Ces composants ne sont pas des modules auto-decouverts mais des elements d'infrastructure
 partages par tous les modules.
@@ -206,6 +209,10 @@ partages par tous les modules.
 | OpenTelemetry Tracing | A | `app/core/telemetry.py` | `opentelemetry-*` (7 packages) | Prometheus seul |
 | Error Tracking | A | `app/core/error_tracking.py` | `sentry-sdk` | structlog seul |
 | Multi-tenant Middleware | B | `app/middleware/tenant_middleware.py` | `contextvars` (stdlib) | - |
+| Audit Middleware | B | `app/middleware/audit_middleware.py` | Aucune | - |
+| Feature Flag Middleware | B | `app/middleware/feature_flag_middleware.py` | `redis` | In-memory dict |
+| Transactional Outbox | B | `app/core/outbox.py` | Aucune | - |
+| Secrets Rotation | B | `app/core/secrets_rotation.py` | Aucune | - |
 
 ---
 
@@ -213,20 +220,20 @@ partages par tous les modules.
 
 3 systemes d'orchestration connectent les modules entre eux :
 
-### 1. Agent Executor (~68 actions)
+### 1. Agent Executor (~79 actions)
 
 Le service `agents` peut appeler directement les services des autres modules.
 Chaque action mappe un nom (`transcribe_audio`, `search_knowledge`, etc.) a un appel de methode service.
 
 **Fichier** : `app/modules/agents/service.py` (methode `execute_action`)
 
-### 2. Pipeline Steps (20 step types)
+### 2. Pipeline Steps (29 step types)
 
 Le module `pipelines` execute des etapes en sequence. Chaque step type appelle un service module.
 
 **Fichier** : `app/modules/pipelines/service.py`
 
-### 3. Workflow Actions (23 types)
+### 3. Workflow Actions (30 types)
 
 Le module `ai_workflows` execute un DAG (graphe acyclique dirige) avec branches paralleles.
 Chaque noeud du DAG est une action typee qui appelle un service.
@@ -239,13 +246,13 @@ Chaque noeud du DAG est une action typee qui appelle un service.
 
 ```
 Pattern A (Lib wrappee)        : 12 modules
-Pattern B (From scratch)       : 23 modules
+Pattern B (From scratch)       : 26 modules
 Pattern C (CLI wrappee)        :  2 modules
 
-Total modules                  : 37
+Total modules                  : 40
 Total libs open-source         : 30+
 Total fallbacks implementes    : 20+
-Enterprise components          : 12
+Enterprise components          : 16
 ```
 
 ---

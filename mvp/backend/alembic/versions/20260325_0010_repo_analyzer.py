@@ -9,7 +9,7 @@ from alembic import op
 import sqlalchemy as sa
 
 revision: str = 'repo_analyzer_001'
-down_revision: Union[str, None] = 'notifications_001'
+down_revision: Union[str, None] = 'audio_studio_001'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

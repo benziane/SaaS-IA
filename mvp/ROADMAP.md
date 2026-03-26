@@ -1,7 +1,7 @@
 # ROADMAP - SaaS-IA Platform
 
-**Date de mise a jour** : 2026-03-25
-**Version actuelle** : MVP 4.0.0
+**Date de mise a jour** : 2026-03-26
+**Version actuelle** : MVP 4.3.0
 **Objectif** : Plateforme SaaS d'orchestration IA multi-modules, production-ready
 
 ---
@@ -1259,6 +1259,27 @@ CREATE INDEX ix_document_chunks_embedding_hnsw
 ---
 
 ## CHANGELOG
+
+### v4.3.0 (2026-03-26) - Enterprise Systems + Documentation Sync
+
+#### New Modules (3)
+- **audit** : Immutable audit log with SHA-256 hash chain, compliance-grade (SOC2 patterns)
+- **feature_flags** : Kill switches, percentage rollout, Redis-backed (inspired by LaunchDarkly/Unleash)
+- **secrets** : Rotation tracking, expiry alerts, health score (inspired by HashiCorp Vault metadata)
+
+#### Enterprise Architecture (16 components)
+- 12 middleware layers (+AuditMiddleware, +FeatureFlagMiddleware)
+- Audit Log with immutable hash chain
+- Transactional Outbox pattern
+- Feature Flags with gradual rollout
+- Secrets Rotation tracking
+
+#### Interconnections
+- Agent Executor: ~79 actions (+11)
+- Pipeline Steps: 29 step types (+9)
+- Workflow Actions: 30 types (+7)
+
+Total plateforme : **40 modules**, **48 pages**, **~380 endpoints**, **12 middleware layers**, **16 composants enterprise**, **30 libs open-source**
 
 ### v4.0.0 (2026-03-25) - Ecosystem Modules + Content & Dev Tools + Enterprise S+++
 

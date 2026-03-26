@@ -81,7 +81,8 @@ async def process_text(
             text=request.text,
             task=request.task,
             provider_name=request.provider,
-            language=request.language
+            language=request.language,
+            user_id=current_user.id
         )
         
         logger.info(
@@ -160,7 +161,8 @@ async def stream_text(
                 text=request_body.text,
                 task=request_body.task,
                 target_language=request_body.language,
-                strategy=SelectionStrategy.BALANCED
+                strategy=SelectionStrategy.BALANCED,
+                user_id=current_user.id
             ):
                 # Check for client disconnect
                 if await request.is_disconnected():

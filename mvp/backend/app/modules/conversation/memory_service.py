@@ -117,8 +117,8 @@ class ConversationMemory:
                     f"[{r.get('filename', '')}] {r.get('content', '')[:300]}"
                     for r in results
                 )
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning("knowledge_search_failed", conversation_id=str(self.conversation_id), error=str(e))
         return None
 
     async def extract_facts(self, messages: list[dict]) -> list[dict]:

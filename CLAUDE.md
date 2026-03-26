@@ -2,7 +2,7 @@
 
 ## Projet
 
-Plateforme SaaS modulaire d'intelligence artificielle - 37 modules backend auto-decouverts, 41 pages frontend, ~280 endpoints API. Architecture enterprise S+++ (v4.0.0).
+Plateforme SaaS modulaire d'intelligence artificielle - 40 modules backend auto-decouverts, 48 pages frontend, ~380 endpoints API. Architecture enterprise S+++ (v4.3.0).
 
 ## Stack technique
 
@@ -10,7 +10,7 @@ Plateforme SaaS modulaire d'intelligence artificielle - 37 modules backend auto-
 - **Frontend** : Next.js 15 (App Router), React 18, MUI 6, TanStack Query 5, Axios
 - **AI Providers** : Gemini 2.0 Flash, Claude Sonnet, Groq Llama 3.3 70B (via AIAssistantService + LiteLLM proxy)
 - **Infra** : Docker Compose (multi-stage), Prometheus, OpenTelemetry, structlog (JSON prod), Sentry/GlitchTip, Alembic
-- **Enterprise** : 9 middleware layers (CORS, RequestID, ShutdownGuard, Sentry, RateLimit, Logging, Security, Compression, Prometheus), 12 enterprise components (circuit breaker, sliding window rate limit, graceful shutdown, K8s health probes, OpenTelemetry tracing, Sentry error tracking, structured logging, DB pooling, compression Gzip+Brotli, security headers OWASP, multi-stage Dockerfile, tini PID 1)
+- **Enterprise** : 12 middleware layers (CORS, RequestID, ShutdownGuard, Sentry, RateLimit, Logging, Security, Compression, Prometheus, Tenant, AuditMiddleware, FeatureFlagMiddleware), 16 enterprise components (circuit breaker, sliding window rate limit, graceful shutdown, K8s health probes, OpenTelemetry tracing, Sentry error tracking, structured logging, DB pooling, compression Gzip+Brotli, security headers OWASP, multi-stage Dockerfile, tini PID 1, Audit Log, Transactional Outbox, Feature Flags, Secrets Rotation)
 - **Ports** : Backend 8004, Frontend 3002, PostgreSQL 5435, Redis 6382, Flower 5555
 
 ## Architecture modulaire
@@ -85,7 +85,7 @@ Ce qui est interdit c'est de **supprimer un module entier ou remplacer une techn
 - Pour ajouter un embedding a un chunk, utiliser raw SQL : `UPDATE document_chunks SET embedding = :emb WHERE id = :cid`
 - Toujours garder le TF-IDF comme fallback - ne jamais le supprimer
 
-## Modules existants (37)
+## Modules existants (40)
 
 ### Core (12)
 transcription, conversation, knowledge (hybrid search: pgvector + TF-IDF), compare, pipelines, agents, sentiment, web_crawler, workspaces, billing, api_keys, cost_tracker
@@ -117,8 +117,8 @@ skill_seekers (GitHub repo scraper + Claude AI packager, mock mode, async CLI ex
 ### New (3)
 repo_analyzer (git CLI analysis, code metrics), pdf_processor (PyMuPDF + pdfplumber, text/table extraction), audio_studio (pydub + noisereduce, audio editing)
 
-### Enterprise (1)
-tenants (multi-tenant isolation, PostgreSQL RLS, contextvars middleware)
+### Enterprise (4)
+tenants (multi-tenant isolation, PostgreSQL RLS, contextvars middleware), audit (immutable hash chain, compliance-grade), feature_flags (kill switches, % rollout, Redis-backed), secrets (rotation tracking, alerts, health score)
 
 ## Integrations open-source (30 libs)
 
@@ -153,7 +153,7 @@ Toutes les integrations suivent la regle : **auto-detection + fallback gracieux*
 
 Chaque module suit un des 3 patterns :
 - **Pattern A (Lib wrappee)** : package pip installe, API Python appelee dans le service (12 modules)
-- **Pattern B (From scratch)** : code maison inspire par les concepts d'un repo/produit de reference (23 modules)
+- **Pattern B (From scratch)** : code maison inspire par les concepts d'un repo/produit de reference (26 modules)
 - **Pattern C (CLI wrappee)** : outil CLI appele via `asyncio.create_subprocess_exec` (2 modules)
 
 Toutes les libs optionnelles utilisent le pattern `HAS_XXX` (auto-detection + fallback gracieux).
@@ -162,9 +162,9 @@ Voir `mvp/docs/MODULE_ARCHITECTURE.md` pour le detail module par module.
 ## Interconnexions
 
 3 systemes d'orchestration connectent tous les modules :
-- **Agent Executor** : ~68 actions (appels directs aux services)
-- **Pipeline Steps** : 20 step types (chaining sequentiel)
-- **Workflow Actions** : 23 types (DAG avec branches paralleles)
+- **Agent Executor** : ~79 actions (appels directs aux services)
+- **Pipeline Steps** : 29 step types (chaining sequentiel)
+- **Workflow Actions** : 30 types (DAG avec branches paralleles)
 
 Quand on ajoute un nouveau module, penser a l'integrer dans les 3 systemes + le planner heuristique.
 
@@ -191,5 +191,5 @@ cd mvp/backend && alembic upgrade head
 - [README.md](mvp/README.md) - Vue d'ensemble et modules
 - [ROADMAP.md](mvp/ROADMAP.md) - Roadmap complete, changelog, endpoints API, connectivite
 - [TECH_AUDIT_ROADMAP.md](mvp/TECH_AUDIT_ROADMAP.md) - Audit open-source : libs a integrer, priorites, checkboxes de suivi
-- [MODULE_ARCHITECTURE.md](mvp/docs/MODULE_ARCHITECTURE.md) - Architecture detaillee des 37 modules : patterns, sources, libs, fallbacks
+- [MODULE_ARCHITECTURE.md](mvp/docs/MODULE_ARCHITECTURE.md) - Architecture detaillee des 40 modules : patterns, sources, libs, fallbacks
 - [backend/MIGRATIONS_GUIDE.md](mvp/backend/MIGRATIONS_GUIDE.md) - Guide migrations Alembic

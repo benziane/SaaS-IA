@@ -110,8 +110,8 @@ class AgentService:
                             success=step.status == AgentStatus.COMPLETED,
                             session=session,
                         )
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        logger.warning("agent_cost_tracking_failed", run_id=str(run.id), step=i, error=str(e))
 
                 except Exception as e:
                     step.status = AgentStatus.FAILED
@@ -123,8 +123,19 @@ class AgentService:
                 session.add(step)
                 await session.commit()
 
-            # Finalize
-            run.status = AgentStatus.COMPLETED
+            # Finalize: determine run status based on step outcomes
+            failed_steps = sum(1 for s in steps if s.status == AgentStatus.FAILED)
+            total_steps = len(steps)
+
+            if failed_steps == 0:
+                run.status = AgentStatus.COMPLETED
+            elif failed_steps == total_steps:
+                run.status = AgentStatus.FAILED
+                run.error = f"All {total_steps} steps failed"
+            else:
+                run.status = AgentStatus.PARTIAL_FAILURE
+                run.error = f"{failed_steps}/{total_steps} steps failed"
+
             run.results_json = json.dumps(results, ensure_ascii=False)
             run.completed_at = datetime.now(UTC)
 

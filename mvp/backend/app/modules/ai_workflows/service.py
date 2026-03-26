@@ -475,6 +475,12 @@ class WorkflowService:
             return await WorkflowService._node_generate_podcast(previous_output, config, user_id)
         elif action == "analyze_repo":
             return await WorkflowService._node_analyze_repo(previous_output, config, user_id)
+        elif action == "process_pdf":
+            return await WorkflowService._node_process_pdf(previous_output, config, user_id)
+        elif action == "create_webhook":
+            return await WorkflowService._node_create_webhook(previous_output, config, user_id)
+        elif action == "fine_tune":
+            return await WorkflowService._node_fine_tune(previous_output, config, user_id)
         else:
             return await WorkflowService._node_generate(previous_output, config, user_id)
 
@@ -1242,3 +1248,107 @@ class WorkflowService:
             }
         except Exception as e:
             return {"output": "", "error": str(e)[:500], "action": "analyze_repo"}
+
+    @staticmethod
+    async def _node_process_pdf(text: str, config: dict, user_id: UUID) -> dict:
+        """Process, summarize, or query a PDF document in a workflow."""
+        pdf_id = config.get("pdf_id", "")
+        action = config.get("action", "summarize")
+        if not pdf_id:
+            return {"output": text, "error": "No pdf_id provided", "action": "process_pdf"}
+        try:
+            from uuid import UUID as _UUID
+            from app.modules.pdf_processor.service import PDFProcessorService
+            from app.database import get_session_context
+            parsed_id = _UUID(str(pdf_id).strip())
+            async with get_session_context() as session:
+                if action == "query":
+                    question = config.get("question", text or "")
+                    result = await PDFProcessorService.query_pdf(
+                        user_id, parsed_id, question, session,
+                    )
+                    step_output = result.get("answer", "") if result else "PDF query failed"
+                elif action == "keywords":
+                    result = await PDFProcessorService.extract_keywords(
+                        user_id, parsed_id, session,
+                    )
+                    step_output = ", ".join(result.get("keywords", [])) if result else "Keyword extraction failed"
+                elif action == "export":
+                    fmt = config.get("format", "markdown")
+                    result = await PDFProcessorService.export_pdf(
+                        user_id, parsed_id, fmt, session,
+                    )
+                    step_output = result.get("content", "")[:3000] if result else "Export failed"
+                else:
+                    style = config.get("style", "executive")
+                    result = await PDFProcessorService.summarize_pdf(
+                        user_id, parsed_id, session, style=style,
+                    )
+                    step_output = result.get("summary", "") if result else "Summarization failed"
+            return {"output": step_output, "action": "process_pdf"}
+        except Exception as e:
+            return {"output": "", "error": str(e)[:500], "action": "process_pdf"}
+
+    @staticmethod
+    async def _node_create_webhook(text: str, config: dict, user_id: UUID) -> dict:
+        """Create a webhook connector via IntegrationHubService in a workflow."""
+        url = config.get("url", text or "").strip()
+        if not url or not url.startswith("http"):
+            return {"output": text, "error": "No valid URL provided for webhook", "action": "create_webhook"}
+        try:
+            from app.modules.integration_hub.service import IntegrationHubService
+            from app.database import get_session_context
+            async with get_session_context() as session:
+                svc = IntegrationHubService(session)
+                connector = await svc.create_connector(
+                    user_id=user_id,
+                    data={
+                        "name": config.get("name", "Workflow Webhook"),
+                        "type": "webhook",
+                        "provider": "custom",
+                        "config": {
+                            "url": url,
+                            "method": config.get("method", "POST"),
+                            "headers": config.get("headers", {}),
+                        },
+                        "enabled": True,
+                    },
+                )
+            return {
+                "output": f"Webhook created: {connector.name} (id: {connector.id})",
+                "action": "create_webhook",
+                "connector_id": str(connector.id),
+            }
+        except Exception as e:
+            return {"output": "", "error": str(e)[:500], "action": "create_webhook"}
+
+    @staticmethod
+    async def _node_fine_tune(text: str, config: dict, user_id: UUID) -> dict:
+        """Create a fine-tuning job in a workflow."""
+        dataset_id = config.get("dataset_id", "")
+        if not dataset_id:
+            return {
+                "output": text,
+                "action": "fine_tune",
+                "note": "No dataset_id provided. Create a dataset first via the Fine-Tuning module.",
+            }
+        try:
+            from app.modules.fine_tuning.service import FineTuningService
+            from app.database import get_session_context
+            async with get_session_context() as session:
+                job = await FineTuningService.create_job(
+                    user_id=user_id,
+                    name=config.get("name", "Workflow Fine-Tune"),
+                    dataset_id=dataset_id,
+                    base_model=config.get("base_model", "unsloth/tinyllama-bnb-4bit"),
+                    provider=config.get("provider", "local"),
+                    hyperparams=config.get("hyperparams", {}),
+                    session=session,
+                )
+            return {
+                "output": f"Fine-tuning job created: {job.name} (ID: {job.id}, status: {job.status})",
+                "action": "fine_tune",
+                "job_id": str(job.id),
+            }
+        except Exception as e:
+            return {"output": "", "error": str(e)[:500], "action": "fine_tune"}

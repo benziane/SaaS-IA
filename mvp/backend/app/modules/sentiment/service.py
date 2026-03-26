@@ -27,7 +27,7 @@ class SentimentService:
     """Service for sentiment and emotion analysis."""
 
     @staticmethod
-    async def analyze_text(text: str) -> dict:
+    async def analyze_text(text: str, user_id: Optional[UUID] = None) -> dict:
         """
         Analyze sentiment of text using AI.
 
@@ -86,7 +86,7 @@ Respond ONLY with the JSON array."""
             try:
                 from app.modules.cost_tracker.tracker import track_ai_usage
                 await track_ai_usage(
-                    user_id=None,
+                    user_id=user_id,
                     provider="gemini",
                     model="gemini-2.5-flash",
                     module="sentiment",

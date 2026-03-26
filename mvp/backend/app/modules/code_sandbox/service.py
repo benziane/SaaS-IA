@@ -315,8 +315,8 @@ async def _execute_in_docker(source: str, language: str = "python", timeout: int
         if container is not None:
             try:
                 container.remove(force=True)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning("docker_container_cleanup_failed", error=str(e))
 
 
 async def _execute_code_subprocess(source: str, timeout: int = MAX_EXECUTION_TIMEOUT) -> dict:

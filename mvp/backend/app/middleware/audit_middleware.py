@@ -62,13 +62,16 @@ _METHOD_ACTION_MAP = {
 
 
 def _extract_ip(request: Request) -> str | None:
-    """Extract client IP from X-Forwarded-For header or client host."""
-    forwarded = request.headers.get("X-Forwarded-For")
-    if forwarded:
-        return forwarded.split(",")[0].strip()
-    if request.client:
-        return request.client.host
-    return None
+    """Extract client IP, only trusting X-Forwarded-For from trusted proxies."""
+    client_ip = request.client.host if request.client else None
+
+    trusted_proxies = settings.trusted_proxies_set
+    if trusted_proxies and client_ip in trusted_proxies:
+        forwarded = request.headers.get("X-Forwarded-For")
+        if forwarded:
+            return forwarded.split(",")[0].strip()
+
+    return client_ip
 
 
 def _extract_user_id(request: Request) -> str | None:

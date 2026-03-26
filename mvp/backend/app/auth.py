@@ -34,6 +34,7 @@ logger = structlog.get_logger()
 # ---------------------------------------------------------------------------
 LOGIN_MAX_ATTEMPTS = 5
 LOGIN_LOCKOUT_SECONDS = 15 * 60  # 15 minutes
+LOGIN_REDIS_FAIL_LOCKOUT = 30  # seconds – fail-closed when Redis is down
 
 
 async def _get_login_redis():
@@ -50,20 +51,22 @@ async def _check_login_lockout(email: str) -> Optional[int]:
     Check whether *email* is locked out due to too many failed attempts.
 
     Returns the number of seconds remaining in the lockout window, or
-    ``None`` if the account is not locked.  Fails open (returns None) when
-    Redis is unavailable.
+    ``None`` if the account is not locked.  Fails closed (returns a short
+    lockout TTL) when Redis is unavailable to prevent brute-force attacks.
     """
     try:
         client = await _get_login_redis()
         if client is None:
-            return None
+            logger.warning("login_lockout_redis_unavailable", email=email, fallback_ttl=LOGIN_REDIS_FAIL_LOCKOUT)
+            return LOGIN_REDIS_FAIL_LOCKOUT
         key = f"login_attempts:{email}"
         attempts = await client.get(key)
         if attempts is not None and int(attempts) >= LOGIN_MAX_ATTEMPTS:
             ttl = await client.ttl(key)
             return max(ttl, 1)
     except Exception as e:
-        logger.debug("login_lockout_check_error", email=email, error=str(e))
+        logger.warning("login_lockout_check_error", email=email, error=str(e), fallback_ttl=LOGIN_REDIS_FAIL_LOCKOUT)
+        return LOGIN_REDIS_FAIL_LOCKOUT
     return None
 
 
@@ -161,13 +164,13 @@ async def get_user_by_email(session: AsyncSession, email: str) -> Optional[User]
 async def authenticate_user(session: AsyncSession, email: str, password: str) -> Optional[User]:
     """Authenticate a user"""
     user = await get_user_by_email(session, email)
-    
+
     if not user:
         return None
-    
+
     if not verify_password(password, user.hashed_password):
         return None
-    
+
     return user
 
 
@@ -303,10 +306,10 @@ async def register(
 ):
     """
     Register a new user
-    
+
     Rate limit: 5 requests/minute (anti-abuse)
     """
-    
+
     # Check if user already exists
     existing_user = await get_user_by_email(session, user_data.email)
     if existing_user:
@@ -314,10 +317,10 @@ async def register(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Email already registered"
         )
-    
+
     # Create new user
     hashed_password = get_password_hash(user_data.password)
-    
+
     new_user = User(
         email=user_data.email,
         hashed_password=hashed_password,
@@ -325,11 +328,11 @@ async def register(
         role=Role.USER,
         is_active=True
     )
-    
+
     session.add(new_user)
     await session.commit()
     await session.refresh(new_user)
-    
+
     return new_user
 
 
@@ -599,4 +602,3 @@ async def logout_all(
     logger.info("user_logged_out_all", user_id=str(current_user.id))
 
     return {"message": "All sessions have been logged out"}
-

@@ -163,14 +163,14 @@ class AuditLogger:
             if own_session:
                 try:
                     await session.rollback()
-                except Exception:
-                    pass
+                except Exception as e2:
+                    logger.warning("audit_log_rollback_failed", error=str(e2))
         finally:
             if own_session and session is not None:
                 try:
                     await ctx.__aexit__(None, None, None)
-                except Exception:
-                    pass
+                except Exception as e3:
+                    logger.warning("audit_log_session_cleanup_failed", error=str(e3))
 
     @staticmethod
     async def query(

@@ -238,6 +238,7 @@ def _verify_webhook_signature(body: bytes, secret: str, signature: Optional[str]
 
 
 @router.post("/webhook/{connector_id}")
+@limiter.limit("60/minute")
 async def receive_webhook(
     connector_id: UUID,
     request: Request,

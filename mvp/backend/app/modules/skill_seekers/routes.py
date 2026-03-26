@@ -407,6 +407,11 @@ async def cleanup_old_jobs(
     max_age_hours: int = 24,
     current_user: User = Depends(get_current_user),
 ):
-    """Remove completed/failed jobs older than max_age_hours and their output files."""
+    """Remove completed/failed jobs older than max_age_hours and their output files. Admin only."""
+    if not getattr(current_user, "is_superuser", False):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only administrators can run cleanup operations",
+        )
     count = await SkillSeekersService.cleanup_old_jobs(max_age_hours=max_age_hours)
     return {"cleaned": count, "max_age_hours": max_age_hours}

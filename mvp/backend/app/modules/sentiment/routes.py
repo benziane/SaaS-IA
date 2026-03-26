@@ -40,7 +40,7 @@ async def analyze_sentiment(
 
     Rate limit: 10 requests/minute
     """
-    result = await SentimentService.analyze_text(body.text)
+    result = await SentimentService.analyze_text(body.text, user_id=current_user.id)
 
     await BillingService.consume_quota(current_user.id, "ai_call", 1, session)
 
@@ -76,7 +76,7 @@ async def analyze_transcription_sentiment(
     if transcription.status != TranscriptionStatus.COMPLETED or not transcription.text:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Transcription not completed")
 
-    result = await SentimentService.analyze_text(transcription.text)
+    result = await SentimentService.analyze_text(transcription.text, user_id=current_user.id)
 
     await BillingService.consume_quota(current_user.id, "ai_call", 1, session)
 

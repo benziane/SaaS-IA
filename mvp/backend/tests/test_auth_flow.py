@@ -26,7 +26,9 @@ async def test_login_success(client, test_user):
     test_user.hashed_password = get_password_hash(plain_password)
     test_user.email = "login@example.com"
 
-    with patch("app.auth.authenticate_user", new_callable=AsyncMock, return_value=test_user):
+    with patch("app.auth.authenticate_user", new_callable=AsyncMock, return_value=test_user), \
+         patch("app.auth._check_login_lockout", new_callable=AsyncMock, return_value=None), \
+         patch("app.auth._record_login_attempt", new_callable=AsyncMock):
         resp = await client.post(
             "/api/auth/login",
             data={

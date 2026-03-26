@@ -524,13 +524,49 @@ async def _exec_generate_clips(input_data: dict, previous: Optional[str]) -> dic
 
 
 async def _exec_fine_tune(input_data: dict, previous: Optional[str]) -> dict:
-    """Fine-tune a custom model."""
-    return {
-        "output": "[Fine-tuning task queued. Use the Fine-Tuning Studio to create a dataset and train a model.]",
-        "action": "fine_tune",
-        "note": "Create a dataset from your transcriptions, conversations, or documents, then train a custom model.",
-    }
+    """Create a fine-tuning job via FineTuningService."""
+    dataset_id = input_data.get("dataset_id", "")
+    if not dataset_id:
+        return {
+            "output": "[Fine-tuning ready. Create a dataset first via POST /api/fine-tuning/datasets, then provide dataset_id.]",
+            "action": "fine_tune",
+            "note": "No dataset_id provided. Create a dataset from your transcriptions, conversations, or documents first.",
+        }
 
+    try:
+        from app.modules.fine_tuning.service import FineTuningService
+        from app.database import get_session_context
+        from uuid import UUID as UUIDType
+
+        user_id = input_data.get("_user_id")
+        if not user_id:
+            return {
+                "output": f"[Fine-tuning job ready for dataset {dataset_id}. Use the Fine-Tuning module to launch.]",
+                "action": "fine_tune",
+                "note": "No user context. Use the Fine-Tuning module directly.",
+            }
+
+        uid = UUIDType(user_id) if isinstance(user_id, str) else user_id
+        async with get_session_context() as session:
+            job = await FineTuningService.create_job(
+                user_id=uid,
+                name=input_data.get("name", "Agent Fine-Tune"),
+                dataset_id=dataset_id,
+                base_model=input_data.get("base_model", "unsloth/tinyllama-bnb-4bit"),
+                provider=input_data.get("provider", "local"),
+                hyperparams=input_data.get("hyperparams", {}),
+                session=session,
+            )
+
+        return {
+            "output": f"[Fine-tuning job '{job.name}' created. Job ID: {job.id}. Status: {job.status}. "
+                      f"Base model: {job.base_model}. Provider: {job.provider}.]",
+            "action": "fine_tune",
+            "job_id": str(job.id),
+            "status": str(job.status),
+        }
+    except Exception as e:
+        return {"output": "", "error": str(e)[:500], "action": "fine_tune"}
 
 async def _exec_publish_social(input_data: dict, previous: Optional[str]) -> dict:
     """Publish content to social media platforms."""
