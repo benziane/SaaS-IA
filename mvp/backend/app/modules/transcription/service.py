@@ -3,7 +3,7 @@ Transcription service - Business logic for transcription jobs
 """
 
 import asyncio
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import Optional, List
 from uuid import UUID
 
@@ -515,9 +515,30 @@ class TranscriptionService:
             end_debug_session()
             raise
     
+    PENDING_TIMEOUT_MINUTES = 30
+
+    async def _timeout_stale_pending(self, job: Transcription, session: AsyncSession) -> None:
+        if job.status != TranscriptionStatus.PENDING:
+            return
+        age = datetime.now(UTC) - job.created_at.replace(tzinfo=UTC)
+        if age > timedelta(minutes=self.PENDING_TIMEOUT_MINUTES):
+            job.status = TranscriptionStatus.FAILED
+            job.error = "Job timed out after 30 minutes in PENDING status"
+            job.updated_at = datetime.now(UTC)
+            session.add(job)
+            await session.commit()
+            logger.warning(
+                "pending_job_timed_out",
+                job_id=str(job.id),
+                age_seconds=int(age.total_seconds()),
+            )
+
     async def get_job(self, job_id: UUID, session: AsyncSession) -> Optional[Transcription]:
         """Get a transcription job by ID"""
-        return await session.get(Transcription, job_id)
+        job = await session.get(Transcription, job_id)
+        if job is not None:
+            await self._timeout_stale_pending(job, session)
+        return job
     
     async def list_user_jobs(
         self,
@@ -552,7 +573,10 @@ class TranscriptionService:
         )
 
         result = await session.execute(statement)
-        items = result.scalars().all()
+        items = list(result.scalars().all())
+
+        for job in items:
+            await self._timeout_stale_pending(job, session)
 
         return items, total
     

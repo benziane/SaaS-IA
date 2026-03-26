@@ -2,7 +2,7 @@
 Workspace and collaboration models.
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 from enum import Enum
 from typing import Optional
 from uuid import UUID, uuid4
@@ -25,8 +25,8 @@ class Workspace(SQLModel, table=True):
     description: Optional[str] = Field(default=None, max_length=1000)
     owner_id: UUID = Field(foreign_key="users.id", index=True)
     is_active: bool = Field(default=True)
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 
 class WorkspaceMember(SQLModel, table=True):
@@ -37,7 +37,7 @@ class WorkspaceMember(SQLModel, table=True):
     workspace_id: UUID = Field(foreign_key="workspaces.id", index=True)
     user_id: UUID = Field(foreign_key="users.id", index=True)
     role: WorkspaceRole = Field(default=WorkspaceRole.VIEWER)
-    joined_at: datetime = Field(default_factory=datetime.utcnow)
+    joined_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 
 class SharedItem(SQLModel, table=True):
@@ -49,7 +49,7 @@ class SharedItem(SQLModel, table=True):
     item_type: str = Field(max_length=50)
     item_id: UUID
     shared_by: UUID = Field(foreign_key="users.id")
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 
 class Comment(SQLModel, table=True):
@@ -60,5 +60,5 @@ class Comment(SQLModel, table=True):
     shared_item_id: UUID = Field(foreign_key="shared_items.id", index=True)
     user_id: UUID = Field(foreign_key="users.id")
     content: str = Field(max_length=5000)
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))

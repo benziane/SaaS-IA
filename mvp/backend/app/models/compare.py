@@ -2,7 +2,7 @@
 Compare models: Multi-model comparison results and votes.
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Optional
 from uuid import UUID, uuid4
 
@@ -18,7 +18,7 @@ class ComparisonResult(SQLModel, table=True):
     prompt: str = Field(max_length=10000)
     providers_used: str = Field(max_length=500)
     results_json: str = Field(default="{}")
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 
 class ComparisonVote(SQLModel, table=True):
@@ -30,4 +30,4 @@ class ComparisonVote(SQLModel, table=True):
     user_id: UUID = Field(foreign_key="users.id", index=True)
     provider_name: str = Field(max_length=50)
     quality_score: int = Field(ge=1, le=5)
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))

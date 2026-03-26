@@ -1,8 +1,10 @@
 """AI Assistant Service Layer - Grade S++"""
 
+import asyncio
 import time
 import structlog
 from typing import Optional, Dict, Any, AsyncGenerator
+from collections import OrderedDict
 from datetime import UTC, datetime
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -18,6 +20,32 @@ from app.ai_assistant.classification.prompt_selector import PromptSelector
 from app.ai_assistant.classification.enums import SelectionStrategy
 
 logger = structlog.get_logger(__name__)
+
+_USER_CONCURRENCY_LIMIT = 5
+_GLOBAL_CONCURRENCY_LIMIT = 10
+_MAX_SEMAPHORES = 1024
+
+_user_semaphores: OrderedDict[UUID, asyncio.Semaphore] = OrderedDict()
+_global_semaphore: asyncio.Semaphore | None = None
+
+
+def _get_user_semaphore(user_id: Optional[UUID]) -> asyncio.Semaphore:
+    global _global_semaphore
+    if user_id is None:
+        if _global_semaphore is None:
+            _global_semaphore = asyncio.Semaphore(_GLOBAL_CONCURRENCY_LIMIT)
+        return _global_semaphore
+
+    if user_id in _user_semaphores:
+        _user_semaphores.move_to_end(user_id)
+        return _user_semaphores[user_id]
+
+    while len(_user_semaphores) >= _MAX_SEMAPHORES:
+        _user_semaphores.popitem(last=False)
+
+    sem = asyncio.Semaphore(_USER_CONCURRENCY_LIMIT)
+    _user_semaphores[user_id] = sem
+    return sem
 
 
 class AIAssistantService:
@@ -450,70 +478,71 @@ Contenu restructuré :"""
         
         prompt = prompts.get(task, prompts["improve_quality"])
 
-        # Process with AI
-        start_time = time.monotonic()
-        success = True
-        error_msg = None
-        processed_text = ""
+        sem = _get_user_semaphore(user_id)
+        async with sem:
+            start_time = time.monotonic()
+            success = True
+            error_msg = None
+            processed_text = ""
 
-        try:
-            processed_text = await provider.complete(prompt)
-
-            ai_provider_requests_total.labels(
-                provider=provider_name, success="true"
-            ).inc()
-
-            logger.info(
-                "text_processing_success",
-                task=task,
-                provider=provider_name,
-                original_length=len(text),
-                processed_length=len(processed_text)
-            )
-
-            return {
-                "original_text": text,
-                "processed_text": processed_text.strip(),
-                "provider_used": provider_name,
-                "task_performed": task,
-                "improvements": [f"Processed with {provider.model_name}"]
-            }
-
-        except Exception as e:
-            success = False
-            error_msg = str(e)
-            ai_provider_requests_total.labels(
-                provider=provider_name, success="false"
-            ).inc()
-
-            logger.error(
-                "text_processing_error",
-                task=task,
-                provider=provider_name,
-                error=str(e)
-            )
-            raise
-
-        finally:
-            elapsed_ms = int((time.monotonic() - start_time) * 1000)
-            est_input_tokens = max(len(prompt) // 4, 1)
-            est_output_tokens = max(len(processed_text) // 4, 1) if processed_text else 0
             try:
-                from app.modules.cost_tracker.tracker import track_ai_usage
-                await track_ai_usage(
-                    user_id=user_id,
+                processed_text = await provider.complete(prompt)
+
+                ai_provider_requests_total.labels(
+                    provider=provider_name, success="true"
+                ).inc()
+
+                logger.info(
+                    "text_processing_success",
+                    task=task,
                     provider=provider_name,
-                    model=provider.model_name,
-                    module="text_processing",
-                    action=task,
-                    input_tokens=est_input_tokens,
-                    output_tokens=est_output_tokens,
-                    latency_ms=elapsed_ms,
-                    success=success,
-                    error=error_msg,
+                    original_length=len(text),
+                    processed_length=len(processed_text)
                 )
-            except Exception:
-                pass
+
+                return {
+                    "original_text": text,
+                    "processed_text": processed_text.strip(),
+                    "provider_used": provider_name,
+                    "task_performed": task,
+                    "improvements": [f"Processed with {provider.model_name}"]
+                }
+
+            except Exception as e:
+                success = False
+                error_msg = str(e)
+                ai_provider_requests_total.labels(
+                    provider=provider_name, success="false"
+                ).inc()
+
+                logger.error(
+                    "text_processing_error",
+                    task=task,
+                    provider=provider_name,
+                    error=str(e)
+                )
+                raise
+
+            finally:
+                elapsed_ms = int((time.monotonic() - start_time) * 1000)
+                est_input_tokens = max(len(prompt) // 4, 1)
+                est_output_tokens = max(len(processed_text) // 4, 1) if processed_text else 0
+                try:
+                    from app.modules.cost_tracker.tracker import track_ai_usage
+                    await track_ai_usage(
+                        user_id=user_id,
+                        provider=provider_name,
+                        model=provider.model_name,
+                        module="text_processing",
+                        action=task,
+                        input_tokens=est_input_tokens,
+                        output_tokens=est_output_tokens,
+                        latency_ms=elapsed_ms,
+                        success=success,
+                        error=error_msg,
+                    )
+                except Exception:
+                    pass
     
     @staticmethod
     async def process_text_smart(
@@ -680,25 +709,27 @@ Contenu restructuré :"""
         Auto-routes through LiteLLM proxy if available (exact token counting + cost).
         Falls back to direct provider calls if LiteLLM is not installed.
         """
-        # Try LiteLLM proxy first (better cost tracking, unified API)
-        try:
-            from app.ai_assistant.litellm_proxy import is_available as litellm_available, complete as litellm_complete
-            if litellm_available():
-                return await litellm_complete(
-                    text=f"Task: {task}\n\n{text}",
-                    provider_name=provider_name,
-                    user_id=user_id,
-                    module=module,
-                    task=task,
-                )
-        except Exception as e:
-            logger.debug("litellm_proxy_fallback", error=str(e))
+        sem = _get_user_semaphore(user_id)
+        async with sem:
+            # Try LiteLLM proxy first (better cost tracking, unified API)
+            try:
+                from app.ai_assistant.litellm_proxy import is_available as litellm_available, complete as litellm_complete
+                if litellm_available():
+                    return await litellm_complete(
+                        text=f"Task: {task}\n\n{text}",
+                        provider_name=provider_name,
+                        user_id=user_id,
+                        module=module,
+                        task=task,
+                    )
+            except Exception as e:
+                logger.debug("litellm_proxy_fallback", error=str(e))
 
-        # Fallback: direct provider calls (original implementation)
-        return await AIAssistantService._process_text_direct(
-            text=text, task=task, provider_name=provider_name,
-            user_id=user_id, module=module,
-        )
+            # Fallback: direct provider calls (original implementation)
+            return await AIAssistantService._process_text_direct(
+                text=text, task=task, provider_name=provider_name,
+                user_id=user_id, module=module,
+            )
 
     @staticmethod
     async def _process_text_direct(
@@ -844,7 +875,7 @@ Contenu restructuré :"""
 
         prompt = prompts.get(task, prompts["improve_quality"])
 
-        # Yield metadata first
+        # Yield metadata first (before acquiring semaphore)
         yield {
             "provider": provider_name,
             "model": provider.model_name,
@@ -855,39 +886,41 @@ Contenu restructuré :"""
             }
         }
 
-        # 5. Stream tokens from the provider
-        start_time = time.monotonic()
-        collected_output = []
-        stream_success = True
-        stream_error = None
+        # 5. Stream tokens from the provider (under per-user concurrency limit)
+        sem = _get_user_semaphore(user_id)
+        async with sem:
+            start_time = time.monotonic()
+            collected_output = []
+            stream_success = True
+            stream_error = None
 
-        try:
-            async for chunk in provider.stream_chat(prompt):
-                collected_output.append(chunk)
-                yield {"token": chunk}
-        except Exception as e:
-            stream_success = False
-            stream_error = str(e)
-            raise
-        finally:
-            elapsed_ms = int((time.monotonic() - start_time) * 1000)
-            full_output = "".join(collected_output)
-            est_input_tokens = max(len(prompt) // 4, 1)
-            est_output_tokens = max(len(full_output) // 4, 1) if full_output else 0
             try:
-                from app.modules.cost_tracker.tracker import track_ai_usage
-                await track_ai_usage(
-                    user_id=user_id,
-                    provider=provider_name,
-                    model=provider.model_name,
-                    module="stream_processing",
-                    action=task,
-                    input_tokens=est_input_tokens,
-                    output_tokens=est_output_tokens,
-                    latency_ms=elapsed_ms,
-                    success=stream_success,
-                    error=stream_error,
-                )
-            except Exception:
-                pass
+                async for chunk in provider.stream_chat(prompt):
+                    collected_output.append(chunk)
+                    yield {"token": chunk}
+            except Exception as e:
+                stream_success = False
+                stream_error = str(e)
+                raise
+            finally:
+                elapsed_ms = int((time.monotonic() - start_time) * 1000)
+                full_output = "".join(collected_output)
+                est_input_tokens = max(len(prompt) // 4, 1)
+                est_output_tokens = max(len(full_output) // 4, 1) if full_output else 0
+                try:
+                    from app.modules.cost_tracker.tracker import track_ai_usage
+                    await track_ai_usage(
+                        user_id=user_id,
+                        provider=provider_name,
+                        model=provider.model_name,
+                        module="stream_processing",
+                        action=task,
+                        input_tokens=est_input_tokens,
+                        output_tokens=est_output_tokens,
+                        latency_ms=elapsed_ms,
+                        success=stream_success,
+                        error=stream_error,
+                    )
+                except Exception:
+                    pass
 

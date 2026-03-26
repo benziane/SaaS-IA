@@ -3,7 +3,7 @@ API Key models for public API authentication.
 """
 
 import secrets
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Optional
 from uuid import UUID, uuid4
 
@@ -23,5 +23,5 @@ class APIKey(SQLModel, table=True):
     rate_limit_per_day: int = Field(default=1000)
     is_active: bool = Field(default=True)
     last_used_at: Optional[datetime] = Field(default=None)
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     expires_at: Optional[datetime] = Field(default=None)

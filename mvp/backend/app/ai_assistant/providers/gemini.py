@@ -1,10 +1,13 @@
 """Google Gemini AI Provider"""
 
+import asyncio
+
 import structlog
 from typing import AsyncGenerator
 import google.generativeai as genai
 
 from app.ai_assistant.providers.base import BaseAIProvider
+from app.ai_assistant.retry import with_retries
 from app.config import settings
 
 logger = structlog.get_logger(__name__)
@@ -80,10 +83,16 @@ class GeminiProvider(BaseAIProvider):
             has_history=conversation_history is not None
         )
 
-        response = await self.model.generate_content_async(
-            prompt,
-            stream=True
-        )
+        async def _call():
+            try:
+                return await asyncio.wait_for(
+                    self.model.generate_content_async(prompt, stream=True),
+                    timeout=60,
+                )
+            except asyncio.TimeoutError:
+                raise TimeoutError("AI provider timed out after 60s")
+
+        response = await with_retries(_call, provider="gemini")
 
         chunk_count = 0
         async for chunk in response:

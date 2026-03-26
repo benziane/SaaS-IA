@@ -2,7 +2,7 @@
 Pipeline models: User-defined AI processing pipelines.
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 from enum import Enum
 from typing import Optional
 from uuid import UUID, uuid4
@@ -34,8 +34,8 @@ class Pipeline(SQLModel, table=True):
     steps_json: str = Field(default="[]")
     status: PipelineStatus = Field(default=PipelineStatus.DRAFT)
     is_template: bool = Field(default=False)
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 
 class PipelineExecution(SQLModel, table=True):
@@ -52,4 +52,4 @@ class PipelineExecution(SQLModel, table=True):
     error: Optional[str] = Field(default=None, max_length=2000)
     started_at: Optional[datetime] = Field(default=None)
     completed_at: Optional[datetime] = Field(default=None)
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))

@@ -10,7 +10,7 @@ Plateforme SaaS modulaire d'intelligence artificielle - 40 modules backend auto-
 - **Frontend** : Next.js 15 (App Router), React 18, MUI 6, TanStack Query 5, Axios
 - **AI Providers** : Gemini 2.0 Flash, Claude Sonnet, Groq Llama 3.3 70B (via AIAssistantService + LiteLLM proxy)
 - **Infra** : Docker Compose (multi-stage), Prometheus, OpenTelemetry, structlog (JSON prod), Sentry/GlitchTip, Alembic
-- **Enterprise** : 12 middleware layers (CORS, RequestID, ShutdownGuard, Sentry, RateLimit, Logging, Security, Compression, Prometheus, Tenant, AuditMiddleware, FeatureFlagMiddleware), 16 enterprise components (circuit breaker, sliding window rate limit, graceful shutdown, K8s health probes, OpenTelemetry tracing, Sentry error tracking, structured logging, DB pooling, compression Gzip+Brotli, security headers OWASP, multi-stage Dockerfile, tini PID 1, Audit Log, Transactional Outbox, Feature Flags, Secrets Rotation)
+- **Enterprise** : 12 middleware layers (CORS, RequestID, ShutdownGuard, Sentry, RateLimit, Logging, Security, Compression, Prometheus, Tenant, AuditMiddleware, FeatureFlagMiddleware), 19 enterprise components (circuit breaker, sliding window rate limit, graceful shutdown, K8s health probes, OpenTelemetry tracing, Sentry error tracking, structured logging, DB pooling 50+25, compression Gzip+Brotli, security headers OWASP, multi-stage Dockerfile, tini PID 1, Audit Log, Transactional Outbox, Feature Flags, Secrets Rotation, AI retry+timeout 60s, per-user AI semaphore max 5, CASCADE DELETE FK)
 - **Ports** : Backend 8004, Frontend 3002, PostgreSQL 5435, Redis 6382, Flower 5555
 
 ## Architecture modulaire
@@ -167,6 +167,33 @@ Voir `mvp/docs/MODULE_ARCHITECTURE.md` pour le detail module par module.
 - **Workflow Actions** : 30 types (DAG avec branches paralleles)
 
 Quand on ajoute un nouveau module, penser a l'integrer dans les 3 systemes + le planner heuristique.
+
+## Resilience & Securite (v4.4.0)
+
+### AI Providers
+- **Retry** : exponential backoff (1s/2s/4s, max 3 retries) sur erreurs transientes (429/502/503/timeout) via `app.ai_assistant.retry.with_retries()`
+- **Timeout** : 60s sur tous les providers (Gemini: asyncio.wait_for, Claude/Groq: httpx.Timeout, LiteLLM: native)
+- **Semaphore** : max 5 appels AI concurrents par user, 10 global (LRU 1024 entries)
+- **Cost tracking** : user_id propage dans tous les appels AI (sentiment, stream, process_text)
+
+### Auth & Securite
+- **Lockout fail-closed** : Redis down = 429 + Retry-After 30s (pas de bypass brute-force)
+- **Audit IP** : X-Forwarded-For valide uniquement si peer IP dans `trusted_proxies_set`
+- **SSRF protection** : `_validate_url_for_ssrf()` (image_gen), `ALLOWED_HOSTS` (repo_analyzer)
+- **Path traversal** : `os.path.basename()` double couche (pdf_processor)
+
+### Database
+- **CASCADE DELETE** : 78 FK sur 59 tables (migration 0017)
+- **Composite indexes** : 10 indexes (migration 0012)
+- **Unique constraints** : workspace_members, marketplace_installs, shared_items (migration 0016)
+- **Pool** : 50 connections + 25 overflow, timeout 60s, pool_pre_ping=True
+- **Datetimes** : `datetime.now(UTC)` standardise sur 38 models (zero `utcnow`)
+
+### Health & Observabilite
+- **Health check** : `/health` verifie DB + Redis (healthy/degraded/unhealthy + latence)
+- **Silent exceptions** : 6 `except: pass` remplaces par `logger.warning()` structure
+- **Agent status** : `PARTIAL_FAILURE` si certains steps echouent (au lieu de toujours COMPLETED)
+- **Transcription timeout** : PENDING > 30min auto-marque FAILED
 
 ## Commandes utiles
 

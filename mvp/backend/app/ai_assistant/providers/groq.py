@@ -2,9 +2,11 @@
 
 import structlog
 from typing import AsyncGenerator
+import httpx
 from openai import AsyncOpenAI
 
 from app.ai_assistant.providers.base import BaseAIProvider
+from app.ai_assistant.retry import with_retries
 from app.config import settings
 
 logger = structlog.get_logger(__name__)
@@ -25,7 +27,8 @@ class GroqProvider(BaseAIProvider):
         
         self.client = AsyncOpenAI(
             api_key=settings.GROQ_API_KEY,
-            base_url="https://api.groq.com/openai/v1"
+            base_url="https://api.groq.com/openai/v1",
+            timeout=httpx.Timeout(60.0, connect=10.0),
         )
         logger.info("groq_provider_initialized", model="llama-3.3-70b-versatile")
     
@@ -80,13 +83,16 @@ class GroqProvider(BaseAIProvider):
                 messages.extend(conversation_history[-5:])  # Last 5 messages
             messages.append({"role": "user", "content": message})
             
-            # Stream response
-            stream = await self.client.chat.completions.create(
-                model="llama-3.3-70b-versatile",
-                messages=messages,
-                stream=True,
-                max_tokens=2000,
-                temperature=0.7
+            # Stream response with retry on transient errors
+            stream = await with_retries(
+                lambda: self.client.chat.completions.create(
+                    model="llama-3.3-70b-versatile",
+                    messages=messages,
+                    stream=True,
+                    max_tokens=2000,
+                    temperature=0.7,
+                ),
+                provider="groq",
             )
             
             chunk_count = 0
@@ -100,6 +106,9 @@ class GroqProvider(BaseAIProvider):
                 chunk_count=chunk_count
             )
             
+        except httpx.TimeoutException:
+            logger.error("groq_stream_timeout", timeout_seconds=60)
+            raise TimeoutError("AI provider timed out after 60s")
         except Exception as e:
             logger.error(
                 "groq_stream_error",

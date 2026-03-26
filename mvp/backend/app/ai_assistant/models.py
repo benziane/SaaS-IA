@@ -4,7 +4,7 @@ Database Models pour AI Assistant - Grade S++
 Tables pour stocker configurations des providers AI.
 """
 from typing import Optional
-from datetime import datetime
+from datetime import UTC, datetime
 from sqlmodel import SQLModel, Field
 from uuid import UUID, uuid4
 
@@ -35,6 +35,6 @@ class AIProviderConfig(SQLModel, table=True):
     cost_per_1k_output: float = Field(default=0.0)
     
     # Timestamps
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 

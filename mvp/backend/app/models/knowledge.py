@@ -4,7 +4,7 @@ Knowledge Base models: Documents and chunks for RAG.
 Supports both TF-IDF (legacy) and pgvector (v2) search.
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 from enum import Enum
 from typing import Optional
 from uuid import UUID, uuid4
@@ -32,8 +32,8 @@ class Document(SQLModel, table=True):
     status: DocumentStatus = Field(default=DocumentStatus.PENDING)
     error: Optional[str] = Field(default=None, max_length=1000)
     embedding_model: Optional[str] = Field(default=None, max_length=100)
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 
 class DocumentChunk(SQLModel, table=True):
@@ -49,4 +49,4 @@ class DocumentChunk(SQLModel, table=True):
     # pgvector embedding - nullable for backward compat with existing chunks
     # Stored as a pgvector vector(384) column via migration
     # Not declared here as SQLModel type - managed via raw SQL in migration
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))

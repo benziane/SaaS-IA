@@ -17,6 +17,8 @@ from uuid import UUID
 
 import structlog
 
+from app.ai_assistant.retry import with_retries
+
 logger = structlog.get_logger()
 
 # LiteLLM model mapping to our provider names
@@ -68,14 +70,18 @@ async def complete(
 
     start_time = time.monotonic()
     try:
-        response = await litellm.acompletion(
-            model=model,
-            messages=[{"role": "user", "content": text}],
-            metadata={
-                "user_id": str(user_id) if user_id else None,
-                "module": module,
-                "task": task,
-            },
+        response = await with_retries(
+            lambda: litellm.acompletion(
+                model=model,
+                messages=[{"role": "user", "content": text}],
+                timeout=60,
+                metadata={
+                    "user_id": str(user_id) if user_id else None,
+                    "module": module,
+                    "task": task,
+                },
+            ),
+            provider=provider_name,
         )
 
         elapsed_ms = int((time.monotonic() - start_time) * 1000)
@@ -122,6 +128,17 @@ async def complete(
             "via": "litellm",
         }
 
+    except TimeoutError:
+        elapsed_ms = int((time.monotonic() - start_time) * 1000)
+        logger.error("litellm_timeout", provider=provider_name, timeout_seconds=60)
+
+        await _track_cost(
+            user_id=user_id, provider=provider_name, model=model,
+            module=module, task=task, input_tokens=0, output_tokens=0,
+            latency_ms=elapsed_ms, success=False, error="AI provider timed out after 60s",
+        )
+
+        raise TimeoutError("AI provider timed out after 60s")
     except Exception as e:
         elapsed_ms = int((time.monotonic() - start_time) * 1000)
         logger.warning("litellm_failed_fallback", provider=provider_name, error=str(e))

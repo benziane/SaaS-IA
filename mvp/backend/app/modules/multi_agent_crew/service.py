@@ -282,11 +282,15 @@ class MultiAgentCrewService:
         agents: list[dict], context: str, crew_goal: str,
         user_id: UUID, run: "CrewRun", session: AsyncSession,
     ) -> tuple[list[dict], int]:
-        run.current_agent = len(agents)
+        run.current_agent = 0
         session.add(run)
         await session.commit()
 
+        completed_count = 0
+        progress_lock = asyncio.Lock()
+
         async def _safe_run(agent_def: dict) -> dict:
+            nonlocal completed_count
             try:
                 result = await MultiAgentCrewService._run_agent(
                     agent_def=agent_def,
@@ -303,6 +307,12 @@ class MultiAgentCrewService:
                     error=str(exc),
                 )
                 return {"ok": False, "agent_def": agent_def, "error": str(exc)}
+            finally:
+                async with progress_lock:
+                    completed_count += 1
+                    run.current_agent = completed_count
+                    session.add(run)
+                    await session.commit()
 
         raw_results = await asyncio.gather(*[_safe_run(a) for a in agents])
 

@@ -2,7 +2,7 @@
 AI Agent models: Autonomous task execution.
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 from enum import Enum
 from typing import Optional
 from uuid import UUID, uuid4
@@ -32,7 +32,7 @@ class AgentRun(SQLModel, table=True):
     current_step: int = Field(default=0)
     total_steps: int = Field(default=0)
     error: Optional[str] = Field(default=None, max_length=2000)
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     completed_at: Optional[datetime] = Field(default=None)
 
 

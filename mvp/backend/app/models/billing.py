@@ -2,7 +2,7 @@
 Billing models: Plans and User Quotas for multi-tenancy.
 """
 
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 from enum import Enum
 from typing import Optional
 from uuid import UUID, uuid4
@@ -29,7 +29,7 @@ class Plan(SQLModel, table=True):
     price_cents: int = Field(default=0)
     stripe_price_id: Optional[str] = Field(default=None, max_length=100)
     is_active: bool = Field(default=True)
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 
 class UserQuota(SQLModel, table=True):
@@ -46,5 +46,5 @@ class UserQuota(SQLModel, table=True):
     stripe_subscription_id: Optional[str] = Field(default=None, max_length=100)
     period_start: date = Field(default_factory=date.today)
     period_end: date
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
