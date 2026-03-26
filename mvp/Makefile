@@ -5,6 +5,8 @@ COMPOSE        = docker compose
 COMPOSE_MON    = $(COMPOSE) -f docker-compose.yml -f docker-compose.monitoring.yml
 BACKEND_DIR    = ./backend
 FRONTEND_DIR   = ./frontend
+LOAD_DIR       = ./tests/load
+COMPOSE_LOAD   = $(COMPOSE) -f $(LOAD_DIR)/docker-compose.load.yml
 
 .DEFAULT_GOAL := help
 
@@ -75,6 +77,42 @@ test-cov: ## Run tests with coverage report
 .PHONY: test-frontend
 test-frontend: ## Run frontend tests
 	cd $(FRONTEND_DIR) && npm run test
+
+# ── Load Testing ────────────────────────────────────────────
+
+.PHONY: load-test
+load-test: ## Run Locust load test (web UI at http://localhost:8089)
+	cd $(LOAD_DIR) && locust -f locustfile.py
+	@echo "\n  Locust UI: http://localhost:8089\n"
+
+.PHONY: load-smoke
+load-smoke: ## Quick smoke test (5 users, 30s)
+	cd $(LOAD_DIR) && locust -f scenarios/smoke.py --headless -u 5 -r 5 -t 30s
+
+.PHONY: load-stress
+load-stress: ## Stress test (ramp to 500 users, 7m)
+	cd $(LOAD_DIR) && locust -f scenarios/stress.py --headless -u 500 -r 50 -t 7m
+
+.PHONY: load-soak
+load-soak: ## Soak test (50 users, 30m)
+	cd $(LOAD_DIR) && locust -f scenarios/soak.py --headless -u 50 -r 5 -t 30m
+
+.PHONY: load-spike
+load-spike: ## Spike test (0 -> 200 -> 0 users, 1m)
+	cd $(LOAD_DIR) && locust -f scenarios/spike.py --headless -u 200 -r 200 -t 1m
+
+.PHONY: load-k6
+load-k6: ## Run k6 load test (staged ramp-up)
+	cd $(LOAD_DIR) && k6 run k6_test.js
+
+.PHONY: load-docker
+load-docker: ## Start distributed Locust (4 workers, web UI at http://localhost:8089)
+	$(COMPOSE_LOAD) up -d
+	@echo "\n  Locust UI: http://localhost:8089\n"
+
+.PHONY: load-docker-down
+load-docker-down: ## Stop distributed Locust
+	$(COMPOSE_LOAD) down
 
 # ── Linting & Formatting ────────────────────────────────────
 

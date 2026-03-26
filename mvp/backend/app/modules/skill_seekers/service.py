@@ -25,6 +25,7 @@ logger = structlog.get_logger()
 
 # Repo name security whitelist: owner/repo with alphanumerics, hyphens, underscores, dots
 REPO_NAME_PATTERN = re.compile(r"^[a-zA-Z0-9_\-\.]+/[a-zA-Z0-9_\-\.]+$")
+SAFE_FILENAME_PATTERN = re.compile(r"^[a-zA-Z0-9_\-\.]+$")
 
 # Auto-detect CLI availability
 HAS_SKILL_SEEKERS = shutil.which("skill-seekers") is not None
@@ -54,17 +55,19 @@ class SkillSeekersService:
         return HAS_SKILL_SEEKERS
 
     @staticmethod
-    def get_cli_version() -> Optional[str]:
+    async def get_cli_version() -> Optional[str]:
         """Return the installed skill-seekers CLI version, or None."""
         if not HAS_SKILL_SEEKERS:
             return None
         try:
-            import subprocess
-            result = subprocess.run(
-                ["skill-seekers", "--version"],
-                capture_output=True, text=True, timeout=5,
+            proc = await asyncio.create_subprocess_exec(
+                "skill-seekers", "--version",
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+                stdin=asyncio.subprocess.DEVNULL,
             )
-            return result.stdout.strip() if result.returncode == 0 else None
+            stdout, _ = await asyncio.wait_for(proc.communicate(), timeout=5)
+            return stdout.decode("utf-8", errors="replace").strip() if proc.returncode == 0 else None
         except Exception:
             return None
 
@@ -215,23 +218,24 @@ class SkillSeekersService:
                 job.updated_at = datetime.now(UTC)
                 await session.commit()
 
-                # Auto-index completed scrape results into Knowledge Base
+                # Auto-index completed scrape results into Knowledge Base (separate session)
                 try:
                     from app.modules.knowledge.service import KnowledgeService
-                    for filepath in output_files:
-                        if os.path.isfile(filepath):
-                            with open(filepath, "r", encoding="utf-8") as f:
-                                content = f.read()
-                            if content and len(content.strip()) > 50:
-                                filename = f"skill_seekers_{os.path.basename(filepath)}"
-                                await KnowledgeService.index_text_content(
-                                    user_id=job.user_id,
-                                    filename=filename,
-                                    content=content,
-                                    content_type="text/markdown",
-                                    session=session,
-                                )
-                                logger.info("auto_index_scrape_result", file=filename)
+                    async with get_session_context() as index_session:
+                        for filepath in output_files:
+                            if os.path.isfile(filepath):
+                                with open(filepath, "r", encoding="utf-8") as f:
+                                    content = f.read()
+                                if content and len(content.strip()) > 50:
+                                    kb_filename = f"skill_seekers_{os.path.basename(filepath)}"
+                                    await KnowledgeService.index_text_content(
+                                        user_id=job.user_id,
+                                        filename=kb_filename,
+                                        content=content,
+                                        content_type="text/markdown",
+                                        session=index_session,
+                                    )
+                                    logger.info("auto_index_scrape_result", file=kb_filename)
                 except Exception as e:
                     logger.warning("auto_index_scrape_failed", error=str(e))
 
@@ -551,6 +555,8 @@ class SkillSeekersService:
         """Return the full path for a job output file if it exists."""
         if not job.output_files_json:
             return None
+        if not SAFE_FILENAME_PATTERN.match(filename):
+            return None
 
         files = json.loads(job.output_files_json)
         for filepath in files:
@@ -687,15 +693,17 @@ class SkillSeekersService:
 
     @staticmethod
     def get_file_preview(job: ScrapeJob, filename: str, max_chars: int = 5000) -> Optional[str]:
-        """Return the first max_chars of an output file content."""
+        """Return the first max_chars+1 characters of an output file for truncation detection."""
         if not job.output_files_json:
+            return None
+        if not SAFE_FILENAME_PATTERN.match(filename):
             return None
 
         files = json.loads(job.output_files_json)
         for filepath in files:
             if os.path.basename(filepath) == filename and os.path.isfile(filepath):
                 with open(filepath, "r", encoding="utf-8") as f:
-                    return f.read(max_chars)
+                    return f.read(max_chars + 1)
         return None
 
     @staticmethod

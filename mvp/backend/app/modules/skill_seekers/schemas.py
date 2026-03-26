@@ -78,3 +78,9 @@ class ScrapeJobStats(BaseModel):
     running: int
     total_repos_scraped: int
     recent_jobs: list[dict]
+
+
+class CancelJobResponse(BaseModel):
+    """Response for cancel job endpoint."""
+    status: str
+    job_id: str

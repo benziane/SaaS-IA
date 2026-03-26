@@ -30,8 +30,6 @@ const SKILL_SEEKERS_ENDPOINTS = {
   CANCEL: (id: string) => `/api/skill-seekers/jobs/${id}/cancel`,
   PREVIEW: (id: string, filename: string) =>
     `/api/skill-seekers/jobs/${id}/preview/${filename}`,
-  DOWNLOAD: (id: string, filename: string) =>
-    `/api/skill-seekers/jobs/${id}/download/${filename}`,
 } as const;
 
 /* ========================================================================
@@ -137,14 +135,6 @@ export async function getSignedDownloadUrl(jobId: string, filename: string): Pro
   return `${baseUrl}${response.data.url}`;
 }
 
-/**
- * Get the download URL for an output file (legacy, requires JWT)
- */
-export function getDownloadUrl(jobId: string, filename: string): string {
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8004';
-  return `${baseUrl}${SKILL_SEEKERS_ENDPOINTS.DOWNLOAD(jobId, filename)}`;
-}
-
 /* ========================================================================
    EXPORTS
    ======================================================================== */
@@ -159,7 +149,6 @@ export const skillSeekersApi = {
   previewFile,
   getStatus,
   getStats,
-  getDownloadUrl,
   getSignedDownloadUrl,
 } as const;
 

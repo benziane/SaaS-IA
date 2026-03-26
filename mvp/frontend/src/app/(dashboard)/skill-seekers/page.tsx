@@ -231,7 +231,7 @@ export default function SkillSeekersPage() {
   const deleteMutation = useDeleteScrapeJob();
   const retryMutation = useRetryScrapeJob();
   const cancelMutation = useCancelScrapeJob();
-  const [previewData, setPreviewData] = useState<{ filename: string; content: string } | null>(null);
+  const [previewData, setPreviewData] = useState<{ filename: string; content: string; truncated?: boolean } | null>(null);
 
   // Form state
   const [repoInput, setRepoInput] = useState('');
@@ -560,8 +560,10 @@ export default function SkillSeekersPage() {
                                 onClick={async () => {
                                   try {
                                     const data = await previewFile(job.id, filename);
-                                    setPreviewData({ filename, content: data.content });
-                                  } catch { /* handled by toast */ }
+                                    setPreviewData({ filename, content: data.content, truncated: data.truncated });
+                                  } catch (err) {
+                                    setPreviewData({ filename, content: `Error loading preview: ${err instanceof Error ? err.message : 'Unknown error'}`, truncated: false });
+                                  }
                                 }}
                               >
                                 Preview
@@ -574,7 +576,9 @@ export default function SkillSeekersPage() {
                                   try {
                                     const url = await getSignedDownloadUrl(job.id, filename);
                                     window.open(url, '_blank');
-                                  } catch { /* handled by interceptor */ }
+                                  } catch (err) {
+                                    alert(`Download failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
+                                  }
                                 }}
                               >
                                 {filename}
@@ -600,6 +604,11 @@ export default function SkillSeekersPage() {
               <Typography variant="subtitle2">{previewData.filename}</Typography>
               <Button size="small" onClick={() => setPreviewData(null)}>Close</Button>
             </Box>
+            {previewData.truncated && (
+              <Alert severity="info" sx={{ mb: 1, py: 0 }}>
+                <Typography variant="caption">Preview truncated. Download the full file for complete content.</Typography>
+              </Alert>
+            )}
             <Divider sx={{ mb: 1 }} />
             <Typography
               variant="body2"

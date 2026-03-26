@@ -13,7 +13,7 @@ from app.auth import get_current_user
 from app.database import get_session
 from app.models.user import User
 from app.models.skill_seekers import ScrapeJob
-from app.modules.skill_seekers.schemas import ScrapeJobCreate, ScrapeJobRead, PaginatedJobs, ScrapeJobStats
+from app.modules.skill_seekers.schemas import CancelJobResponse, ScrapeJobCreate, ScrapeJobRead, PaginatedJobs, ScrapeJobStats
 from app.modules.skill_seekers.service import SkillSeekersService
 from app.rate_limit import limiter
 
@@ -256,6 +256,20 @@ async def retry_job(
     service: SkillSeekersService = Depends(get_service),
 ):
     """Retry a failed scrape job by cloning it and re-launching."""
+    # Check concurrent job limit (same as create_job)
+    from app.models.skill_seekers import ScrapeJobStatus as SJS
+    active_jobs, _ = await SkillSeekersService.get_jobs(
+        user_id=current_user.id, session=session, status_filter=SJS.RUNNING,
+    )
+    pending_jobs, _ = await SkillSeekersService.get_jobs(
+        user_id=current_user.id, session=session, status_filter=SJS.PENDING,
+    )
+    if len(active_jobs) + len(pending_jobs) >= MAX_CONCURRENT_JOBS_PER_USER:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=f"Maximum {MAX_CONCURRENT_JOBS_PER_USER} concurrent jobs allowed. Wait for current jobs to complete.",
+        )
+
     new_job = await SkillSeekersService.retry_job(
         job_id=job_id,
         user_id=current_user.id,
@@ -275,7 +289,7 @@ async def retry_job(
 # POST /jobs/{job_id}/cancel - Cancel a running/pending job
 # --------------------------------------------------------------------------
 
-@router.post("/jobs/{job_id}/cancel")
+@router.post("/jobs/{job_id}/cancel", response_model=CancelJobResponse)
 @limiter.limit("5/minute")
 async def cancel_job(
     request: Request,
@@ -320,11 +334,13 @@ async def preview_file(
     if not job:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Scrape job not found")
 
-    content = SkillSeekersService.get_file_preview(job, filename, max_chars=min(max_chars, 50000))
+    capped = min(max_chars, 50000)
+    content = SkillSeekersService.get_file_preview(job, filename, max_chars=capped)
     if content is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="File not found")
 
-    return {"filename": filename, "content": content, "truncated": len(content) >= max_chars}
+    truncated = len(content) > capped
+    return {"filename": filename, "content": content[:capped], "truncated": truncated}
 
 
 # --------------------------------------------------------------------------
@@ -338,7 +354,7 @@ async def check_status(request: Request):
     return {
         "installed": SkillSeekersService.is_installed(),
         "mock_mode": not SkillSeekersService.is_installed(),
-        "version": SkillSeekersService.get_cli_version(),
+        "version": await SkillSeekersService.get_cli_version(),
     }
 
 
