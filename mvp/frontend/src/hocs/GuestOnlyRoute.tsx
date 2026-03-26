@@ -7,9 +7,6 @@ import { useRouter, useSearchParams } from 'next/navigation'
 // Auth Context
 import { useAuth } from '@/contexts/AuthContext'
 
-// Component Imports
-import { CircularProgress, Box } from '@mui/material'
-
 type Props = {
   children: React.ReactNode
 }
@@ -42,16 +39,9 @@ const GuestOnlyRoute = ({ children }: Props) => {
   // Show loader while checking auth or if already authenticated (redirect pending)
   if (isLoading || isAuthenticated) {
     return (
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          minHeight: '100vh'
-        }}
-      >
-        <CircularProgress />
-      </Box>
+      <div className='flex justify-center items-center min-h-screen'>
+        <div className='h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent' />
+      </div>
     )
   }
 

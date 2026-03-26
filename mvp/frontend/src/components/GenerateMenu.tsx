@@ -1,11 +1,9 @@
 // React Imports
 import type { ReactNode } from 'react'
 
-// MUI Imports — ChipProps type still used by menuTypes.ts (Sneat infrastructure)
-import type { ChipProps } from '@mui/material/Chip'
-
 // Type Imports
 import type {
+  MenuChipProps,
   VerticalMenuDataType,
   VerticalSectionDataType,
   VerticalSubMenuDataType,
@@ -26,10 +24,10 @@ import { Badge } from '@/lib/design-hub/components/Badge'
  * Render a chip-like badge for prefix/suffix if it has a label property,
  * otherwise render it as-is (ReactNode).
  */
-const renderChipOrNode = (value: ReactNode | ChipProps | undefined): ReactNode => {
+const renderChipOrNode = (value: ReactNode | MenuChipProps | undefined): ReactNode => {
   if (!value) return undefined
-  if ((value as ChipProps).label) {
-    const chipProps = value as ChipProps
+  if ((value as MenuChipProps).label) {
+    const chipProps = value as MenuChipProps
     return (
       <Badge variant='secondary' className='rounded-full text-xs px-2 py-0.5'>
         {chipProps.label}
