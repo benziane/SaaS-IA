@@ -78,6 +78,14 @@ test-cov: ## Run tests with coverage report
 test-frontend: ## Run frontend tests
 	cd $(FRONTEND_DIR) && npm run test
 
+.PHONY: test-integration
+test-integration: ## Run integration tests (mock mode, no external deps)
+	cd $(BACKEND_DIR) && USE_REAL_DB=false USE_REAL_REDIS=false python -m pytest tests/integration/ -v --tb=short --no-cov
+
+.PHONY: test-integration-real
+test-integration-real: ## Run integration tests (real PostgreSQL + Redis)
+	cd $(BACKEND_DIR) && USE_REAL_DB=true USE_REAL_REDIS=true python -m pytest tests/integration/ -v --tb=short --no-cov
+
 # ── Load Testing ────────────────────────────────────────────
 
 .PHONY: load-test

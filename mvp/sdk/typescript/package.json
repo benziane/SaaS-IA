@@ -1,0 +1,17 @@
+{
+  "name": "@saas-ia/sdk",
+  "version": "1.0.0",
+  "description": "Official SaaS-IA TypeScript SDK",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc",
+    "prepublish": "npm run build"
+  },
+  "keywords": ["saas-ia", "ai", "sdk", "transcription", "llm"],
+  "license": "Proprietary",
+  "engines": {
+    "node": ">=18"
+  }
+}
