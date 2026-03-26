@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import {
-  Box, Card, CardContent, Chip, CircularProgress, FormControl, Grid,
+  Box, Card, CardContent, Chip, FormControl, Grid,
   InputLabel, LinearProgress, MenuItem, Select, Skeleton, Typography,
 } from '@mui/material';
 import MonitorHeartIcon from '@mui/icons-material/MonitorHeart';

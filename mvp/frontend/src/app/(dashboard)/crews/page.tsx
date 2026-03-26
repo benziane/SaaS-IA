@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import {
-  Alert, Avatar, Box, Button, Card, CardActions, CardContent, Chip,
+  Alert, Box, Button, Card, CardActions, CardContent, Chip,
   CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle,
   Divider, Grid, IconButton, Skeleton, Step, StepLabel, Stepper,
   TextField, Typography,
@@ -10,7 +10,6 @@ import {
 import GroupsIcon from '@mui/icons-material/Groups';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import DeleteIcon from '@mui/icons-material/Delete';
-import AddIcon from '@mui/icons-material/Add';
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 

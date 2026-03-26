@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import {
   Alert, Box, Button, Card, CardContent, Chip, CircularProgress,
-  FormControl, Grid, InputLabel, MenuItem, Select, Skeleton,
+  Grid, Skeleton,
   Slider, TextField, Typography,
 } from '@mui/material';
 import VideocamIcon from '@mui/icons-material/Videocam';

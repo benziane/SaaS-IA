@@ -1,0 +1,134 @@
+/**
+ * Design Hub Bridge CSS
+ * Phase C.2 — Maps design-hub recipe tokens to MUI and shadcn/ui CSS variables
+ *
+ * This bridge enables un-migrated MUI pages to consume recipe tokens seamlessly
+ * while also providing shadcn-compatible CSS vars for new components.
+ *
+ * Import order matters: recipe tokens first, then bridge aliases.
+ */
+
+/* ========================================================================
+   1. RECIPE TOKEN IMPORTS
+   ======================================================================== */
+
+@import '../lib/design-hub/recipes/saas-ia/tokens.css';
+@import '../lib/design-hub/recipes/cockpit-ui/tokens.css';
+@import '../lib/design-hub/recipes/automation-tool/tokens.css';
+
+/* ========================================================================
+   2. MUI COMPATIBILITY ALIASES — saas-ia
+   ======================================================================== */
+
+[data-recipe="saas-ia"] {
+  /* Palette */
+  --mui-palette-primary-main: var(--accent);
+  --mui-palette-background-paper: var(--bg-surface);
+  --mui-palette-background-default: var(--bg-app);
+  --mui-palette-text-primary: var(--text-high);
+  --mui-palette-text-secondary: var(--text-mid);
+  --mui-palette-text-disabled: var(--text-low);
+  --mui-palette-divider: var(--border);
+  --mui-palette-action-hover: var(--bg-elevated);
+
+  /* Legacy aliases used by some MUI overrides */
+  --primary-color: var(--accent);
+
+  /* Shadows */
+  --mui-customShadows-xs: var(--shadow-sm);
+  --mui-customShadows-sm: var(--shadow-md);
+  --mui-customShadows-md: var(--shadow-lg);
+  --mui-customShadows-lg: var(--shadow-xl);
+
+  /* Border radius */
+  --mui-shape-customBorderRadius-xs: var(--radius-sm);
+  --mui-shape-customBorderRadius-sm: var(--radius-md);
+  --mui-shape-customBorderRadius-md: var(--radius-lg);
+  --mui-shape-customBorderRadius-lg: var(--radius-xl);
+}
+
+/* ========================================================================
+   3. MUI COMPATIBILITY ALIASES — cockpit-ui
+   ======================================================================== */
+
+[data-recipe="cockpit-ui"] {
+  /* Palette */
+  --mui-palette-primary-main: var(--accent);
+  --mui-palette-background-paper: var(--bg-surface);
+  --mui-palette-background-default: var(--bg-app);
+  --mui-palette-text-primary: var(--text-high);
+  --mui-palette-text-secondary: var(--text-mid);
+  --mui-palette-text-disabled: var(--text-low);
+  --mui-palette-divider: var(--border);
+  --mui-palette-action-hover: var(--bg-elevated);
+
+  /* Legacy aliases */
+  --primary-color: var(--accent);
+
+  /* Shadows */
+  --mui-customShadows-xs: var(--shadow-sm);
+  --mui-customShadows-sm: var(--shadow-md);
+  --mui-customShadows-md: var(--shadow-lg);
+  --mui-customShadows-lg: var(--shadow-xl);
+
+  /* Border radius */
+  --mui-shape-customBorderRadius-xs: var(--radius-sm);
+  --mui-shape-customBorderRadius-sm: var(--radius-md);
+  --mui-shape-customBorderRadius-md: var(--radius-lg);
+  --mui-shape-customBorderRadius-lg: var(--radius-xl);
+}
+
+/* ========================================================================
+   4. MUI COMPATIBILITY ALIASES — automation-tool
+   ======================================================================== */
+
+[data-recipe="automation-tool"] {
+  /* Palette */
+  --mui-palette-primary-main: var(--accent);
+  --mui-palette-background-paper: var(--bg-surface);
+  --mui-palette-background-default: var(--bg-app);
+  --mui-palette-text-primary: var(--text-high);
+  --mui-palette-text-secondary: var(--text-mid);
+  --mui-palette-text-disabled: var(--text-low);
+  --mui-palette-divider: var(--border);
+  --mui-palette-action-hover: var(--bg-elevated);
+
+  /* Legacy aliases */
+  --primary-color: var(--accent);
+
+  /* Shadows */
+  --mui-customShadows-xs: var(--shadow-sm);
+  --mui-customShadows-sm: var(--shadow-md);
+  --mui-customShadows-md: var(--shadow-lg);
+  --mui-customShadows-lg: var(--shadow-xl);
+
+  /* Border radius */
+  --mui-shape-customBorderRadius-xs: var(--radius-sm);
+  --mui-shape-customBorderRadius-sm: var(--radius-md);
+  --mui-shape-customBorderRadius-md: var(--radius-lg);
+  --mui-shape-customBorderRadius-lg: var(--radius-xl);
+}
+
+/* ========================================================================
+   5. SHADCN-COMPATIBLE CSS VARS (all recipes)
+   ======================================================================== */
+
+[data-recipe="saas-ia"],
+[data-recipe="cockpit-ui"],
+[data-recipe="automation-tool"] {
+  --background: var(--bg-app);
+  --foreground: var(--text-high);
+  --card: var(--bg-surface);
+  --card-foreground: var(--text-high);
+  --primary: var(--accent);
+  --primary-foreground: var(--bg-app);
+  --secondary: var(--bg-elevated);
+  --secondary-foreground: var(--text-high);
+  --muted: var(--bg-elevated);
+  --muted-foreground: var(--text-mid);
+  --destructive: var(--status-error, #ef4444);
+  --destructive-foreground: #ffffff;
+  --border: var(--border);
+  --input: var(--border);
+  --ring: var(--accent);
+}

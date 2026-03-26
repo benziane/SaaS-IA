@@ -6,7 +6,7 @@ import PerfectScrollbar from 'react-perfect-scrollbar'
 
 // Type Imports
 import type { VerticalMenuContextProps } from '@menu/components/vertical-menu/Menu'
-import type { VerticalMenuDataType } from '@/types/menuTypes'
+import type { VerticalMenuDataType, VerticalMenuItemDataType } from '@/types/menuTypes'
 
 // Component Imports
 import { Menu, MenuItem, MenuSection, SubMenu } from '@menu/vertical-menu'
@@ -75,15 +75,16 @@ const renderMenuItems = (items: VerticalMenuDataType[]) => {
     }
 
     // Regular menu item
+    const menuItem = item as VerticalMenuItemDataType
     return (
       <MenuItem
         key={`item-${index}`}
-        href={item.href}
-        icon={renderIcon(item.icon)}
-        target={item.target}
-        disabled={item.disabled}
+        href={menuItem.href}
+        icon={renderIcon(menuItem.icon)}
+        target={menuItem.target}
+        disabled={menuItem.disabled}
       >
-        {item.label}
+        {menuItem.label}
       </MenuItem>
     )
   })

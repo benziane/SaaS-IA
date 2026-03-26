@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import {
-  Alert, Box, Button, Card, CardContent, Chip, CircularProgress,
-  Dialog, DialogActions, DialogContent, DialogTitle, Divider,
+  Box, Button, Card, CardContent, Chip, CircularProgress,
+  Dialog, DialogActions, DialogContent, DialogTitle,
   FormControl, Grid, IconButton, InputLabel, MenuItem, Select,
   TextField, Typography,
 } from '@mui/material';
@@ -68,7 +68,7 @@ export default function MemoryPage() {
     if (!extractText.trim()) return;
     setExtracting(true);
     try {
-      const resp = await apiClient.post('/api/memory/extract', { text: extractText, source: 'manual' });
+      await apiClient.post('/api/memory/extract', { text: extractText, source: 'manual' });
       setExtractOpen(false); setExtractText('');
       fetchData();
     } catch {}

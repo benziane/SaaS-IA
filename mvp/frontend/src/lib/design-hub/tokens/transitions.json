@@ -1,0 +1,17 @@
+{
+  "duration": {
+    "fast": "150ms",
+    "base": "200ms",
+    "slow": "300ms",
+    "slower": "500ms"
+  },
+  "easing": {
+    "ease": "ease",
+    "ease-in": "ease-in",
+    "ease-out": "ease-out",
+    "ease-in-out": "ease-in-out",
+    "linear": "linear",
+    "spring": "cubic-bezier(0.68, -0.55, 0.265, 1.55)",
+    "smooth": "cubic-bezier(0.4, 0, 0.2, 1)"
+  }
+}

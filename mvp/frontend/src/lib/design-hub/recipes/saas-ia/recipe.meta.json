@@ -1,0 +1,20 @@
+{
+  "id": "saas-ia",
+  "name": "SaaS-IA Platform",
+  "version": "1.0.0",
+  "description": "AI SaaS platform — modular intelligence, dark tech aesthetic with cyan accent, neon glow effects",
+  "colors": {
+    "primary": "hsl(187, 96%, 47%)",
+    "neutral": "slate"
+  },
+  "dimensions": {
+    "radius": "rounded",
+    "shadow": "neon",
+    "motion": "ease",
+    "surface": "flat",
+    "density": "default",
+    "typographyMood": "technical"
+  },
+  "tags": [],
+  "generatedAt": "2026-03-26T12:47:29.975Z"
+}

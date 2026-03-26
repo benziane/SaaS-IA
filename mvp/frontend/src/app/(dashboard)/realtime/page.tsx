@@ -2,8 +2,7 @@
 
 import { useRef, useState } from 'react';
 import {
-  Alert, Avatar, Box, Button, Card, CardContent, Chip, CircularProgress,
-  Dialog, DialogActions, DialogContent, DialogTitle, Divider,
+  Box, Button, Card, CardContent, Chip, CircularProgress,
   FormControl, Grid, IconButton, InputLabel, MenuItem, Select,
   Skeleton, TextField, Typography,
 } from '@mui/material';
@@ -12,7 +11,6 @@ import MicIcon from '@mui/icons-material/Mic';
 import StopIcon from '@mui/icons-material/Stop';
 import SendIcon from '@mui/icons-material/Send';
 import HistoryIcon from '@mui/icons-material/History';
-import SummarizeIcon from '@mui/icons-material/Summarize';
 
 import {
   useCreateSession, useEndSession, useRealtimeSessions, useSendMessage,
@@ -56,7 +54,7 @@ export default function RealtimePage() {
     sendMutation.mutate(userMsg, {
       onSuccess: (result) => {
         const aiMsg = (result as Record<string, Record<string, string>>).ai_message;
-        if (aiMsg) setChatHistory((prev) => [...prev, { role: 'assistant', content: aiMsg.content }]);
+        if (aiMsg) setChatHistory((prev) => [...prev, { role: 'assistant', content: aiMsg.content ?? '' }]);
         chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
       },
     });

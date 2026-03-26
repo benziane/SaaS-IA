@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import {
   Alert,
-  Avatar,
   Box,
   Button,
   Card,
@@ -15,7 +14,6 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  Divider,
   Grid,
   IconButton,
   LinearProgress,
@@ -387,11 +385,11 @@ export default function WorkflowsPage() {
                             {ACTION_ICONS[(result.action as string) || ''] || '⚙️'}{' '}
                             {(result.label as string) || (result.action as string) || `Step ${i + 1}`}
                           </Typography>
-                          {result.error && <Chip label="error" size="small" color="error" />}
+                          {Boolean(result.error) && <Chip label="error" size="small" color="error" />}
                         </Box>
                       </StepLabel>
                       <Box sx={{ ml: 4, mb: 2 }}>
-                        {result.output && (
+                        {Boolean(result.output) && (
                           <Box sx={{ position: 'relative' }}>
                             <Box
                               sx={{
@@ -417,7 +415,7 @@ export default function WorkflowsPage() {
                             </IconButton>
                           </Box>
                         )}
-                        {result.error && (
+                        {Boolean(result.error) && (
                           <Alert severity="error" sx={{ mt: 1 }}>{result.error as string}</Alert>
                         )}
                       </Box>

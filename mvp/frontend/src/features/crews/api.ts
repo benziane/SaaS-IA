@@ -1,7 +1,6 @@
 /**
  * Multi-Agent Crew API
  */
-import type { AxiosResponse } from 'axios';
 import apiClient from '@/lib/apiClient';
 import type { Crew, CrewCreateRequest, CrewRun, CrewTemplate } from './types';
 

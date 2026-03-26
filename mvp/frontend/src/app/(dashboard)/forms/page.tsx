@@ -175,7 +175,7 @@ export default function FormsPage() {
 
   const handleUpdateField = (index: number, updates: Partial<FormField>) => {
     const updated = [...editFields];
-    updated[index] = { ...updated[index], ...updates };
+    updated[index] = { ...updated[index], ...updates } as FormField;
     setEditFields(updated);
   };
 
@@ -187,7 +187,7 @@ export default function FormsPage() {
     const newIndex = direction === 'up' ? index - 1 : index + 1;
     if (newIndex < 0 || newIndex >= editFields.length) return;
     const updated = [...editFields];
-    [updated[index], updated[newIndex]] = [updated[newIndex], updated[index]];
+    [updated[index], updated[newIndex]] = [updated[newIndex]!, updated[index]!];
     setEditFields(updated);
   };
 

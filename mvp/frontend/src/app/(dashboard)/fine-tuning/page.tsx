@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import {
   Alert, Box, Button, Card, CardActions, CardContent, Chip, CircularProgress,
-  Dialog, DialogActions, DialogContent, DialogTitle, Divider,
+  Dialog, DialogActions, DialogContent, DialogTitle,
   FormControl, Grid, InputLabel, LinearProgress, MenuItem, Select,
   Skeleton, TextField, Typography,
 } from '@mui/material';
@@ -16,7 +16,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import IconButton from '@mui/material/IconButton';
 
 import {
-  useAssessQuality, useAvailableModels, useCreateFromSource, useCreateFTDataset,
+  useAssessQuality, useAvailableModels, useCreateFromSource,
   useCreateFTJob, useDeleteFTDataset, useFTDatasets, useFTJobs,
 } from '@/features/fine-tuning/hooks/useFineTuning';
 
@@ -36,7 +36,6 @@ export default function FineTuningPage() {
   const { data: datasets, isLoading: dsLoading } = useFTDatasets();
   const { data: jobs, isLoading: jobsLoading } = useFTJobs();
   const { data: models } = useAvailableModels();
-  const createDsMutation = useCreateFTDataset();
   const createFromSourceMutation = useCreateFromSource();
   const deleteDsMutation = useDeleteFTDataset();
   const assessMutation = useAssessQuality();

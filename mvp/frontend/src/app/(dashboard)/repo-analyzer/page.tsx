@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import {
   Alert, Box, Button, Card, CardContent, Chip, CircularProgress,
-  Divider, FormControl, Grid, IconButton, InputLabel, LinearProgress,
+  FormControl, Grid, IconButton, InputLabel, LinearProgress,
   MenuItem, Select, Skeleton, Tab, Tabs, TextField, Tooltip, Typography,
 } from '@mui/material';
 import AnalyticsIcon from '@mui/icons-material/Analytics';
@@ -93,7 +93,7 @@ function ResultTabs({ results }: { results: AnalysisResults }) {
 
   if (tabs.length === 0) return <Typography color="text.secondary">No results available</Typography>;
 
-  const currentTab = tabs[tab] || tabs[0];
+  const currentTab = (tabs[tab] || tabs[0])!;
 
   return (
     <Box>

@@ -97,7 +97,6 @@ export function useRemoveSlide(presentationId: string) {
 }
 
 export function useExportPresentation(presentationId: string) {
-  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: ExportRequest) => exportPresentation(presentationId, data),
   });

@@ -33,6 +33,9 @@ import { Toaster } from 'sonner';
 // Command Palette (MVP)
 import CommandPalette from '@/components/ui/CommandPalette';
 
+// Design Hub Recipe Provider (Phase C.3)
+import { RecipeProvider } from '@/components/RecipeProvider';
+
 // Lib Imports
 import { queryClient } from '@/lib/queryClient';
 
@@ -68,8 +71,10 @@ export function Providers({
         <VerticalNavProvider>
           <SettingsProvider settingsCookie={settingsCookie} mode={mode}>
             <ThemeProvider direction={direction} systemMode={systemMode ?? 'light'}>
+              <RecipeProvider>
               {children}
-              
+              </RecipeProvider>
+
               {/* Toast Notifications - Grade S++ (MVP) */}
               <Toaster
                 position="top-right"

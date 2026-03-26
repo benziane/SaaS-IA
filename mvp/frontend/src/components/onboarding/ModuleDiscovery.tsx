@@ -4,7 +4,6 @@ import { useState, useMemo } from 'react';
 import {
   Avatar,
   Box,
-  Button,
   Card,
   CardActionArea,
   CardContent,
@@ -251,8 +250,8 @@ export default function ModuleDiscovery() {
                           height: 20,
                           fontSize: '0.65rem',
                           fontWeight: 700,
-                          bgcolor: badgeColors[module.badge].bg,
-                          color: badgeColors[module.badge].text,
+                          bgcolor: badgeColors[module.badge]?.bg,
+                          color: badgeColors[module.badge]?.text,
                         }}
                       />
                     )}

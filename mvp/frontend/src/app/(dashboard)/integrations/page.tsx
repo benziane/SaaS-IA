@@ -14,7 +14,6 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  Divider,
   FormControl,
   Grid,
   IconButton,
@@ -604,7 +603,7 @@ export default function IntegrationsPage() {
               <Typography variant="body2">
                 Type: <strong>{testResult.type as string}</strong>
               </Typography>
-              {testResult.webhook_url && (
+              {Boolean(testResult.webhook_url) && (
                 <Box sx={{ mt: 1 }}>
                   <Typography variant="body2">Webhook URL:</Typography>
                   <Typography

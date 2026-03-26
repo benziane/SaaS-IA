@@ -25,7 +25,6 @@ import type {
   MarkAllReadResponse,
   MarkReadResponse,
   NotificationListResponse,
-  UnreadCountResponse,
   WSMessage,
 } from '@/features/notifications/types';
 

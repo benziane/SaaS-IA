@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import {
   Alert, Box, Button, Card, CardContent, Chip, CircularProgress,
-  Dialog, DialogActions, DialogContent, DialogTitle, Divider,
+  Divider,
   FormControlLabel, Grid, LinearProgress, Skeleton, Switch,
   TextField, Typography,
 } from '@mui/material';
@@ -24,7 +24,7 @@ const SEVERITY_COLORS: Record<string, 'default' | 'info' | 'warning' | 'error'> 
 export default function SecurityPage() {
   const { data: dashboard, isLoading: dashLoading } = useSecurityDashboard();
   const { data: auditLogs } = useAuditLogs();
-  const { data: guardrails } = useGuardrails();
+  const { data: _guardrails } = useGuardrails();
   const scanMutation = useScanContent();
 
   const [scanText, setScanText] = useState('');

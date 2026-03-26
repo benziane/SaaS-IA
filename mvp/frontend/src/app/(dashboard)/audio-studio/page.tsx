@@ -92,7 +92,7 @@ function MiniWaveform({ data }: { data: number[] | null }) {
           key={i}
           sx={{
             width: 2,
-            height: `${Math.max(4, v * 32)}px`,
+            height: `${Math.max(4, (v ?? 0) * 32)}px`,
             bgcolor: 'primary.main',
             borderRadius: 1,
             opacity: 0.7,

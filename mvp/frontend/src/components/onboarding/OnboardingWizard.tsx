@@ -15,7 +15,6 @@ import {
   Fade,
   FormControlLabel,
   Grid,
-  IconButton,
   InputAdornment,
   Stack,
   Step,
@@ -649,8 +648,6 @@ export default function OnboardingWizard({ userName = '' }: OnboardingWizardProp
     toggleUseCase,
     completeOnboarding,
   } = useOnboarding();
-
-  const theme = useTheme();
 
   if (!shouldShowWizard) {
     return null;

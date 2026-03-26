@@ -90,7 +90,7 @@ export default function CommandPalette() {
     const groups: Record<string, CommandItem[]> = {};
     for (const cmd of filtered) {
       if (!groups[cmd.category]) groups[cmd.category] = [];
-      groups[cmd.category].push(cmd);
+      groups[cmd.category]!.push(cmd);
     }
     return groups;
   }, [filtered]);

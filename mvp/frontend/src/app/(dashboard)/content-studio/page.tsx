@@ -22,8 +22,6 @@ import {
   MenuItem,
   Select,
   Skeleton,
-  Tab,
-  Tabs,
   TextField,
   Tooltip,
   Typography,

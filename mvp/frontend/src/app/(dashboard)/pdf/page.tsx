@@ -283,11 +283,11 @@ export default function PDFPage() {
                       </Box>
                     )}
 
-                    {pdfDetail?.keywords?.length > 0 && !keywordsMutation.data && (
+                    {(pdfDetail?.keywords?.length ?? 0) > 0 && !keywordsMutation.data && (
                       <Box sx={{ mt: 2 }}>
                         <Typography variant="subtitle2" gutterBottom>Keywords</Typography>
                         <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
-                          {pdfDetail.keywords.map((kw, i) => (
+                          {pdfDetail?.keywords?.map((kw, i) => (
                             <Chip key={i} label={kw} size="small" variant="outlined" />
                           ))}
                         </Box>

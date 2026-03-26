@@ -14,7 +14,6 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  Divider,
   FormControl,
   Grid,
   IconButton,
@@ -46,7 +45,6 @@ import {
   usePostAnalytics,
   usePosts,
   usePublishPost,
-  useSchedulePost,
 } from '@/features/social-publisher/hooks/useSocialPublisher';
 import type { SocialPost } from '@/features/social-publisher/types';
 
@@ -78,7 +76,6 @@ export default function SocialPublisherPage() {
   const disconnectMutation = useDisconnectAccount();
   const createPostMutation = useCreatePost();
   const publishMutation = usePublishPost();
-  const scheduleMutation = useSchedulePost();
   const deleteMutation = useDeletePost();
 
   // Compose state

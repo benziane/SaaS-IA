@@ -36,8 +36,6 @@ import FormatListBulletedIcon from '@mui/icons-material/FormatListBulleted';
 import TitleIcon from '@mui/icons-material/Title';
 import WavingHandIcon from '@mui/icons-material/WavingHand';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import SaveIcon from '@mui/icons-material/Save';
-import FullscreenIcon from '@mui/icons-material/Fullscreen';
 import ZoomInIcon from '@mui/icons-material/ZoomIn';
 import ZoomOutIcon from '@mui/icons-material/ZoomOut';
 import Link from 'next/link';
@@ -575,7 +573,7 @@ export default function VideoComposerPage() {
 
   const currentSceneIndex = useMemo(() => {
     for (let i = composition.scenes.length - 1; i >= 0; i--) {
-      if (playheadTime >= sceneOffsets[i]) return i;
+      if (playheadTime >= (sceneOffsets[i] ?? 0)) return i;
     }
     return 0;
   }, [playheadTime, sceneOffsets, composition.scenes.length]);
@@ -610,6 +608,7 @@ export default function VideoComposerPage() {
       prevSceneIdxRef.current = currentSceneIndex;
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, [currentSceneIndex]);
 
   const stopPlayback = useCallback(() => {
@@ -654,8 +653,8 @@ export default function VideoComposerPage() {
   const jumpToScene = useCallback(
     (idx: number) => {
       if (idx < 0 || idx >= composition.scenes.length) return;
-      setPlayheadTime(sceneOffsets[idx]);
-      setSelectedSceneId(composition.scenes[idx].id);
+      setPlayheadTime(sceneOffsets[idx] ?? 0);
+      setSelectedSceneId(composition.scenes[idx]!.id);
       setAnimState('enter');
       setTimeout(() => setAnimState('idle'), 700);
     },
@@ -1536,7 +1535,7 @@ export default function VideoComposerPage() {
                 const meta = SCENE_TYPE_META[scene.type];
                 const isSelected = scene.id === selectedSceneId;
                 const isCurrent = idx === currentSceneIndex;
-                const offset = sceneOffsets[idx];
+                const offset = sceneOffsets[idx] ?? 0;
                 const width = scene.duration * PX_PER_SEC;
 
                 return (
@@ -1654,7 +1653,7 @@ export default function VideoComposerPage() {
             <Box sx={{ position: 'absolute', top: 88, left: 0, right: 0, height: 16 }}>
               {composition.scenes.map((scene, idx) => {
                 if (idx === 0) return null;
-                const offset = sceneOffsets[idx];
+                const offset = sceneOffsets[idx] ?? 0;
                 if (scene.transition === 'none') return null;
                 return (
                   <Box
@@ -1738,7 +1737,7 @@ export default function VideoComposerPage() {
 
             {/* Scene click zones on top of seek (higher z-index for scene interaction) */}
             {composition.scenes.map((scene, idx) => {
-              const offset = sceneOffsets[idx];
+              const offset = sceneOffsets[idx] ?? 0;
               const width = scene.duration * PX_PER_SEC;
               return (
                 <Box

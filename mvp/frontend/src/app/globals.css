@@ -6,43 +6,122 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Design Hub recipe tokens + MUI/shadcn bridge (Phase C.2) */
+@import '../styles/design-hub-bridge.css';
+
 /* ========================================================================
    CSS VARIABLES
    ======================================================================== */
 
 :root {
-  /* Colors */
+  /* ---- Page background & text ---- */
   --background: #ffffff;
   --foreground: #171717;
-  
-  /* Primary */
+
+  /* ---- Card surfaces ---- */
+  --card: #ffffff;
+  --card-foreground: #171717;
+
+  /* ---- Popover surfaces ---- */
+  --popover: #ffffff;
+  --popover-foreground: #171717;
+
+  /* ---- Primary (Sneat violet) ---- */
   --primary: #7367f0;
   --primary-foreground: #ffffff;
-  
-  /* Secondary */
+
+  /* ---- Secondary ---- */
   --secondary: #a8aaae;
   --secondary-foreground: #ffffff;
-  
-  /* Success */
+
+  /* ---- Muted (subtle backgrounds) ---- */
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+
+  /* ---- Accent (hover/active highlights) ---- */
+  --accent: #f1f5f9;
+  --accent-foreground: #171717;
+
+  /* ---- Destructive ---- */
+  --destructive: #ea5455;
+  --destructive-foreground: #ffffff;
+
+  /* ---- Borders & inputs ---- */
+  --border: #e2e8f0;
+  --input: #e2e8f0;
+  --ring: #7367f0;
+
+  /* ---- Status colors ---- */
   --success: #28c76f;
   --success-foreground: #ffffff;
-  
-  /* Error */
   --error: #ea5455;
   --error-foreground: #ffffff;
-  
-  /* Warning */
   --warning: #ff9f43;
   --warning-foreground: #ffffff;
-  
-  /* Info */
   --info: #00cfe8;
   --info-foreground: #ffffff;
+
+  /* ---- Chart palette ---- */
+  --chart-1: #7367f0;
+  --chart-2: #28c76f;
+  --chart-3: #ff9f43;
+  --chart-4: #a855f7;
+  --chart-5: #ea5455;
+
+  /* ---- Sidebar ---- */
+  --sidebar-background: #fafafa;
+  --sidebar-foreground: #3f3f46;
+  --sidebar-primary: #7367f0;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f4f4f5;
+  --sidebar-accent-foreground: #18181b;
+  --sidebar-border: #e4e4e7;
+  --sidebar-ring: #7367f0;
 }
 
 [data-theme='dark'] {
   --background: #1a1a1a;
   --foreground: #ededed;
+
+  --card: #1f1f1f;
+  --card-foreground: #ededed;
+
+  --popover: #1f1f1f;
+  --popover-foreground: #ededed;
+
+  --primary: #7367f0;
+  --primary-foreground: #ffffff;
+
+  --secondary: #6b6e73;
+  --secondary-foreground: #ededed;
+
+  --muted: #27272a;
+  --muted-foreground: #a1a1aa;
+
+  --accent: #27272a;
+  --accent-foreground: #ededed;
+
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
+
+  --border: #27272a;
+  --input: #27272a;
+  --ring: #7367f0;
+
+  --chart-1: #7367f0;
+  --chart-2: #28c76f;
+  --chart-3: #ff9f43;
+  --chart-4: #a855f7;
+  --chart-5: #ea5455;
+
+  --sidebar-background: #18181b;
+  --sidebar-foreground: #fafafa;
+  --sidebar-primary: #7367f0;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #27272a;
+  --sidebar-accent-foreground: #fafafa;
+  --sidebar-border: #27272a;
+  --sidebar-ring: #7367f0;
 }
 
 /* ========================================================================
