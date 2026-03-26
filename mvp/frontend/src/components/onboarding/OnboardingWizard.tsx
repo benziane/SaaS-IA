@@ -1,31 +1,18 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { Check } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/lib/design-hub/components/Button';
+import { Input } from '@/lib/design-hub/components/Input';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
-  Avatar,
-  Box,
-  Button,
-  Card,
-  CardActionArea,
-  CardContent,
-  Checkbox,
-  Chip,
   Dialog,
   DialogContent,
-  Fade,
-  FormControlLabel,
-  Grid,
-  InputAdornment,
-  Stack,
-  Step,
-  StepLabel,
-  Stepper,
-  TextField,
-  Typography,
-} from '@mui/material';
-import { alpha, useTheme } from '@mui/material/styles';
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+} from '@/lib/design-hub/components/Dialog';
 
 import { useOnboarding } from '@/hooks/useOnboarding';
 
@@ -235,35 +222,24 @@ const PROVIDERS: ProviderInfo[] = [
 
 function StepWelcome({ userName }: { userName: string }) {
   return (
-    <Fade in timeout={500}>
-      <Box sx={{ textAlign: 'center', py: 4 }}>
-        <Box
-          sx={{
-            width: 80,
-            height: 80,
-            borderRadius: '50%',
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            mx: 'auto',
-            mb: 3,
-          }}
-        >
-          <i className="tabler-sparkles" style={{ fontSize: 36, color: '#fff' }} />
-        </Box>
-        <Typography variant="h4" sx={{ fontWeight: 700, mb: 1 }}>
-          Bienvenue sur SaaS-IA !
-        </Typography>
-        <Typography variant="h6" color="text.secondary" sx={{ mb: 2 }}>
-          {userName && `Bonjour ${userName},`}
-        </Typography>
-        <Typography variant="body1" color="text.secondary" sx={{ maxWidth: 480, mx: 'auto', lineHeight: 1.7 }}>
-          Votre plateforme d&apos;IA modulaire avec 37 modules. Transcription, generation de contenu,
-          analyse de donnees, automatisation et bien plus — tout en un seul endroit.
-        </Typography>
-      </Box>
-    </Fade>
+    <div className="text-center py-8 animate-in fade-in duration-500">
+      <div
+        className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6"
+        style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}
+      >
+        <i className="tabler-sparkles" style={{ fontSize: 36, color: '#fff' }} />
+      </div>
+      <h2 className="text-3xl font-bold mb-2 text-[var(--text-high)]">
+        Bienvenue sur SaaS-IA !
+      </h2>
+      <h3 className="text-lg text-[var(--text-mid)] mb-4">
+        {userName && `Bonjour ${userName},`}
+      </h3>
+      <p className="text-base text-[var(--text-mid)] max-w-[480px] mx-auto leading-relaxed">
+        Votre plateforme d&apos;IA modulaire avec 37 modules. Transcription, generation de contenu,
+        analyse de donnees, automatisation et bien plus — tout en un seul endroit.
+      </p>
+    </div>
   );
 }
 
@@ -274,77 +250,66 @@ function StepUseCases({
   selectedUseCases: string[];
   onToggle: (id: string) => void;
 }) {
-  const theme = useTheme();
-
   return (
-    <Fade in timeout={500}>
-      <Box sx={{ py: 2 }}>
-        <Typography variant="h5" sx={{ fontWeight: 700, mb: 1, textAlign: 'center' }}>
-          Quel est votre cas d&apos;usage ?
-        </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 3, textAlign: 'center' }}>
-          Selectionnez un ou plusieurs domaines pour personnaliser votre experience.
-        </Typography>
-        <Grid container spacing={2}>
-          {USE_CASE_OPTIONS.map((option) => {
-            const isSelected = selectedUseCases.includes(option.id);
-            return (
-              <Grid item xs={12} sm={6} key={option.id}>
-                <Card
-                  sx={{
-                    border: 2,
-                    borderColor: isSelected ? option.color : 'divider',
-                    bgcolor: isSelected ? alpha(option.color, 0.06) : 'background.paper',
-                    transition: 'all 0.2s ease',
-                    '&:hover': {
-                      borderColor: option.color,
-                      transform: 'translateY(-2px)',
-                      boxShadow: theme.shadows[4],
-                    },
-                  }}
-                >
-                  <CardActionArea onClick={() => onToggle(option.id)} sx={{ p: 2 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
-                      <Avatar
-                        sx={{
-                          bgcolor: alpha(option.color, 0.15),
-                          color: option.color,
-                          width: 48,
-                          height: 48,
-                        }}
-                      >
-                        <i className={option.icon} style={{ fontSize: 24 }} />
-                      </Avatar>
-                      <Box sx={{ flex: 1 }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                          <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                            {option.label}
-                          </Typography>
-                          <Checkbox
-                            checked={isSelected}
-                            sx={{ color: option.color, '&.Mui-checked': { color: option.color } }}
-                            tabIndex={-1}
-                          />
-                        </Box>
-                        <Typography variant="body2" color="text.secondary">
-                          {option.description}
-                        </Typography>
-                      </Box>
-                    </Box>
-                  </CardActionArea>
-                </Card>
-              </Grid>
-            );
-          })}
-        </Grid>
-      </Box>
-    </Fade>
+    <div className="py-4 animate-in fade-in duration-500">
+      <h2 className="text-2xl font-bold mb-2 text-center text-[var(--text-high)]">
+        Quel est votre cas d&apos;usage ?
+      </h2>
+      <p className="text-sm text-[var(--text-mid)] mb-6 text-center">
+        Selectionnez un ou plusieurs domaines pour personnaliser votre experience.
+      </p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {USE_CASE_OPTIONS.map((option) => {
+          const isSelected = selectedUseCases.includes(option.id);
+          return (
+            <Card
+              key={option.id}
+              className={`cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg ${
+                isSelected
+                  ? 'border-2'
+                  : 'border-2 border-[var(--border)]'
+              }`}
+              style={{
+                borderColor: isSelected ? option.color : undefined,
+                backgroundColor: isSelected ? `${option.color}0f` : undefined,
+              }}
+              onClick={() => onToggle(option.id)}
+            >
+              <div className="p-4">
+                <div className="flex items-start gap-4">
+                  <div
+                    className="w-12 h-12 rounded-full flex items-center justify-center shrink-0"
+                    style={{ backgroundColor: `${option.color}26`, color: option.color }}
+                  >
+                    <i className={option.icon} style={{ fontSize: 24 }} />
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-base font-semibold text-[var(--text-high)]">
+                        {option.label}
+                      </h4>
+                      <Checkbox
+                        checked={isSelected}
+                        tabIndex={-1}
+                        className="pointer-events-none"
+                        style={{ color: option.color } as React.CSSProperties}
+                      />
+                    </div>
+                    <p className="text-sm text-[var(--text-mid)]">
+                      {option.description}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </Card>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 
 function StepQuickTour({ selectedUseCases }: { selectedUseCases: string[] }) {
-  const theme = useTheme();
-
   const relevantFeatures = useMemo(() => {
     if (selectedUseCases.length === 0) {
       return FEATURE_CARDS.slice(0, 4);
@@ -362,159 +327,114 @@ function StepQuickTour({ selectedUseCases }: { selectedUseCases: string[] }) {
   }, [selectedUseCases]);
 
   return (
-    <Fade in timeout={500}>
-      <Box sx={{ py: 2 }}>
-        <Typography variant="h5" sx={{ fontWeight: 700, mb: 1, textAlign: 'center' }}>
-          Tour rapide
-        </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 3, textAlign: 'center' }}>
-          Voici les fonctionnalites recommandees pour vous.
-        </Typography>
-        <Grid container spacing={2}>
-          {relevantFeatures.map((feature, index) => (
-            <Grid item xs={12} sm={6} key={feature.title}>
-              <Fade in timeout={300 + index * 150}>
-                <Card
-                  sx={{
-                    height: '100%',
-                    transition: 'all 0.2s ease',
-                    '&:hover': {
-                      transform: 'translateY(-2px)',
-                      boxShadow: theme.shadows[6],
-                    },
-                  }}
-                >
-                  <CardContent sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-                    <Avatar
-                      sx={{
-                        bgcolor: alpha(feature.color, 0.15),
-                        color: feature.color,
-                        width: 44,
-                        height: 44,
-                        mb: 1.5,
-                      }}
-                    >
-                      <i className={feature.icon} style={{ fontSize: 22 }} />
-                    </Avatar>
-                    <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 0.5 }}>
-                      {feature.title}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2, flex: 1 }}>
-                      {feature.description}
-                    </Typography>
-                    <Button
-                      variant="outlined"
-                      size="small"
-                      href={feature.href}
-                      sx={{
-                        borderColor: feature.color,
-                        color: feature.color,
-                        alignSelf: 'flex-start',
-                        '&:hover': {
-                          borderColor: feature.color,
-                          bgcolor: alpha(feature.color, 0.08),
-                        },
-                      }}
-                    >
-                      Essayer
-                    </Button>
-                  </CardContent>
-                </Card>
-              </Fade>
-            </Grid>
-          ))}
-        </Grid>
-      </Box>
-    </Fade>
+    <div className="py-4 animate-in fade-in duration-500">
+      <h2 className="text-2xl font-bold mb-2 text-center text-[var(--text-high)]">
+        Tour rapide
+      </h2>
+      <p className="text-sm text-[var(--text-mid)] mb-6 text-center">
+        Voici les fonctionnalites recommandees pour vous.
+      </p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {relevantFeatures.map((feature) => (
+          <Card
+            key={feature.title}
+            className="h-full transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl animate-in fade-in duration-500"
+          >
+            <CardContent className="p-6 flex flex-col h-full">
+              <div
+                className="w-11 h-11 rounded-full flex items-center justify-center mb-3"
+                style={{ backgroundColor: `${feature.color}26`, color: feature.color }}
+              >
+                <i className={feature.icon} style={{ fontSize: 22 }} />
+              </div>
+              <h4 className="text-base font-semibold mb-1 text-[var(--text-high)]">
+                {feature.title}
+              </h4>
+              <p className="text-sm text-[var(--text-mid)] mb-4 flex-1">
+                {feature.description}
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                asChild
+                className="self-start"
+                style={{ borderColor: feature.color, color: feature.color }}
+              >
+                <Link href={feature.href}>Essayer</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </div>
   );
 }
 
 function StepProviders() {
-  const theme = useTheme();
   const [apiKeys, setApiKeys] = useState<Record<string, string>>({});
 
   return (
-    <Fade in timeout={500}>
-      <Box sx={{ py: 2 }}>
-        <Typography variant="h5" sx={{ fontWeight: 700, mb: 1, textAlign: 'center' }}>
-          Connectez vos providers IA
-        </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 1, textAlign: 'center' }}>
-          Vous pouvez commencer avec Gemini gratuitement.
-        </Typography>
-        <Typography variant="caption" color="text.secondary" sx={{ mb: 3, textAlign: 'center', display: 'block' }}>
-          Les cles API sont stockees de maniere securisee et ne sont jamais partagees.
-        </Typography>
-        <Stack spacing={2}>
-          {PROVIDERS.map((provider) => (
-            <Card
-              key={provider.name}
-              sx={{
-                border: 1,
-                borderColor: 'divider',
-                transition: 'all 0.2s ease',
-                '&:hover': { boxShadow: theme.shadows[3] },
-              }}
-            >
-              <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: provider.keyPlaceholder ? 1.5 : 0 }}>
-                  <Avatar
-                    sx={{
-                      bgcolor: alpha(provider.color, 0.15),
-                      color: provider.color,
-                      width: 44,
-                      height: 44,
-                    }}
-                  >
-                    <i className={provider.icon} style={{ fontSize: 22 }} />
-                  </Avatar>
-                  <Box sx={{ flex: 1 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                        {provider.name}
-                      </Typography>
-                      {provider.free && (
-                        <Chip label="Gratuit" size="small" color="success" sx={{ height: 20, fontSize: '0.7rem' }} />
-                      )}
-                    </Box>
-                    <Typography variant="body2" color="text.secondary">
-                      {provider.description}
-                    </Typography>
-                  </Box>
-                  {!provider.keyPlaceholder && (
-                    <Chip
-                      label="Configure"
-                      size="small"
-                      variant="outlined"
-                      color="success"
-                      icon={<i className="tabler-check" style={{ fontSize: 14 }} />}
-                    />
-                  )}
-                </Box>
-                {provider.keyPlaceholder && (
-                  <TextField
-                    fullWidth
-                    size="small"
+    <div className="py-4 animate-in fade-in duration-500">
+      <h2 className="text-2xl font-bold mb-2 text-center text-[var(--text-high)]">
+        Connectez vos providers IA
+      </h2>
+      <p className="text-sm text-[var(--text-mid)] mb-2 text-center">
+        Vous pouvez commencer avec Gemini gratuitement.
+      </p>
+      <p className="text-xs text-[var(--text-low)] mb-6 text-center block">
+        Les cles API sont stockees de maniere securisee et ne sont jamais partagees.
+      </p>
+      <div className="space-y-4">
+        {PROVIDERS.map((provider) => (
+          <Card
+            key={provider.name}
+            className="border border-[var(--border)] transition-all duration-200 hover:shadow-md"
+          >
+            <CardContent className="p-4">
+              <div className={`flex items-center gap-4 ${provider.keyPlaceholder ? 'mb-3' : ''}`}>
+                <div
+                  className="w-11 h-11 rounded-full flex items-center justify-center shrink-0"
+                  style={{ backgroundColor: `${provider.color}26`, color: provider.color }}
+                >
+                  <i className={provider.icon} style={{ fontSize: 22 }} />
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <h4 className="text-base font-semibold text-[var(--text-high)]">
+                      {provider.name}
+                    </h4>
+                    {provider.free && (
+                      <Badge variant="success" className="text-[0.7rem]">Gratuit</Badge>
+                    )}
+                  </div>
+                  <p className="text-sm text-[var(--text-mid)]">
+                    {provider.description}
+                  </p>
+                </div>
+                {!provider.keyPlaceholder && (
+                  <Badge variant="outline" className="gap-1 text-green-400 border-green-400/30">
+                    <Check className="h-3 w-3" />
+                    Configure
+                  </Badge>
+                )}
+              </div>
+              {provider.keyPlaceholder && (
+                <div className="relative mt-1">
+                  <i className="tabler-key absolute left-3 top-1/2 -translate-y-1/2" style={{ fontSize: 16, color: 'var(--text-low)' }} />
+                  <Input
                     placeholder={provider.keyPlaceholder}
                     type="password"
                     value={apiKeys[provider.name] || ''}
                     onChange={(e) => setApiKeys((prev) => ({ ...prev, [provider.name]: e.target.value }))}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <i className="tabler-key" style={{ fontSize: 16 }} />
-                        </InputAdornment>
-                      ),
-                    }}
-                    sx={{ mt: 0.5 }}
+                    className="pl-9"
                   />
-                )}
-              </CardContent>
-            </Card>
-          ))}
-        </Stack>
-      </Box>
-    </Fade>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -536,98 +456,61 @@ function StepReady({ onComplete }: { onComplete: () => void }) {
   };
 
   return (
-    <Fade in timeout={500}>
-      <Box sx={{ textAlign: 'center', py: 4 }}>
-        <Box
-          sx={{
-            width: 80,
-            height: 80,
-            borderRadius: '50%',
-            background: 'linear-gradient(135deg, #28c76f 0%, #48dbfb 100%)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            mx: 'auto',
-            mb: 3,
-          }}
-        >
-          <i className="tabler-rocket" style={{ fontSize: 36, color: '#fff' }} />
-        </Box>
-        <Typography variant="h4" sx={{ fontWeight: 700, mb: 1 }}>
-          Votre plateforme est prete !
-        </Typography>
-        <Typography variant="body1" color="text.secondary" sx={{ mb: 4, maxWidth: 440, mx: 'auto' }}>
-          Commencez par une action rapide ou explorez le dashboard complet.
-        </Typography>
-        <Grid container spacing={2} sx={{ mb: 4, maxWidth: 560, mx: 'auto' }}>
-          {quickActions.map((action) => (
-            <Grid item xs={12} sm={4} key={action.label}>
-              <Button
-                variant="outlined"
-                href={action.href}
-                fullWidth
-                onClick={onComplete}
-                sx={{
-                  py: 2,
-                  flexDirection: 'column',
-                  gap: 1,
-                  borderColor: 'divider',
-                  '&:hover': {
-                    borderColor: action.color,
-                    bgcolor: alpha(action.color, 0.06),
-                  },
-                }}
+    <div className="text-center py-8 animate-in fade-in duration-500">
+      <div
+        className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6"
+        style={{ background: 'linear-gradient(135deg, #28c76f 0%, #48dbfb 100%)' }}
+      >
+        <i className="tabler-rocket" style={{ fontSize: 36, color: '#fff' }} />
+      </div>
+      <h2 className="text-3xl font-bold mb-2 text-[var(--text-high)]">
+        Votre plateforme est prete !
+      </h2>
+      <p className="text-base text-[var(--text-mid)] mb-8 max-w-[440px] mx-auto">
+        Commencez par une action rapide ou explorez le dashboard complet.
+      </p>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8 max-w-[560px] mx-auto">
+        {quickActions.map((action) => (
+          <Button
+            key={action.label}
+            variant="outline"
+            asChild
+            className="py-4 flex-col gap-2 h-auto border-[var(--border)] hover:border-current"
+            onClick={onComplete}
+          >
+            <Link href={action.href}>
+              <div
+                className="w-10 h-10 rounded-full flex items-center justify-center"
+                style={{ backgroundColor: `${action.color}26`, color: action.color }}
               >
-                <Avatar
-                  sx={{
-                    bgcolor: alpha(action.color, 0.15),
-                    color: action.color,
-                    width: 40,
-                    height: 40,
-                  }}
-                >
-                  <i className={action.icon} style={{ fontSize: 20 }} />
-                </Avatar>
-                <Typography variant="caption" sx={{ fontWeight: 600, textTransform: 'none' }}>
-                  {action.label}
-                </Typography>
-              </Button>
-            </Grid>
-          ))}
-        </Grid>
-        <Button
-          variant="contained"
-          size="large"
-          onClick={handleExplore}
-          sx={{
-            px: 5,
-            py: 1.5,
-            borderRadius: 3,
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            fontWeight: 600,
-            mb: 2,
-          }}
-        >
-          Explorer le dashboard
-        </Button>
-        <Box>
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={dontShowAgain}
-                onChange={(e) => setDontShowAgain(e.target.checked)}
-                size="small"
-              />
-            }
-            label={
-              <Typography variant="caption" color="text.secondary">
-                Ne plus afficher ce guide
-              </Typography>
-            }
-          />
-        </Box>
-      </Box>
-    </Fade>
+                <i className={action.icon} style={{ fontSize: 20 }} />
+              </div>
+              <span className="text-xs font-semibold normal-case">
+                {action.label}
+              </span>
+            </Link>
+          </Button>
+        ))}
+      </div>
+      <Button
+        size="lg"
+        onClick={handleExplore}
+        className="px-10 py-3 rounded-xl font-semibold mb-4"
+        style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}
+      >
+        Explorer le dashboard
+      </Button>
+      <div className="flex items-center justify-center gap-2">
+        <Checkbox
+          id="dont-show"
+          checked={dontShowAgain}
+          onCheckedChange={(checked) => setDontShowAgain(checked === true)}
+        />
+        <label htmlFor="dont-show" className="text-xs text-[var(--text-low)] cursor-pointer">
+          Ne plus afficher ce guide
+        </label>
+      </div>
+    </div>
   );
 }
 
@@ -691,130 +574,92 @@ export default function OnboardingWizard({ userName = '' }: OnboardingWizardProp
   const isLastStep = currentStep === STEPS.length - 1;
 
   return (
-    <Dialog
-      open={shouldShowWizard}
-      maxWidth="md"
-      fullWidth
-      PaperProps={{
-        sx: {
-          borderRadius: 3,
-          maxHeight: '90vh',
-          overflow: 'hidden',
-        },
-      }}
-    >
-      <DialogContent sx={{ p: 0, overflow: 'auto' }}>
+    <Dialog open={shouldShowWizard}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden p-0 gap-0">
         {/* Header with stepper */}
-        <Box
-          sx={{
-            px: { xs: 2, sm: 4 },
-            pt: 3,
-            pb: 2,
-            borderBottom: 1,
-            borderColor: 'divider',
-            position: 'sticky',
-            top: 0,
-            bgcolor: 'background.paper',
-            zIndex: 1,
-          }}
-        >
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Box
-                sx={{
-                  width: 32,
-                  height: 32,
-                  borderRadius: 1.5,
-                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
+        <div className="px-4 sm:px-8 pt-6 pb-4 border-b border-[var(--border)] sticky top-0 bg-[var(--bg-surface)] z-10">
+          <div className="flex justify-between items-center mb-4">
+            <div className="flex items-center gap-2">
+              <div
+                className="w-8 h-8 rounded-md flex items-center justify-center"
+                style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}
               >
                 <i className="tabler-sparkles" style={{ fontSize: 18, color: '#fff' }} />
-              </Box>
-              <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+              </div>
+              <span className="text-base font-bold text-[var(--text-high)]">
                 SaaS-IA
-              </Typography>
-            </Box>
+              </span>
+            </div>
             {!isLastStep && (
               <Button
-                size="small"
-                color="inherit"
+                variant="ghost"
+                size="sm"
                 onClick={completeOnboarding}
-                sx={{ color: 'text.secondary', textTransform: 'none' }}
+                className="text-[var(--text-low)]"
               >
                 Passer l&apos;intro
               </Button>
             )}
-          </Box>
-          <Stepper
-            activeStep={currentStep}
-            alternativeLabel
-            sx={{
-              '& .MuiStepLabel-label': { fontSize: { xs: '0.65rem', sm: '0.75rem' } },
-            }}
-          >
-            {STEPS.map((label) => (
-              <Step key={label}>
-                <StepLabel>{label}</StepLabel>
-              </Step>
+          </div>
+          {/* Step indicators */}
+          <div className="flex items-center justify-between gap-2">
+            {STEPS.map((label, index) => (
+              <div key={label} className="flex flex-col items-center flex-1">
+                <div
+                  className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium mb-1 transition-colors ${
+                    index <= currentStep
+                      ? 'bg-[var(--accent)] text-[var(--bg-app)]'
+                      : 'bg-[var(--bg-elevated)] text-[var(--text-low)]'
+                  }`}
+                >
+                  {index < currentStep ? (
+                    <Check className="h-4 w-4" />
+                  ) : (
+                    index + 1
+                  )}
+                </div>
+                <span className="text-[0.65rem] sm:text-xs text-[var(--text-low)] text-center">
+                  {label}
+                </span>
+              </div>
             ))}
-          </Stepper>
-        </Box>
+          </div>
+        </div>
 
         {/* Content */}
-        <Box sx={{ px: { xs: 2, sm: 4 }, py: 2, minHeight: 320 }}>
+        <div className="px-4 sm:px-8 py-4 min-h-[320px] overflow-auto">
           {renderStep()}
-        </Box>
+        </div>
 
         {/* Footer navigation */}
         {!isLastStep && (
-          <Box
-            sx={{
-              px: { xs: 2, sm: 4 },
-              py: 2,
-              borderTop: 1,
-              borderColor: 'divider',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              position: 'sticky',
-              bottom: 0,
-              bgcolor: 'background.paper',
-              zIndex: 1,
-            }}
-          >
+          <div className="px-4 sm:px-8 py-4 border-t border-[var(--border)] flex justify-between items-center sticky bottom-0 bg-[var(--bg-surface)] z-10">
             <Button
+              variant="ghost"
               onClick={handleBack}
               disabled={currentStep === 0}
-              sx={{ textTransform: 'none' }}
             >
               Retour
             </Button>
-            <Box sx={{ display: 'flex', gap: 1 }}>
+            <div className="flex gap-2">
               {currentStep === 3 && (
                 <Button
+                  variant="ghost"
                   onClick={handleSkip}
-                  sx={{ textTransform: 'none', color: 'text.secondary' }}
+                  className="text-[var(--text-low)]"
                 >
                   Passer
                 </Button>
               )}
               <Button
-                variant="contained"
                 onClick={handleNext}
-                sx={{
-                  px: 4,
-                  textTransform: 'none',
-                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                  fontWeight: 600,
-                }}
+                className="px-8 font-semibold"
+                style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}
               >
                 {currentStep === 0 ? 'Commencer' : 'Suivant'}
               </Button>
-            </Box>
-          </Box>
+            </div>
+          </div>
         )}
       </DialogContent>
     </Dialog>

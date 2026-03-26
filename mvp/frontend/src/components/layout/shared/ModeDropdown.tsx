@@ -1,47 +1,34 @@
 'use client'
 
 // React Imports
-import { useRef, useState } from 'react'
+import { useState } from 'react'
 
-// MUI Imports
-import Tooltip from '@mui/material/Tooltip'
-import IconButton from '@mui/material/IconButton'
-import Popper from '@mui/material/Popper'
-import Fade from '@mui/material/Fade'
-import Paper from '@mui/material/Paper'
-import ClickAwayListener from '@mui/material/ClickAwayListener'
-import MenuList from '@mui/material/MenuList'
-import MenuItem from '@mui/material/MenuItem'
+// Lucide Imports
+import { Sun, Moon, Monitor } from 'lucide-react'
 
 // Type Imports
 import type { Mode } from '@core/types'
+
+// Design Hub Imports
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/lib/design-hub/components/Tooltip'
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from '@/lib/design-hub/components/DropdownMenu'
 
 // Hook Imports
 import { useSettings } from '@core/hooks/useSettings'
 
 const ModeDropdown = () => {
   // States
-  const [open, setOpen] = useState(false)
   const [tooltipOpen, setTooltipOpen] = useState(false)
-
-  // Refs
-  const anchorRef = useRef<HTMLButtonElement>(null)
 
   // Hooks
   const { settings, updateSettings } = useSettings()
 
-  const handleClose = () => {
-    setOpen(false)
-    setTooltipOpen(false)
-  }
-
-  const handleToggle = () => {
-    setOpen(prevOpen => !prevOpen)
-  }
-
   const handleModeSwitch = (mode: Mode) => {
-    handleClose()
-
     if (settings.mode !== mode) {
       updateSettings({ mode: mode })
     }
@@ -49,76 +36,54 @@ const ModeDropdown = () => {
 
   const getModeIcon = () => {
     if (settings.mode === 'system') {
-      return 'bx-desktop'
+      return <Monitor className='h-5 w-5' />
     } else if (settings.mode === 'dark') {
-      return 'bx-moon'
+      return <Moon className='h-5 w-5' />
     } else {
-      return 'bx-sun'
+      return <Sun className='h-5 w-5' />
     }
   }
 
   return (
-    <>
-      <Tooltip
-        title={settings.mode + ' Mode'}
-        onOpen={() => setTooltipOpen(true)}
-        onClose={() => setTooltipOpen(false)}
-        open={open ? false : tooltipOpen ? true : false}
-        slotProps={{
-          popper: { className: 'capitalize' }
-        }}
-      >
-        <IconButton ref={anchorRef} onClick={handleToggle} className='text-textPrimary'>
-          <i className={getModeIcon()} />
-        </IconButton>
-      </Tooltip>
-      <Popper
-        open={open}
-        transition
-        disablePortal
-        placement='bottom-start'
-        anchorEl={anchorRef.current}
-        className='min-is-[160px] !mbs-4 z-[1]'
-      >
-        {({ TransitionProps, placement }) => (
-          <Fade
-            {...TransitionProps}
-            style={{ transformOrigin: placement === 'bottom-start' ? 'left top' : 'right top' }}
-          >
-            <Paper className={settings.skin === 'bordered' ? 'border shadow-none' : 'shadow-lg'}>
-              <ClickAwayListener onClickAway={handleClose}>
-                <MenuList onKeyDown={handleClose}>
-                  <MenuItem
-                    className='gap-3'
-                    onClick={() => handleModeSwitch('light')}
-                    selected={settings.mode === 'light'}
-                  >
-                    <i className='bx-sun' />
-                    Light
-                  </MenuItem>
-                  <MenuItem
-                    className='gap-3'
-                    onClick={() => handleModeSwitch('dark')}
-                    selected={settings.mode === 'dark'}
-                  >
-                    <i className='bx-moon' />
-                    Dark
-                  </MenuItem>
-                  <MenuItem
-                    className='gap-3'
-                    onClick={() => handleModeSwitch('system')}
-                    selected={settings.mode === 'system'}
-                  >
-                    <i className='bx-desktop' />
-                    System
-                  </MenuItem>
-                </MenuList>
-              </ClickAwayListener>
-            </Paper>
-          </Fade>
-        )}
-      </Popper>
-    </>
+    <DropdownMenu onOpenChange={(open) => { if (open) setTooltipOpen(false) }}>
+      <TooltipProvider>
+        <Tooltip open={tooltipOpen} onOpenChange={setTooltipOpen}>
+          <TooltipTrigger asChild>
+            <DropdownMenuTrigger asChild>
+              <button className='inline-flex items-center justify-center rounded-full p-2 text-[var(--text-high)] hover:bg-[var(--bg-elevated)] transition-colors capitalize'>
+                {getModeIcon()}
+              </button>
+            </DropdownMenuTrigger>
+          </TooltipTrigger>
+          <TooltipContent>
+            <span className='capitalize'>{settings.mode} Mode</span>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+      <DropdownMenuContent align='start' className='min-w-[160px]'>
+        <DropdownMenuItem
+          className='gap-3'
+          onClick={() => handleModeSwitch('light')}
+        >
+          <Sun className='h-4 w-4' />
+          Light
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          className='gap-3'
+          onClick={() => handleModeSwitch('dark')}
+        >
+          <Moon className='h-4 w-4' />
+          Dark
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          className='gap-3'
+          onClick={() => handleModeSwitch('system')}
+        >
+          <Monitor className='h-4 w-4' />
+          System
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
 }
 

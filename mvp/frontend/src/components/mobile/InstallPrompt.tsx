@@ -1,16 +1,9 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-
-import Alert from '@mui/material/Alert';
-import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
-import IconButton from '@mui/material/IconButton';
-import Slide from '@mui/material/Slide';
-import Typography from '@mui/material/Typography';
-
-import CloseIcon from '@mui/icons-material/Close';
-import GetAppIcon from '@mui/icons-material/GetApp';
+import { X, Download } from 'lucide-react';
+import { Button } from '@/lib/design-hub/components/Button';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 
 import { useIsInstalled, useIsMobile } from '@/hooks/useMobile';
 
@@ -78,60 +71,44 @@ export default function InstallPrompt() {
   }
 
   return (
-    <Slide direction="up" in={showPrompt} mountOnEnter unmountOnExit>
-      <Box
-        sx={{
-          position: 'fixed',
-          bottom: isMobile ? 80 : 24,
-          left: isMobile ? 12 : 'auto',
-          right: isMobile ? 12 : 24,
-          zIndex: 1400,
-          maxWidth: isMobile ? 'none' : 400,
-        }}
+    <div
+      className={`fixed z-[1400] transition-all duration-300 ${
+        showPrompt ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0'
+      } ${
+        isMobile
+          ? 'bottom-20 left-3 right-3'
+          : 'bottom-6 right-6 max-w-[400px]'
+      }`}
+    >
+      <Alert
+        variant="info"
+        className="relative rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.3)] bg-[var(--accent)] text-white border-[var(--accent)]"
       >
-        <Alert
-          severity="info"
-          variant="filled"
-          icon={<GetAppIcon />}
-          action={
-            <IconButton
-              size="small"
-              color="inherit"
-              onClick={handleDismiss}
-              aria-label="Dismiss install prompt"
-            >
-              <CloseIcon fontSize="small" />
-            </IconButton>
-          }
-          sx={{
-            borderRadius: 3,
-            boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
-            '& .MuiAlert-message': { width: '100%' },
-          }}
+        <Download className="h-5 w-5" />
+        <button
+          onClick={handleDismiss}
+          aria-label="Dismiss install prompt"
+          className="absolute right-3 top-3 text-white/80 hover:text-white transition-colors"
         >
-          <Typography variant="subtitle2" fontWeight={700} gutterBottom>
-            Install SaaS-IA
-          </Typography>
-          <Typography variant="body2" sx={{ mb: 1.5, opacity: 0.9 }}>
+          <X className="h-4 w-4" />
+        </button>
+        <AlertTitle className="font-bold text-white">
+          Install SaaS-IA
+        </AlertTitle>
+        <AlertDescription className="text-white/90">
+          <p className="text-sm mb-3">
             Add to your home screen for faster access and offline support.
-          </Typography>
+          </p>
           <Button
-            variant="contained"
-            size="small"
+            size="sm"
             onClick={handleInstall}
-            startIcon={<GetAppIcon />}
-            sx={{
-              bgcolor: 'rgba(255,255,255,0.2)',
-              color: 'inherit',
-              '&:hover': { bgcolor: 'rgba(255,255,255,0.3)' },
-              textTransform: 'none',
-              fontWeight: 600,
-            }}
+            className="bg-white/20 text-white hover:bg-white/30 border-0 font-semibold gap-2"
           >
+            <Download className="h-4 w-4" />
             Install App
           </Button>
-        </Alert>
-      </Box>
-    </Slide>
+        </AlertDescription>
+      </Alert>
+    </div>
   );
 }

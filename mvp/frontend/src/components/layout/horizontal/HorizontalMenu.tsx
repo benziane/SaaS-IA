@@ -1,4 +1,4 @@
-// MUI Imports
+// MUI Imports — required by Sneat menu style functions that use theme.spacing
 import { useTheme } from '@mui/material/styles'
 
 // Type Imports
@@ -44,7 +44,7 @@ const RenderVerticalExpandIcon = ({ open, transitionDuration }: RenderVerticalEx
 )
 
 const HorizontalMenu = () => {
-  // Hooks
+  // Hooks — theme is required by Sneat style functions
   const verticalNavOptions = useVerticalNav()
   const theme = useTheme()
 
@@ -85,26 +85,6 @@ const HorizontalMenu = () => {
           About
         </MenuItem>
       </Menu>
-      {/* <Menu
-        rootStyles={menuRootStyles(theme)}
-        renderExpandIcon={({ level }) => <RenderExpandIcon level={level} />}
-        menuItemStyles={menuItemStyles(theme, 'bx-bxs-circle')}
-        renderExpandedMenuItemIcon={{ icon: <i className='bx-bxs-circle' /> }}
-        popoutMenuOffset={{
-          mainAxis: ({ level }) => (level && level > 0 ? 6 : 10),
-          alignmentAxis: 0
-        }}
-        verticalMenuProps={{
-          menuItemStyles: verticalMenuItemStyles(verticalNavOptions, theme),
-          renderExpandIcon: ({ open }) => (
-            <RenderVerticalExpandIcon open={open} transitionDuration={transitionDuration} />
-          ),
-          renderExpandedMenuItemIcon: { icon: <i className='bx-bxs-circle' /> },
-          menuSectionStyles: verticalMenuSectionStyles(verticalNavOptions, theme)
-        }}
-      >
-        <GenerateHorizontalMenu menuData={menuData(dictionary)} />
-      </Menu> */}
     </HorizontalNav>
   )
 }

@@ -2,25 +2,16 @@
 
 import { usePathname, useRouter } from 'next/navigation';
 import { useMemo } from 'react';
-
-import BottomNavigation from '@mui/material/BottomNavigation';
-import BottomNavigationAction from '@mui/material/BottomNavigationAction';
-import Paper from '@mui/material/Paper';
-
-import DashboardIcon from '@mui/icons-material/Dashboard';
-import ChatIcon from '@mui/icons-material/Chat';
-import MicIcon from '@mui/icons-material/Mic';
-import MenuBookIcon from '@mui/icons-material/MenuBook';
-import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
+import { LayoutDashboard, MessageSquare, Mic, BookOpen, MoreHorizontal } from 'lucide-react';
 
 import { useIsMobile, useIsInstalled } from '@/hooks/useMobile';
 
 const NAV_ITEMS = [
-  { label: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' },
-  { label: 'Chat', icon: <ChatIcon />, path: '/chat' },
-  { label: 'Transcription', icon: <MicIcon />, path: '/transcription' },
-  { label: 'Knowledge', icon: <MenuBookIcon />, path: '/knowledge' },
-  { label: 'More', icon: <MoreHorizIcon />, path: '/more' },
+  { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
+  { label: 'Chat', icon: MessageSquare, path: '/chat' },
+  { label: 'Transcription', icon: Mic, path: '/transcription' },
+  { label: 'Knowledge', icon: BookOpen, path: '/knowledge' },
+  { label: 'More', icon: MoreHorizontal, path: '/more' },
 ] as const;
 
 export default function BottomNav() {
@@ -40,52 +31,36 @@ export default function BottomNav() {
   }
 
   return (
-    <Paper
-      sx={{
-        position: 'fixed',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        zIndex: 1300,
-        borderTop: '1px solid',
-        borderColor: 'divider',
-        // Safe area inset for notched devices
-        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-      }}
-      elevation={8}
+    <div
+      className="fixed bottom-0 left-0 right-0 z-[1300] border-t border-[var(--border)] bg-[var(--bg-surface)] shadow-[0_-2px_10px_rgba(0,0,0,0.3)]"
+      style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
     >
-      <BottomNavigation
-        value={currentIndex}
-        onChange={(_, newValue) => {
-          const item = NAV_ITEMS[newValue as number];
-          if (item) router.push(item.path);
-        }}
-        showLabels
-        sx={{
-          height: 64,
-          '& .MuiBottomNavigationAction-root': {
-            minWidth: 'auto',
-            padding: '6px 0',
-            '&.Mui-selected': {
-              color: 'primary.main',
-            },
-          },
-          '& .MuiBottomNavigationAction-label': {
-            fontSize: '0.65rem',
-            '&.Mui-selected': {
-              fontSize: '0.7rem',
-            },
-          },
-        }}
-      >
-        {NAV_ITEMS.map((item) => (
-          <BottomNavigationAction
-            key={item.path}
-            label={item.label}
-            icon={item.icon}
-          />
-        ))}
-      </BottomNavigation>
-    </Paper>
+      <nav className="flex h-16 items-center justify-around">
+        {NAV_ITEMS.map((item, index) => {
+          const Icon = item.icon;
+          const isActive = index === currentIndex;
+          return (
+            <button
+              key={item.path}
+              onClick={() => router.push(item.path)}
+              className={`flex flex-col items-center justify-center min-w-0 flex-1 py-1.5 transition-colors ${
+                isActive
+                  ? 'text-[var(--accent)]'
+                  : 'text-[var(--text-low)] hover:text-[var(--text-mid)]'
+              }`}
+            >
+              <Icon className="h-5 w-5" />
+              <span
+                className={`mt-0.5 ${
+                  isActive ? 'text-[0.7rem] font-medium' : 'text-[0.65rem]'
+                }`}
+              >
+                {item.label}
+              </span>
+            </button>
+          );
+        })}
+      </nav>
+    </div>
   );
 }

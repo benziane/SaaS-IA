@@ -7,26 +7,20 @@
 'use client';
 
 import { useState } from 'react';
+import { Plus, Trash2, MessageSquare } from 'lucide-react';
+import { Button } from '@/lib/design-hub/components/Button';
+import { Badge } from '@/components/ui/badge';
 import {
-  Box,
-  Button,
-  Chip,
   Dialog,
-  DialogActions,
   DialogContent,
-  DialogContentText,
+  DialogHeader,
   DialogTitle,
-  Divider,
-  IconButton,
-  List,
-  ListItem,
-  ListItemButton,
-  ListItemText,
-  Skeleton,
-  Tooltip,
-  Typography,
-} from '@mui/material';
-import { Add, Delete, Forum } from '@mui/icons-material';
+  DialogDescription,
+  DialogFooter,
+} from '@/lib/design-hub/components/Dialog';
+import { Separator } from '@/lib/design-hub/components/Separator';
+import { Skeleton } from '@/lib/design-hub/components/Skeleton';
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/lib/design-hub/components/Tooltip';
 
 import type { Conversation } from '@/features/conversation/types';
 
@@ -90,172 +84,120 @@ export function ConversationList({
   };
 
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        height: '100%',
-        bgcolor: 'background.paper',
-      }}
-    >
+    <div className="flex flex-col h-full bg-[var(--bg-surface)]">
       {/* Header */}
-      <Box sx={{ p: 2, pb: 1 }}>
-        <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
-          Conversations
-        </Typography>
+      <div className="p-4 pb-2">
+        <h2 className="text-lg font-semibold mb-2 text-[var(--text-high)]">Conversations</h2>
         <Button
-          fullWidth
-          variant="contained"
-          startIcon={<Add />}
           onClick={onCreate}
-          size="small"
+          size="sm"
+          className="w-full gap-2"
         >
+          <Plus className="h-4 w-4" />
           New Conversation
         </Button>
-      </Box>
+      </div>
 
-      <Divider />
+      <Separator />
 
       {/* Conversation List */}
-      <Box sx={{ flex: 1, overflow: 'auto' }}>
+      <div className="flex-1 overflow-auto">
         {isLoading ? (
-          <Box sx={{ p: 2 }}>
+          <div className="p-4 space-y-2">
             {Array.from({ length: 4 }).map((_, i) => (
-              <Skeleton
-                key={i}
-                variant="rectangular"
-                height={56}
-                sx={{ mb: 1, borderRadius: 1 }}
-              />
+              <Skeleton key={i} className="h-14 w-full" />
             ))}
-          </Box>
+          </div>
         ) : conversations.length === 0 ? (
-          <Box
-            sx={{
-              p: 3,
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: 1,
-              color: 'text.secondary',
-            }}
-          >
-            <Forum sx={{ fontSize: 48, opacity: 0.3 }} />
-            <Typography variant="body2" color="text.secondary" textAlign="center">
+          <div className="p-6 flex flex-col items-center gap-2 text-[var(--text-low)]">
+            <MessageSquare className="h-12 w-12 opacity-30" />
+            <p className="text-sm text-[var(--text-low)] text-center">
               No conversations yet. Start a new one to chat with AI.
-            </Typography>
-          </Box>
+            </p>
+          </div>
         ) : (
-          <List disablePadding>
+          <ul className="py-1">
             {conversations.map((conversation) => {
               const isActive = conversation.id === activeId;
 
               return (
-                <ListItem
+                <li
                   key={conversation.id}
-                  disablePadding
-                  secondaryAction={
-                    <Tooltip title="Delete conversation">
-                      <IconButton
-                        edge="end"
-                        size="small"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setDeleteTarget(conversation.id);
-                        }}
-                        sx={{
-                          opacity: 0,
-                          transition: 'opacity 0.2s',
-                          '.MuiListItem-root:hover &': { opacity: 1 },
-                        }}
-                      >
-                        <Delete fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                  }
+                  className="group relative"
                 >
-                  <ListItemButton
-                    selected={isActive}
+                  <button
                     onClick={() => onSelect(conversation.id)}
-                    sx={{
-                      borderRadius: 0,
-                      borderLeft: isActive ? '3px solid' : '3px solid transparent',
-                      borderLeftColor: isActive ? 'primary.main' : 'transparent',
-                      py: 1.5,
-                      px: 2,
-                    }}
+                    className={`w-full text-left py-3 px-4 transition-colors ${
+                      isActive
+                        ? 'bg-[var(--bg-elevated)] border-l-[3px] border-l-[var(--accent)]'
+                        : 'border-l-[3px] border-l-transparent hover:bg-[var(--bg-elevated)]/50'
+                    }`}
                   >
-                    <ListItemText
-                      primary={
-                        <Typography
-                          variant="body2"
-                          sx={{
-                            fontWeight: isActive ? 600 : 400,
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap',
-                            maxWidth: 180,
+                    <p
+                      className={`text-sm truncate max-w-[180px] ${
+                        isActive ? 'font-semibold' : 'font-normal'
+                      } text-[var(--text-high)]`}
+                    >
+                      {conversation.title || 'New Conversation'}
+                    </p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-xs text-[var(--text-low)]">
+                        {formatRelativeDate(conversation.updated_at)}
+                      </span>
+                      {conversation.message_count > 0 && (
+                        <Badge variant="outline" className="h-[18px] text-[0.65rem]">
+                          {conversation.message_count}
+                        </Badge>
+                      )}
+                    </div>
+                  </button>
+
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDeleteTarget(conversation.id);
                           }}
+                          aria-label="Delete conversation"
+                          className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-md hover:bg-[var(--bg-elevated)] text-[var(--text-low)] hover:text-red-400"
                         >
-                          {conversation.title || 'New Conversation'}
-                        </Typography>
-                      }
-                      secondary={
-                        <Box
-                          component="span"
-                          sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 1,
-                            mt: 0.5,
-                          }}
-                        >
-                          <Typography variant="caption" color="text.secondary">
-                            {formatRelativeDate(conversation.updated_at)}
-                          </Typography>
-                          {conversation.message_count > 0 && (
-                            <Chip
-                              label={conversation.message_count}
-                              size="small"
-                              variant="outlined"
-                              sx={{ height: 18, fontSize: '0.65rem' }}
-                            />
-                          )}
-                        </Box>
-                      }
-                    />
-                  </ListItemButton>
-                </ListItem>
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent>Delete conversation</TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </li>
               );
             })}
-          </List>
+          </ul>
         )}
-      </Box>
+      </div>
 
       {/* Delete Confirmation Dialog */}
-      <Dialog
-        open={!!deleteTarget}
-        onClose={() => setDeleteTarget(null)}
-        maxWidth="xs"
-        fullWidth
-      >
-        <DialogTitle>Delete Conversation</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            Are you sure you want to delete this conversation? All messages will
-            be permanently removed. This action cannot be undone.
-          </DialogContentText>
+      <Dialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <DialogContent className="max-w-xs">
+          <DialogHeader>
+            <DialogTitle>Delete Conversation</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this conversation? All messages will
+              be permanently removed. This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setDeleteTarget(null)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleConfirmDelete}>
+              Delete
+            </Button>
+          </DialogFooter>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDeleteTarget(null)} color="inherit">
-            Cancel
-          </Button>
-          <Button onClick={handleConfirmDelete} color="error" variant="contained">
-            Delete
-          </Button>
-        </DialogActions>
       </Dialog>
-    </Box>
+    </div>
   );
 }
 

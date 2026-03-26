@@ -1,16 +1,7 @@
 'use client';
 
-import {
-  Avatar,
-  Box,
-  Card,
-  CardActionArea,
-  CardContent,
-  Grid,
-  Typography,
-} from '@mui/material';
-import { alpha, useTheme } from '@mui/material/styles';
 import Link from 'next/link';
+import { Card, CardContent } from '@/components/ui/card';
 
 /* ========================================================================
    TYPES
@@ -78,84 +69,53 @@ const QUICK_ACTIONS: QuickAction[] = [
    ======================================================================== */
 
 export default function QuickActionsPanel() {
-  const theme = useTheme();
-
   return (
-    <Card sx={{ mb: 3 }}>
-      <CardContent>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
-          <Box
-            sx={{
-              width: 36,
-              height: 36,
-              borderRadius: 2,
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
+    <Card className="mb-6">
+      <CardContent className="p-6">
+        <div className="flex items-center gap-3 mb-6">
+          <div
+            className="w-9 h-9 rounded-lg flex items-center justify-center"
+            style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}
           >
             <i className="tabler-rocket" style={{ fontSize: 20, color: '#fff' }} />
-          </Box>
-          <Box>
-            <Typography variant="h6" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
+          </div>
+          <div>
+            <h3 className="text-lg font-bold leading-tight text-[var(--text-high)]">
               Actions rapides
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
+            </h3>
+            <p className="text-xs text-[var(--text-low)]">
               Commencez par une de ces actions courantes
-            </Typography>
-          </Box>
-        </Box>
+            </p>
+          </div>
+        </div>
 
-        <Grid container spacing={2}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
           {QUICK_ACTIONS.map((action) => (
-            <Grid item xs={12} sm={6} md={4} key={action.title}>
-              <Card
-                variant="outlined"
-                sx={{
-                  height: '100%',
-                  transition: 'all 0.2s ease',
-                  '&:hover': {
-                    borderColor: action.color,
-                    transform: 'translateY(-2px)',
-                    boxShadow: theme.shadows[4],
-                  },
-                }}
+            <Card
+              key={action.title}
+              className="h-full border border-[var(--border)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg"
+              style={{ '--hover-border': action.color } as React.CSSProperties}
+            >
+              <Link
+                href={action.href}
+                className="p-4 h-full flex flex-col items-start justify-start"
               >
-                <CardActionArea
-                  component={Link}
-                  href={action.href}
-                  sx={{
-                    p: 2,
-                    height: '100%',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'flex-start',
-                    justifyContent: 'flex-start',
-                  }}
+                <div
+                  className="w-11 h-11 rounded-full flex items-center justify-center mb-3"
+                  style={{ backgroundColor: `${action.color}1f`, color: action.color }}
                 >
-                  <Avatar
-                    sx={{
-                      bgcolor: alpha(action.color, 0.12),
-                      color: action.color,
-                      width: 44,
-                      height: 44,
-                      mb: 1.5,
-                    }}
-                  >
-                    <i className={action.icon} style={{ fontSize: 22 }} />
-                  </Avatar>
-                  <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 0.5 }}>
-                    {action.title}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
-                    {action.description}
-                  </Typography>
-                </CardActionArea>
-              </Card>
-            </Grid>
+                  <i className={action.icon} style={{ fontSize: 22 }} />
+                </div>
+                <h4 className="text-sm font-semibold mb-1 text-[var(--text-high)]">
+                  {action.title}
+                </h4>
+                <p className="text-xs text-[var(--text-mid)] leading-relaxed">
+                  {action.description}
+                </p>
+              </Link>
+            </Card>
           ))}
-        </Grid>
+        </div>
       </CardContent>
     </Card>
   );

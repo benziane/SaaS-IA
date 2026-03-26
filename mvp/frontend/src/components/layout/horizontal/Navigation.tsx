@@ -1,5 +1,4 @@
 // Third-party Imports
-import styled from '@emotion/styled'
 import classnames from 'classnames'
 
 // Component Imports
@@ -15,27 +14,6 @@ import useHorizontalNav from '@menu/hooks/useHorizontalNav'
 // Util Imports
 import { horizontalLayoutClasses } from '@layouts/utils/layoutClasses'
 
-type StyledDivProps = {
-  isContentCompact: boolean
-  isBreakpointReached?: boolean
-}
-
-const StyledDiv = styled.div<StyledDivProps>`
-  ${({ isContentCompact, isBreakpointReached }) =>
-    !isBreakpointReached &&
-    `
-    padding: ${themeConfig.layoutPadding}px;
-
-    ${
-      isContentCompact &&
-      `
-      margin-inline: auto;
-      max-inline-size: ${themeConfig.compactContentWidth}px;
-    `
-    }
-  `}
-`
-
 const Navigation = () => {
   // Hooks
   const { settings } = useSettings()
@@ -50,15 +28,25 @@ const Navigation = () => {
         className: classnames(horizontalLayoutClasses.navigation, 'relative flex border-bs')
       })}
     >
-      <StyledDiv
-        isContentCompact={headerContentCompact}
-        isBreakpointReached={isBreakpointReached}
-        {...(!isBreakpointReached && {
-          className: classnames(horizontalLayoutClasses.navigationContentWrapper, 'flex items-center is-full plb-2.5')
-        })}
+      <div
+        className={classnames(
+          !isBreakpointReached && horizontalLayoutClasses.navigationContentWrapper,
+          !isBreakpointReached && 'flex items-center is-full plb-2.5'
+        )}
+        style={
+          !isBreakpointReached
+            ? {
+                padding: `${themeConfig.layoutPadding}px`,
+                ...(headerContentCompact && {
+                  marginInline: 'auto',
+                  maxInlineSize: `${themeConfig.compactContentWidth}px`,
+                }),
+              }
+            : undefined
+        }
       >
         <HorizontalMenu />
-      </StyledDiv>
+      </div>
     </div>
   )
 }

@@ -1,72 +1,37 @@
 'use client'
 
-// React Imports
-import { useRef, useState } from 'react'
-import type { MouseEvent } from 'react'
-
 // Next Imports
 import { useRouter } from 'next/navigation'
 
-// MUI Imports
-import { styled } from '@mui/material/styles'
-import Badge from '@mui/material/Badge'
-import Popper from '@mui/material/Popper'
-import Fade from '@mui/material/Fade'
-import Paper from '@mui/material/Paper'
-import ClickAwayListener from '@mui/material/ClickAwayListener'
-import MenuList from '@mui/material/MenuList'
-import Typography from '@mui/material/Typography'
-import Divider from '@mui/material/Divider'
-import MenuItem from '@mui/material/MenuItem'
+// Lucide Imports
+import { User, Settings, DollarSign, HelpCircle, LogOut } from 'lucide-react'
 
-// Component Imports
-import CustomAvatar from '@core/components/mui/Avatar'
+// Design Hub Imports
+import { Avatar, AvatarImage, AvatarFallback } from '@/lib/design-hub/components/Avatar'
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from '@/lib/design-hub/components/DropdownMenu'
 
 // Hook Imports
-import { useSettings } from '@core/hooks/useSettings'
 import { useAuth } from '@/contexts/AuthContext'
 
-// Styled component for badge content
-const BadgeContentSpan = styled('span')({
-  width: 8,
-  height: 8,
-  borderRadius: '50%',
-  cursor: 'pointer',
-  backgroundColor: 'var(--mui-palette-success-main)',
-  boxShadow: '0 0 0 2px var(--mui-palette-background-paper)'
-})
-
 const UserDropdown = () => {
-  // States
-  const [open, setOpen] = useState(false)
-
-  // Refs
-  const anchorRef = useRef<HTMLDivElement>(null)
-
   // Hooks
   const router = useRouter()
   const { user, logout } = useAuth()
-
-  const { settings } = useSettings()
 
   // Derive display values from auth context with fallbacks
   const displayName = user?.email?.split('@')[0] || 'User'
   const displayEmail = user?.email || 'Not signed in'
 
-  const handleDropdownOpen = () => {
-    !open ? setOpen(true) : setOpen(false)
-  }
-
-  const handleDropdownClose = (event?: MouseEvent<HTMLLIElement> | (MouseEvent | TouchEvent), url?: string) => {
+  const handleDropdownClose = (url?: string) => {
     if (url) {
       router.push(url)
     }
-
-    if (anchorRef.current && anchorRef.current.contains(event?.target as HTMLElement)) {
-      return
-    }
-
-    setOpen(false)
   }
 
   const handleUserLogout = async () => {
@@ -74,78 +39,51 @@ const UserDropdown = () => {
   }
 
   return (
-    <>
-      <Badge
-        ref={anchorRef}
-        overlap='circular'
-        badgeContent={<BadgeContentSpan onClick={handleDropdownOpen} />}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-        className='mis-2.5'
-      >
-        <CustomAvatar
-          ref={anchorRef}
-          alt={displayName}
-          src='/images/avatars/1.png'
-          onClick={handleDropdownOpen}
-          className='cursor-pointer'
-        />
-      </Badge>
-      <Popper
-        open={open}
-        transition
-        disablePortal
-        placement='bottom-end'
-        anchorEl={anchorRef.current}
-        className='min-is-[240px] !mbs-4 z-[1]'
-      >
-        {({ TransitionProps, placement }) => (
-          <Fade
-            {...TransitionProps}
-            style={{
-              transformOrigin: placement === 'bottom-end' ? 'right top' : 'left top'
-            }}
-          >
-            <Paper className={settings.skin === 'bordered' ? 'border shadow-none' : 'shadow-lg'}>
-              <ClickAwayListener onClickAway={e => handleDropdownClose(e as MouseEvent | TouchEvent)}>
-                <MenuList>
-                  <div className='flex items-center plb-2 pli-5 gap-2' tabIndex={-1}>
-                    <CustomAvatar size={40} alt={displayName} src='/images/avatars/1.png' />
-                    <div className='flex items-start flex-col'>
-                      <Typography variant='h6'>{displayName}</Typography>
-                      <Typography variant='body2' color='text.disabled'>
-                        {displayEmail}
-                      </Typography>
-                    </div>
-                  </div>
-                  <Divider className='mlb-1' />
-                  <MenuItem className='gap-3' onClick={e => handleDropdownClose(e)}>
-                    <i className='bx-user' />
-                    <Typography color='text.primary'>My Profile</Typography>
-                  </MenuItem>
-                  <MenuItem className='gap-3' onClick={e => handleDropdownClose(e)}>
-                    <i className='bx-cog' />
-                    <Typography color='text.primary'>Settings</Typography>
-                  </MenuItem>
-                  <MenuItem className='gap-3' onClick={e => handleDropdownClose(e)}>
-                    <i className='bx-dollar' />
-                    <Typography color='text.primary'>Pricing</Typography>
-                  </MenuItem>
-                  <MenuItem className='gap-3' onClick={e => handleDropdownClose(e)}>
-                    <i className='bx-help-circle' />
-                    <Typography color='text.primary'>FAQ</Typography>
-                  </MenuItem>
-                  <Divider className='mlb-1' />
-                  <MenuItem className='gap-3' onClick={handleUserLogout}>
-                    <i className='bx-power-off' />
-                    <Typography color='text.primary'>Logout</Typography>
-                  </MenuItem>
-                </MenuList>
-              </ClickAwayListener>
-            </Paper>
-          </Fade>
-        )}
-      </Popper>
-    </>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button className='relative ms-2.5 cursor-pointer rounded-full outline-none'>
+          <Avatar className='h-10 w-10'>
+            <AvatarImage src='/images/avatars/1.png' alt={displayName} />
+            <AvatarFallback>{displayName.charAt(0).toUpperCase()}</AvatarFallback>
+          </Avatar>
+          <span className='absolute bottom-0 right-0 h-2 w-2 rounded-full bg-green-500 ring-2 ring-[var(--bg-surface)]' />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align='end' className='min-w-[240px]'>
+        <div className='flex items-center gap-2 px-3 py-2'>
+          <Avatar className='h-10 w-10'>
+            <AvatarImage src='/images/avatars/1.png' alt={displayName} />
+            <AvatarFallback>{displayName.charAt(0).toUpperCase()}</AvatarFallback>
+          </Avatar>
+          <div className='flex flex-col'>
+            <span className='text-sm font-semibold text-[var(--text-high)]'>{displayName}</span>
+            <span className='text-xs text-[var(--text-low)]'>{displayEmail}</span>
+          </div>
+        </div>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem className='gap-3' onClick={() => handleDropdownClose()}>
+          <User className='h-4 w-4' />
+          My Profile
+        </DropdownMenuItem>
+        <DropdownMenuItem className='gap-3' onClick={() => handleDropdownClose()}>
+          <Settings className='h-4 w-4' />
+          Settings
+        </DropdownMenuItem>
+        <DropdownMenuItem className='gap-3' onClick={() => handleDropdownClose()}>
+          <DollarSign className='h-4 w-4' />
+          Pricing
+        </DropdownMenuItem>
+        <DropdownMenuItem className='gap-3' onClick={() => handleDropdownClose()}>
+          <HelpCircle className='h-4 w-4' />
+          FAQ
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem className='gap-3' onClick={handleUserLogout}>
+          <LogOut className='h-4 w-4' />
+          Logout
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
 }
 

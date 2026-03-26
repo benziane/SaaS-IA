@@ -4,8 +4,8 @@ import { useRef } from 'react'
 // Next Imports
 import Link from 'next/link'
 
-// MUI Imports
-import { styled } from '@mui/material/styles'
+// MUI Imports — required for shadow gradient that uses theme.direction and theme.mixins
+import { useTheme } from '@mui/material/styles'
 
 // Third-party Imports
 import PerfectScrollbar from 'react-perfect-scrollbar'
@@ -24,23 +24,6 @@ import useHorizontalNav from '@menu/hooks/useHorizontalNav'
 // Util Imports
 import { mapHorizontalToVerticalMenu } from '@menu/utils/menuUtils'
 
-const StyledBoxForShadow = styled('div')(({ theme }) => ({
-  top: 72,
-  zIndex: 2,
-  opacity: 0,
-  position: 'absolute',
-  pointerEvents: 'none',
-  width: '100%',
-  height: theme.mixins.toolbar.minHeight,
-  transition: 'opacity .15s ease-in-out',
-  background: `linear-gradient(var(--mui-palette-background-paper) ${
-    theme.direction === 'rtl' ? '95%' : '5%'
-  }, rgb(var(--mui-palette-background-paperChannel) / 0.85) 30%, rgb(var(--mui-palette-background-paperChannel) / 0.5) 65%, rgb(var(--mui-palette-background-paperChannel) / 0.3) 75%, transparent)`,
-  '&.scrolled': {
-    opacity: 1
-  }
-}))
-
 const MenuToggle = (
   <div className='icon-wrapper'>
     <i className='bx-bxs-chevron-left' />
@@ -50,9 +33,10 @@ const MenuToggle = (
 const VerticalNavContent = ({ children }: ChildrenType) => {
   // Hooks
   const { isBreakpointReached } = useHorizontalNav()
+  const theme = useTheme()
 
   // Refs
-  const shadowRef = useRef(null)
+  const shadowRef = useRef<HTMLDivElement>(null)
 
   // Vars
   const ScrollWrapper = isBreakpointReached ? 'div' : PerfectScrollbar
@@ -80,7 +64,16 @@ const VerticalNavContent = ({ children }: ChildrenType) => {
         </Link>
         <NavCollapseIcons lockedIcon={MenuToggle} unlockedIcon={MenuToggle} closeIcon={MenuToggle} />
       </NavHeader>
-      <StyledBoxForShadow ref={shadowRef} />
+      <div
+        ref={shadowRef}
+        className='absolute top-[72px] z-[2] opacity-0 pointer-events-none w-full transition-opacity duration-150 ease-in-out [&.scrolled]:opacity-100'
+        style={{
+          height: theme.mixins.toolbar.minHeight,
+          background: `linear-gradient(var(--mui-palette-background-paper) ${
+            theme.direction === 'rtl' ? '95%' : '5%'
+          }, rgb(var(--mui-palette-background-paperChannel) / 0.85) 30%, rgb(var(--mui-palette-background-paperChannel) / 0.5) 65%, rgb(var(--mui-palette-background-paperChannel) / 0.3) 75%, transparent)`,
+        }}
+      />
       <ScrollWrapper
         {...(isBreakpointReached
           ? {

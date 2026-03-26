@@ -4,12 +4,6 @@
 import { useEffect, useRef } from 'react'
 import type { CSSProperties } from 'react'
 
-// Third-party Imports
-import styled from '@emotion/styled'
-
-// Type Imports
-import type { VerticalNavContextProps } from '@menu/contexts/verticalNavContext'
-
 // Component Imports
 import SneatLogo from '@core/svg/Logo'
 
@@ -19,29 +13,6 @@ import themeConfig from '@configs/themeConfig'
 // Hook Imports
 import useVerticalNav from '@menu/hooks/useVerticalNav'
 import { useSettings } from '@core/hooks/useSettings'
-
-type LogoTextProps = {
-  isHovered?: VerticalNavContextProps['isHovered']
-  isCollapsed?: VerticalNavContextProps['isCollapsed']
-  transitionDuration?: VerticalNavContextProps['transitionDuration']
-  isBreakpointReached?: VerticalNavContextProps['isBreakpointReached']
-  color?: CSSProperties['color']
-}
-
-const LogoText = styled.span<LogoTextProps>`
-  color: ${({ color }) => color ?? 'var(--mui-palette-text-primary)'};
-  font-size: 1.75rem;
-  line-height: 1;
-  font-weight: 700;
-  letter-spacing: 0.15px;
-  transition: ${({ transitionDuration }) =>
-    `margin-inline-start ${transitionDuration}ms ease-in-out, opacity ${transitionDuration}ms ease-in-out`};
-
-  ${({ isHovered, isCollapsed, isBreakpointReached }) =>
-    !isBreakpointReached && isCollapsed && !isHovered
-      ? 'opacity: 0; margin-inline-start: 0;'
-      : 'opacity: 1; margin-inline-start: 8px;'}
-`
 
 const Logo = ({ color }: { color?: CSSProperties['color'] }) => {
   // Refs
@@ -53,6 +24,9 @@ const Logo = ({ color }: { color?: CSSProperties['color'] }) => {
 
   // Vars
   const { layout } = settings
+
+  const isCollapsed = layout === 'collapsed'
+  const isHidden = !isBreakpointReached && isCollapsed && !isHovered
 
   useEffect(() => {
     if (layout !== 'collapsed') {
@@ -72,16 +46,18 @@ const Logo = ({ color }: { color?: CSSProperties['color'] }) => {
   return (
     <div className='flex items-center'>
       <SneatLogo className='text-2xl text-primary' />
-      <LogoText
-        color={color}
+      <span
         ref={logoTextRef}
-        isHovered={isHovered}
-        isCollapsed={layout === 'collapsed'}
-        transitionDuration={transitionDuration}
-        isBreakpointReached={isBreakpointReached}
+        className='text-[1.75rem] leading-none font-bold tracking-[0.15px]'
+        style={{
+          color: color ?? 'var(--mui-palette-text-primary)',
+          transition: `margin-inline-start ${transitionDuration}ms ease-in-out, opacity ${transitionDuration}ms ease-in-out`,
+          opacity: isHidden ? 0 : 1,
+          marginInlineStart: isHidden ? 0 : 8,
+        }}
       >
         {themeConfig.templateName}
-      </LogoText>
+      </span>
     </div>
   )
 }

@@ -3,13 +3,16 @@
 // Third-party Imports
 import classnames from 'classnames'
 
-// MUI Imports
-import { Box, Chip, Typography } from '@mui/material'
+// Lucide Imports
+import { Search } from 'lucide-react'
 
 // Component Imports
 import NavToggle from './NavToggle'
 import ModeDropdown from '@components/layout/shared/ModeDropdown'
 import UserDropdown from '@components/layout/shared/UserDropdown'
+
+// Design Hub Imports
+import { Badge } from '@/components/ui/badge'
 
 // Util Imports
 import { verticalLayoutClasses } from '@layouts/utils/layoutClasses'
@@ -21,32 +24,19 @@ const NavbarContent = () => {
         <NavToggle />
         <ModeDropdown />
       </div>
-      <Box
+      <div
         onClick={() => {
           const event = new KeyboardEvent('keydown', { key: 'k', ctrlKey: true, bubbles: true });
           window.dispatchEvent(event);
         }}
-        sx={{
-          display: { xs: 'none', md: 'flex' },
-          alignItems: 'center',
-          gap: 1,
-          px: 2,
-          py: 0.75,
-          borderRadius: 2,
-          border: '1px solid',
-          borderColor: 'divider',
-          cursor: 'pointer',
-          color: 'text.secondary',
-          '&:hover': { bgcolor: 'action.hover' },
-          minWidth: 200,
-        }}
+        className='hidden md:flex items-center gap-2 px-4 py-1.5 rounded-lg border border-[var(--border)] cursor-pointer text-[var(--text-mid)] hover:bg-[var(--bg-elevated)] min-w-[200px]'
       >
-        <i className="tabler-search" style={{ fontSize: 18 }} />
-        <Typography variant="body2" color="text.secondary" sx={{ flex: 1 }}>
+        <Search className='h-[18px] w-[18px]' />
+        <span className='flex-1 text-sm text-[var(--text-mid)]'>
           Search...
-        </Typography>
-        <Chip label="Ctrl+K" size="small" variant="outlined" sx={{ height: 20, fontSize: '0.65rem' }} />
-      </Box>
+        </span>
+        <Badge variant='outline' className='h-5 text-[0.65rem] px-1.5 py-0'>Ctrl+K</Badge>
+      </div>
       <div className='flex items-center'>
         <UserDropdown />
       </div>

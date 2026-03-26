@@ -7,14 +7,10 @@
 'use client';
 
 import { useCallback, useState } from 'react';
-import {
-  Box,
-  IconButton,
-  TextField,
-  Tooltip,
-  Typography,
-} from '@mui/material';
-import { Send, StopCircle } from '@mui/icons-material';
+import { Send, CircleStop } from 'lucide-react';
+import { Textarea } from '@/lib/design-hub/components/Textarea';
+import { Button } from '@/lib/design-hub/components/Button';
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/lib/design-hub/components/Tooltip';
 
 /* ========================================================================
    CONSTANTS
@@ -63,7 +59,7 @@ export function ChatInput({
   }, [canSend, onSend, trimmedValue]);
 
   const handleKeyDown = useCallback(
-    (event: React.KeyboardEvent<HTMLDivElement>) => {
+    (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
       if (event.key === 'Enter' && !event.shiftKey) {
         event.preventDefault();
         handleSend();
@@ -73,76 +69,59 @@ export function ChatInput({
   );
 
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        alignItems: 'flex-end',
-        gap: 1,
-        p: 2,
-        borderTop: '1px solid',
-        borderColor: 'divider',
-        bgcolor: 'background.paper',
-      }}
-    >
-      <Box sx={{ flex: 1, position: 'relative' }}>
-        <TextField
-          fullWidth
-          multiline
-          maxRows={6}
+    <div className="flex items-end gap-2 p-4 border-t border-[var(--border)] bg-[var(--bg-surface)]">
+      <div className="flex-1 relative">
+        <Textarea
           value={value}
           onChange={(e) => setValue(e.target.value.slice(0, MAX_CHARACTERS))}
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
           disabled={disabled || isStreaming}
-          size="small"
-          variant="outlined"
-          sx={{
-            '& .MuiOutlinedInput-root': {
-              borderRadius: 2,
-            },
-          }}
+          className="min-h-[40px] max-h-[160px] rounded-lg resize-none"
+          rows={1}
         />
-        <Typography
-          variant="caption"
-          color="text.secondary"
-          sx={{
-            position: 'absolute',
-            right: 8,
-            bottom: -18,
-            fontSize: '0.7rem',
-          }}
-        >
+        <span className="absolute right-2 -bottom-5 text-[0.7rem] text-[var(--text-low)]">
           {characterCount}/{MAX_CHARACTERS}
-        </Typography>
-      </Box>
+        </span>
+      </div>
 
-      {isStreaming ? (
-        <Tooltip title="Stop generating">
-          <IconButton
-            color="warning"
-            onClick={onStop}
-            size="medium"
-            sx={{ mb: '2px' }}
-          >
-            <StopCircle />
-          </IconButton>
-        </Tooltip>
-      ) : (
-        <Tooltip title={canSend ? 'Send message (Enter)' : 'Type a message to send'}>
-          <span>
-            <IconButton
-              color="primary"
-              onClick={handleSend}
-              disabled={!canSend}
-              size="medium"
-              sx={{ mb: '2px' }}
-            >
-              <Send />
-            </IconButton>
-          </span>
-        </Tooltip>
-      )}
-    </Box>
+      <TooltipProvider>
+        {isStreaming ? (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onStop}
+                className="mb-0.5 text-amber-500 hover:text-amber-600"
+              >
+                <CircleStop className="h-5 w-5" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Stop generating</TooltipContent>
+          </Tooltip>
+        ) : (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span>
+                <Button
+                  variant="default"
+                  size="icon"
+                  onClick={handleSend}
+                  disabled={!canSend}
+                  className="mb-0.5"
+                >
+                  <Send className="h-5 w-5" />
+                </Button>
+              </span>
+            </TooltipTrigger>
+            <TooltipContent>
+              {canSend ? 'Send message (Enter)' : 'Type a message to send'}
+            </TooltipContent>
+          </Tooltip>
+        )}
+      </TooltipProvider>
+    </div>
   );
 }
 

@@ -2,22 +2,15 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Search } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/lib/design-hub/components/Input';
+import { Separator } from '@/lib/design-hub/components/Separator';
+import { Avatar, AvatarFallback } from '@/lib/design-hub/components/Avatar';
 import {
-  Box,
   Dialog,
   DialogContent,
-  Divider,
-  InputAdornment,
-  List,
-  ListItem,
-  ListItemAvatar,
-  ListItemButton,
-  ListItemText,
-  Avatar,
-  TextField,
-  Typography,
-  Chip,
-} from '@mui/material';
+} from '@/lib/design-hub/components/Dialog';
 
 interface CommandItem {
   id: string;
@@ -133,121 +126,88 @@ export default function CommandPalette() {
   let flatIndex = -1;
 
   return (
-    <Dialog
-      open={open}
-      onClose={() => setOpen(false)}
-      maxWidth="sm"
-      fullWidth
-      PaperProps={{
-        sx: {
-          position: 'fixed',
-          top: '15%',
-          m: 0,
-          borderRadius: 3,
-          maxHeight: '60vh',
-        },
-      }}
-    >
-      <Box sx={{ p: 2, pb: 0 }}>
-        <TextField
-          autoFocus
-          fullWidth
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Type a command or search..."
-          variant="outlined"
-          size="medium"
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <i className="tabler-search" style={{ fontSize: 20, opacity: 0.5 }} />
-              </InputAdornment>
-            ),
-            endAdornment: (
-              <InputAdornment position="end">
-                <Chip label="ESC" size="small" variant="outlined" sx={{ height: 22, fontSize: '0.7rem' }} />
-              </InputAdornment>
-            ),
-            sx: { borderRadius: 2 },
-          }}
-        />
-      </Box>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogContent className="fixed top-[15%] translate-y-0 max-w-lg max-h-[60vh] p-0 gap-0 overflow-hidden">
+        <div className="p-4 pb-0">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 opacity-50 text-[var(--text-low)]" />
+            <Input
+              autoFocus
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Type a command or search..."
+              className="pl-10 pr-16"
+            />
+            <Badge variant="outline" className="absolute right-3 top-1/2 -translate-y-1/2 h-[22px] text-[0.7rem]">
+              ESC
+            </Badge>
+          </div>
+        </div>
 
-      <DialogContent sx={{ p: 1, pt: 1 }}>
-        {filtered.length === 0 ? (
-          <Box sx={{ py: 4, textAlign: 'center' }}>
-            <Typography variant="body2" color="text.secondary">
-              No results for &quot;{search}&quot;
-            </Typography>
-          </Box>
-        ) : (
-          Object.entries(grouped).map(([category, items]) => (
-            <Box key={category}>
-              <Typography
-                variant="overline"
-                color="text.secondary"
-                sx={{ px: 2, py: 0.5, display: 'block', fontSize: '0.65rem', letterSpacing: 1.5 }}
-              >
-                {category}
-              </Typography>
-              <List disablePadding>
-                {items.map((cmd) => {
-                  flatIndex++;
-                  const isSelected = flatIndex === selectedIndex;
-                  return (
-                    <ListItem key={cmd.id} disablePadding>
-                      <ListItemButton
-                        selected={isSelected}
-                        onClick={() => handleSelect(cmd.href)}
-                        sx={{
-                          borderRadius: 2,
-                          mx: 1,
-                          mb: 0.5,
-                          py: 1,
-                        }}
-                      >
-                        <ListItemAvatar sx={{ minWidth: 40 }}>
-                          <Avatar
-                            sx={{
-                              width: 32,
-                              height: 32,
-                              bgcolor: `${cmd.color}15`,
-                              color: cmd.color,
-                            }}
-                          >
-                            <i className={`tabler-${cmd.icon}`} style={{ fontSize: 16 }} />
+        <div className="p-2 pt-2 overflow-auto max-h-[calc(60vh-120px)]">
+          {filtered.length === 0 ? (
+            <div className="py-8 text-center">
+              <p className="text-sm text-[var(--text-low)]">
+                No results for &quot;{search}&quot;
+              </p>
+            </div>
+          ) : (
+            Object.entries(grouped).map(([category, items]) => (
+              <div key={category}>
+                <span className="px-4 py-1 block text-[0.65rem] uppercase tracking-[1.5px] text-[var(--text-low)] font-medium">
+                  {category}
+                </span>
+                <ul>
+                  {items.map((cmd) => {
+                    flatIndex++;
+                    const isSelected = flatIndex === selectedIndex;
+                    return (
+                      <li key={cmd.id}>
+                        <button
+                          onClick={() => handleSelect(cmd.href)}
+                          className={`w-full flex items-center gap-3 rounded-lg mx-1 mb-0.5 py-2 px-3 text-left transition-colors ${
+                            isSelected
+                              ? 'bg-[var(--bg-elevated)] text-[var(--text-high)]'
+                              : 'hover:bg-[var(--bg-elevated)]/50 text-[var(--text-mid)]'
+                          }`}
+                        >
+                          <Avatar className="h-8 w-8">
+                            <AvatarFallback
+                              className="text-xs"
+                              style={{ backgroundColor: `${cmd.color}15`, color: cmd.color }}
+                            >
+                              <i className={`tabler-${cmd.icon}`} style={{ fontSize: 16 }} />
+                            </AvatarFallback>
                           </Avatar>
-                        </ListItemAvatar>
-                        <ListItemText
-                          primary={cmd.label}
-                          secondary={cmd.description}
-                          primaryTypographyProps={{ variant: 'body2', fontWeight: 600 }}
-                          secondaryTypographyProps={{ variant: 'caption' }}
-                        />
-                      </ListItemButton>
-                    </ListItem>
-                  );
-                })}
-              </List>
-            </Box>
-          ))
-        )}
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-semibold truncate">{cmd.label}</p>
+                            <p className="text-xs text-[var(--text-low)] truncate">{cmd.description}</p>
+                          </div>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            ))
+          )}
 
-        <Divider sx={{ mt: 1 }} />
-        <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, py: 1 }}>
-          <Typography variant="caption" color="text.secondary">
-            <Chip label="↑↓" size="small" variant="outlined" sx={{ height: 18, fontSize: '0.65rem', mr: 0.5 }} />
-            Navigate
-          </Typography>
-          <Typography variant="caption" color="text.secondary">
-            <Chip label="↵" size="small" variant="outlined" sx={{ height: 18, fontSize: '0.65rem', mr: 0.5 }} />
-            Open
-          </Typography>
-          <Typography variant="caption" color="text.secondary">
-            <Chip label="Ctrl+K" size="small" variant="outlined" sx={{ height: 18, fontSize: '0.65rem', mr: 0.5 }} />
-            Toggle
-          </Typography>
-        </Box>
+          <Separator className="mt-2" />
+          <div className="flex justify-center gap-4 py-2">
+            <span className="text-xs text-[var(--text-low)] flex items-center gap-1">
+              <Badge variant="outline" className="h-[18px] text-[0.65rem]">&#8593;&#8595;</Badge>
+              Navigate
+            </span>
+            <span className="text-xs text-[var(--text-low)] flex items-center gap-1">
+              <Badge variant="outline" className="h-[18px] text-[0.65rem]">&#8629;</Badge>
+              Open
+            </span>
+            <span className="text-xs text-[var(--text-low)] flex items-center gap-1">
+              <Badge variant="outline" className="h-[18px] text-[0.65rem]">Ctrl+K</Badge>
+              Toggle
+            </span>
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   );

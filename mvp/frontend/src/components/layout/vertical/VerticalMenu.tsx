@@ -1,4 +1,4 @@
-// MUI Imports
+// MUI Imports — required by Sneat menu style functions
 import { useTheme } from '@mui/material/styles'
 
 // Third-party Imports
@@ -91,7 +91,7 @@ const renderMenuItems = (items: VerticalMenuDataType[]) => {
 }
 
 const VerticalMenu = ({ scrollMenu }: Props) => {
-  // Hooks
+  // Hooks — theme is required by Sneat menuItemStyles/menuSectionStyles
   const theme = useTheme()
   const verticalNavOptions = useVerticalNav()
 

@@ -6,8 +6,8 @@ import { useEffect, useRef } from 'react'
 // Next Imports
 import Link from 'next/link'
 
-// MUI Imports
-import { styled, useColorScheme, useTheme } from '@mui/material/styles'
+// MUI Imports — required by Sneat navigationCustomStyles which uses theme.spacing/transitions
+import { useColorScheme, useTheme } from '@mui/material/styles'
 
 // Type Imports
 import type { Mode } from '@core/types'
@@ -28,23 +28,6 @@ type Props = {
   mode?: Mode
 }
 
-const StyledBoxForShadow = styled('div')(({ theme }) => ({
-  top: 72,
-  zIndex: 2,
-  opacity: 0,
-  position: 'absolute',
-  pointerEvents: 'none',
-  width: '100%',
-  height: theme.mixins.toolbar.minHeight,
-  transition: 'opacity .15s ease-in-out',
-  background: `linear-gradient(var(--mui-palette-background-paper) ${
-    theme.direction === 'rtl' ? '95%' : '5%'
-  }, rgb(var(--mui-palette-background-paperChannel) / 0.85) 30%, rgb(var(--mui-palette-background-paperChannel) / 0.5) 65%, rgb(var(--mui-palette-background-paperChannel) / 0.3) 75%, transparent)`,
-  '&.scrolled': {
-    opacity: 1
-  }
-}))
-
 const MenuToggle = (
   <div className='icon-wrapper'>
     <i className='bx-bxs-chevron-left' />
@@ -55,14 +38,14 @@ const Navigation = (props: Props) => {
   // Props
   const { mode } = props
 
-  // Hooks
+  // Hooks — useTheme/useColorScheme required by Sneat style functions
   const verticalNavOptions = useVerticalNav()
   const { updateSettings, settings } = useSettings()
   const { mode: muiMode, systemMode: muiSystemMode } = useColorScheme()
   const theme = useTheme()
 
   // Refs
-  const shadowRef = useRef(null)
+  const shadowRef = useRef<HTMLDivElement>(null)
 
   // Vars
   const { isCollapsed, isHovered, collapseVerticalNav, isBreakpointReached } = verticalNavOptions
@@ -125,7 +108,16 @@ const Navigation = (props: Props) => {
           />
         )}
       </NavHeader>
-      <StyledBoxForShadow ref={shadowRef} />
+      <div
+        ref={shadowRef}
+        className='absolute top-[72px] z-[2] opacity-0 pointer-events-none w-full transition-opacity duration-150 ease-in-out [&.scrolled]:opacity-100'
+        style={{
+          height: theme.mixins.toolbar.minHeight,
+          background: `linear-gradient(var(--mui-palette-background-paper) ${
+            theme.direction === 'rtl' ? '95%' : '5%'
+          }, rgb(var(--mui-palette-background-paperChannel) / 0.85) 30%, rgb(var(--mui-palette-background-paperChannel) / 0.5) 65%, rgb(var(--mui-palette-background-paperChannel) / 0.3) 75%, transparent)`,
+        }}
+      />
       <VerticalMenu scrollMenu={scrollMenu} />
     </VerticalNav>
   )

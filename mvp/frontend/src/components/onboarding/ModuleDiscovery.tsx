@@ -1,22 +1,12 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import {
-  Avatar,
-  Box,
-  Card,
-  CardActionArea,
-  CardContent,
-  Chip,
-  Grid,
-  InputAdornment,
-  Tab,
-  Tabs,
-  TextField,
-  Typography,
-} from '@mui/material';
-import { alpha, useTheme } from '@mui/material/styles';
 import Link from 'next/link';
+import { Search } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/lib/design-hub/components/Input';
+import { Tabs, TabsList, TabsTrigger } from '@/lib/design-hub/components/Tabs';
 
 /* ========================================================================
    TYPES
@@ -104,7 +94,6 @@ const MODULES: ModuleInfo[] = [
    ======================================================================== */
 
 export default function ModuleDiscovery() {
-  const theme = useTheme();
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -135,162 +124,103 @@ export default function ModuleDiscovery() {
 
   return (
     <Card>
-      <CardContent>
+      <CardContent className="p-6">
         {/* Header */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
-          <Box
-            sx={{
-              width: 36,
-              height: 36,
-              borderRadius: 2,
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
+        <div className="flex items-center gap-3 mb-4">
+          <div
+            className="w-9 h-9 rounded-lg flex items-center justify-center"
+            style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}
           >
             <i className="tabler-apps" style={{ fontSize: 20, color: '#fff' }} />
-          </Box>
-          <Box sx={{ flex: 1 }}>
-            <Typography variant="h6" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
+          </div>
+          <div className="flex-1">
+            <h3 className="text-lg font-bold leading-tight text-[var(--text-high)]">
               Decouvrir les modules
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
+            </h3>
+            <p className="text-xs text-[var(--text-low)]">
               {MODULES.length} modules disponibles
-            </Typography>
-          </Box>
-        </Box>
+            </p>
+          </div>
+        </div>
 
         {/* Search */}
-        <TextField
-          fullWidth
-          size="small"
-          placeholder="Rechercher un module..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <i className="tabler-search" style={{ fontSize: 18 }} />
-              </InputAdornment>
-            ),
-          }}
-          sx={{ mb: 2 }}
-        />
+        <div className="relative mb-4">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-low)]" />
+          <Input
+            placeholder="Rechercher un module..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9"
+          />
+        </div>
 
         {/* Category Tabs */}
-        <Tabs
-          value={selectedCategory}
-          onChange={(_, value) => setSelectedCategory(value)}
-          variant="scrollable"
-          scrollButtons="auto"
-          sx={{
-            mb: 2,
-            minHeight: 36,
-            '& .MuiTab-root': {
-              minHeight: 36,
-              py: 0.5,
-              px: 1.5,
-              fontSize: '0.8rem',
-              textTransform: 'none',
-              fontWeight: 500,
-            },
-          }}
-        >
-          {CATEGORIES.map((cat) => (
-            <Tab key={cat.id} value={cat.id} label={cat.label} />
-          ))}
+        <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="mb-4">
+          <TabsList className="flex-wrap h-auto gap-1">
+            {CATEGORIES.map((cat) => (
+              <TabsTrigger key={cat.id} value={cat.id} className="text-xs px-3 py-1">
+                {cat.label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
         </Tabs>
 
         {/* Module Grid */}
         {filteredModules.length === 0 ? (
-          <Box sx={{ textAlign: 'center', py: 4 }}>
-            <Typography variant="body2" color="text.secondary">
+          <div className="text-center py-8">
+            <p className="text-sm text-[var(--text-low)]">
               Aucun module trouve pour &quot;{searchQuery}&quot;
-            </Typography>
-          </Box>
+            </p>
+          </div>
         ) : (
-          <Grid container spacing={2}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             {filteredModules.map((module) => (
-              <Grid item xs={12} sm={6} md={4} key={module.name}>
-                <Card
-                  variant="outlined"
-                  sx={{
-                    height: '100%',
-                    position: 'relative',
-                    transition: 'all 0.2s ease',
-                    '&:hover': {
-                      borderColor: module.color,
-                      transform: 'translateY(-2px)',
-                      boxShadow: theme.shadows[4],
-                    },
-                  }}
+              <Card
+                key={module.name}
+                className="h-full relative border border-[var(--border)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg"
+              >
+                <Link
+                  href={module.href}
+                  className="p-4 h-full flex flex-col items-start justify-start"
                 >
-                  <CardActionArea
-                    component={Link}
-                    href={module.href}
-                    sx={{
-                      p: 2,
-                      height: '100%',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'flex-start',
-                      justifyContent: 'flex-start',
-                    }}
-                  >
-                    {/* Badge */}
-                    {module.badge && (
-                      <Chip
-                        label={module.badge === 'new' ? 'Nouveau' : 'Populaire'}
-                        size="small"
-                        sx={{
-                          position: 'absolute',
-                          top: 8,
-                          right: 8,
-                          height: 20,
-                          fontSize: '0.65rem',
-                          fontWeight: 700,
-                          bgcolor: badgeColors[module.badge]?.bg,
-                          color: badgeColors[module.badge]?.text,
-                        }}
-                      />
-                    )}
-
-                    <Avatar
-                      sx={{
-                        bgcolor: alpha(module.color, 0.12),
-                        color: module.color,
-                        width: 40,
-                        height: 40,
-                        mb: 1.5,
+                  {/* Badge */}
+                  {module.badge && (
+                    <Badge
+                      className="absolute top-2 right-2 text-[0.65rem] font-bold"
+                      style={{
+                        backgroundColor: badgeColors[module.badge]?.bg,
+                        color: badgeColors[module.badge]?.text,
                       }}
                     >
-                      <i className={module.icon} style={{ fontSize: 20 }} />
-                    </Avatar>
-                    <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 0.5 }}>
-                      {module.name}
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      sx={{ fontSize: '0.78rem', lineHeight: 1.5 }}
-                    >
-                      {module.description}
-                    </Typography>
-                  </CardActionArea>
-                </Card>
-              </Grid>
+                      {module.badge === 'new' ? 'Nouveau' : 'Populaire'}
+                    </Badge>
+                  )}
+
+                  <div
+                    className="w-10 h-10 rounded-full flex items-center justify-center mb-3"
+                    style={{ backgroundColor: `${module.color}1f`, color: module.color }}
+                  >
+                    <i className={module.icon} style={{ fontSize: 20 }} />
+                  </div>
+                  <h4 className="text-sm font-semibold mb-1 text-[var(--text-high)]">
+                    {module.name}
+                  </h4>
+                  <p className="text-xs text-[var(--text-mid)] leading-relaxed">
+                    {module.description}
+                  </p>
+                </Link>
+              </Card>
             ))}
-          </Grid>
+          </div>
         )}
 
         {/* Footer count */}
-        <Box sx={{ mt: 2, textAlign: 'center' }}>
-          <Typography variant="caption" color="text.secondary">
+        <div className="mt-4 text-center">
+          <p className="text-xs text-[var(--text-low)]">
             {filteredModules.length} module{filteredModules.length !== 1 ? 's' : ''} affiche{filteredModules.length !== 1 ? 's' : ''}
             {selectedCategory !== 'all' && ` dans ${CATEGORIES.find((c) => c.id === selectedCategory)?.label}`}
-          </Typography>
-        </Box>
+          </p>
+        </div>
       </CardContent>
     </Card>
   );

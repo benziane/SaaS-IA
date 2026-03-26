@@ -6,8 +6,6 @@
 
 'use client';
 
-import { Box, Typography } from '@mui/material';
-
 /* ========================================================================
    TYPES
    ======================================================================== */
@@ -47,63 +45,31 @@ export function StreamingText({
   const showMeta = !isStreaming && provider;
 
   return (
-    <Box>
+    <div>
       {/* Inject keyframes for blinking cursor */}
       {isStreaming && (
         <style>{cursorKeyframes}</style>
       )}
 
-      <Box
-        sx={{
-          p: 2,
-          border: '1px solid',
-          borderColor: 'divider',
-          borderRadius: 1,
-          bgcolor: 'action.hover',
-          maxHeight: 400,
-          overflow: 'auto',
-          position: 'relative',
-        }}
-      >
-        <Typography
-          variant="body2"
-          component="div"
-          sx={{
-            whiteSpace: 'pre-wrap',
-            wordBreak: 'break-word',
-            lineHeight: 1.7,
-            minHeight: 24,
-          }}
-        >
+      <div className="p-4 border border-[var(--border)] rounded-[var(--radius-md,6px)] bg-[var(--bg-elevated)] max-h-[400px] overflow-auto relative">
+        <div className="text-sm whitespace-pre-wrap break-words leading-[1.7] min-h-[24px]">
           {text || (isStreaming ? '' : 'No content')}
           {isStreaming && (
-            <Box
-              component="span"
-              sx={{
-                display: 'inline-block',
-                width: '2px',
-                height: '1em',
-                bgcolor: 'primary.main',
-                verticalAlign: 'text-bottom',
-                ml: '1px',
-                animation: 'blink-cursor 0.8s step-end infinite',
-              }}
+            <span
+              className="inline-block w-[2px] h-[1em] bg-[var(--accent)] align-text-bottom ml-[1px]"
+              style={{ animation: 'blink-cursor 0.8s step-end infinite' }}
             />
           )}
-        </Typography>
-      </Box>
+        </div>
+      </div>
 
       {showMeta && (
-        <Typography
-          variant="caption"
-          color="text.secondary"
-          sx={{ mt: 1, display: 'block' }}
-        >
+        <span className="mt-2 block text-xs text-[var(--text-low)]">
           Provider: {provider}
           {tokenCount !== undefined && ` | Tokens: ${tokenCount.toLocaleString()}`}
-        </Typography>
+        </span>
       )}
-    </Box>
+    </div>
   );
 }
 

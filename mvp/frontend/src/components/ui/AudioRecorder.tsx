@@ -5,11 +5,11 @@
 
 'use client';
 
-import {
-  Box, Button, Card, CardContent, IconButton, Stack, Tooltip, Typography,
-} from '@mui/material';
-import { Delete, FiberManualRecord, Mic, Stop } from '@mui/icons-material';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { Trash2, Circle, Mic, Square } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/lib/design-hub/components/Button';
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/lib/design-hub/components/Tooltip';
 
 export interface AudioRecorderProps {
   onRecordingComplete: (file: File) => void;
@@ -155,86 +155,106 @@ export default function AudioRecorder({
   const hasRecording = state === 'recorded';
 
   return (
-    <Card variant="outlined">
-      <CardContent>
-        <Stack spacing={2} alignItems="center">
-          <Box
-            sx={{
-              width: 80, height: 80, borderRadius: '50%',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              bgcolor: isRecording ? 'error.light' : 'action.hover',
-              transition: 'background-color 0.3s',
-              animation: isRecording ? 'pulse 1.5s infinite' : 'none',
-              '@keyframes pulse': {
-                '0%': { transform: 'scale(1)', opacity: 1 },
-                '50%': { transform: 'scale(1.05)', opacity: 0.8 },
-                '100%': { transform: 'scale(1)', opacity: 1 },
-              },
-            }}
+    <Card className="border border-[var(--border)]">
+      <CardContent className="p-6">
+        <div className="flex flex-col items-center gap-4">
+          <div
+            className={`w-20 h-20 rounded-full flex items-center justify-center transition-colors duration-300 ${
+              isRecording
+                ? 'bg-red-500/20 animate-pulse'
+                : 'bg-[var(--bg-elevated)]'
+            }`}
           >
             {isRecording ? (
-              <FiberManualRecord sx={{ fontSize: 40, color: 'error.contrastText' }} />
+              <Circle className="h-10 w-10 text-red-500 fill-red-500" />
             ) : (
-              <Mic sx={{ fontSize: 40, color: 'text.secondary' }} />
+              <Mic className="h-10 w-10 text-[var(--text-low)]" />
             )}
-          </Box>
+          </div>
 
-          <Typography variant="h5" sx={{ fontFamily: 'monospace', fontWeight: 600 }} aria-live="polite">
+          <h3 className="text-2xl font-semibold font-mono" aria-live="polite">
             {formatElapsed(elapsed)}
-          </Typography>
+          </h3>
 
           {isRecording && (
-            <Typography variant="caption" color="text.secondary">
+            <span className="text-xs text-[var(--text-low)]">
               Max duration: {formatElapsed(maxDurationSeconds)}
-            </Typography>
+            </span>
           )}
 
-          <Stack direction="row" spacing={2} alignItems="center">
+          <div className="flex items-center gap-4">
             {state === 'idle' && (
-              <Button variant="contained" color="error" startIcon={<Mic />}
-                onClick={() => void handleStart()} disabled={disabled} size="large"
-                aria-label="Start recording">
+              <Button
+                variant="destructive"
+                size="lg"
+                onClick={() => void handleStart()}
+                disabled={disabled}
+                aria-label="Start recording"
+                className="gap-2"
+              >
+                <Mic className="h-5 w-5" />
                 Start Recording
               </Button>
             )}
             {isRecording && (
-              <Button variant="contained" color="inherit" startIcon={<Stop />}
-                onClick={handleStop} size="large" aria-label="Stop recording">
+              <Button
+                variant="secondary"
+                size="lg"
+                onClick={handleStop}
+                aria-label="Stop recording"
+                className="gap-2"
+              >
+                <Square className="h-5 w-5" />
                 Stop
               </Button>
             )}
             {hasRecording && (
               <>
-                <Tooltip title="Discard recording">
-                  <IconButton onClick={handleDiscard} color="error"
-                    aria-label="Discard recording" disabled={disabled}>
-                    <Delete />
-                  </IconButton>
-                </Tooltip>
-                <Button variant="contained" color="primary" onClick={handleSubmit}
-                  disabled={disabled} size="large" aria-label="Submit recording for transcription">
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={handleDiscard}
+                        disabled={disabled}
+                        aria-label="Discard recording"
+                        className="text-red-500 hover:text-red-600"
+                      >
+                        <Trash2 className="h-5 w-5" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Discard recording</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                <Button
+                  size="lg"
+                  onClick={handleSubmit}
+                  disabled={disabled}
+                  aria-label="Submit recording for transcription"
+                >
                   {disabled ? 'Uploading...' : 'Transcribe Recording'}
                 </Button>
               </>
             )}
-          </Stack>
+          </div>
 
           {hasRecording && audioUrl && (
-            <Box sx={{ width: '100%', maxWidth: 400 }}>
-              <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block' }}>
+            <div className="w-full max-w-[400px]">
+              <span className="text-xs text-[var(--text-low)] mb-1 block">
                 Preview
-              </Typography>
+              </span>
               {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
               <audio controls src={audioUrl} style={{ width: '100%' }} />
-            </Box>
+            </div>
           )}
 
           {error && (
-            <Typography variant="body2" color="error" role="alert">
+            <p className="text-sm text-red-400" role="alert">
               {error}
-            </Typography>
+            </p>
           )}
-        </Stack>
+        </div>
       </CardContent>
     </Card>
   );

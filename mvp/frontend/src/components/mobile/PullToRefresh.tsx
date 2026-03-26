@@ -1,9 +1,7 @@
 'use client';
 
 import { useCallback, useRef, useState, type ReactNode } from 'react';
-import Box from '@mui/material/Box';
-import CircularProgress from '@mui/material/CircularProgress';
-import Typography from '@mui/material/Typography';
+import { Spinner } from '@/components/ui/spinner';
 
 import { useIsMobile } from '@/hooks/useMobile';
 
@@ -74,61 +72,69 @@ export default function PullToRefresh({
   const progress = Math.min((pullDistance / threshold) * 100, 100);
 
   return (
-    <Box
+    <div
       ref={containerRef}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
-      sx={{ position: 'relative', overflow: 'auto', height: '100%' }}
+      className="relative overflow-auto h-full"
     >
       {/* Pull indicator */}
-      <Box
-        sx={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
+      <div
+        className="absolute top-0 left-0 right-0 flex flex-col items-center justify-center overflow-hidden z-10"
+        style={{
           height: pullDistance,
-          overflow: 'hidden',
           transition: isPullingRef.current ? 'none' : 'height 0.2s ease',
-          zIndex: 10,
         }}
       >
         {isRefreshing ? (
-          <CircularProgress size={24} />
+          <Spinner size={24} />
         ) : (
           <>
-            <CircularProgress
-              variant="determinate"
-              value={progress}
-              size={24}
-              sx={{
+            <svg
+              className="animate-spin text-[var(--accent)]"
+              width={24}
+              height={24}
+              viewBox="0 0 24 24"
+              fill="none"
+              style={{
                 transition: 'none',
                 transform: `rotate(${progress * 3.6}deg)`,
               }}
-            />
+            >
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              />
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                strokeDasharray={`${progress} 100`}
+              />
+            </svg>
             {pullDistance >= threshold && (
-              <Typography variant="caption" sx={{ mt: 0.5, color: 'text.secondary' }}>
+              <span className="mt-1 text-xs text-[var(--text-low)]">
                 Release to refresh
-              </Typography>
+              </span>
             )}
           </>
         )}
-      </Box>
+      </div>
 
       {/* Content shifted down by pull distance */}
-      <Box
-        sx={{
+      <div
+        style={{
           transform: `translateY(${pullDistance}px)`,
           transition: isPullingRef.current ? 'none' : 'transform 0.2s ease',
         }}
       >
         {children}
-      </Box>
-    </Box>
+      </div>
+    </div>
   );
 }
