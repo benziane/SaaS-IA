@@ -1,14 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import {
-  Alert, Box, Button, Card, CardContent, Chip,
-  Divider, Grid, IconButton, Typography,
-} from '@mui/material';
-import AccountTreeIcon from '@mui/icons-material/AccountTree';
-import AddIcon from '@mui/icons-material/Add';
-import SaveIcon from '@mui/icons-material/Save';
-import DeleteIcon from '@mui/icons-material/Delete';
+import { GitBranch, Plus, Save, Trash2 } from 'lucide-react';
+
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/lib/design-hub/components/Alert';
+import { Button } from '@/lib/design-hub/components/Button';
+import { Separator } from '@/lib/design-hub/components/Separator';
 
 /**
  * Visual Pipeline Builder Demo
@@ -117,69 +116,81 @@ export default function PipelineBuilderPage() {
   };
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-        <Box>
-          <Typography variant="h4" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <AccountTreeIcon color="primary" /> Visual Pipeline Builder
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
+    <div className="p-6">
+      <div className="flex justify-between items-center mb-4">
+        <div>
+          <h1 className="text-2xl font-bold flex items-center gap-2 text-[var(--text-high)]">
+            <GitBranch className="h-6 w-6 text-[var(--accent)]" /> Visual Pipeline Builder
+          </h1>
+          <p className="text-sm text-[var(--text-mid)]">
             Build AI pipelines visually - drag nodes, connect edges, validate and execute
-          </Typography>
-        </Box>
-        <Box sx={{ display: 'flex', gap: 1 }}>
-          <Button variant="outlined" onClick={handleValidate} disabled={nodes.length === 0}>
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={handleValidate} disabled={nodes.length === 0}>
             Validate DAG
           </Button>
-          <Button variant="outlined" startIcon={<SaveIcon />} onClick={handleSave} disabled={nodes.length === 0}>
+          <Button variant="outline" onClick={handleSave} disabled={nodes.length === 0}>
+            <Save className="h-4 w-4 mr-1" />
             Save as Workflow
           </Button>
-        </Box>
-      </Box>
+        </div>
+      </div>
 
-      {saved && <Alert severity="success" sx={{ mb: 2 }}>Pipeline saved as workflow!</Alert>}
-
-      {validationResult && (
-        <Alert severity={(validationResult as { valid: boolean }).valid ? 'success' : 'error'} sx={{ mb: 2 }} onClose={() => setValidationResult(null)}>
-          {(validationResult as { valid: boolean }).valid
-            ? `Valid DAG! ${((validationResult as { stats?: { total_nodes?: number } }).stats?.total_nodes) || 0} nodes, execution order ready.`
-            : `Invalid: ${((validationResult as { errors?: string[] }).errors || []).join('; ')}`}
+      {saved && (
+        <Alert variant="success" className="mb-4">
+          <AlertDescription>Pipeline saved as workflow!</AlertDescription>
         </Alert>
       )}
 
-      <Grid container spacing={2}>
+      {validationResult && (
+        <Alert
+          variant={(validationResult as { valid: boolean }).valid ? 'success' : 'destructive'}
+          className="mb-4"
+        >
+          <AlertDescription>
+            {(validationResult as { valid: boolean }).valid
+              ? `Valid DAG! ${((validationResult as { stats?: { total_nodes?: number } }).stats?.total_nodes) || 0} nodes, execution order ready.`
+              : `Invalid: ${((validationResult as { errors?: string[] }).errors || []).join('; ')}`}
+          </AlertDescription>
+        </Alert>
+      )}
+
+      <div className="grid grid-cols-12 gap-4">
         {/* Node Palette */}
-        <Grid item xs={12} md={2}>
+        <div className="col-span-12 md:col-span-2">
           <Card>
-            <CardContent>
-              <Typography variant="subtitle2" sx={{ mb: 1 }}>Add Nodes</Typography>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+            <CardContent className="p-4">
+              <h3 className="text-sm font-semibold text-[var(--text-high)] mb-2">Add Nodes</h3>
+              <div className="flex flex-col gap-1">
                 {NODE_TYPES.map((nt) => (
-                  <Chip
+                  <button
                     key={nt.type}
-                    label={`${nt.icon} ${nt.label}`}
                     onClick={() => addNode(nt)}
-                    sx={{ justifyContent: 'flex-start', bgcolor: nt.color, cursor: 'pointer' }}
-                    icon={<AddIcon sx={{ fontSize: 16 }} />}
-                  />
+                    className="flex items-center gap-1.5 px-2 py-1.5 rounded text-sm text-left cursor-pointer hover:opacity-80 transition-opacity"
+                    style={{ backgroundColor: nt.color }}
+                  >
+                    <Plus className="h-3 w-3 shrink-0" />
+                    {nt.icon} {nt.label}
+                  </button>
                 ))}
-              </Box>
-              <Divider sx={{ my: 2 }} />
-              <Typography variant="caption" color="text.secondary">
-                Click a node then click "Connect" and click another node to create an edge.
-              </Typography>
+              </div>
+              <Separator className="my-4" />
+              <p className="text-xs text-[var(--text-low)]">
+                Click a node then click &quot;Connect&quot; and click another node to create an edge.
+              </p>
             </CardContent>
           </Card>
-        </Grid>
+        </div>
 
         {/* Canvas */}
-        <Grid item xs={12} md={10}>
-          <Card sx={{ minHeight: 500, position: 'relative', overflow: 'hidden' }}>
-            <CardContent sx={{ p: 0, height: 500, position: 'relative' }}>
+        <div className="col-span-12 md:col-span-10">
+          <Card className="min-h-[500px] relative overflow-hidden">
+            <div className="p-0 h-[500px] relative">
               {nodes.length === 0 ? (
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-                  <Typography color="text.secondary">Add nodes from the palette to start building your pipeline</Typography>
-                </Box>
+                <div className="flex items-center justify-center h-full">
+                  <p className="text-[var(--text-mid)]">Add nodes from the palette to start building your pipeline</p>
+                </div>
               ) : (
                 <svg width="100%" height="100%" style={{ position: 'absolute', top: 0, left: 0, pointerEvents: 'none' }}>
                   <defs>
@@ -200,58 +211,66 @@ export default function PipelineBuilderPage() {
               )}
 
               {nodes.map((node) => (
-                <Box
+                <div
                   key={node.id}
                   onClick={() => handleNodeClick(node.id)}
-                  sx={{
-                    position: 'absolute',
+                  className="absolute w-[180px] h-[50px] flex items-center justify-between px-3 py-1 rounded-lg cursor-pointer shadow-sm hover:shadow-md transition-shadow"
+                  style={{
                     left: node.x, top: node.y,
-                    width: 180, height: 50,
-                    bgcolor: node.color,
+                    backgroundColor: node.color,
                     border: selectedNode === node.id ? '3px solid #1976d2' : connectFrom === node.id ? '3px solid #f57c00' : '1px solid #ccc',
-                    borderRadius: 2, px: 1.5, py: 0.5,
-                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                    cursor: 'pointer', boxShadow: 1,
-                    '&:hover': { boxShadow: 3 },
                   }}
                 >
-                  <Typography variant="body2" fontWeight="bold" noWrap>
+                  <span className="text-sm font-bold truncate">
                     {node.icon} {node.label}
-                  </Typography>
-                  <Box sx={{ display: 'flex', gap: 0.3 }}>
-                    <IconButton size="small"
+                  </span>
+                  <div className="flex gap-0.5">
+                    <button
+                      type="button"
+                      title="Connect node"
+                      className="p-0.5 text-xs hover:opacity-80"
                       onClick={(e) => { e.stopPropagation(); setConnectFrom(connectFrom === node.id ? null : node.id); }}
-                      sx={{ color: connectFrom === node.id ? 'warning.main' : 'text.secondary', fontSize: 12 }}>
+                      style={{ color: connectFrom === node.id ? '#f57c00' : '#666' }}
+                    >
                       {connectFrom === node.id ? '⬤' : '→'}
-                    </IconButton>
-                    <IconButton size="small" onClick={(e) => { e.stopPropagation(); removeNode(node.id); }}>
-                      <DeleteIcon sx={{ fontSize: 14 }} />
-                    </IconButton>
-                  </Box>
-                </Box>
+                    </button>
+                    <button
+                      type="button"
+                      title="Remove node"
+                      className="p-0.5 hover:opacity-80"
+                      onClick={(e) => { e.stopPropagation(); removeNode(node.id); }}
+                    >
+                      <Trash2 className="h-3.5 w-3.5 text-[var(--text-mid)]" />
+                    </button>
+                  </div>
+                </div>
               ))}
-            </CardContent>
+            </div>
           </Card>
 
           {/* Pipeline Summary */}
           {nodes.length > 0 && (
-            <Card sx={{ mt: 2 }}>
-              <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-                  <Typography variant="subtitle2">Flow:</Typography>
+            <Card className="mt-4">
+              <CardContent className="py-3">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-sm font-semibold text-[var(--text-high)]">Flow:</span>
                   {nodes.map((n, i) => (
-                    <Box key={n.id} sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                      <Chip label={`${n.icon} ${n.label}`} size="small" sx={{ bgcolor: n.color }} />
-                      {i < nodes.length - 1 && <Typography color="text.disabled">→</Typography>}
-                    </Box>
+                    <div key={n.id} className="flex items-center gap-1">
+                      <Badge variant="secondary" className="text-xs" style={{ backgroundColor: n.color, color: '#000' }}>
+                        {n.icon} {n.label}
+                      </Badge>
+                      {i < nodes.length - 1 && <span className="text-[var(--text-low)]">→</span>}
+                    </div>
                   ))}
-                  <Chip label={`${nodes.length} nodes, ${edges.length} edges`} size="small" variant="outlined" sx={{ ml: 'auto' }} />
-                </Box>
+                  <Badge variant="outline" className="ml-auto text-xs">
+                    {nodes.length} nodes, {edges.length} edges
+                  </Badge>
+                </div>
               </CardContent>
             </Card>
           )}
-        </Grid>
-      </Grid>
-    </Box>
+        </div>
+      </div>
+    </div>
   );
 }

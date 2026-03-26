@@ -2,22 +2,34 @@
 
 import { useState } from 'react';
 import {
-  Alert, Box, Button, Card, CardContent, CardActions, Checkbox, Chip, CircularProgress,
-  Divider, Drawer, FormControlLabel, Grid, IconButton, LinearProgress, Skeleton,
-  Stack, Switch, TextField, Tooltip, Typography,
-} from '@mui/material';
-import GitHubIcon from '@mui/icons-material/GitHub';
-import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
-import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
-import CancelIcon from '@mui/icons-material/Cancel';
-import CloseIcon from '@mui/icons-material/Close';
-import DeleteIcon from '@mui/icons-material/Delete';
-import DownloadIcon from '@mui/icons-material/Download';
-import PreviewIcon from '@mui/icons-material/Visibility';
-import ReplayIcon from '@mui/icons-material/Replay';
-import RocketLaunchIcon from '@mui/icons-material/RocketLaunch';
-import TerminalIcon from '@mui/icons-material/Terminal';
-import RefreshIcon from '@mui/icons-material/Refresh';
+  GitFork, PlusCircle, Sparkles, XCircle, X,
+  Trash2, Download, Eye, RotateCcw, Rocket,
+  Terminal, RefreshCw, Loader2, Check,
+} from 'lucide-react';
+
+import { Card, CardContent, CardFooter } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/lib/design-hub/components/Alert';
+import { Progress } from '@/components/ui/progress';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetFooter,
+} from '@/components/ui/sheet';
+import { Button } from '@/lib/design-hub/components/Button';
+import { Input } from '@/lib/design-hub/components/Input';
+import { Skeleton } from '@/lib/design-hub/components/Skeleton';
+import { Switch } from '@/lib/design-hub/components/Switch';
+import { Separator } from '@/lib/design-hub/components/Separator';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/lib/design-hub/components/Tooltip';
 
 import { useSkillSeekersJobs, useSkillSeekersStatus, useSkillSeekersStats } from '@/features/skill-seekers/hooks/useSkillSeekers';
 import { useCreateScrapeJob, useDeleteScrapeJob, useRetryScrapeJob, useCancelScrapeJob } from '@/features/skill-seekers/hooks/useSkillSeekersMutations';
@@ -60,141 +72,125 @@ function SkillCatalogueDrawer({
   ).length;
 
   return (
-    <Drawer
-      anchor="right"
-      open={open}
-      onClose={onClose}
-      PaperProps={{ sx: { width: { xs: '100%', sm: 560, md: 720 }, display: 'flex', flexDirection: 'column' } }}
-    >
-      {/* Header */}
-      <Box sx={{ px: 3, py: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: 1, borderColor: 'divider' }}>
-        <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <AutoAwesomeIcon color="primary" fontSize="small" />
-          Catalogue Claude Skills
-        </Typography>
-        <IconButton onClick={onClose} size="small">
-          <CloseIcon />
-        </IconButton>
-      </Box>
+    <Sheet open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
+      <SheetContent side="right" className="w-full sm:max-w-xl md:max-w-2xl flex flex-col p-0">
+        {/* Header */}
+        <SheetHeader className="px-6 py-4 border-b border-[var(--border)]">
+          <SheetTitle className="flex items-center gap-2">
+            <Sparkles className="h-5 w-5 text-[var(--accent)]" />
+            Catalogue Claude Skills
+          </SheetTitle>
+        </SheetHeader>
 
-      {/* Filters */}
-      <Box sx={{ px: 3, py: 1.5, borderBottom: 1, borderColor: 'divider' }}>
-        <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap>
-          <Chip
-            label="Tous"
-            size="small"
-            variant={filter === 'all' ? 'filled' : 'outlined'}
-            color={filter === 'all' ? 'primary' : 'default'}
-            onClick={() => onFilterChange('all')}
-            clickable
-          />
-          {ALL_CATEGORIES.map((cat) => (
-            <Chip
-              key={cat}
-              label={CATEGORY_LABELS[cat]}
-              size="small"
-              variant={filter === cat ? 'filled' : 'outlined'}
-              onClick={() => onFilterChange(cat)}
-              clickable
-              sx={filter === cat ? { bgcolor: CATEGORY_COLORS[cat], color: '#fff', borderColor: CATEGORY_COLORS[cat], '&:hover': { bgcolor: CATEGORY_COLORS[cat] } } : { borderColor: CATEGORY_COLORS[cat], color: CATEGORY_COLORS[cat] }}
-            />
-          ))}
-        </Stack>
-      </Box>
+        {/* Filters */}
+        <div className="px-6 py-3 border-b border-[var(--border)]">
+          <div className="flex flex-wrap gap-1">
+            <button
+              type="button"
+              onClick={() => onFilterChange('all')}
+              className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
+                filter === 'all'
+                  ? 'bg-[var(--accent)] text-[var(--bg-app)]'
+                  : 'border border-[var(--border)] text-[var(--text-mid)]'
+              }`}
+            >
+              Tous
+            </button>
+            {ALL_CATEGORIES.map((cat) => (
+              <button
+                key={cat}
+                type="button"
+                onClick={() => onFilterChange(cat)}
+                className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
+                  filter === cat
+                    ? 'text-white'
+                    : 'border text-[var(--text-mid)]'
+                }`}
+                style={filter === cat
+                  ? { backgroundColor: CATEGORY_COLORS[cat] }
+                  : { borderColor: CATEGORY_COLORS[cat], color: CATEGORY_COLORS[cat] }
+                }
+              >
+                {CATEGORY_LABELS[cat]}
+              </button>
+            ))}
+          </div>
+        </div>
 
-      {/* Cards grid */}
-      <Box sx={{ flex: 1, overflow: 'auto', p: 2 }}>
-        <Grid container spacing={1.5}>
-          {filtered.map((item) => {
-            const isSelected = selectedRepos.includes(item.repo);
-            const isDisabled = !isSelected && selectedRepos.length >= 10;
-            return (
-              <Grid item xs={12} sm={6} md={4} key={item.repo}>
+        {/* Cards grid */}
+        <div className="flex-1 overflow-auto p-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+            {filtered.map((item) => {
+              const isSelected = selectedRepos.includes(item.repo);
+              const isDisabled = !isSelected && selectedRepos.length >= 10;
+              return (
                 <Card
-                  variant="outlined"
-                  sx={{
-                    height: '100%',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    opacity: isDisabled ? 0.5 : 1,
+                  key={item.repo}
+                  className={`flex flex-col h-full ${isDisabled ? 'opacity-50' : ''}`}
+                  style={{
                     borderColor: isSelected ? CATEGORY_COLORS[item.category] : undefined,
                     borderWidth: isSelected ? 2 : 1,
                   }}
                 >
-                  <CardContent sx={{ flex: 1, pb: 0.5 }}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 0.5 }}>
-                      <Typography variant="subtitle2" sx={{ fontWeight: 600, lineHeight: 1.2 }}>
+                  <CardContent className="flex-1 p-3 pb-1">
+                    <div className="flex justify-between items-start mb-1">
+                      <span className="text-sm font-semibold leading-tight text-[var(--text-high)]">
                         {item.name}
-                      </Typography>
-                      <Chip
-                        label={CATEGORY_LABELS[item.category]}
-                        size="small"
-                        sx={{ ml: 0.5, fontSize: '0.65rem', height: 18, bgcolor: CATEGORY_COLORS[item.category], color: '#fff', flexShrink: 0 }}
-                      />
-                    </Box>
-                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
-                      {item.repo}
-                    </Typography>
-                    <Typography variant="body2" sx={{ fontSize: '0.75rem', mb: 1, color: 'text.secondary' }}>
-                      {item.description}
-                    </Typography>
-                    <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap sx={{ mb: 0.5 }}>
+                      </span>
+                      <Badge
+                        className="ml-1 text-[0.65rem] h-[18px] shrink-0 text-white"
+                        style={{ backgroundColor: CATEGORY_COLORS[item.category] }}
+                      >
+                        {CATEGORY_LABELS[item.category]}
+                      </Badge>
+                    </div>
+                    <p className="text-xs text-[var(--text-low)] mb-1">{item.repo}</p>
+                    <p className="text-xs text-[var(--text-mid)] mb-2">{item.description}</p>
+                    <div className="flex flex-wrap gap-1 mb-1">
                       {item.tags.map((tag) => (
-                        <Chip key={tag} label={tag} size="small" variant="outlined" sx={{ fontSize: '0.6rem', height: 16 }} />
+                        <Badge key={tag} variant="outline" className="text-[0.6rem] h-4 px-1">{tag}</Badge>
                       ))}
-                    </Stack>
-                    <Typography variant="caption" color="text.secondary">
-                      {formatStars(item.stars)} ⭐
-                    </Typography>
+                    </div>
+                    <span className="text-xs text-[var(--text-low)]">{formatStars(item.stars)} stars</span>
                   </CardContent>
-                  <CardActions sx={{ pt: 0.5, pb: 1, px: 2 }}>
+                  <CardFooter className="p-3 pt-1">
                     {isSelected ? (
                       <Button
-                        size="small"
-                        variant="outlined"
-                        color="success"
-                        fullWidth
-                        startIcon={<Checkbox checked size="small" sx={{ p: 0 }} />}
+                        size="sm"
+                        variant="outline"
+                        className="w-full text-xs text-green-400 border-green-400/30"
                         onClick={() => onToggle(item.repo)}
-                        sx={{ fontSize: '0.7rem' }}
                       >
-                        Déjà ajouté
+                        <Check className="h-3 w-3 mr-1" /> Already added
                       </Button>
                     ) : (
                       <Button
-                        size="small"
-                        variant="contained"
-                        fullWidth
+                        size="sm"
+                        className="w-full text-xs"
                         disabled={isDisabled}
                         onClick={() => onToggle(item.repo)}
-                        sx={{ fontSize: '0.7rem' }}
                       >
-                        Ajouter
+                        Add
                       </Button>
                     )}
-                  </CardActions>
+                  </CardFooter>
                 </Card>
-              </Grid>
-            );
-          })}
-        </Grid>
-      </Box>
+              );
+            })}
+          </div>
+        </div>
 
-      {/* Footer */}
-      <Box sx={{ px: 3, py: 2, borderTop: 1, borderColor: 'divider', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <Typography variant="body2" color="text.secondary">
-          {pendingCount > 0 ? `${pendingCount} repo${pendingCount > 1 ? 's' : ''} sélectionné${pendingCount > 1 ? 's' : ''}` : 'Aucun repo sélectionné'}
-        </Typography>
-        <Button
-          variant="contained"
-          onClick={onClose}
-          disabled={pendingCount === 0}
-          startIcon={<RocketLaunchIcon />}
-        >
-          Confirmer
-        </Button>
-      </Box>
-    </Drawer>
+        {/* Footer */}
+        <SheetFooter className="px-6 py-4 border-t border-[var(--border)] flex items-center justify-between">
+          <p className="text-sm text-[var(--text-mid)]">
+            {pendingCount > 0 ? `${pendingCount} repo${pendingCount > 1 ? 's' : ''} selected` : 'No repos selected'}
+          </p>
+          <Button onClick={onClose} disabled={pendingCount === 0}>
+            <Rocket className="h-4 w-4 mr-1" /> Confirm
+          </Button>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
   );
 }
 
@@ -215,11 +211,11 @@ const TARGET_OPTIONS = [
   { id: 'markdown', label: 'Markdown' },
 ];
 
-const STATUS_COLORS: Record<string, 'default' | 'info' | 'success' | 'error' | 'warning'> = {
-  pending: 'default',
-  running: 'info',
+const STATUS_COLORS: Record<string, 'secondary' | 'default' | 'success' | 'destructive' | 'warning'> = {
+  pending: 'secondary',
+  running: 'default',
   completed: 'success',
-  failed: 'error',
+  failed: 'destructive',
 };
 
 export default function SkillSeekersPage() {
@@ -284,279 +280,289 @@ export default function SkillSeekersPage() {
   };
 
   return (
-    <Box sx={{ p: 3 }}>
+    <div className="p-6">
       {/* Header */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Box>
-          <Typography variant="h4" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <TerminalIcon color="primary" /> Skill Seekers
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h1 className="text-2xl font-bold flex items-center gap-2 text-[var(--text-high)]">
+            <Terminal className="h-6 w-6 text-[var(--accent)]" /> Skill Seekers
+          </h1>
+          <p className="text-sm text-[var(--text-mid)]">
             Scrape GitHub repos and package them for Claude AI consumption
-          </Typography>
-        </Box>
-        <Tooltip title="Refresh jobs">
-          <IconButton onClick={() => refetch()}>
-            <RefreshIcon />
-          </IconButton>
-        </Tooltip>
-      </Box>
+          </p>
+        </div>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button type="button" title="Refresh jobs" onClick={() => refetch()} className="p-2 rounded hover:bg-[var(--bg-elevated)] text-[var(--text-mid)] hover:text-[var(--text-high)] transition-colors">
+                <RefreshCw className="h-5 w-5" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>Refresh jobs</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </div>
 
       {/* CLI status alert */}
       {!statusLoading && statusData && !statusData.installed && (
-        <Alert severity="warning" sx={{ mb: 3 }}>
-          <strong>skill-seekers CLI not installed.</strong> Running in mock mode.
-          Install it with: <code>pip install skill-seekers</code>
+        <Alert variant="warning" className="mb-6">
+          <AlertDescription>
+            <strong>skill-seekers CLI not installed.</strong> Running in mock mode.
+            Install it with: <code className="font-mono">pip install skill-seekers</code>
+          </AlertDescription>
         </Alert>
       )}
 
       {/* Stats cards */}
       {statsData && (
-        <Grid container spacing={2} sx={{ mb: 3 }}>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
           {[
-            { label: 'Total Jobs', value: statsData.total_jobs, color: 'primary.main' },
-            { label: 'Completed', value: statsData.completed, color: 'success.main' },
-            { label: 'Failed', value: statsData.failed, color: 'error.main' },
-            { label: 'Repos Scraped', value: statsData.total_repos_scraped, color: 'info.main' },
+            { label: 'Total Jobs', value: statsData.total_jobs, colorClass: 'text-[var(--accent)]' },
+            { label: 'Completed', value: statsData.completed, colorClass: 'text-green-400' },
+            { label: 'Failed', value: statsData.failed, colorClass: 'text-red-400' },
+            { label: 'Repos Scraped', value: statsData.total_repos_scraped, colorClass: 'text-blue-400' },
           ].map((stat) => (
-            <Grid item xs={6} sm={3} key={stat.label}>
-              <Card>
-                <CardContent sx={{ textAlign: 'center', py: 2, '&:last-child': { pb: 2 } }}>
-                  <Typography variant="h4" sx={{ color: stat.color, fontWeight: 700 }}>
-                    {stat.value}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    {stat.label}
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
+            <Card key={stat.label}>
+              <CardContent className="text-center py-4 px-4">
+                <p className={`text-2xl font-bold ${stat.colorClass}`}>{stat.value}</p>
+                <p className="text-xs text-[var(--text-low)]">{stat.label}</p>
+              </CardContent>
+            </Card>
           ))}
-        </Grid>
+        </div>
       )}
 
-      <Grid container spacing={3}>
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
         {/* Left panel: Create job form */}
-        <Grid item xs={12} md={5}>
+        <div className="md:col-span-5">
           <Card>
-            <CardContent>
-              <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-                <GitHubIcon /> New Scrape Job
-              </Typography>
+            <CardContent className="p-6">
+              <h2 className="text-lg font-semibold text-[var(--text-high)] mb-4 flex items-center gap-2">
+                <GitFork className="h-5 w-5" /> New Scrape Job
+              </h2>
 
               {/* Repo input */}
-              <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
-                <TextField
-                  fullWidth
-                  size="small"
-                  label="GitHub repo (owner/repo)"
-                  placeholder="e.g. anthropics/claude-code"
-                  value={repoInput}
-                  onChange={(e) => setRepoInput(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  helperText={repos.length >= 10 ? 'Max 10 repos' : undefined}
-                  error={repos.length >= 10}
-                />
+              <div className="flex gap-2 mb-4">
+                <div className="flex-1">
+                  <Input
+                    placeholder="e.g. anthropics/claude-code"
+                    value={repoInput}
+                    onChange={(e) => setRepoInput(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    className={repos.length >= 10 ? 'border-red-500' : ''}
+                  />
+                  {repos.length >= 10 && (
+                    <p className="text-xs text-red-400 mt-1">Max 10 repos</p>
+                  )}
+                </div>
                 <Button
-                  variant="outlined"
+                  variant="outline"
+                  size="sm"
                   onClick={handleAddRepo}
                   disabled={!repoInput.trim() || repos.length >= 10}
-                  sx={{ minWidth: 'auto', px: 1 }}
+                  className="px-2"
+                  title="Add repo"
                 >
-                  <AddCircleOutlineIcon />
+                  <PlusCircle className="h-4 w-4" />
                 </Button>
                 <Button
-                  variant="outlined"
-                  startIcon={<AutoAwesomeIcon />}
+                  variant="outline"
+                  size="sm"
                   onClick={() => setCatalogueOpen(true)}
-                  size="small"
-                  sx={{ whiteSpace: 'nowrap' }}
+                  className="whitespace-nowrap"
                 >
-                  Catalogue
+                  <Sparkles className="h-4 w-4 mr-1" /> Catalogue
                 </Button>
-              </Box>
+              </div>
 
               {/* Repo chips */}
               {repos.length > 0 && (
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 2 }}>
+                <div className="flex flex-wrap gap-1 mb-4">
                   {repos.map((repo) => (
-                    <Chip
-                      key={repo}
-                      label={repo}
-                      onDelete={() => handleRemoveRepo(repo)}
-                      size="small"
-                      icon={<GitHubIcon />}
-                    />
+                    <Badge key={repo} variant="secondary" className="text-xs flex items-center gap-1">
+                      <GitFork className="h-3 w-3" /> {repo}
+                      <button type="button" onClick={() => handleRemoveRepo(repo)} className="ml-0.5 hover:text-red-400">
+                        <X className="h-3 w-3" />
+                      </button>
+                    </Badge>
                   ))}
-                </Box>
+                </div>
               )}
 
-              <Divider sx={{ my: 2 }} />
+              <Separator className="my-4" />
 
               {/* Target checkboxes */}
-              <Typography variant="subtitle2" sx={{ mb: 1 }}>
+              <h3 className="text-sm font-semibold text-[var(--text-high)] mb-2">
                 Package Targets
-              </Typography>
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0 }}>
+              </h3>
+              <div className="flex flex-wrap gap-3 mb-4">
                 {TARGET_OPTIONS.map((opt) => (
-                  <FormControlLabel
-                    key={opt.id}
-                    control={
-                      <Checkbox
-                        checked={targets.includes(opt.id)}
-                        onChange={() => handleToggleTarget(opt.id)}
-                        size="small"
-                      />
-                    }
-                    label={opt.label}
-                  />
+                  <label key={opt.id} className="flex items-center gap-1.5 text-sm text-[var(--text-mid)]">
+                    <Checkbox
+                      checked={targets.includes(opt.id)}
+                      onCheckedChange={() => handleToggleTarget(opt.id)}
+                    />
+                    {opt.label}
+                  </label>
                 ))}
-              </Box>
+              </div>
 
-              <Divider sx={{ my: 2 }} />
+              <Separator className="my-4" />
 
               {/* Enhance toggle */}
-              <FormControlLabel
-                control={<Switch checked={enhance} onChange={(e) => setEnhance(e.target.checked)} />}
-                label="AI Enhancement Pass"
-              />
-              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 2 }}>
+              <label className="flex items-center gap-2 text-sm text-[var(--text-mid)] mb-1">
+                <Switch checked={enhance} onCheckedChange={setEnhance} />
+                AI Enhancement Pass
+              </label>
+              <p className="text-xs text-[var(--text-low)] mb-4">
                 Runs an additional AI pass to improve content structure and readability
-              </Typography>
+              </p>
 
               {/* Launch button */}
               <Button
-                variant="contained"
-                fullWidth
-                startIcon={createMutation.isPending ? <CircularProgress size={18} /> : <RocketLaunchIcon />}
+                className="w-full"
+                size="lg"
                 onClick={handleLaunch}
                 disabled={repos.length === 0 || targets.length === 0 || createMutation.isPending}
-                size="large"
               >
+                {createMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Rocket className="h-4 w-4 mr-2" />}
                 {createMutation.isPending ? 'Launching...' : `Scrape ${repos.length} Repo${repos.length !== 1 ? 's' : ''}`}
               </Button>
 
               {createMutation.isError && (
-                <Alert severity="error" sx={{ mt: 2 }}>
-                  {createMutation.error?.message || 'Failed to create job'}
+                <Alert variant="destructive" className="mt-4">
+                  <AlertDescription>
+                    {createMutation.error?.message || 'Failed to create job'}
+                  </AlertDescription>
                 </Alert>
               )}
             </CardContent>
           </Card>
-        </Grid>
+        </div>
 
         {/* Right panel: Job history */}
-        <Grid item xs={12} md={7}>
+        <div className="md:col-span-7">
           <Card>
-            <CardContent>
-              <Typography variant="h6" sx={{ mb: 1 }}>
+            <CardContent className="p-6">
+              <h2 className="text-lg font-semibold text-[var(--text-high)] mb-2">
                 Job History
-              </Typography>
-              <Box sx={{ display: 'flex', gap: 0.5, mb: 2, flexWrap: 'wrap' }}>
+              </h2>
+              <div className="flex gap-1 mb-4 flex-wrap">
                 {STATUS_TABS.map((tab) => (
-                  <Chip
+                  <button
                     key={tab.value}
-                    label={tab.label}
-                    size="small"
-                    variant={statusFilter === tab.value ? 'filled' : 'outlined'}
-                    color={statusFilter === tab.value ? 'primary' : 'default'}
+                    type="button"
                     onClick={() => setStatusFilter(tab.value)}
-                    clickable
-                  />
+                    className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
+                      statusFilter === tab.value
+                        ? 'bg-[var(--accent)] text-[var(--bg-app)]'
+                        : 'border border-[var(--border)] text-[var(--text-mid)] hover:bg-[var(--bg-elevated)]'
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
                 ))}
-              </Box>
+              </div>
 
               {jobsLoading ? (
-                <Box>
+                <div className="space-y-2">
                   {[1, 2, 3].map((i) => (
-                    <Skeleton key={i} variant="rectangular" height={80} sx={{ mb: 1, borderRadius: 1 }} />
+                    <Skeleton key={i} className="h-20 rounded" />
                   ))}
-                </Box>
+                </div>
               ) : !jobsData?.items.length ? (
-                <Typography color="text.secondary" sx={{ py: 4, textAlign: 'center' }}>
+                <p className="text-[var(--text-mid)] py-8 text-center">
                   No scrape jobs yet. Add repos and launch your first job.
-                </Typography>
+                </p>
               ) : (
                 jobsData.items.map((job) => (
-                  <Card key={job.id} variant="outlined" sx={{ mb: 1.5 }}>
-                    <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
+                  <Card key={job.id} className="mb-3 border border-[var(--border)]">
+                    <CardContent className="py-3 px-4">
                       {/* Job header */}
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <Chip
-                            label={job.status}
-                            size="small"
-                            color={STATUS_COLORS[job.status] || 'default'}
-                          />
-                          <Typography variant="body2" color="text.secondary">
+                      <div className="flex justify-between items-center mb-1">
+                        <div className="flex items-center gap-2">
+                          <Badge variant={STATUS_COLORS[job.status] || 'secondary'}>
+                            {job.status}
+                          </Badge>
+                          <span className="text-sm text-[var(--text-mid)]">
                             {new Date(job.created_at).toLocaleString()}
-                          </Typography>
-                        </Box>
-                        <Box sx={{ display: 'flex', gap: 0.5 }}>
+                          </span>
+                        </div>
+                        <div className="flex gap-1">
                           {(job.status === ScrapeJobStatus.RUNNING || job.status === ScrapeJobStatus.PENDING) && (
-                            <Tooltip title="Cancel job">
-                              <IconButton size="small" onClick={() => cancelMutation.mutate(job.id)} disabled={cancelMutation.isPending}>
-                                <CancelIcon fontSize="small" />
-                              </IconButton>
-                            </Tooltip>
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <button type="button" title="Cancel job" className="p-1 rounded hover:bg-[var(--bg-elevated)] text-[var(--text-mid)]" onClick={() => cancelMutation.mutate(job.id)} disabled={cancelMutation.isPending}>
+                                    <XCircle className="h-4 w-4" />
+                                  </button>
+                                </TooltipTrigger>
+                                <TooltipContent>Cancel job</TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
                           )}
                           {job.status === ScrapeJobStatus.FAILED && (
-                            <Tooltip title="Retry job">
-                              <IconButton size="small" onClick={() => retryMutation.mutate(job.id)} disabled={retryMutation.isPending}>
-                                <ReplayIcon fontSize="small" />
-                              </IconButton>
-                            </Tooltip>
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <button type="button" title="Retry job" className="p-1 rounded hover:bg-[var(--bg-elevated)] text-[var(--text-mid)]" onClick={() => retryMutation.mutate(job.id)} disabled={retryMutation.isPending}>
+                                    <RotateCcw className="h-4 w-4" />
+                                  </button>
+                                </TooltipTrigger>
+                                <TooltipContent>Retry job</TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
                           )}
-                          <Tooltip title="Delete job">
-                            <IconButton size="small" onClick={() => deleteMutation.mutate(job.id)} disabled={deleteMutation.isPending}>
-                              <DeleteIcon fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-                        </Box>
-                      </Box>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <button type="button" title="Delete job" className="p-1 rounded hover:bg-[var(--bg-elevated)] text-[var(--text-mid)]" onClick={() => deleteMutation.mutate(job.id)} disabled={deleteMutation.isPending}>
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
+                              </TooltipTrigger>
+                              <TooltipContent>Delete job</TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </div>
+                      </div>
 
                       {/* Repos */}
-                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 1 }}>
+                      <div className="flex flex-wrap gap-1 mb-2">
                         {job.repos.map((repo) => (
-                          <Chip key={repo} label={repo} size="small" variant="outlined" icon={<GitHubIcon />} />
+                          <Badge key={repo} variant="outline" className="text-xs flex items-center gap-1">
+                            <GitFork className="h-3 w-3" /> {repo}
+                          </Badge>
                         ))}
-                        {job.enhance && <Chip label="Enhanced" size="small" color="secondary" variant="outlined" />}
-                      </Box>
+                        {job.enhance && <Badge variant="outline" className="text-xs text-purple-400 border-purple-400/30">Enhanced</Badge>}
+                      </div>
 
                       {/* Progress bar for running jobs */}
                       {(job.status === ScrapeJobStatus.RUNNING || job.status === ScrapeJobStatus.PENDING) && (
-                        <Box sx={{ mb: 1 }}>
-                          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                            <Typography variant="caption" color="text.secondary">
-                              {job.current_step}
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary">
-                              {job.progress}%
-                            </Typography>
-                          </Box>
-                          <LinearProgress
-                            variant={job.progress > 0 ? 'determinate' : 'indeterminate'}
-                            value={job.progress}
-                          />
-                        </Box>
+                        <div className="mb-2">
+                          <div className="flex justify-between mb-1">
+                            <span className="text-xs text-[var(--text-low)]">{job.current_step}</span>
+                            <span className="text-xs text-[var(--text-low)]">{job.progress}%</span>
+                          </div>
+                          <Progress value={job.progress > 0 ? job.progress : undefined} className="h-1.5" />
+                        </div>
                       )}
 
                       {/* Error */}
                       {job.status === ScrapeJobStatus.FAILED && job.error && (
-                        <Alert severity="error" sx={{ mt: 1, py: 0 }}>
-                          <Typography variant="caption">{job.error}</Typography>
+                        <Alert variant="destructive" className="mt-2 py-1">
+                          <AlertDescription className="text-xs">{job.error}</AlertDescription>
                         </Alert>
                       )}
 
                       {/* Download + Preview links for completed jobs */}
                       {job.status === ScrapeJobStatus.COMPLETED && job.output_files.length > 0 && (
-                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 1 }}>
+                        <div className="flex flex-wrap gap-1 mt-2">
                           {job.output_files.map((filename) => (
-                            <Box key={filename} sx={{ display: 'flex', gap: 0.5 }}>
+                            <div key={filename} className="flex gap-1">
                               <Button
-                                size="small"
-                                variant="outlined"
-                                startIcon={<PreviewIcon />}
+                                size="sm"
+                                variant="outline"
+                                className="text-xs"
                                 onClick={async () => {
                                   try {
                                     const data = await previewFile(job.id, filename);
@@ -566,12 +572,12 @@ export default function SkillSeekersPage() {
                                   }
                                 }}
                               >
-                                Preview
+                                <Eye className="h-3 w-3 mr-1" /> Preview
                               </Button>
                               <Button
-                                size="small"
-                                variant="outlined"
-                                startIcon={<DownloadIcon />}
+                                size="sm"
+                                variant="outline"
+                                className="text-xs"
                                 onClick={async () => {
                                   try {
                                     const url = await getSignedDownloadUrl(job.id, filename);
@@ -581,11 +587,11 @@ export default function SkillSeekersPage() {
                                   }
                                 }}
                               >
-                                {filename}
+                                <Download className="h-3 w-3 mr-1" /> {filename}
                               </Button>
-                            </Box>
+                            </div>
                           ))}
-                        </Box>
+                        </div>
                       )}
                     </CardContent>
                   </Card>
@@ -593,30 +599,26 @@ export default function SkillSeekersPage() {
               )}
             </CardContent>
           </Card>
-        </Grid>
-      </Grid>
+        </div>
+      </div>
 
       {/* Preview dialog */}
       {previewData && (
-        <Card sx={{ position: 'fixed', bottom: 16, right: 16, left: 16, maxHeight: '50vh', overflow: 'auto', zIndex: 1200, boxShadow: 8 }}>
-          <CardContent>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-              <Typography variant="subtitle2">{previewData.filename}</Typography>
-              <Button size="small" onClick={() => setPreviewData(null)}>Close</Button>
-            </Box>
+        <Card className="fixed bottom-4 right-4 left-4 max-h-[50vh] overflow-auto z-50 shadow-xl">
+          <CardContent className="p-4">
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-sm font-semibold text-[var(--text-high)]">{previewData.filename}</span>
+              <Button size="sm" variant="ghost" onClick={() => setPreviewData(null)}>Close</Button>
+            </div>
             {previewData.truncated && (
-              <Alert severity="info" sx={{ mb: 1, py: 0 }}>
-                <Typography variant="caption">Preview truncated. Download the full file for complete content.</Typography>
+              <Alert variant="info" className="mb-2 py-1">
+                <AlertDescription className="text-xs">Preview truncated. Download the full file for complete content.</AlertDescription>
               </Alert>
             )}
-            <Divider sx={{ mb: 1 }} />
-            <Typography
-              variant="body2"
-              component="pre"
-              sx={{ whiteSpace: 'pre-wrap', fontFamily: 'monospace', fontSize: '0.8rem', maxHeight: '35vh', overflow: 'auto' }}
-            >
+            <Separator className="mb-2" />
+            <pre className="whitespace-pre-wrap font-mono text-xs max-h-[35vh] overflow-auto text-[var(--text-mid)]">
               {previewData.content}
-            </Typography>
+            </pre>
           </CardContent>
         </Card>
       )}
@@ -634,6 +636,6 @@ export default function SkillSeekersPage() {
         filter={catalogueFilter}
         onFilterChange={setCatalogueFilter}
       />
-    </Box>
+    </div>
   );
 }

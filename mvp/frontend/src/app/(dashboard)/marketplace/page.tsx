@@ -2,54 +2,22 @@
 
 import { useState } from 'react';
 import {
-  Alert,
-  Box,
-  Button,
-  Card,
-  CardActions,
-  CardContent,
-  Chip,
-  CircularProgress,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  Divider,
-  FormControl,
-  Grid,
-  IconButton,
-  InputAdornment,
-  InputLabel,
-  List,
-  ListItemButton,
-  ListItemIcon,
-  ListItemText,
-  MenuItem,
-  Rating,
-  Select,
-  Skeleton,
-  TextField,
-  Tooltip,
-  Typography,
-} from '@mui/material';
-import AddIcon from '@mui/icons-material/Add';
-import SearchIcon from '@mui/icons-material/Search';
-import StorefrontIcon from '@mui/icons-material/Storefront';
-import DownloadIcon from '@mui/icons-material/Download';
-import DeleteIcon from '@mui/icons-material/Delete';
-import PublishIcon from '@mui/icons-material/Publish';
-import UnpublishedIcon from '@mui/icons-material/Unpublished';
-import StarIcon from '@mui/icons-material/Star';
-import SmartToyIcon from '@mui/icons-material/SmartToy';
-import SpeedIcon from '@mui/icons-material/Speed';
-import EditIcon from '@mui/icons-material/Edit';
-import BarChartIcon from '@mui/icons-material/BarChart';
-import ImageIcon from '@mui/icons-material/Image';
-import ShieldIcon from '@mui/icons-material/Shield';
-import AutoModeIcon from '@mui/icons-material/AutoMode';
-import CategoryIcon from '@mui/icons-material/Category';
-import PersonIcon from '@mui/icons-material/Person';
-import InventoryIcon from '@mui/icons-material/Inventory';
+  Plus, Search, Store, Download, Trash2, Upload, CircleOff,
+  Star, Bot, Gauge, Pencil, BarChart3, Image, Shield,
+  RefreshCw, Tags, User, Package, Loader2,
+} from 'lucide-react';
+
+import { Card, CardContent, CardFooter } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/lib/design-hub/components/Button';
+import { Input } from '@/lib/design-hub/components/Input';
+import { Textarea } from '@/lib/design-hub/components/Textarea';
+import { Skeleton } from '@/lib/design-hub/components/Skeleton';
+import { Separator } from '@/lib/design-hub/components/Separator';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/lib/design-hub/components/Select';
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/lib/design-hub/components/Tooltip';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/lib/design-hub/components/Dialog';
 
 import {
   useAddReview,
@@ -66,22 +34,22 @@ import {
 import type { MarketplaceListing } from '@/features/marketplace/types';
 
 const CATEGORY_ICONS: Record<string, React.ReactNode> = {
-  ai: <SmartToyIcon fontSize="small" />,
-  productivity: <SpeedIcon fontSize="small" />,
-  content: <EditIcon fontSize="small" />,
-  data: <BarChartIcon fontSize="small" />,
-  media: <ImageIcon fontSize="small" />,
-  security: <ShieldIcon fontSize="small" />,
-  automation: <AutoModeIcon fontSize="small" />,
-  other: <CategoryIcon fontSize="small" />,
+  ai: <Bot className="h-4 w-4" />,
+  productivity: <Gauge className="h-4 w-4" />,
+  content: <Pencil className="h-4 w-4" />,
+  data: <BarChart3 className="h-4 w-4" />,
+  media: <Image className="h-4 w-4" />,
+  security: <Shield className="h-4 w-4" />,
+  automation: <RefreshCw className="h-4 w-4" />,
+  other: <Tags className="h-4 w-4" />,
 };
 
-const TYPE_COLORS: Record<string, 'primary' | 'secondary' | 'success' | 'warning' | 'info'> = {
-  module: 'primary',
+const TYPE_VARIANTS: Record<string, 'default' | 'secondary' | 'success' | 'warning'> = {
+  module: 'default',
   template: 'secondary',
   prompt: 'success',
   workflow: 'warning',
-  dataset: 'info',
+  dataset: 'default',
 };
 
 const LISTING_TYPES = ['module', 'template', 'prompt', 'workflow', 'dataset'];
@@ -93,6 +61,19 @@ const SORT_OPTIONS = [
   { value: 'price_asc', label: 'Price: Low to High' },
   { value: 'price_desc', label: 'Price: High to Low' },
 ];
+
+function StarRating({ value }: { value: number }) {
+  return (
+    <div className="flex items-center gap-0.5">
+      {[1, 2, 3, 4, 5].map((s) => (
+        <Star
+          key={s}
+          className={`h-3.5 w-3.5 ${s <= Math.round(value) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`}
+        />
+      ))}
+    </div>
+  );
+}
 
 export default function MarketplacePage() {
   const [search, setSearch] = useState('');
@@ -175,427 +156,398 @@ export default function MarketplacePage() {
   };
 
   const renderListingCard = (listing: MarketplaceListing) => (
-    <Grid item xs={12} sm={6} md={4} lg={3} key={listing.id}>
-      <Card
-        sx={{
-          height: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-          transition: 'box-shadow 0.2s',
-          '&:hover': { boxShadow: 6 },
-        }}
-      >
-        <CardContent sx={{ flexGrow: 1 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
-            <Chip
-              label={listing.type}
-              size="small"
-              color={TYPE_COLORS[listing.type] || 'default'}
-              variant="outlined"
-            />
-            <Typography variant="subtitle2" color={listing.price === 0 ? 'success.main' : 'text.primary'} fontWeight="bold">
+    <div key={listing.id} className="col-span-1">
+      <Card className="h-full flex flex-col transition-shadow hover:shadow-lg">
+        <CardContent className="flex-1 p-4">
+          <div className="flex justify-between items-start mb-2">
+            <Badge variant={TYPE_VARIANTS[listing.type] || 'default'}>{listing.type}</Badge>
+            <span className={`text-sm font-bold ${listing.price === 0 ? 'text-green-600' : 'text-[var(--text-high)]'}`}>
               {listing.price === 0 ? 'Free' : `$${listing.price.toFixed(2)}`}
-            </Typography>
-          </Box>
-          <Typography variant="h6" gutterBottom noWrap>
-            {listing.title}
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 1, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-            {listing.description}
-          </Typography>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 1 }}>
-            <Rating value={listing.rating} precision={0.5} size="small" readOnly />
-            <Typography variant="caption" color="text.secondary">
-              ({listing.reviews_count})
-            </Typography>
-          </Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Chip
-              label={listing.category}
-              size="small"
-              icon={CATEGORY_ICONS[listing.category] as React.ReactElement || undefined}
-              variant="outlined"
-              sx={{ fontSize: '0.7rem' }}
-            />
-            <Typography variant="caption" color="text.secondary">
-              v{listing.version}
-            </Typography>
-          </Box>
+            </span>
+          </div>
+          <h3 className="text-lg font-semibold text-[var(--text-high)] truncate mb-1">{listing.title}</h3>
+          <p className="text-sm text-[var(--text-mid)] mb-2 line-clamp-2">{listing.description}</p>
+          <div className="flex items-center gap-1 mb-2">
+            <StarRating value={listing.rating} />
+            <span className="text-xs text-[var(--text-mid)]">({listing.reviews_count})</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className="text-xs">
+              {CATEGORY_ICONS[listing.category] as React.ReactElement || null}
+              <span className="ml-1">{listing.category}</span>
+            </Badge>
+            <span className="text-xs text-[var(--text-mid)]">v{listing.version}</span>
+          </div>
           {listing.tags.length > 0 && (
-            <Box sx={{ mt: 1, display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
+            <div className="mt-2 flex gap-1 flex-wrap">
               {listing.tags.slice(0, 3).map((tag) => (
-                <Chip key={tag} label={tag} size="small" variant="outlined" sx={{ fontSize: '0.65rem', height: 20 }} />
+                <Badge key={tag} variant="outline" className="text-[0.65rem] h-5">{tag}</Badge>
               ))}
-            </Box>
+            </div>
           )}
         </CardContent>
-        <Divider />
-        <CardActions sx={{ justifyContent: 'space-between', px: 2, py: 1 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-            <PersonIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
-            <Typography variant="caption" color="text.secondary">
-              {listing.author_name}
-            </Typography>
-          </Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-            <Typography variant="caption" color="text.secondary">
-              {listing.installs_count} installs
-            </Typography>
-            <Tooltip title="Install">
-              <IconButton
-                size="small"
-                color="primary"
-                onClick={() => installMutation.mutate(listing.id)}
-                disabled={installMutation.isPending}
-              >
-                <DownloadIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Review">
-              <IconButton
-                size="small"
-                onClick={() => {
-                  setReviewListingId(listing.id);
-                  setReviewOpen(true);
-                }}
-              >
-                <StarIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
-          </Box>
-        </CardActions>
+        <Separator />
+        <CardFooter className="justify-between px-4 py-2">
+          <div className="flex items-center gap-1">
+            <User className="h-3.5 w-3.5 text-[var(--text-mid)]" />
+            <span className="text-xs text-[var(--text-mid)]">{listing.author_name}</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <span className="text-xs text-[var(--text-mid)]">{listing.installs_count} installs</span>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    title="Install"
+                    className="p-1 rounded hover:bg-[var(--bg-hover)] text-[var(--accent)]"
+                    onClick={() => installMutation.mutate(listing.id)}
+                    disabled={installMutation.isPending}
+                  >
+                    <Download className="h-4 w-4" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>Install</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    title="Review"
+                    className="p-1 rounded hover:bg-[var(--bg-hover)]"
+                    onClick={() => {
+                      setReviewListingId(listing.id);
+                      setReviewOpen(true);
+                    }}
+                  >
+                    <Star className="h-4 w-4 text-[var(--text-mid)]" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>Review</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+        </CardFooter>
       </Card>
-    </Grid>
+    </div>
   );
 
   const renderMyListingCard = (listing: MarketplaceListing) => (
-    <Grid item xs={12} sm={6} md={4} key={listing.id}>
-      <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-        <CardContent sx={{ flexGrow: 1 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-            <Chip label={listing.type} size="small" color={TYPE_COLORS[listing.type] || 'default'} variant="outlined" />
-            <Chip
-              label={listing.is_published ? 'Published' : 'Draft'}
-              size="small"
-              color={listing.is_published ? 'success' : 'default'}
-            />
-          </Box>
-          <Typography variant="h6" gutterBottom noWrap>{listing.title}</Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 1, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-            {listing.description}
-          </Typography>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Rating value={listing.rating} precision={0.5} size="small" readOnly />
-            <Typography variant="caption">{listing.installs_count} installs</Typography>
-          </Box>
+    <div key={listing.id} className="col-span-1">
+      <Card className="h-full flex flex-col">
+        <CardContent className="flex-1 p-4">
+          <div className="flex justify-between mb-2">
+            <Badge variant={TYPE_VARIANTS[listing.type] || 'default'}>{listing.type}</Badge>
+            <Badge variant={listing.is_published ? 'success' : 'default'}>
+              {listing.is_published ? 'Published' : 'Draft'}
+            </Badge>
+          </div>
+          <h3 className="text-lg font-semibold text-[var(--text-high)] truncate mb-1">{listing.title}</h3>
+          <p className="text-sm text-[var(--text-mid)] mb-2 line-clamp-2">{listing.description}</p>
+          <div className="flex items-center gap-2">
+            <StarRating value={listing.rating} />
+            <span className="text-xs text-[var(--text-mid)]">{listing.installs_count} installs</span>
+          </div>
         </CardContent>
-        <Divider />
-        <CardActions sx={{ justifyContent: 'flex-end' }}>
-          {listing.is_published ? (
-            <Tooltip title="Unpublish">
-              <IconButton size="small" onClick={() => unpublishMutation.mutate(listing.id)} disabled={unpublishMutation.isPending}>
-                <UnpublishedIcon fontSize="small" />
-              </IconButton>
+        <Separator />
+        <CardFooter className="justify-end gap-1 px-4 py-2">
+          <TooltipProvider>
+            {listing.is_published ? (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button type="button" title="Unpublish" className="p-1 rounded hover:bg-[var(--bg-hover)]" onClick={() => unpublishMutation.mutate(listing.id)} disabled={unpublishMutation.isPending}>
+                    <CircleOff className="h-4 w-4 text-[var(--text-mid)]" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>Unpublish</TooltipContent>
+              </Tooltip>
+            ) : (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button type="button" title="Publish" className="p-1 rounded hover:bg-green-100 text-green-600" onClick={() => publishMutation.mutate(listing.id)} disabled={publishMutation.isPending}>
+                    <Upload className="h-4 w-4" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>Publish</TooltipContent>
+              </Tooltip>
+            )}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button type="button" title="Delete" className="p-1 rounded hover:bg-red-100 text-red-500" onClick={() => deleteMutation.mutate(listing.id)} disabled={deleteMutation.isPending}>
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>Delete</TooltipContent>
             </Tooltip>
-          ) : (
-            <Tooltip title="Publish">
-              <IconButton size="small" color="success" onClick={() => publishMutation.mutate(listing.id)} disabled={publishMutation.isPending}>
-                <PublishIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
-          )}
-          <Tooltip title="Delete">
-            <IconButton size="small" color="error" onClick={() => deleteMutation.mutate(listing.id)} disabled={deleteMutation.isPending}>
-              <DeleteIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-        </CardActions>
+          </TooltipProvider>
+        </CardFooter>
       </Card>
-    </Grid>
+    </div>
   );
 
   return (
-    <Box sx={{ p: 3 }}>
+    <div className="p-6">
       {/* Header */}
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
-        <Box>
-          <Typography variant="h4" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <StorefrontIcon color="primary" /> Marketplace
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-3xl font-bold text-[var(--text-high)] flex items-center gap-2">
+            <Store className="h-8 w-8 text-[var(--accent)]" /> Marketplace
+          </h1>
+          <p className="text-sm text-[var(--text-mid)]">
             Discover and share modules, templates, prompts, workflows, and datasets
-          </Typography>
-        </Box>
-        <Box sx={{ display: 'flex', gap: 1 }}>
+          </p>
+        </div>
+        <div className="flex gap-2">
           <Button
-            variant={tab === 'browse' ? 'contained' : 'outlined'}
+            variant={tab === 'browse' ? 'default' : 'outline'}
             onClick={() => setTab('browse')}
-            startIcon={<StorefrontIcon />}
           >
-            Browse
+            <Store className="h-4 w-4 mr-2" /> Browse
           </Button>
           <Button
-            variant={tab === 'my-listings' ? 'contained' : 'outlined'}
+            variant={tab === 'my-listings' ? 'default' : 'outline'}
             onClick={() => setTab('my-listings')}
-            startIcon={<InventoryIcon />}
           >
-            My Listings
+            <Package className="h-4 w-4 mr-2" /> My Listings
           </Button>
-          <Button variant="contained" startIcon={<AddIcon />} onClick={() => setCreateOpen(true)}>
-            Create Listing
+          <Button onClick={() => setCreateOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" /> Create Listing
           </Button>
-        </Box>
-      </Box>
+        </div>
+      </div>
 
       {tab === 'browse' ? (
-        <Grid container spacing={3}>
+        <div className="grid grid-cols-12 gap-6">
           {/* Sidebar */}
-          <Grid item xs={12} md={2}>
-            <Typography variant="subtitle2" gutterBottom>Categories</Typography>
-            <List dense disablePadding>
-              <ListItemButton
-                selected={!selectedCategory}
+          <div className="col-span-12 md:col-span-2">
+            <p className="text-sm font-medium text-[var(--text-high)] mb-2">Categories</p>
+            <nav className="space-y-0.5">
+              <button
+                type="button"
+                className={`w-full text-left px-3 py-1.5 rounded text-sm flex items-center gap-2 ${!selectedCategory ? 'bg-[var(--accent)]/10 text-[var(--accent)] font-medium' : 'text-[var(--text-mid)] hover:bg-[var(--bg-hover)]'}`}
                 onClick={() => setSelectedCategory(undefined)}
-                sx={{ borderRadius: 1, mb: 0.5 }}
               >
-                <ListItemIcon sx={{ minWidth: 32 }}><CategoryIcon fontSize="small" /></ListItemIcon>
-                <ListItemText primary="All" primaryTypographyProps={{ variant: 'body2' }} />
-              </ListItemButton>
+                <Tags className="h-4 w-4" /> All
+              </button>
               {(categories || []).map((cat) => (
-                <ListItemButton
+                <button
                   key={cat.id}
-                  selected={selectedCategory === cat.id}
+                  type="button"
+                  className={`w-full text-left px-3 py-1.5 rounded text-sm flex items-center gap-2 ${selectedCategory === cat.id ? 'bg-[var(--accent)]/10 text-[var(--accent)] font-medium' : 'text-[var(--text-mid)] hover:bg-[var(--bg-hover)]'}`}
                   onClick={() => setSelectedCategory(cat.id)}
-                  sx={{ borderRadius: 1, mb: 0.5 }}
                 >
-                  <ListItemIcon sx={{ minWidth: 32 }}>
-                    {CATEGORY_ICONS[cat.id] || <CategoryIcon fontSize="small" />}
-                  </ListItemIcon>
-                  <ListItemText primary={cat.name} primaryTypographyProps={{ variant: 'body2' }} />
-                </ListItemButton>
+                  {CATEGORY_ICONS[cat.id] || <Tags className="h-4 w-4" />}
+                  {cat.name}
+                </button>
               ))}
-            </List>
+            </nav>
 
-            <Divider sx={{ my: 2 }} />
-            <Typography variant="subtitle2" gutterBottom>Type</Typography>
-            <List dense disablePadding>
-              <ListItemButton
-                selected={!selectedType}
+            <Separator className="my-4" />
+            <p className="text-sm font-medium text-[var(--text-high)] mb-2">Type</p>
+            <nav className="space-y-0.5">
+              <button
+                type="button"
+                className={`w-full text-left px-3 py-1.5 rounded text-sm ${!selectedType ? 'bg-[var(--accent)]/10 text-[var(--accent)] font-medium' : 'text-[var(--text-mid)] hover:bg-[var(--bg-hover)]'}`}
                 onClick={() => setSelectedType(undefined)}
-                sx={{ borderRadius: 1, mb: 0.5 }}
               >
-                <ListItemText primary="All Types" primaryTypographyProps={{ variant: 'body2' }} />
-              </ListItemButton>
+                All Types
+              </button>
               {LISTING_TYPES.map((t) => (
-                <ListItemButton
+                <button
                   key={t}
-                  selected={selectedType === t}
+                  type="button"
+                  className={`w-full text-left px-3 py-1.5 rounded text-sm ${selectedType === t ? 'bg-[var(--accent)]/10 text-[var(--accent)] font-medium' : 'text-[var(--text-mid)] hover:bg-[var(--bg-hover)]'}`}
                   onClick={() => setSelectedType(t)}
-                  sx={{ borderRadius: 1, mb: 0.5 }}
                 >
-                  <ListItemText primary={t.charAt(0).toUpperCase() + t.slice(1)} primaryTypographyProps={{ variant: 'body2' }} />
-                </ListItemButton>
+                  {t.charAt(0).toUpperCase() + t.slice(1)}
+                </button>
               ))}
-            </List>
-          </Grid>
+            </nav>
+          </div>
 
           {/* Main content */}
-          <Grid item xs={12} md={10}>
+          <div className="col-span-12 md:col-span-10">
             {/* Search & sort bar */}
-            <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
-              <TextField
-                size="small"
-                placeholder="Search marketplace..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                sx={{ flexGrow: 1 }}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchIcon />
-                    </InputAdornment>
-                  ),
-                }}
-              />
-              <FormControl size="small" sx={{ minWidth: 180 }}>
-                <InputLabel>Sort by</InputLabel>
-                <Select value={sortBy} label="Sort by" onChange={(e) => setSortBy(e.target.value)}>
+            <div className="flex gap-4 mb-6">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-mid)]" />
+                <Input
+                  className="pl-10"
+                  placeholder="Search marketplace..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+              </div>
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="Sort by" />
+                </SelectTrigger>
+                <SelectContent>
                   {SORT_OPTIONS.map((opt) => (
-                    <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
+                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
                   ))}
-                </Select>
-              </FormControl>
-            </Box>
+                </SelectContent>
+              </Select>
+            </div>
 
             {/* Featured section */}
             {!search && !selectedCategory && !selectedType && featured && featured.length > 0 && (
-              <Box sx={{ mb: 4 }}>
-                <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <StarIcon color="warning" /> Featured
-                </Typography>
-                <Grid container spacing={2}>
+              <div className="mb-8">
+                <h2 className="text-lg font-semibold text-[var(--text-high)] flex items-center gap-2 mb-4">
+                  <Star className="h-5 w-5 text-yellow-500" /> Featured
+                </h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                   {featured.slice(0, 4).map(renderListingCard)}
-                </Grid>
-              </Box>
+                </div>
+              </div>
             )}
 
             {/* Listings grid */}
             {isLoading ? (
-              <Grid container spacing={2}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {[...Array(8)].map((_, i) => (
-                  <Grid item xs={12} sm={6} md={4} lg={3} key={i}>
-                    <Skeleton variant="rounded" height={240} />
-                  </Grid>
+                  <Skeleton key={i} className="h-60 rounded-lg" />
                 ))}
-              </Grid>
+              </div>
             ) : listings && listings.length > 0 ? (
-              <Grid container spacing={2}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {listings.map(renderListingCard)}
-              </Grid>
+              </div>
             ) : (
-              <Alert severity="info" sx={{ mt: 2 }}>
-                No listings found. Be the first to publish something!
+              <Alert className="mt-4">
+                <AlertDescription>No listings found. Be the first to publish something!</AlertDescription>
               </Alert>
             )}
-          </Grid>
-        </Grid>
+          </div>
+        </div>
       ) : (
         /* My Listings tab */
-        <Box>
+        <div>
           {myListingsLoading ? (
-            <Grid container spacing={2}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
               {[...Array(3)].map((_, i) => (
-                <Grid item xs={12} sm={6} md={4} key={i}>
-                  <Skeleton variant="rounded" height={200} />
-                </Grid>
+                <Skeleton key={i} className="h-52 rounded-lg" />
               ))}
-            </Grid>
+            </div>
           ) : myListings && myListings.length > 0 ? (
-            <Grid container spacing={2}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
               {myListings.map(renderMyListingCard)}
-            </Grid>
+            </div>
           ) : (
-            <Alert severity="info">
-              You have no listings yet. Create your first one!
+            <Alert>
+              <AlertDescription>You have no listings yet. Create your first one!</AlertDescription>
             </Alert>
           )}
-        </Box>
+        </div>
       )}
 
       {/* Create listing dialog */}
-      <Dialog open={createOpen} onClose={() => setCreateOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Create Listing</DialogTitle>
-        <DialogContent>
-          <TextField
-            label="Title"
-            fullWidth
-            margin="dense"
-            value={newTitle}
-            onChange={(e) => setNewTitle(e.target.value)}
-          />
-          <TextField
-            label="Description"
-            fullWidth
-            margin="dense"
-            multiline
-            rows={3}
-            value={newDesc}
-            onChange={(e) => setNewDesc(e.target.value)}
-          />
-          <FormControl fullWidth margin="dense">
-            <InputLabel>Type</InputLabel>
-            <Select value={newType} label="Type" onChange={(e) => setNewType(e.target.value)}>
-              {LISTING_TYPES.map((t) => (
-                <MenuItem key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <FormControl fullWidth margin="dense">
-            <InputLabel>Category</InputLabel>
-            <Select value={newCategory} label="Category" onChange={(e) => setNewCategory(e.target.value)}>
-              {LISTING_CATEGORIES.map((c) => (
-                <MenuItem key={c} value={c}>{c.charAt(0).toUpperCase() + c.slice(1)}</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <TextField
-            label="Price (USD, 0 = free)"
-            fullWidth
-            margin="dense"
-            type="number"
-            value={newPrice}
-            onChange={(e) => setNewPrice(e.target.value)}
-          />
-          <TextField
-            label="Tags (comma separated)"
-            fullWidth
-            margin="dense"
-            value={newTags}
-            onChange={(e) => setNewTags(e.target.value)}
-            placeholder="seo, automation, ai"
-          />
+      <Dialog open={createOpen} onOpenChange={(v) => { if (!v) setCreateOpen(false); }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Create Listing</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 mt-2">
+            <Input placeholder="Title" value={newTitle} onChange={(e) => setNewTitle(e.target.value)} />
+            <Textarea placeholder="Description" rows={3} value={newDesc} onChange={(e) => setNewDesc(e.target.value)} />
+            <div>
+              <label className="text-xs text-[var(--text-mid)] mb-1 block">Type</label>
+              <Select value={newType} onValueChange={setNewType}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  {LISTING_TYPES.map((t) => (
+                    <SelectItem key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="text-xs text-[var(--text-mid)] mb-1 block">Category</label>
+              <Select value={newCategory} onValueChange={setNewCategory}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {LISTING_CATEGORIES.map((c) => (
+                    <SelectItem key={c} value={c}>{c.charAt(0).toUpperCase() + c.slice(1)}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <Input type="number" placeholder="Price (USD, 0 = free)" value={newPrice} onChange={(e) => setNewPrice(e.target.value)} />
+            <Input placeholder="Tags (comma separated, e.g., seo, automation, ai)" value={newTags} onChange={(e) => setNewTags(e.target.value)} />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCreateOpen(false)}>Cancel</Button>
+            <Button
+              onClick={handleCreate}
+              disabled={!newTitle.trim() || !newDesc.trim() || createMutation.isPending}
+            >
+              {createMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Create'}
+            </Button>
+          </DialogFooter>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setCreateOpen(false)}>Cancel</Button>
-          <Button
-            variant="contained"
-            onClick={handleCreate}
-            disabled={!newTitle.trim() || !newDesc.trim() || createMutation.isPending}
-          >
-            {createMutation.isPending ? <CircularProgress size={20} /> : 'Create'}
-          </Button>
-        </DialogActions>
       </Dialog>
 
       {/* Review dialog */}
-      <Dialog open={reviewOpen} onClose={() => setReviewOpen(false)} maxWidth="xs" fullWidth>
-        <DialogTitle>Add Review</DialogTitle>
-        <DialogContent>
-          <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}>
-            <Rating
-              value={reviewRating}
-              onChange={(_, value) => setReviewRating(value)}
-              size="large"
-            />
-          </Box>
-          <TextField
-            label="Comment (optional)"
-            fullWidth
-            margin="dense"
-            multiline
+      <Dialog open={reviewOpen} onOpenChange={(v) => { if (!v) setReviewOpen(false); }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Add Review</DialogTitle>
+          </DialogHeader>
+          <div className="flex justify-center my-4">
+            <div className="flex gap-1">
+              {[1, 2, 3, 4, 5].map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  title={`${s} star${s > 1 ? 's' : ''}`}
+                  onClick={() => setReviewRating(s)}
+                  className="p-0.5"
+                >
+                  <Star
+                    className={`h-7 w-7 ${s <= (reviewRating ?? 0) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`}
+                  />
+                </button>
+              ))}
+            </div>
+          </div>
+          <Textarea
+            placeholder="Comment (optional)"
             rows={3}
             value={reviewComment}
             onChange={(e) => setReviewComment(e.target.value)}
           />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setReviewOpen(false)}>Cancel</Button>
+            <Button
+              onClick={handleReviewSubmit}
+              disabled={!reviewRating || reviewMutation.isPending}
+            >
+              {reviewMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Submit'}
+            </Button>
+          </DialogFooter>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setReviewOpen(false)}>Cancel</Button>
-          <Button
-            variant="contained"
-            onClick={handleReviewSubmit}
-            disabled={!reviewRating || reviewMutation.isPending}
-          >
-            {reviewMutation.isPending ? <CircularProgress size={20} /> : 'Submit'}
-          </Button>
-        </DialogActions>
       </Dialog>
 
-      {/* Error alerts */}
+      {/* Error / success alerts */}
       {installMutation.isError && (
-        <Alert severity="error" sx={{ mt: 2 }} onClose={() => installMutation.reset()}>
-          {installMutation.error?.message || 'Install failed. It may already be installed.'}
+        <Alert variant="destructive" className="mt-4">
+          <AlertDescription>{installMutation.error?.message || 'Install failed. It may already be installed.'}</AlertDescription>
         </Alert>
       )}
       {installMutation.isSuccess && (
-        <Alert severity="success" sx={{ mt: 2 }} onClose={() => installMutation.reset()}>
-          Listing installed successfully!
+        <Alert className="mt-4">
+          <AlertDescription>Listing installed successfully!</AlertDescription>
         </Alert>
       )}
       {reviewMutation.isError && (
-        <Alert severity="error" sx={{ mt: 2 }} onClose={() => reviewMutation.reset()}>
-          {reviewMutation.error?.message || 'Review failed.'}
+        <Alert variant="destructive" className="mt-4">
+          <AlertDescription>{reviewMutation.error?.message || 'Review failed.'}</AlertDescription>
         </Alert>
       )}
-    </Box>
+    </div>
   );
 }

@@ -2,15 +2,15 @@
 
 import { useRef, useState } from 'react';
 import {
-  Box, Button, Card, CardContent, Chip, CircularProgress,
-  FormControl, Grid, IconButton, InputLabel, MenuItem, Select,
-  Skeleton, TextField, Typography,
-} from '@mui/material';
-import SmartToyIcon from '@mui/icons-material/SmartToy';
-import MicIcon from '@mui/icons-material/Mic';
-import StopIcon from '@mui/icons-material/Stop';
-import SendIcon from '@mui/icons-material/Send';
-import HistoryIcon from '@mui/icons-material/History';
+  Bot, Mic, Square, Send, History, Loader2,
+} from 'lucide-react';
+
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/lib/design-hub/components/Button';
+import { Input } from '@/lib/design-hub/components/Input';
+import { Skeleton } from '@/lib/design-hub/components/Skeleton';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/lib/design-hub/components/Select';
 
 import {
   useCreateSession, useEndSession, useRealtimeSessions, useSendMessage,
@@ -20,8 +20,8 @@ import type { RealtimeSession } from '@/features/realtime/types';
 const MODE_ICONS: Record<string, string> = {
   voice: '🎤', vision: '👁️', voice_vision: '🎤👁️', meeting: '🏢',
 };
-const STATUS_COLORS: Record<string, 'success' | 'default' | 'error' | 'warning'> = {
-  active: 'success', paused: 'warning', ended: 'default', failed: 'error',
+const STATUS_VARIANTS: Record<string, 'success' | 'default' | 'destructive' | 'warning'> = {
+  active: 'success', paused: 'warning', ended: 'default', failed: 'destructive',
 };
 
 export default function RealtimePage() {
@@ -68,136 +68,161 @@ export default function RealtimePage() {
   };
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h4" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <SmartToyIcon color="primary" /> Realtime AI
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
+    <div className="p-6">
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold text-[var(--text-high)] flex items-center gap-2">
+          <Bot className="h-8 w-8 text-[var(--accent)]" /> Realtime AI
+        </h1>
+        <p className="text-sm text-[var(--text-mid)]">
           Live AI conversations with voice, vision, and knowledge base integration
-        </Typography>
-      </Box>
+        </p>
+      </div>
 
-      <Grid container spacing={3}>
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
         {/* Chat Area */}
-        <Grid item xs={12} md={8}>
+        <div className="md:col-span-8">
           {activeSession ? (
-            <Card sx={{ height: '70vh', display: 'flex', flexDirection: 'column' }}>
-              <Box sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: 1, borderColor: 'divider' }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Chip label={MODE_ICONS[activeSession.mode] || '🎤'} size="small" />
-                  <Typography variant="subtitle1">{activeSession.title}</Typography>
-                  <Chip label="LIVE" color="success" size="small" />
-                </Box>
-                <Button color="error" variant="outlined" size="small" startIcon={<StopIcon />} onClick={handleEnd}>
-                  End Session
+            <Card className="h-[70vh] flex flex-col">
+              <div className="p-4 flex justify-between items-center border-b border-[var(--border)]">
+                <div className="flex items-center gap-2">
+                  <Badge>{MODE_ICONS[activeSession.mode] || '🎤'}</Badge>
+                  <span className="font-medium text-[var(--text-high)]">{activeSession.title}</span>
+                  <Badge variant="success">LIVE</Badge>
+                </div>
+                <Button variant="outline" size="sm" className="text-red-500 border-red-500 hover:bg-red-50" onClick={handleEnd}>
+                  <Square className="h-3.5 w-3.5 mr-1" /> End Session
                 </Button>
-              </Box>
+              </div>
 
               {/* Messages */}
-              <Box sx={{ flex: 1, overflow: 'auto', p: 2 }}>
+              <div className="flex-1 overflow-auto p-4">
                 {chatHistory.map((msg, i) => (
-                  <Box key={i} sx={{ display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start', mb: 1.5 }}>
-                    <Box sx={{
-                      maxWidth: '75%', p: 1.5, borderRadius: 2,
-                      bgcolor: msg.role === 'user' ? 'primary.main' : 'action.hover',
-                      color: msg.role === 'user' ? 'primary.contrastText' : 'text.primary',
-                    }}>
-                      <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>{msg.content}</Typography>
-                    </Box>
-                  </Box>
+                  <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} mb-3`}>
+                    <div className={`max-w-[75%] p-3 rounded-lg ${
+                      msg.role === 'user'
+                        ? 'bg-[var(--accent)] text-white'
+                        : 'bg-[var(--bg-surface)] text-[var(--text-high)]'
+                    }`}>
+                      <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                    </div>
+                  </div>
                 ))}
                 {sendMutation.isPending && (
-                  <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', color: 'text.secondary' }}>
-                    <CircularProgress size={16} /> <Typography variant="caption">AI is thinking...</Typography>
-                  </Box>
+                  <div className="flex gap-2 items-center text-[var(--text-mid)]">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span className="text-xs">AI is thinking...</span>
+                  </div>
                 )}
                 <div ref={chatEndRef} />
-              </Box>
+              </div>
 
               {/* Input */}
-              <Box sx={{ p: 2, borderTop: 1, borderColor: 'divider', display: 'flex', gap: 1 }}>
-                <TextField fullWidth size="small" placeholder="Type a message..."
-                  value={message} onChange={(e) => setMessage(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }} />
-                <IconButton color="primary" onClick={handleSend} disabled={!message.trim() || sendMutation.isPending}>
-                  <SendIcon />
-                </IconButton>
-              </Box>
+              <div className="p-4 border-t border-[var(--border)] flex gap-2">
+                <Input
+                  placeholder="Type a message..."
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
+                />
+                <button
+                  type="button"
+                  title="Send"
+                  className="p-2 rounded text-[var(--accent)] hover:bg-[var(--bg-hover)] disabled:opacity-40"
+                  onClick={handleSend}
+                  disabled={!message.trim() || sendMutation.isPending}
+                >
+                  <Send className="h-5 w-5" />
+                </button>
+              </div>
             </Card>
           ) : (
             <Card>
-              <CardContent sx={{ textAlign: 'center', py: 8 }}>
-                <SmartToyIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
-                <Typography variant="h6" color="text.secondary" sx={{ mb: 2 }}>Start a Realtime AI Session</Typography>
-                <Grid container spacing={2} justifyContent="center" sx={{ mb: 3, maxWidth: 500, mx: 'auto' }}>
-                  <Grid item xs={6}>
-                    <FormControl fullWidth size="small">
-                      <InputLabel>Mode</InputLabel>
-                      <Select value={mode} label="Mode" onChange={(e) => setMode(e.target.value)}>
-                        <MenuItem value="voice">Voice Chat</MenuItem>
-                        <MenuItem value="vision">Vision Analysis</MenuItem>
-                        <MenuItem value="voice_vision">Voice + Vision</MenuItem>
-                        <MenuItem value="meeting">Meeting Assistant</MenuItem>
-                      </Select>
-                    </FormControl>
-                  </Grid>
-                  <Grid item xs={6}>
-                    <FormControl fullWidth size="small">
-                      <InputLabel>Provider</InputLabel>
-                      <Select value={provider} label="Provider" onChange={(e) => setProvider(e.target.value)}>
-                        <MenuItem value="gemini">Gemini Flash</MenuItem>
-                        <MenuItem value="groq">Groq (Ultra-fast)</MenuItem>
-                        <MenuItem value="claude">Claude</MenuItem>
-                      </Select>
-                    </FormControl>
-                  </Grid>
-                  <Grid item xs={12}>
-                    <TextField fullWidth size="small" label="System Prompt (optional)"
-                      placeholder="e.g., You are a helpful coding assistant..."
-                      value={systemPrompt} onChange={(e) => setSystemPrompt(e.target.value)} />
-                  </Grid>
-                </Grid>
-                <Button variant="contained" size="large" startIcon={
-                  createMutation.isPending ? <CircularProgress size={18} color="inherit" /> : <MicIcon />
-                } onClick={handleCreate} disabled={createMutation.isPending}>
+              <CardContent className="text-center py-16 px-6">
+                <Bot className="h-16 w-16 text-[var(--text-low)] mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-[var(--text-mid)] mb-4">Start a Realtime AI Session</h3>
+                <div className="grid grid-cols-2 gap-4 max-w-md mx-auto mb-6">
+                  <div>
+                    <label className="text-xs text-[var(--text-mid)] mb-1 block">Mode</label>
+                    <Select value={mode} onValueChange={setMode}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Mode" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="voice">Voice Chat</SelectItem>
+                        <SelectItem value="vision">Vision Analysis</SelectItem>
+                        <SelectItem value="voice_vision">Voice + Vision</SelectItem>
+                        <SelectItem value="meeting">Meeting Assistant</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <label className="text-xs text-[var(--text-mid)] mb-1 block">Provider</label>
+                    <Select value={provider} onValueChange={setProvider}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Provider" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="gemini">Gemini Flash</SelectItem>
+                        <SelectItem value="groq">Groq (Ultra-fast)</SelectItem>
+                        <SelectItem value="claude">Claude</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="col-span-2">
+                    <Input
+                      placeholder="System Prompt (optional, e.g., You are a helpful coding assistant...)"
+                      value={systemPrompt}
+                      onChange={(e) => setSystemPrompt(e.target.value)}
+                    />
+                  </div>
+                </div>
+                <Button
+                  size="lg"
+                  onClick={handleCreate}
+                  disabled={createMutation.isPending}
+                >
+                  {createMutation.isPending ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Mic className="h-4 w-4 mr-2" />
+                  )}
                   Start Session
                 </Button>
               </CardContent>
             </Card>
           )}
-        </Grid>
+        </div>
 
         {/* Session History */}
-        <Grid item xs={12} md={4}>
+        <div className="md:col-span-4">
           <Card>
-            <CardContent>
-              <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-                <HistoryIcon /> Sessions
-              </Typography>
-              {isLoading ? <Skeleton variant="rectangular" height={300} /> : !sessions?.length ? (
-                <Typography color="text.secondary">No sessions yet</Typography>
+            <CardContent className="p-6">
+              <h3 className="text-lg font-semibold text-[var(--text-high)] flex items-center gap-2 mb-4">
+                <History className="h-5 w-5" /> Sessions
+              </h3>
+              {isLoading ? <Skeleton className="h-72 rounded-lg" /> : !sessions?.length ? (
+                <p className="text-[var(--text-mid)]">No sessions yet</p>
               ) : (
                 sessions.map((s) => (
-                  <Card key={s.id} variant="outlined" sx={{ mb: 1 }}>
-                    <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <Typography variant="subtitle2">{s.title || 'Untitled'}</Typography>
-                        <Chip label={s.status} size="small" color={STATUS_COLORS[s.status] || 'default'} />
-                      </Box>
-                      <Box sx={{ display: 'flex', gap: 0.5, mt: 0.5 }}>
-                        <Chip label={MODE_ICONS[s.mode] || s.mode} size="small" variant="outlined" />
-                        <Chip label={s.provider} size="small" variant="outlined" />
-                        <Chip label={`${s.total_turns} turns`} size="small" variant="outlined" />
-                      </Box>
+                  <Card key={s.id} className="mb-2 border border-[var(--border)]">
+                    <CardContent className="py-3 px-4">
+                      <div className="flex justify-between">
+                        <span className="text-sm font-medium text-[var(--text-high)]">{s.title || 'Untitled'}</span>
+                        <Badge variant={STATUS_VARIANTS[s.status] || 'default'}>{s.status}</Badge>
+                      </div>
+                      <div className="flex gap-1 mt-1">
+                        <Badge variant="outline">{MODE_ICONS[s.mode] || s.mode}</Badge>
+                        <Badge variant="outline">{s.provider}</Badge>
+                        <Badge variant="outline">{s.total_turns} turns</Badge>
+                      </div>
                     </CardContent>
                   </Card>
                 ))
               )}
             </CardContent>
           </Card>
-        </Grid>
-      </Grid>
-    </Box>
+        </div>
+      </div>
+    </div>
   );
 }

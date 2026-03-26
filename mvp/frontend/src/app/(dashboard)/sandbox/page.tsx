@@ -2,18 +2,17 @@
 
 import { useState } from 'react';
 import {
-  Alert, Box, Button, Card, CardContent, Chip, CircularProgress,
-  Dialog, DialogActions, DialogContent, DialogTitle,
-  Grid, IconButton, Skeleton, TextField, Typography,
-} from '@mui/material';
-import CodeIcon from '@mui/icons-material/Code';
-import AddIcon from '@mui/icons-material/Add';
-import PlayArrowIcon from '@mui/icons-material/PlayArrow';
-import DeleteIcon from '@mui/icons-material/Delete';
-import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
-import BugReportIcon from '@mui/icons-material/BugReport';
-import LightbulbIcon from '@mui/icons-material/Lightbulb';
-import SmartToyIcon from '@mui/icons-material/SmartToy';
+  Code, Plus, Play, Trash2, Wand2, Bug, Lightbulb, Bot, Loader2,
+} from 'lucide-react';
+
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/lib/design-hub/components/Button';
+import { Input } from '@/lib/design-hub/components/Input';
+import { Textarea } from '@/lib/design-hub/components/Textarea';
+import { Skeleton } from '@/lib/design-hub/components/Skeleton';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/lib/design-hub/components/Dialog';
 
 import {
   useAddCell, useCreateSandbox, useDeleteCell, useDeleteSandbox,
@@ -22,8 +21,8 @@ import {
 } from '@/features/code-sandbox/hooks/useCodeSandbox';
 import type { SandboxCell } from '@/features/code-sandbox/types';
 
-const STATUS_COLORS: Record<string, 'default' | 'info' | 'success' | 'error' | 'warning'> = {
-  idle: 'default', running: 'info', success: 'success', error: 'error', timeout: 'warning',
+const STATUS_VARIANTS: Record<string, 'default' | 'secondary' | 'success' | 'destructive' | 'warning'> = {
+  idle: 'default', running: 'secondary', success: 'success', error: 'destructive', timeout: 'warning',
   active: 'success', archived: 'default',
 };
 
@@ -62,7 +61,6 @@ export default function SandboxPage() {
   };
 
   const handleExecute = (cellId: string) => {
-    // Save pending edits before executing
     const pendingSource = editingSources[cellId];
     if (pendingSource !== undefined) {
       updateCellMutation.mutate(
@@ -107,130 +105,166 @@ export default function SandboxPage() {
   const getCellSource = (cell: SandboxCell) => editingSources[cell.id] ?? cell.source;
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h4" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <CodeIcon color="primary" /> Code Sandbox
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
+    <div className="p-6">
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold text-[var(--text-high)] flex items-center gap-2">
+          <Code className="h-8 w-8 text-[var(--accent)]" /> Code Sandbox
+        </h1>
+        <p className="text-sm text-[var(--text-mid)]">
           Write, execute, and debug code in a secure sandbox with AI assistance
-        </Typography>
-      </Box>
+        </p>
+      </div>
 
-      <Grid container spacing={3}>
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
         {/* Sandbox list */}
-        <Grid item xs={12} md={3}>
+        <div className="md:col-span-3">
           <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                <Typography variant="h6">Sandboxes</Typography>
-                <Button size="small" variant="outlined" startIcon={<AddIcon />}
-                  onClick={() => setCreateOpen(true)}>New</Button>
-              </Box>
+            <CardContent className="p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold text-[var(--text-high)]">Sandboxes</h3>
+                <Button size="sm" variant="outline" onClick={() => setCreateOpen(true)}>
+                  <Plus className="h-3.5 w-3.5 mr-1" /> New
+                </Button>
+              </div>
 
-              {isLoading ? <Skeleton variant="rectangular" height={200} /> : !sandboxes?.length ? (
-                <Box sx={{ textAlign: 'center', py: 4 }}>
-                  <CodeIcon sx={{ fontSize: 48, color: 'text.disabled', mb: 1 }} />
-                  <Typography color="text.secondary">Create your first sandbox</Typography>
-                </Box>
+              {isLoading ? <Skeleton className="h-52 rounded-lg" /> : !sandboxes?.length ? (
+                <div className="text-center py-8">
+                  <Code className="h-12 w-12 text-[var(--text-low)] mx-auto mb-2" />
+                  <p className="text-[var(--text-mid)]">Create your first sandbox</p>
+                </div>
               ) : (
                 sandboxes.map((s) => (
-                  <Card key={s.id} variant="outlined" sx={{
-                    mb: 1, cursor: 'pointer',
-                    bgcolor: activeSandboxId === s.id ? 'action.selected' : 'transparent',
-                    '&:hover': { bgcolor: 'action.hover' },
-                  }} onClick={() => { setActiveSandboxId(s.id); setEditingSources({}); }}>
-                    <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <Typography variant="subtitle2" noWrap>{s.name}</Typography>
-                        <IconButton size="small" color="error" onClick={(e) => {
-                          e.stopPropagation();
-                          deleteSandboxMutation.mutate(s.id);
-                          if (activeSandboxId === s.id) setActiveSandboxId(null);
-                        }}>
-                          <DeleteIcon fontSize="small" />
-                        </IconButton>
-                      </Box>
-                      <Box sx={{ display: 'flex', gap: 0.5, mt: 0.5 }}>
-                        <Chip label={s.language} size="small" variant="outlined" />
-                        <Chip label={`${s.cells.length} cells`} size="small" variant="outlined" />
-                        <Chip label={s.status} size="small" color={STATUS_COLORS[s.status] || 'default'} />
-                      </Box>
+                  <Card
+                    key={s.id}
+                    className={`mb-2 cursor-pointer border border-[var(--border)] transition-colors hover:bg-[var(--bg-hover)] ${
+                      activeSandboxId === s.id ? 'bg-[var(--bg-surface)]' : ''
+                    }`}
+                    onClick={() => { setActiveSandboxId(s.id); setEditingSources({}); }}
+                  >
+                    <CardContent className="py-3 px-4">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium text-[var(--text-high)] truncate">{s.name}</span>
+                        <button
+                          type="button"
+                          title="Delete"
+                          className="p-1 rounded hover:bg-red-100 text-red-500"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deleteSandboxMutation.mutate(s.id);
+                            if (activeSandboxId === s.id) setActiveSandboxId(null);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                      <div className="flex gap-1 mt-1">
+                        <Badge variant="outline">{s.language}</Badge>
+                        <Badge variant="outline">{s.cells.length} cells</Badge>
+                        <Badge variant={STATUS_VARIANTS[s.status] || 'default'}>{s.status}</Badge>
+                      </div>
                     </CardContent>
                   </Card>
                 ))
               )}
             </CardContent>
           </Card>
-        </Grid>
+        </div>
 
         {/* Editor & output */}
-        <Grid item xs={12} md={9}>
+        <div className="md:col-span-9">
           {activeSandbox ? (
-            <Box>
+            <div>
               {/* AI generate bar */}
-              <Card sx={{ mb: 2 }}>
-                <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
-                  <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                    <SmartToyIcon color="primary" />
-                    <TextField fullWidth size="small" placeholder="Describe what code you want to generate..."
-                      value={generatePrompt} onChange={(e) => setGeneratePrompt(e.target.value)}
-                      onKeyDown={(e) => { if (e.key === 'Enter') handleGenerate(); }} />
-                    <Button variant="contained" size="small" startIcon={
-                      generateMutation.isPending ? <CircularProgress size={14} /> : <AutoFixHighIcon />
-                    } onClick={handleGenerate} disabled={!generatePrompt.trim() || generateMutation.isPending}>
+              <Card className="mb-4">
+                <CardContent className="py-3 px-4">
+                  <div className="flex gap-2 items-center">
+                    <Bot className="h-5 w-5 text-[var(--accent)] shrink-0" />
+                    <Input
+                      placeholder="Describe what code you want to generate..."
+                      value={generatePrompt}
+                      onChange={(e) => setGeneratePrompt(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === 'Enter') handleGenerate(); }}
+                    />
+                    <Button
+                      size="sm"
+                      onClick={handleGenerate}
+                      disabled={!generatePrompt.trim() || generateMutation.isPending}
+                    >
+                      {generateMutation.isPending ? (
+                        <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />
+                      ) : (
+                        <Wand2 className="h-3.5 w-3.5 mr-1" />
+                      )}
                       Generate
                     </Button>
-                  </Box>
+                  </div>
                 </CardContent>
               </Card>
 
               {/* Cells */}
               {activeSandbox.cells.map((cell, idx) => (
-                <Card key={cell.id} sx={{ mb: 2 }}>
-                  <CardContent>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Chip label={`[${idx + 1}]`} size="small" color="primary" variant="outlined" />
-                        <Chip label={cell.language} size="small" variant="outlined" />
+                <Card key={cell.id} className="mb-4">
+                  <CardContent className="p-4">
+                    <div className="flex justify-between items-center mb-2">
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="text-[var(--accent)]">[{idx + 1}]</Badge>
+                        <Badge variant="outline">{cell.language}</Badge>
                         {cell.status !== 'idle' && (
-                          <Chip label={cell.status} size="small" color={STATUS_COLORS[cell.status] || 'default'} />
+                          <Badge variant={STATUS_VARIANTS[cell.status] || 'default'}>{cell.status}</Badge>
                         )}
                         {cell.execution_time_ms != null && (
-                          <Typography variant="caption" color="text.secondary">
+                          <span className="text-xs text-[var(--text-mid)]">
                             {cell.execution_time_ms.toFixed(0)}ms
-                          </Typography>
+                          </span>
                         )}
-                      </Box>
-                      <Box sx={{ display: 'flex', gap: 0.5 }}>
-                        <IconButton size="small" color="success" title="Run cell"
+                      </div>
+                      <div className="flex gap-1">
+                        <button
+                          type="button"
+                          title="Run cell"
+                          className="p-1 rounded hover:bg-green-100 text-green-600"
                           onClick={() => handleExecute(cell.id)}
-                          disabled={executeCellMutation.isPending}>
+                          disabled={executeCellMutation.isPending}
+                        >
                           {executeCellMutation.isPending && executeCellMutation.variables === cell.id
-                            ? <CircularProgress size={16} /> : <PlayArrowIcon fontSize="small" />}
-                        </IconButton>
-                        <IconButton size="small" title="Explain code"
+                            ? <Loader2 className="h-4 w-4 animate-spin" />
+                            : <Play className="h-4 w-4" />}
+                        </button>
+                        <button
+                          type="button"
+                          title="Explain code"
+                          className="p-1 rounded hover:bg-[var(--bg-hover)]"
                           onClick={() => handleExplain(getCellSource(cell))}
-                          disabled={explainMutation.isPending}>
-                          <LightbulbIcon fontSize="small" />
-                        </IconButton>
+                          disabled={explainMutation.isPending}
+                        >
+                          <Lightbulb className="h-4 w-4 text-[var(--text-mid)]" />
+                        </button>
                         {cell.error && (
-                          <IconButton size="small" color="warning" title="Debug with AI"
+                          <button
+                            type="button"
+                            title="Debug with AI"
+                            className="p-1 rounded hover:bg-yellow-100 text-yellow-600"
                             onClick={() => handleDebug(cell)}
-                            disabled={debugMutation.isPending}>
-                            <BugReportIcon fontSize="small" />
-                          </IconButton>
+                            disabled={debugMutation.isPending}
+                          >
+                            <Bug className="h-4 w-4" />
+                          </button>
                         )}
-                        <IconButton size="small" color="error" title="Delete cell"
-                          onClick={() => deleteCellMutation.mutate(cell.id)}>
-                          <DeleteIcon fontSize="small" />
-                        </IconButton>
-                      </Box>
-                    </Box>
+                        <button
+                          type="button"
+                          title="Delete cell"
+                          className="p-1 rounded hover:bg-red-100 text-red-500"
+                          onClick={() => deleteCellMutation.mutate(cell.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
 
                     {/* Code editor */}
-                    <TextField
-                      fullWidth multiline minRows={3} maxRows={20}
+                    <Textarea
+                      className="font-mono text-sm bg-gray-50 dark:bg-gray-900"
+                      rows={4}
                       value={getCellSource(cell)}
                       onChange={(e) => setEditingSources((prev) => ({ ...prev, [cell.id]: e.target.value }))}
                       onBlur={() => {
@@ -239,28 +273,21 @@ export default function SandboxPage() {
                           updateCellMutation.mutate({ cellId: cell.id, source: src });
                         }
                       }}
-                      sx={{
-                        fontFamily: 'monospace',
-                        '& .MuiInputBase-input': { fontFamily: '"Fira Code", "Consolas", monospace', fontSize: '0.875rem' },
-                        bgcolor: 'grey.50',
-                      }}
                     />
 
                     {/* Output */}
                     {cell.output && (
-                      <Box sx={{ mt: 1, p: 1.5, bgcolor: 'grey.900', borderRadius: 1, maxHeight: 300, overflow: 'auto' }}>
-                        <Typography variant="body2" component="pre" sx={{
-                          fontFamily: 'monospace', fontSize: '0.8rem', color: '#4caf50', whiteSpace: 'pre-wrap', m: 0,
-                        }}>
+                      <div className="mt-2 p-3 bg-gray-900 rounded max-h-72 overflow-auto">
+                        <pre className="font-mono text-[0.8rem] text-green-400 whitespace-pre-wrap m-0">
                           {cell.output}
-                        </Typography>
-                      </Box>
+                        </pre>
+                      </div>
                     )}
 
                     {/* Error */}
                     {cell.error && (
-                      <Alert severity="error" sx={{ mt: 1, fontFamily: 'monospace', fontSize: '0.8rem' }}>
-                        {cell.error}
+                      <Alert variant="destructive" className="mt-2 font-mono text-[0.8rem]">
+                        <AlertDescription>{cell.error}</AlertDescription>
                       </Alert>
                     )}
                   </CardContent>
@@ -268,25 +295,24 @@ export default function SandboxPage() {
               ))}
 
               {/* Add cell button */}
-              <Box sx={{ textAlign: 'center', py: 2 }}>
-                <Button variant="outlined" startIcon={<AddIcon />} onClick={handleAddCell}>
-                  Add Cell
+              <div className="text-center py-4">
+                <Button variant="outline" onClick={handleAddCell}>
+                  <Plus className="h-4 w-4 mr-2" /> Add Cell
                 </Button>
-              </Box>
+              </div>
 
               {/* AI explanation panel */}
               {explainMutation.data && (
-                <Card sx={{ mt: 2 }}>
-                  <CardContent>
-                    <Typography variant="subtitle2" color="primary" sx={{ mb: 1 }}>
-                      <LightbulbIcon sx={{ fontSize: 16, mr: 0.5, verticalAlign: 'text-bottom' }} />
-                      AI Explanation
-                    </Typography>
-                    <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
+                <Card className="mt-4">
+                  <CardContent className="p-4">
+                    <p className="text-sm font-medium text-[var(--accent)] mb-2 flex items-center gap-1">
+                      <Lightbulb className="h-4 w-4" /> AI Explanation
+                    </p>
+                    <p className="text-sm text-[var(--text-high)] whitespace-pre-wrap">
                       {explainMutation.data.explanation}
-                    </Typography>
+                    </p>
                     {explainMutation.data.complexity && (
-                      <Chip label={`Complexity: ${explainMutation.data.complexity}`} size="small" sx={{ mt: 1 }} />
+                      <Badge className="mt-2">Complexity: {explainMutation.data.complexity}</Badge>
                     )}
                   </CardContent>
                 </Card>
@@ -294,50 +320,63 @@ export default function SandboxPage() {
 
               {/* Debug result panel */}
               {debugMutation.data && (
-                <Card sx={{ mt: 2 }}>
-                  <CardContent>
-                    <Typography variant="subtitle2" color="warning.main" sx={{ mb: 1 }}>
-                      <BugReportIcon sx={{ fontSize: 16, mr: 0.5, verticalAlign: 'text-bottom' }} />
-                      Debug Result
-                    </Typography>
-                    <Alert severity="info" sx={{ mb: 1 }}>Root cause: {debugMutation.data.root_cause}</Alert>
-                    <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', mb: 1 }}>
+                <Card className="mt-4">
+                  <CardContent className="p-4">
+                    <p className="text-sm font-medium text-yellow-600 mb-2 flex items-center gap-1">
+                      <Bug className="h-4 w-4" /> Debug Result
+                    </p>
+                    <Alert className="mb-2">
+                      <AlertDescription>Root cause: {debugMutation.data.root_cause}</AlertDescription>
+                    </Alert>
+                    <p className="text-sm text-[var(--text-high)] whitespace-pre-wrap">
                       {debugMutation.data.explanation}
-                    </Typography>
+                    </p>
                   </CardContent>
                 </Card>
               )}
-            </Box>
+            </div>
           ) : (
             <Card>
-              <CardContent sx={{ textAlign: 'center', py: 8 }}>
-                <CodeIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
-                <Typography variant="h6" color="text.secondary">Select or create a sandbox to start coding</Typography>
-                <Typography variant="body2" color="text.secondary">
+              <CardContent className="text-center py-16 px-6">
+                <Code className="h-16 w-16 text-[var(--text-low)] mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-[var(--text-mid)]">Select or create a sandbox to start coding</h3>
+                <p className="text-sm text-[var(--text-mid)]">
                   Write code, run it in a secure environment, and use AI to generate, explain, or debug
-                </Typography>
+                </p>
               </CardContent>
             </Card>
           )}
-        </Grid>
-      </Grid>
+        </div>
+      </div>
 
       {/* Create dialog */}
-      <Dialog open={createOpen} onClose={() => setCreateOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Create New Sandbox</DialogTitle>
-        <DialogContent>
-          <TextField fullWidth label="Name" value={newName} onChange={(e) => setNewName(e.target.value)}
-            sx={{ mt: 1, mb: 2 }} autoFocus />
-          <TextField fullWidth label="Description (optional)" value={newDesc}
-            onChange={(e) => setNewDesc(e.target.value)} multiline rows={2} />
+      <Dialog open={createOpen} onOpenChange={(v) => { if (!v) setCreateOpen(false); }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Create New Sandbox</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 mt-2">
+            <Input
+              placeholder="Name"
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              autoFocus
+            />
+            <Textarea
+              placeholder="Description (optional)"
+              value={newDesc}
+              onChange={(e) => setNewDesc(e.target.value)}
+              rows={2}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCreateOpen(false)}>Cancel</Button>
+            <Button onClick={handleCreate} disabled={!newName.trim() || createMutation.isPending}>
+              {createMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Create'}
+            </Button>
+          </DialogFooter>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setCreateOpen(false)}>Cancel</Button>
-          <Button variant="contained" onClick={handleCreate} disabled={!newName.trim() || createMutation.isPending}>
-            {createMutation.isPending ? <CircularProgress size={20} /> : 'Create'}
-          </Button>
-        </DialogActions>
       </Dialog>
-    </Box>
+    </div>
   );
 }

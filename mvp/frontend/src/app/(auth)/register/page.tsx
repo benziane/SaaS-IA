@@ -6,28 +6,14 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import {
-  Box,
-  Button,
-  Card,
-  CardContent,
-  Checkbox,
-  FormControl,
-  FormControlLabel,
-  FormHelperText,
-  IconButton,
-  InputAdornment,
-  InputLabel,
-  Link as MuiLink,
-  OutlinedInput,
-  TextField,
-  Typography,
-} from '@mui/material';
-import { Visibility, VisibilityOff } from '@mui/icons-material';
+import { Eye, EyeOff } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/lib/design-hub/components/Button';
+import { Input } from '@/lib/design-hub/components/Input';
 import { useRegister } from '@/features/auth/hooks';
 import { registerSchema, type RegisterSchema } from '@/features/auth/schemas';
 
@@ -39,9 +25,9 @@ export default function RegisterPage(): JSX.Element {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [acceptTerms, setAcceptTerms] = useState(false);
-  
+
   const registerMutation = useRegister();
-  
+
   /* Form */
   const {
     control,
@@ -56,65 +42,50 @@ export default function RegisterPage(): JSX.Element {
     },
     mode: 'onBlur',
   });
-  
+
   /* Handlers */
   const onSubmit = async (data: RegisterSchema): Promise<void> => {
     if (!acceptTerms) {
       return;
     }
-    
+
     await registerMutation.mutateAsync({
       email: data.email,
       password: data.password,
     });
   };
-  
+
   /* ========================================================================
      RENDER
      ======================================================================== */
-  
+
   return (
-    <Box
-      sx={{
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: 'background.default',
-        padding: 2,
-      }}
-    >
+    <div className="min-h-screen flex items-center justify-center bg-[var(--bg-app)] p-4">
       {/* Skip to main content - Accessibility S++ */}
       <a href="#main-content" className="skip-to-main">
         Skip to main content
       </a>
-      
+
       <Card
         id="main-content"
-        sx={{
-          maxWidth: 450,
-          width: '100%',
-        }}
+        className="max-w-[450px] w-full"
         role="main"
         aria-labelledby="register-title"
       >
-        <CardContent sx={{ p: 4 }}>
+        <CardContent className="p-8">
           {/* Header */}
-          <Box sx={{ mb: 4, textAlign: 'center' }}>
-            <Typography
+          <div className="mb-8 text-center">
+            <h1
               id="register-title"
-              variant="h4"
-              component="h1"
-              gutterBottom
-              sx={{ fontWeight: 600 }}
+              className="text-2xl font-semibold text-[var(--text-high)] mb-2"
             >
               Create Account 🚀
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
+            </h1>
+            <p className="text-sm text-[var(--text-mid)]">
               Start your AI journey today
-            </Typography>
-          </Box>
-          
+            </p>
+          </div>
+
           {/* Form */}
           <form onSubmit={handleSubmit(onSubmit)} noValidate>
             {/* Email Field */}
@@ -122,152 +93,147 @@ export default function RegisterPage(): JSX.Element {
               name="email"
               control={control}
               render={({ field }) => (
-                <TextField
-                  {...field}
-                  fullWidth
-                  label="Email"
-                  type="email"
-                  autoComplete="email"
-                  error={!!errors.email}
-                  helperText={errors.email?.message}
-                  sx={{ mb: 3 }}
-                  inputProps={{
-                    'aria-label': 'Email address',
-                    'aria-required': 'true',
-                    'aria-invalid': !!errors.email,
-                  }}
-                />
+                <div className="mb-6">
+                  <label htmlFor="email" className="block text-sm font-medium text-[var(--text-mid)] mb-1.5">
+                    Email
+                  </label>
+                  <Input
+                    {...field}
+                    id="email"
+                    type="email"
+                    autoComplete="email"
+                    className={errors.email ? 'border-red-500 focus:ring-red-500' : ''}
+                    aria-label="Email address"
+                    aria-required="true"
+                    aria-invalid={!!errors.email}
+                  />
+                  {errors.email && (
+                    <p className="mt-1 text-xs text-red-400">
+                      {errors.email.message}
+                    </p>
+                  )}
+                </div>
               )}
             />
-            
+
             {/* Password Field */}
             <Controller
               name="password"
               control={control}
               render={({ field }) => (
-                <FormControl fullWidth error={!!errors.password} sx={{ mb: 3 }}>
-                  <InputLabel htmlFor="password">Password</InputLabel>
-                  <OutlinedInput
-                    {...field}
-                    id="password"
-                    type={showPassword ? 'text' : 'password'}
-                    autoComplete="new-password"
-                    endAdornment={
-                      <InputAdornment position="end">
-                        <IconButton
-                          aria-label={showPassword ? 'Hide password' : 'Show password'}
-                          onClick={() => setShowPassword(!showPassword)}
-                          edge="end"
-                        >
-                          {showPassword ? <VisibilityOff /> : <Visibility />}
-                        </IconButton>
-                      </InputAdornment>
-                    }
-                    label="Password"
-                    inputProps={{
-                      'aria-required': 'true',
-                      'aria-invalid': !!errors.password,
-                    }}
-                  />
+                <div className="mb-6">
+                  <label htmlFor="password" className="block text-sm font-medium text-[var(--text-mid)] mb-1.5">
+                    Password
+                  </label>
+                  <div className="relative">
+                    <Input
+                      {...field}
+                      id="password"
+                      type={showPassword ? 'text' : 'password'}
+                      autoComplete="new-password"
+                      className={errors.password ? 'border-red-500 focus:ring-red-500 pr-10' : 'pr-10'}
+                      aria-required="true"
+                      aria-invalid={!!errors.password}
+                    />
+                    <button
+                      type="button"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-[var(--text-low)] hover:text-[var(--text-high)] transition-colors"
+                      aria-label={showPassword ? 'Hide password' : 'Show password'}
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
                   {errors.password && (
-                    <FormHelperText>{errors.password.message}</FormHelperText>
+                    <p className="mt-1 text-xs text-red-400">
+                      {errors.password.message}
+                    </p>
                   )}
-                </FormControl>
+                </div>
               )}
             />
-            
+
             {/* Confirm Password Field */}
             <Controller
               name="confirmPassword"
               control={control}
               render={({ field }) => (
-                <FormControl fullWidth error={!!errors.confirmPassword} sx={{ mb: 2 }}>
-                  <InputLabel htmlFor="confirmPassword">Confirm Password</InputLabel>
-                  <OutlinedInput
-                    {...field}
-                    id="confirmPassword"
-                    type={showConfirmPassword ? 'text' : 'password'}
-                    autoComplete="new-password"
-                    endAdornment={
-                      <InputAdornment position="end">
-                        <IconButton
-                          aria-label={
-                            showConfirmPassword ? 'Hide password' : 'Show password'
-                          }
-                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                          edge="end"
-                        >
-                          {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
-                        </IconButton>
-                      </InputAdornment>
-                    }
-                    label="Confirm Password"
-                    inputProps={{
-                      'aria-required': 'true',
-                      'aria-invalid': !!errors.confirmPassword,
-                    }}
-                  />
+                <div className="mb-4">
+                  <label htmlFor="confirmPassword" className="block text-sm font-medium text-[var(--text-mid)] mb-1.5">
+                    Confirm Password
+                  </label>
+                  <div className="relative">
+                    <Input
+                      {...field}
+                      id="confirmPassword"
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      autoComplete="new-password"
+                      className={errors.confirmPassword ? 'border-red-500 focus:ring-red-500 pr-10' : 'pr-10'}
+                      aria-required="true"
+                      aria-invalid={!!errors.confirmPassword}
+                    />
+                    <button
+                      type="button"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-[var(--text-low)] hover:text-[var(--text-high)] transition-colors"
+                      aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    >
+                      {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
                   {errors.confirmPassword && (
-                    <FormHelperText>{errors.confirmPassword.message}</FormHelperText>
+                    <p className="mt-1 text-xs text-red-400">
+                      {errors.confirmPassword.message}
+                    </p>
                   )}
-                </FormControl>
+                </div>
               )}
             />
-            
+
             {/* Terms & Conditions */}
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={acceptTerms}
-                  onChange={(e) => setAcceptTerms(e.target.checked)}
-                  inputProps={{
-                    'aria-label': 'Accept terms and conditions',
-                    'aria-required': 'true',
-                  }}
-                />
-              }
-              label={
-                <Typography variant="body2">
-                  I agree to the{' '}
-                  <MuiLink href="/terms" underline="hover">
-                    Terms & Conditions
-                  </MuiLink>
-                </Typography>
-              }
-              sx={{ mb: 3 }}
-            />
-            
+            <label className="flex items-start gap-2 cursor-pointer mb-6">
+              <input
+                type="checkbox"
+                checked={acceptTerms}
+                onChange={(e) => setAcceptTerms(e.target.checked)}
+                className="mt-0.5 h-4 w-4 rounded border-[var(--border)] bg-[var(--bg-elevated)] text-[var(--accent)] focus:ring-[var(--accent)]"
+                aria-label="Accept terms and conditions"
+                aria-required="true"
+              />
+              <span className="text-sm text-[var(--text-mid)]">
+                I agree to the{' '}
+                <a href="/terms" className="text-[var(--accent)] hover:underline">
+                  Terms & Conditions
+                </a>
+              </span>
+            </label>
+
             {/* Submit Button */}
             <Button
               type="submit"
-              fullWidth
-              variant="contained"
-              size="large"
+              className="w-full mb-6"
+              size="lg"
               disabled={!acceptTerms || isSubmitting || registerMutation.isPending}
-              sx={{ mb: 3 }}
               aria-label="Create your account"
             >
               {isSubmitting || registerMutation.isPending ? 'Creating account...' : 'Sign Up'}
             </Button>
-            
+
             {/* Login Link */}
-            <Box sx={{ textAlign: 'center' }}>
-              <Typography variant="body2" color="text.secondary">
+            <div className="text-center">
+              <p className="text-sm text-[var(--text-mid)]">
                 Already have an account?{' '}
-                <MuiLink
-                  component={Link}
+                <Link
                   href="/login"
-                  underline="hover"
-                  sx={{ fontWeight: 600 }}
+                  className="font-semibold text-[var(--accent)] hover:underline"
                 >
                   Sign in instead
-                </MuiLink>
-              </Typography>
-            </Box>
+                </Link>
+              </p>
+            </div>
           </form>
         </CardContent>
       </Card>
-    </Box>
+    </div>
   );
 }
-

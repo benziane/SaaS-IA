@@ -6,17 +6,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import {
-  Alert,
-  Box,
-  Card,
-  CardContent,
-  CardHeader,
-  Chip,
-  Grid,
-  Skeleton,
-  Typography,
-} from '@mui/material';
+
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/lib/design-hub/components/Alert';
+import { Skeleton } from '@/lib/design-hub/components/Skeleton';
+
 import { apiClient, extractErrorMessage } from '@/lib/apiClient';
 
 /* ========================================================================
@@ -39,17 +34,21 @@ interface ModuleInfo {
 
 function ModuleCardSkeleton(): JSX.Element {
   return (
-    <Card sx={{ height: '100%' }}>
-      <CardHeader
-        title={<Skeleton variant="text" width="60%" />}
-        subheader={<Skeleton variant="text" width="30%" />}
-        action={<Skeleton variant="rounded" width={70} height={24} />}
-      />
+    <Card className="h-full">
+      <CardHeader>
+        <div className="flex justify-between items-start">
+          <div className="flex-1">
+            <Skeleton className="h-5 w-3/5 mb-2" />
+            <Skeleton className="h-3 w-1/3" />
+          </div>
+          <Skeleton className="h-6 w-[70px] rounded" />
+        </div>
+      </CardHeader>
       <CardContent>
-        <Skeleton variant="text" width="100%" />
-        <Skeleton variant="text" width="80%" sx={{ mb: 2 }} />
-        <Skeleton variant="text" width="40%" sx={{ mb: 1 }} />
-        <Skeleton variant="text" width="50%" />
+        <Skeleton className="h-4 w-full mb-1" />
+        <Skeleton className="h-4 w-4/5 mb-4" />
+        <Skeleton className="h-3 w-2/5 mb-2" />
+        <Skeleton className="h-3 w-1/2" />
       </CardContent>
     </Card>
   );
@@ -61,54 +60,42 @@ function ModuleCardSkeleton(): JSX.Element {
 
 function ModuleCard({ module }: { module: ModuleInfo }): JSX.Element {
   return (
-    <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <CardHeader
-        title={module.name}
-        subheader={`v${module.version}`}
-        action={
-          <Chip
-            label={module.enabled !== false ? 'Enabled' : 'Disabled'}
-            color={module.enabled !== false ? 'success' : 'default'}
-            size="small"
-            variant="outlined"
-          />
-        }
-        titleTypographyProps={{ variant: 'h6', fontWeight: 600 }}
-        subheaderTypographyProps={{ variant: 'caption' }}
-      />
-      <CardContent sx={{ flex: 1, pt: 0 }}>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+    <Card className="h-full flex flex-col">
+      <CardHeader>
+        <div className="flex justify-between items-start">
+          <div>
+            <CardTitle className="text-base">{module.name}</CardTitle>
+            <CardDescription>v{module.version}</CardDescription>
+          </div>
+          <Badge variant={module.enabled !== false ? 'success' : 'secondary'}>
+            {module.enabled !== false ? 'Enabled' : 'Disabled'}
+          </Badge>
+        </div>
+      </CardHeader>
+      <CardContent className="flex-1">
+        <p className="text-sm text-[var(--text-mid)] mb-4">
           {module.description}
-        </Typography>
+        </p>
 
-        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
+        <span className="text-xs text-[var(--text-low)] block mb-1">
           API Prefix
-        </Typography>
-        <Typography
-          variant="body2"
-          sx={{
-            fontFamily: 'monospace',
-            bgcolor: 'action.hover',
-            px: 1,
-            py: 0.5,
-            borderRadius: 1,
-            display: 'inline-block',
-            mb: 2,
-          }}
-        >
+        </span>
+        <code className="text-sm font-mono bg-[var(--bg-elevated)] px-2 py-1 rounded inline-block mb-4">
           {module.prefix}
-        </Typography>
+        </code>
 
         {module.dependencies.length > 0 && (
           <>
-            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
+            <span className="text-xs text-[var(--text-low)] block mb-1">
               Dependencies
-            </Typography>
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+            </span>
+            <div className="flex flex-wrap gap-1">
               {module.dependencies.map((dep) => (
-                <Chip key={dep} label={dep} size="small" variant="outlined" color="info" />
+                <Badge key={dep} variant="outline" className="text-xs border-blue-500/30 text-blue-400">
+                  {dep}
+                </Badge>
               ))}
-            </Box>
+            </div>
           </>
         )}
       </CardContent>
@@ -159,52 +146,48 @@ export default function ModulesPage(): JSX.Element {
      ======================================================================== */
 
   return (
-    <Box>
+    <div>
       {/* Header */}
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" component="h1" gutterBottom sx={{ fontWeight: 600 }}>
+      <div className="mb-8">
+        <h1 className="text-2xl font-semibold text-[var(--text-high)] mb-1">
           Platform Modules
-        </Typography>
-        <Typography variant="body1" color="text.secondary">
+        </h1>
+        <p className="text-[var(--text-mid)]">
           Overview of all registered backend modules and their current status.
-        </Typography>
-      </Box>
+        </p>
+      </div>
 
       {/* Error State */}
       {error && (
-        <Alert severity="error" sx={{ mb: 3 }}>
-          Failed to load modules: {error}
+        <Alert variant="destructive" className="mb-6">
+          <AlertDescription>Failed to load modules: {error}</AlertDescription>
         </Alert>
       )}
 
       {/* Module Cards Grid */}
-      <Grid container spacing={3}>
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
         {loading
           ? Array.from({ length: 3 }).map((_, index) => (
-              <Grid item xs={12} sm={6} md={4} key={index}>
-                <ModuleCardSkeleton />
-              </Grid>
+              <ModuleCardSkeleton key={index} />
             ))
           : modules.map((mod) => (
-              <Grid item xs={12} sm={6} md={4} key={mod.name}>
-                <ModuleCard module={mod} />
-              </Grid>
+              <ModuleCard key={mod.name} module={mod} />
             ))}
-      </Grid>
+      </div>
 
       {/* Empty State */}
       {!loading && !error && modules.length === 0 && (
-        <Card sx={{ mt: 3 }}>
-          <CardContent sx={{ py: 6, textAlign: 'center' }}>
-            <Typography variant="h6" color="text.secondary" gutterBottom>
+        <Card className="mt-6">
+          <CardContent className="py-12 text-center">
+            <h2 className="text-lg font-semibold text-[var(--text-mid)] mb-1">
               No modules registered
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
+            </h2>
+            <p className="text-sm text-[var(--text-mid)]">
               Backend modules will appear here once they are registered with the platform.
-            </Typography>
+            </p>
           </CardContent>
         </Card>
       )}
-    </Box>
+    </div>
   );
 }

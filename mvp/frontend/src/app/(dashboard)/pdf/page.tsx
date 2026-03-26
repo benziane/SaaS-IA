@@ -2,30 +2,18 @@
 
 import { useRef, useState } from 'react';
 import {
-  Alert,
-  Box,
-  Button,
-  Card,
-  CardContent,
-  Chip,
-  CircularProgress,
-  Divider,
-  Grid,
-  IconButton,
-  Tab,
-  Tabs,
-  TextField,
-  Typography,
-} from '@mui/material';
-import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
-import UploadFileIcon from '@mui/icons-material/UploadFile';
-import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
-import DeleteIcon from '@mui/icons-material/Delete';
-import SendIcon from '@mui/icons-material/Send';
-import DownloadIcon from '@mui/icons-material/Download';
-import CompareArrowsIcon from '@mui/icons-material/CompareArrows';
-import KeyIcon from '@mui/icons-material/Key';
-import TableChartIcon from '@mui/icons-material/TableChart';
+  FileText, Upload, Sparkles, Trash2, Send, Download, GitCompareArrows,
+  Key, Table2, Loader2,
+} from 'lucide-react';
+
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/lib/design-hub/components/Button';
+import { Input } from '@/lib/design-hub/components/Input';
+import { Textarea } from '@/lib/design-hub/components/Textarea';
+import { Separator } from '@/lib/design-hub/components/Separator';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/lib/design-hub/components/Tabs';
 
 import {
   useComparePDFs,
@@ -40,11 +28,11 @@ import {
   useUploadPDF,
 } from '@/features/pdf-processor/hooks/usePDFProcessor';
 
-const STATUS_COLORS: Record<string, 'default' | 'info' | 'success' | 'error'> = {
+const STATUS_VARIANTS: Record<string, 'default' | 'secondary' | 'success' | 'destructive'> = {
   uploading: 'default',
-  processing: 'info',
+  processing: 'secondary',
   ready: 'success',
-  failed: 'error',
+  failed: 'destructive',
 };
 
 export default function PDFPage() {
@@ -54,7 +42,7 @@ export default function PDFPage() {
 
   const [activePDF, setActivePDF] = useState<string | null>(null);
   const [question, setQuestion] = useState('');
-  const [tab, setTab] = useState(0);
+  const [tab, setTab] = useState('summary');
   const [selectedForCompare, setSelectedForCompare] = useState<string[]>([]);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -85,91 +73,83 @@ export default function PDFPage() {
   };
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h4" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <PictureAsPdfIcon color="error" /> PDF Processor
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
+    <div className="p-6">
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold text-[var(--text-high)] flex items-center gap-2">
+          <FileText className="h-8 w-8 text-red-500" /> PDF Processor
+        </h1>
+        <p className="text-sm text-[var(--text-mid)]">
           Upload PDFs, get AI summaries, ask questions (RAG), extract tables, and export
-        </Typography>
-      </Box>
+        </p>
+      </div>
 
-      <Grid container spacing={3}>
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
         {/* Left panel: PDF list */}
-        <Grid item xs={12} md={4}>
+        <div className="md:col-span-4">
           <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                <Typography variant="h6">Your PDFs</Typography>
+            <CardContent className="p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold text-[var(--text-high)]">Your PDFs</h3>
                 <Button
-                  variant="contained"
-                  size="small"
-                  startIcon={<UploadFileIcon />}
+                  size="sm"
                   onClick={() => fileRef.current?.click()}
                   disabled={uploadMutation.isPending}
                 >
+                  <Upload className="h-3.5 w-3.5 mr-1" />
                   {uploadMutation.isPending ? 'Uploading...' : 'Upload'}
                 </Button>
                 <input ref={fileRef} type="file" accept=".pdf" hidden onChange={handleUpload} />
-              </Box>
+              </div>
 
               {uploadMutation.isError && (
-                <Alert severity="error" sx={{ mb: 1 }}>
-                  {uploadMutation.error?.message || 'Upload failed'}
+                <Alert variant="destructive" className="mb-2">
+                  <AlertDescription>{uploadMutation.error?.message || 'Upload failed'}</AlertDescription>
                 </Alert>
               )}
 
               {isLoading ? (
-                <CircularProgress size={24} />
+                <Loader2 className="h-6 w-6 animate-spin text-[var(--accent)]" />
               ) : !pdfs?.length ? (
-                <Typography variant="body2" color="text.secondary">
+                <p className="text-sm text-[var(--text-mid)]">
                   No PDFs uploaded yet. Upload your first PDF to get started.
-                </Typography>
+                </p>
               ) : (
                 pdfs.map((pdf) => (
                   <Card
                     key={pdf.id}
-                    variant="outlined"
-                    sx={{
-                      mb: 1,
-                      cursor: 'pointer',
-                      bgcolor: activePDF === pdf.id ? 'action.selected' : undefined,
-                    }}
-                    onClick={() => { setActivePDF(pdf.id); setTab(0); }}
+                    className={`mb-2 cursor-pointer border border-[var(--border)] transition-colors ${
+                      activePDF === pdf.id ? 'bg-[var(--bg-surface)]' : ''
+                    }`}
+                    onClick={() => { setActivePDF(pdf.id); setTab('summary'); }}
                   >
-                    <CardContent sx={{ py: 1, '&:last-child': { pb: 1 } }}>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <Box sx={{ overflow: 'hidden' }}>
-                          <Typography variant="body2" noWrap fontWeight="bold">
-                            {pdf.filename}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
+                    <CardContent className="py-2 px-3">
+                      <div className="flex justify-between items-center">
+                        <div className="overflow-hidden">
+                          <p className="text-sm font-bold text-[var(--text-high)] truncate">{pdf.filename}</p>
+                          <span className="text-xs text-[var(--text-mid)]">
                             {pdf.num_pages} pages | {pdf.file_size_kb} KB
-                          </Typography>
-                        </Box>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                          <Chip
-                            label={pdf.status}
-                            size="small"
-                            color={STATUS_COLORS[pdf.status] || 'default'}
-                          />
-                          <IconButton
-                            size="small"
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1 shrink-0">
+                          <Badge variant={STATUS_VARIANTS[pdf.status] || 'default'}>{pdf.status}</Badge>
+                          <button
+                            type="button"
+                            title="Compare"
+                            className={`p-1 rounded hover:bg-[var(--bg-hover)] ${selectedForCompare.includes(pdf.id) ? 'text-[var(--accent)]' : 'text-[var(--text-mid)]'}`}
                             onClick={(e) => { e.stopPropagation(); toggleCompare(pdf.id); }}
-                            color={selectedForCompare.includes(pdf.id) ? 'primary' : 'default'}
                           >
-                            <CompareArrowsIcon fontSize="small" />
-                          </IconButton>
-                          <IconButton
-                            size="small"
-                            color="error"
+                            <GitCompareArrows className="h-4 w-4" />
+                          </button>
+                          <button
+                            type="button"
+                            title="Delete"
+                            className="p-1 rounded hover:bg-red-100 text-red-500"
                             onClick={(e) => { e.stopPropagation(); deleteMutation.mutate(pdf.id); }}
                           >
-                            <DeleteIcon fontSize="small" />
-                          </IconButton>
-                        </Box>
-                      </Box>
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </div>
                     </CardContent>
                   </Card>
                 ))
@@ -177,278 +157,258 @@ export default function PDFPage() {
 
               {selectedForCompare.length >= 2 && (
                 <Button
-                  variant="outlined"
-                  fullWidth
-                  sx={{ mt: 1 }}
-                  startIcon={<CompareArrowsIcon />}
+                  variant="outline"
+                  className="w-full mt-2"
                   onClick={() => compareMutation.mutate({ pdfIds: selectedForCompare })}
                   disabled={compareMutation.isPending}
                 >
+                  <GitCompareArrows className="h-4 w-4 mr-2" />
                   Compare {selectedForCompare.length} PDFs
                 </Button>
               )}
             </CardContent>
           </Card>
-        </Grid>
+        </div>
 
         {/* Right panel: PDF details */}
-        <Grid item xs={12} md={8}>
+        <div className="md:col-span-8">
           {!activePDF ? (
             <Card>
-              <CardContent>
-                <Typography variant="body1" color="text.secondary" textAlign="center" py={6}>
+              <CardContent className="text-center py-12 px-6">
+                <p className="text-[var(--text-mid)]">
                   Select a PDF from the list to view details, generate summaries, or ask questions.
-                </Typography>
+                </p>
               </CardContent>
             </Card>
           ) : (
             <Card>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
+              <CardContent className="p-6">
+                <h3 className="text-lg font-semibold text-[var(--text-high)] mb-4">
                   {pdfDetail?.filename || 'Loading...'}
-                </Typography>
+                </h3>
 
-                <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 2 }}>
-                  <Tab label="Summary" />
-                  <Tab label="Ask (RAG)" />
-                  <Tab label="Pages" />
-                  <Tab label="Export" />
-                </Tabs>
+                <Tabs value={tab} onValueChange={setTab} className="mb-4">
+                  <TabsList>
+                    <TabsTrigger value="summary">Summary</TabsTrigger>
+                    <TabsTrigger value="rag">Ask (RAG)</TabsTrigger>
+                    <TabsTrigger value="pages">Pages</TabsTrigger>
+                    <TabsTrigger value="export">Export</TabsTrigger>
+                  </TabsList>
 
-                {/* Summary tab */}
-                {tab === 0 && (
-                  <Box>
-                    <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap' }}>
+                  {/* Summary tab */}
+                  <TabsContent value="summary">
+                    <div className="flex gap-2 mb-4 flex-wrap">
                       {['executive', 'detailed', 'bullet_points'].map((style) => (
                         <Button
                           key={style}
-                          variant="outlined"
-                          size="small"
-                          startIcon={<AutoAwesomeIcon />}
+                          variant="outline"
+                          size="sm"
                           onClick={() => summarizeMutation.mutate(style)}
                           disabled={summarizeMutation.isPending}
                         >
+                          <Sparkles className="h-3.5 w-3.5 mr-1" />
                           {style.replace('_', ' ')}
                         </Button>
                       ))}
                       <Button
-                        variant="outlined"
-                        size="small"
-                        startIcon={<KeyIcon />}
+                        variant="outline"
+                        size="sm"
                         onClick={() => keywordsMutation.mutate()}
                         disabled={keywordsMutation.isPending}
                       >
-                        Keywords
+                        <Key className="h-3.5 w-3.5 mr-1" /> Keywords
                       </Button>
                       <Button
-                        variant="outlined"
-                        size="small"
-                        startIcon={<TableChartIcon />}
+                        variant="outline"
+                        size="sm"
                         onClick={() => tablesMutation.mutate()}
                         disabled={tablesMutation.isPending}
                       >
-                        Tables
+                        <Table2 className="h-3.5 w-3.5 mr-1" /> Tables
                       </Button>
-                    </Box>
+                    </div>
 
-                    {summarizeMutation.isPending && <CircularProgress size={24} />}
+                    {summarizeMutation.isPending && <Loader2 className="h-6 w-6 animate-spin text-[var(--accent)]" />}
                     {summarizeMutation.data && (
-                      <Box sx={{ mt: 1 }}>
-                        <Typography variant="subtitle2" gutterBottom>
+                      <div className="mt-2">
+                        <p className="text-sm font-medium text-[var(--text-high)] mb-1">
                           Summary ({summarizeMutation.data.style})
-                        </Typography>
-                        <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
+                        </p>
+                        <p className="text-sm text-[var(--text-high)] whitespace-pre-wrap">
                           {summarizeMutation.data.summary}
-                        </Typography>
-                      </Box>
+                        </p>
+                      </div>
                     )}
 
                     {pdfDetail?.summary && !summarizeMutation.data && (
-                      <Box sx={{ mt: 1 }}>
-                        <Typography variant="subtitle2" gutterBottom>Previous Summary</Typography>
-                        <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
-                          {pdfDetail.summary}
-                        </Typography>
-                      </Box>
+                      <div className="mt-2">
+                        <p className="text-sm font-medium text-[var(--text-high)] mb-1">Previous Summary</p>
+                        <p className="text-sm text-[var(--text-high)] whitespace-pre-wrap">{pdfDetail.summary}</p>
+                      </div>
                     )}
 
                     {keywordsMutation.data && (
-                      <Box sx={{ mt: 2 }}>
-                        <Typography variant="subtitle2" gutterBottom>Keywords</Typography>
-                        <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
+                      <div className="mt-4">
+                        <p className="text-sm font-medium text-[var(--text-high)] mb-1">Keywords</p>
+                        <div className="flex gap-1 flex-wrap">
                           {keywordsMutation.data.keywords.map((kw, i) => (
-                            <Chip key={i} label={kw} size="small" variant="outlined" />
+                            <Badge key={i} variant="outline">{kw}</Badge>
                           ))}
-                        </Box>
-                      </Box>
+                        </div>
+                      </div>
                     )}
 
                     {(pdfDetail?.keywords?.length ?? 0) > 0 && !keywordsMutation.data && (
-                      <Box sx={{ mt: 2 }}>
-                        <Typography variant="subtitle2" gutterBottom>Keywords</Typography>
-                        <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
+                      <div className="mt-4">
+                        <p className="text-sm font-medium text-[var(--text-high)] mb-1">Keywords</p>
+                        <div className="flex gap-1 flex-wrap">
                           {pdfDetail?.keywords?.map((kw, i) => (
-                            <Chip key={i} label={kw} size="small" variant="outlined" />
+                            <Badge key={i} variant="outline">{kw}</Badge>
                           ))}
-                        </Box>
-                      </Box>
+                        </div>
+                      </div>
                     )}
 
                     {tablesMutation.data && (
-                      <Box sx={{ mt: 2 }}>
-                        <Typography variant="subtitle2" gutterBottom>
+                      <div className="mt-4">
+                        <p className="text-sm font-medium text-[var(--text-high)] mb-1">
                           Tables ({tablesMutation.data.total} found)
-                        </Typography>
+                        </p>
                         {tablesMutation.data.tables.map((t, i) => (
-                          <Box key={i} sx={{ mb: 1 }}>
-                            <Typography variant="caption">
+                          <div key={i} className="mb-1">
+                            <span className="text-xs text-[var(--text-mid)]">
                               Page {t.page}, Table {t.table_index + 1} ({t.row_count} rows)
-                            </Typography>
-                          </Box>
+                            </span>
+                          </div>
                         ))}
-                      </Box>
+                      </div>
                     )}
-                  </Box>
-                )}
+                  </TabsContent>
 
-                {/* RAG Query tab */}
-                {tab === 1 && (
-                  <Box>
-                    <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
-                      <TextField
-                        fullWidth
-                        size="small"
+                  {/* RAG Query tab */}
+                  <TabsContent value="rag">
+                    <div className="flex gap-2 mb-4">
+                      <Input
                         placeholder="Ask a question about this PDF..."
                         value={question}
                         onChange={(e) => setQuestion(e.target.value)}
                         onKeyDown={(e) => e.key === 'Enter' && handleQuery()}
                       />
-                      <IconButton
-                        color="primary"
+                      <button
+                        type="button"
+                        title="Send"
+                        className="p-2 rounded text-[var(--accent)] hover:bg-[var(--bg-hover)] disabled:opacity-40"
                         onClick={handleQuery}
                         disabled={queryMutation.isPending || !question.trim()}
                       >
-                        <SendIcon />
-                      </IconButton>
-                    </Box>
+                        <Send className="h-5 w-5" />
+                      </button>
+                    </div>
 
-                    {queryMutation.isPending && <CircularProgress size={24} />}
+                    {queryMutation.isPending && <Loader2 className="h-6 w-6 animate-spin text-[var(--accent)]" />}
                     {queryMutation.data && (
-                      <Box>
-                        <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', mb: 1 }}>
+                      <div>
+                        <p className="text-sm text-[var(--text-high)] whitespace-pre-wrap mb-2">
                           {queryMutation.data.answer}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
+                        </p>
+                        <span className="text-xs text-[var(--text-mid)]">
                           Confidence: {(queryMutation.data.confidence * 100).toFixed(1)}% |{' '}
                           {queryMutation.data.sources.length} source(s)
-                        </Typography>
+                        </span>
                         {queryMutation.data.sources.length > 0 && (
-                          <Box sx={{ mt: 1 }}>
-                            <Divider sx={{ my: 1 }} />
-                            <Typography variant="subtitle2" gutterBottom>Sources</Typography>
+                          <div className="mt-2">
+                            <Separator className="my-2" />
+                            <p className="text-sm font-medium text-[var(--text-high)] mb-1">Sources</p>
                             {queryMutation.data.sources.map((s, i) => (
-                              <Card key={i} variant="outlined" sx={{ mb: 0.5, p: 1 }}>
-                                <Typography variant="caption" color="text.secondary">
+                              <Card key={i} className="mb-1 border border-[var(--border)] p-2">
+                                <span className="text-xs text-[var(--text-mid)]">
                                   Chunk {s.chunk_index} (relevance: {(s.relevance * 100).toFixed(1)}%)
-                                </Typography>
-                                <Typography variant="body2" fontSize="0.8rem">
+                                </span>
+                                <p className="text-[0.8rem] text-[var(--text-high)]">
                                   {s.text}
-                                </Typography>
+                                </p>
                               </Card>
                             ))}
-                          </Box>
+                          </div>
                         )}
-                      </Box>
+                      </div>
                     )}
-                  </Box>
-                )}
+                  </TabsContent>
 
-                {/* Pages tab */}
-                {tab === 2 && (
-                  <Box>
+                  {/* Pages tab */}
+                  <TabsContent value="pages">
                     {pdfDetail?.pages?.length ? (
                       pdfDetail.pages.map((page) => (
-                        <Card key={page.page_number} variant="outlined" sx={{ mb: 1, p: 1 }}>
-                          <Typography variant="subtitle2" gutterBottom>
+                        <Card key={page.page_number} className="mb-2 border border-[var(--border)] p-3">
+                          <p className="text-sm font-medium text-[var(--text-high)] mb-1">
                             Page {page.page_number}
-                          </Typography>
-                          <Typography
-                            variant="body2"
-                            sx={{ whiteSpace: 'pre-wrap', maxHeight: 200, overflow: 'auto', fontSize: '0.8rem' }}
-                          >
+                          </p>
+                          <p className="text-[0.8rem] text-[var(--text-high)] whitespace-pre-wrap max-h-48 overflow-auto">
                             {page.text || '(no text)'}
-                          </Typography>
+                          </p>
                         </Card>
                       ))
                     ) : (
-                      <Typography variant="body2" color="text.secondary">
-                        No page content available.
-                      </Typography>
+                      <p className="text-sm text-[var(--text-mid)]">No page content available.</p>
                     )}
-                  </Box>
-                )}
+                  </TabsContent>
 
-                {/* Export tab */}
-                {tab === 3 && (
-                  <Box>
-                    <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
+                  {/* Export tab */}
+                  <TabsContent value="export">
+                    <div className="flex gap-2 mb-4">
                       {['markdown', 'txt', 'json'].map((fmt) => (
                         <Button
                           key={fmt}
-                          variant="outlined"
-                          size="small"
-                          startIcon={<DownloadIcon />}
+                          variant="outline"
+                          size="sm"
                           onClick={() => exportMutation.mutate(fmt)}
                           disabled={exportMutation.isPending}
                         >
-                          {fmt.toUpperCase()}
+                          <Download className="h-3.5 w-3.5 mr-1" /> {fmt.toUpperCase()}
                         </Button>
                       ))}
-                    </Box>
+                    </div>
 
-                    {exportMutation.isPending && <CircularProgress size={24} />}
+                    {exportMutation.isPending && <Loader2 className="h-6 w-6 animate-spin text-[var(--accent)]" />}
                     {exportMutation.data && (
-                      <Box>
-                        <Typography variant="subtitle2" gutterBottom>
+                      <div>
+                        <p className="text-sm font-medium text-[var(--text-high)] mb-1">
                           Exported as {exportMutation.data.format} ({exportMutation.data.filename})
-                        </Typography>
-                        <TextField
-                          fullWidth
-                          multiline
-                          minRows={8}
-                          maxRows={20}
+                        </p>
+                        <Textarea
+                          className="font-mono text-xs"
+                          rows={10}
                           value={exportMutation.data.content}
-                          InputProps={{ readOnly: true }}
-                          sx={{ '& .MuiInputBase-input': { fontFamily: 'monospace', fontSize: '0.8rem' } }}
+                          readOnly
                         />
-                      </Box>
+                      </div>
                     )}
-                  </Box>
-                )}
+                  </TabsContent>
+                </Tabs>
               </CardContent>
             </Card>
           )}
 
           {/* Compare results */}
           {compareMutation.data && (
-            <Card sx={{ mt: 2 }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
+            <Card className="mt-4">
+              <CardContent className="p-6">
+                <h3 className="text-lg font-semibold text-[var(--text-high)] mb-2">
                   Comparison ({compareMutation.data.comparison_type})
-                </Typography>
-                <Box sx={{ display: 'flex', gap: 0.5, mb: 1, flexWrap: 'wrap' }}>
+                </h3>
+                <div className="flex gap-1 mb-2 flex-wrap">
                   {compareMutation.data.documents.map((d) => (
-                    <Chip key={d.id} label={`${d.filename} (${d.num_pages}p)`} size="small" />
+                    <Badge key={d.id}>{d.filename} ({d.num_pages}p)</Badge>
                   ))}
-                </Box>
-                <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
+                </div>
+                <p className="text-sm text-[var(--text-high)] whitespace-pre-wrap">
                   {compareMutation.data.comparison}
-                </Typography>
+                </p>
               </CardContent>
             </Card>
           )}
-        </Grid>
-      </Grid>
-    </Box>
+        </div>
+      </div>
+    </div>
   );
 }

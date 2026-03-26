@@ -6,24 +6,15 @@
 'use client';
 
 import { useState } from 'react';
+import { Eye, EyeOff, Loader2 } from 'lucide-react';
 
-import {
-  Alert,
-  Box,
-  Button,
-  Card,
-  CardContent,
-  CardHeader,
-  Chip,
-  CircularProgress,
-  Divider,
-  Grid,
-  IconButton,
-  InputAdornment,
-  TextField,
-  Typography,
-} from '@mui/material';
-import { Visibility, VisibilityOff } from '@mui/icons-material';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/lib/design-hub/components/Alert';
+import { Button } from '@/lib/design-hub/components/Button';
+import { Input } from '@/lib/design-hub/components/Input';
+import { Separator } from '@/lib/design-hub/components/Separator';
+
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -166,9 +157,9 @@ export default function ProfilePage(): JSX.Element {
 
   if (userLoading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}>
-        <CircularProgress />
-      </Box>
+      <div className="flex justify-center items-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-[var(--accent)]" />
+      </div>
     );
   }
 
@@ -185,93 +176,91 @@ export default function ProfilePage(): JSX.Element {
     : 'N/A';
 
   return (
-    <Box>
+    <div>
       {/* Page Header */}
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" component="h1" gutterBottom sx={{ fontWeight: 600 }}>
+      <div className="mb-8">
+        <h1 className="text-2xl font-semibold text-[var(--text-high)] mb-1">
           Profile Settings
-        </Typography>
-        <Typography variant="body1" color="text.secondary">
+        </h1>
+        <p className="text-[var(--text-mid)]">
           Manage your account information and security settings.
-        </Typography>
-      </Box>
+        </p>
+      </div>
 
-      <Grid container spacing={3}>
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
         {/* ============================================================
             User Info Card
             ============================================================ */}
-        <Grid item xs={12} md={4}>
-          <Card sx={{ height: '100%' }}>
-            <CardHeader title="Account Information" />
-            <Divider />
-            <CardContent>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
-                <Box>
-                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
+        <div className="md:col-span-4">
+          <Card className="h-full">
+            <CardHeader>
+              <CardTitle>Account Information</CardTitle>
+            </CardHeader>
+            <Separator />
+            <CardContent className="pt-6">
+              <div className="flex flex-col gap-5">
+                <div>
+                  <span className="text-xs text-[var(--text-low)] block mb-1">
                     Email
-                  </Typography>
-                  <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                  </span>
+                  <p className="text-sm font-medium text-[var(--text-high)]">
                     {user?.email ?? 'N/A'}
-                  </Typography>
-                </Box>
+                  </p>
+                </div>
 
-                <Box>
-                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
+                <div>
+                  <span className="text-xs text-[var(--text-low)] block mb-1">
                     Full Name
-                  </Typography>
-                  <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                  </span>
+                  <p className="text-sm font-medium text-[var(--text-high)]">
                     {user?.full_name || 'Not set'}
-                  </Typography>
-                </Box>
+                  </p>
+                </div>
 
-                <Box>
-                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
+                <div>
+                  <span className="text-xs text-[var(--text-low)] block mb-1">
                     Role
-                  </Typography>
-                  <Chip
-                    label={user?.role === 'admin' ? 'Administrator' : 'User'}
-                    color={user?.role === 'admin' ? 'primary' : 'default'}
-                    size="small"
-                    variant="outlined"
-                  />
-                </Box>
+                  </span>
+                  <Badge variant={user?.role === 'admin' ? 'default' : 'outline'}>
+                    {user?.role === 'admin' ? 'Administrator' : 'User'}
+                  </Badge>
+                </div>
 
-                <Box>
-                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
+                <div>
+                  <span className="text-xs text-[var(--text-low)] block mb-1">
                     Status
-                  </Typography>
-                  <Chip
-                    label={user?.is_active ? 'Active' : 'Inactive'}
-                    color={user?.is_active ? 'success' : 'error'}
-                    size="small"
-                  />
-                </Box>
+                  </span>
+                  <Badge variant={user?.is_active ? 'success' : 'destructive'}>
+                    {user?.is_active ? 'Active' : 'Inactive'}
+                  </Badge>
+                </div>
 
-                <Box>
-                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
+                <div>
+                  <span className="text-xs text-[var(--text-low)] block mb-1">
                     Member Since
-                  </Typography>
-                  <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                  </span>
+                  <p className="text-sm font-medium text-[var(--text-high)]">
                     {memberSince}
-                  </Typography>
-                </Box>
-              </Box>
+                  </p>
+                </div>
+              </div>
             </CardContent>
           </Card>
-        </Grid>
+        </div>
 
         {/* ============================================================
             Edit Profile + Change Password
             ============================================================ */}
-        <Grid item xs={12} md={8}>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+        <div className="md:col-span-8">
+          <div className="flex flex-col gap-6">
             {/* Edit Profile Card */}
             <Card>
-              <CardHeader title="Edit Profile" />
-              <Divider />
-              <CardContent>
-                <Box
-                  component="form"
+              <CardHeader>
+                <CardTitle>Edit Profile</CardTitle>
+              </CardHeader>
+              <Separator />
+              <CardContent className="pt-6">
+                <form
                   onSubmit={profileForm.handleSubmit(handleProfileSubmit)}
                   noValidate
                 >
@@ -279,43 +268,47 @@ export default function ProfilePage(): JSX.Element {
                     name="full_name"
                     control={profileForm.control}
                     render={({ field, fieldState }) => (
-                      <TextField
-                        {...field}
-                        label="Full Name"
-                        fullWidth
-                        error={!!fieldState.error}
-                        helperText={fieldState.error?.message}
-                        disabled={profileSubmitting}
-                        sx={{ mb: 3 }}
-                      />
+                      <div className="mb-6">
+                        <label className="text-sm font-medium text-[var(--text-high)] mb-1.5 block">Full Name</label>
+                        <Input
+                          {...field}
+                          className={fieldState.error ? 'border-red-500' : ''}
+                          disabled={profileSubmitting}
+                        />
+                        {fieldState.error && (
+                          <p className="text-xs text-red-400 mt-1">{fieldState.error.message}</p>
+                        )}
+                      </div>
                     )}
                   />
 
-                  <Alert severity="info" variant="outlined" sx={{ mb: 3 }}>
-                    Your email address cannot be changed. Contact support if you need to update it.
+                  <Alert variant="info" className="mb-6">
+                    <AlertDescription>
+                      Your email address cannot be changed. Contact support if you need to update it.
+                    </AlertDescription>
                   </Alert>
 
-                  <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                  <div className="flex justify-end">
                     <Button
                       type="submit"
-                      variant="contained"
                       disabled={profileSubmitting || !profileForm.formState.isDirty}
-                      startIcon={profileSubmitting ? <CircularProgress size={16} /> : undefined}
                     >
+                      {profileSubmitting && <Loader2 className="h-4 w-4 animate-spin mr-1" />}
                       {profileSubmitting ? 'Saving...' : 'Save Changes'}
                     </Button>
-                  </Box>
-                </Box>
+                  </div>
+                </form>
               </CardContent>
             </Card>
 
             {/* Change Password Card */}
             <Card>
-              <CardHeader title="Change Password" />
-              <Divider />
-              <CardContent>
-                <Box
-                  component="form"
+              <CardHeader>
+                <CardTitle>Change Password</CardTitle>
+              </CardHeader>
+              <Separator />
+              <CardContent className="pt-6">
+                <form
                   onSubmit={passwordForm.handleSubmit(handlePasswordSubmit)}
                   noValidate
                 >
@@ -323,30 +316,28 @@ export default function ProfilePage(): JSX.Element {
                     name="current_password"
                     control={passwordForm.control}
                     render={({ field, fieldState }) => (
-                      <TextField
-                        {...field}
-                        label="Current Password"
-                        type={showCurrentPassword ? 'text' : 'password'}
-                        fullWidth
-                        error={!!fieldState.error}
-                        helperText={fieldState.error?.message}
-                        disabled={passwordSubmitting}
-                        sx={{ mb: 3 }}
-                        InputProps={{
-                          endAdornment: (
-                            <InputAdornment position="end">
-                              <IconButton
-                                onClick={() => setShowCurrentPassword((prev) => !prev)}
-                                edge="end"
-                                size="small"
-                                aria-label={showCurrentPassword ? 'Hide password' : 'Show password'}
-                              >
-                                {showCurrentPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
-                              </IconButton>
-                            </InputAdornment>
-                          ),
-                        }}
-                      />
+                      <div className="mb-6">
+                        <label className="text-sm font-medium text-[var(--text-high)] mb-1.5 block">Current Password</label>
+                        <div className="relative">
+                          <Input
+                            {...field}
+                            type={showCurrentPassword ? 'text' : 'password'}
+                            className={fieldState.error ? 'border-red-500 pr-10' : 'pr-10'}
+                            disabled={passwordSubmitting}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowCurrentPassword((prev) => !prev)}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-[var(--text-low)] hover:text-[var(--text-high)]"
+                            aria-label={showCurrentPassword ? 'Hide password' : 'Show password'}
+                          >
+                            {showCurrentPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          </button>
+                        </div>
+                        {fieldState.error && (
+                          <p className="text-xs text-red-400 mt-1">{fieldState.error.message}</p>
+                        )}
+                      </div>
                     )}
                   />
 
@@ -354,30 +345,28 @@ export default function ProfilePage(): JSX.Element {
                     name="new_password"
                     control={passwordForm.control}
                     render={({ field, fieldState }) => (
-                      <TextField
-                        {...field}
-                        label="New Password"
-                        type={showNewPassword ? 'text' : 'password'}
-                        fullWidth
-                        error={!!fieldState.error}
-                        helperText={fieldState.error?.message || 'Minimum 8 characters with uppercase, lowercase, and a number'}
-                        disabled={passwordSubmitting}
-                        sx={{ mb: 3 }}
-                        InputProps={{
-                          endAdornment: (
-                            <InputAdornment position="end">
-                              <IconButton
-                                onClick={() => setShowNewPassword((prev) => !prev)}
-                                edge="end"
-                                size="small"
-                                aria-label={showNewPassword ? 'Hide password' : 'Show password'}
-                              >
-                                {showNewPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
-                              </IconButton>
-                            </InputAdornment>
-                          ),
-                        }}
-                      />
+                      <div className="mb-6">
+                        <label className="text-sm font-medium text-[var(--text-high)] mb-1.5 block">New Password</label>
+                        <div className="relative">
+                          <Input
+                            {...field}
+                            type={showNewPassword ? 'text' : 'password'}
+                            className={fieldState.error ? 'border-red-500 pr-10' : 'pr-10'}
+                            disabled={passwordSubmitting}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowNewPassword((prev) => !prev)}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-[var(--text-low)] hover:text-[var(--text-high)]"
+                            aria-label={showNewPassword ? 'Hide password' : 'Show password'}
+                          >
+                            {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          </button>
+                        </div>
+                        <p className="text-xs text-[var(--text-low)] mt-1">
+                          {fieldState.error?.message || 'Minimum 8 characters with uppercase, lowercase, and a number'}
+                        </p>
+                      </div>
                     )}
                   />
 
@@ -385,50 +374,47 @@ export default function ProfilePage(): JSX.Element {
                     name="confirm_password"
                     control={passwordForm.control}
                     render={({ field, fieldState }) => (
-                      <TextField
-                        {...field}
-                        label="Confirm New Password"
-                        type={showConfirmPassword ? 'text' : 'password'}
-                        fullWidth
-                        error={!!fieldState.error}
-                        helperText={fieldState.error?.message}
-                        disabled={passwordSubmitting}
-                        sx={{ mb: 3 }}
-                        InputProps={{
-                          endAdornment: (
-                            <InputAdornment position="end">
-                              <IconButton
-                                onClick={() => setShowConfirmPassword((prev) => !prev)}
-                                edge="end"
-                                size="small"
-                                aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
-                              >
-                                {showConfirmPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
-                              </IconButton>
-                            </InputAdornment>
-                          ),
-                        }}
-                      />
+                      <div className="mb-6">
+                        <label className="text-sm font-medium text-[var(--text-high)] mb-1.5 block">Confirm New Password</label>
+                        <div className="relative">
+                          <Input
+                            {...field}
+                            type={showConfirmPassword ? 'text' : 'password'}
+                            className={fieldState.error ? 'border-red-500 pr-10' : 'pr-10'}
+                            disabled={passwordSubmitting}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowConfirmPassword((prev) => !prev)}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-[var(--text-low)] hover:text-[var(--text-high)]"
+                            aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
+                          >
+                            {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          </button>
+                        </div>
+                        {fieldState.error && (
+                          <p className="text-xs text-red-400 mt-1">{fieldState.error.message}</p>
+                        )}
+                      </div>
                     )}
                   />
 
-                  <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                  <div className="flex justify-end">
                     <Button
                       type="submit"
-                      variant="contained"
-                      color="warning"
+                      className="bg-amber-600 hover:bg-amber-700 text-white"
                       disabled={passwordSubmitting}
-                      startIcon={passwordSubmitting ? <CircularProgress size={16} /> : undefined}
                     >
+                      {passwordSubmitting && <Loader2 className="h-4 w-4 animate-spin mr-1" />}
                       {passwordSubmitting ? 'Changing...' : 'Change Password'}
                     </Button>
-                  </Box>
-                </Box>
+                  </div>
+                </form>
               </CardContent>
             </Card>
-          </Box>
-        </Grid>
-      </Grid>
-    </Box>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

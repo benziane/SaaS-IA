@@ -1,26 +1,28 @@
 'use client';
 
 import { useState } from 'react';
+
+import { Card, CardContent, CardFooter } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/lib/design-hub/components/Alert';
+import { Button } from '@/lib/design-hub/components/Button';
+import { Input } from '@/lib/design-hub/components/Input';
+import { Textarea } from '@/lib/design-hub/components/Textarea';
+import { Skeleton } from '@/lib/design-hub/components/Skeleton';
 import {
-  Alert,
-  Box,
-  Button,
-  Card,
-  CardActions,
-  CardContent,
-  Chip,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/lib/design-hub/components/Select';
+import {
   Dialog,
-  DialogActions,
   DialogContent,
+  DialogHeader,
+  DialogFooter,
   DialogTitle,
-  Grid,
-  List,
-  ListItem,
-  ListItemText,
-  Skeleton,
-  TextField,
-  Typography,
-} from '@mui/material';
+} from '@/lib/design-hub/components/Dialog';
 
 import {
   useCreateWorkspace,
@@ -30,10 +32,10 @@ import {
   useWorkspaces,
 } from '@/features/workspaces/hooks/useWorkspaces';
 
-const ROLE_COLORS: Record<string, 'primary' | 'success' | 'default'> = {
-  owner: 'primary',
+const ROLE_COLORS: Record<string, 'default' | 'success' | 'secondary'> = {
+  owner: 'default',
   editor: 'success',
-  viewer: 'default',
+  viewer: 'secondary',
 };
 
 export default function WorkspacesPage() {
@@ -70,130 +72,161 @@ export default function WorkspacesPage() {
 
   if (isLoading) {
     return (
-      <Box sx={{ p: 3 }}>
-        <Skeleton variant="text" width={200} height={40} sx={{ mb: 2 }} />
-        <Grid container spacing={3}>
+      <div className="p-6">
+        <Skeleton className="w-48 h-10 mb-4" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {[1, 2].map((i) => (
-            <Grid item xs={12} md={6} key={i}><Skeleton variant="rectangular" height={150} /></Grid>
+            <Skeleton key={i} className="h-[150px]" />
           ))}
-        </Grid>
-      </Box>
+        </div>
+      </div>
     );
   }
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4">Workspaces</Typography>
-        <Button variant="contained" onClick={() => setCreateOpen(true)}>Create Workspace</Button>
-      </Box>
+    <div className="p-6">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold text-[var(--text-high)]">Workspaces</h1>
+        <Button onClick={() => setCreateOpen(true)}>Create Workspace</Button>
+      </div>
 
-      {error && <Alert severity="error" sx={{ mb: 3 }}>Failed to load workspaces.</Alert>}
-      {inviteMutation.isError && <Alert severity="error" sx={{ mb: 2 }}>{inviteMutation.error?.message}</Alert>}
+      {error && (
+        <Alert variant="destructive" className="mb-6">
+          <AlertDescription>Failed to load workspaces.</AlertDescription>
+        </Alert>
+      )}
+      {inviteMutation.isError && (
+        <Alert variant="destructive" className="mb-4">
+          <AlertDescription>{inviteMutation.error?.message}</AlertDescription>
+        </Alert>
+      )}
 
-      <Grid container spacing={3}>
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
         {/* Workspace Cards */}
-        <Grid item xs={12} md={selectedWs ? 7 : 12}>
+        <div className={selectedWs ? 'md:col-span-7' : 'md:col-span-12'}>
           {!workspaces?.length ? (
             <Card>
-              <CardContent sx={{ textAlign: 'center', py: 6 }}>
-                <Typography variant="h6" color="text.secondary" sx={{ mb: 1 }}>No workspaces yet</Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              <CardContent className="text-center py-12">
+                <h2 className="text-lg font-semibold text-[var(--text-mid)] mb-2">No workspaces yet</h2>
+                <p className="text-sm text-[var(--text-mid)] mb-4">
                   Create a workspace to collaborate with your team.
-                </Typography>
-                <Button variant="outlined" onClick={() => setCreateOpen(true)}>Create Workspace</Button>
+                </p>
+                <Button variant="outline" onClick={() => setCreateOpen(true)}>Create Workspace</Button>
               </CardContent>
             </Card>
           ) : (
-            <Grid container spacing={2}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {workspaces.map((ws) => (
-                <Grid item xs={12} sm={6} key={ws.id}>
-                  <Card
-                    variant={selectedWs === ws.id ? 'elevation' : 'outlined'}
-                    sx={{
-                      cursor: 'pointer',
-                      border: selectedWs === ws.id ? '2px solid' : undefined,
-                      borderColor: selectedWs === ws.id ? 'primary.main' : undefined,
-                    }}
-                    onClick={() => setSelectedWs(ws.id === selectedWs ? null : ws.id)}
-                  >
-                    <CardContent>
-                      <Typography variant="h6">{ws.name}</Typography>
-                      {ws.description && (
-                        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>{ws.description}</Typography>
-                      )}
-                      <Chip label={`${ws.member_count} members`} size="small" variant="outlined" />
-                    </CardContent>
-                    <CardActions>
-                      <Button size="small" onClick={(e) => { e.stopPropagation(); setInviteOpen(ws.id); }}>
-                        Invite
-                      </Button>
-                      <Button size="small" color="error" onClick={(e) => { e.stopPropagation(); deleteMutation.mutate(ws.id); }}>
-                        Delete
-                      </Button>
-                    </CardActions>
-                  </Card>
-                </Grid>
+                <Card
+                  key={ws.id}
+                  className={`cursor-pointer transition-colors ${
+                    selectedWs === ws.id
+                      ? 'border-2 border-[var(--accent)] shadow-md'
+                      : 'border border-[var(--border)]'
+                  }`}
+                  onClick={() => setSelectedWs(ws.id === selectedWs ? null : ws.id)}
+                >
+                  <CardContent className="p-6">
+                    <h3 className="text-lg font-semibold text-[var(--text-high)]">{ws.name}</h3>
+                    {ws.description && (
+                      <p className="text-sm text-[var(--text-mid)] mb-2">{ws.description}</p>
+                    )}
+                    <Badge variant="outline" className="text-xs">{ws.member_count} members</Badge>
+                  </CardContent>
+                  <CardFooter className="gap-2">
+                    <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); setInviteOpen(ws.id); }}>
+                      Invite
+                    </Button>
+                    <Button size="sm" variant="ghost" className="text-red-400 hover:text-red-300" onClick={(e) => { e.stopPropagation(); deleteMutation.mutate(ws.id); }}>
+                      Delete
+                    </Button>
+                  </CardFooter>
+                </Card>
               ))}
-            </Grid>
+            </div>
           )}
-        </Grid>
+        </div>
 
         {/* Members Panel */}
         {selectedWs && (
-          <Grid item xs={12} md={5}>
+          <div className="md:col-span-5">
             <Card>
-              <CardContent>
-                <Typography variant="h6" sx={{ mb: 2 }}>Members</Typography>
+              <CardContent className="p-6">
+                <h3 className="text-lg font-semibold text-[var(--text-high)] mb-4">Members</h3>
                 {members ? (
-                  <List dense>
+                  <div className="space-y-2">
                     {members.map((m) => (
-                      <ListItem key={m.id}>
-                        <ListItemText primary={m.user_email} secondary={`Joined ${new Date(m.joined_at).toLocaleDateString()}`} />
-                        <Chip label={m.role} size="small" color={ROLE_COLORS[m.role] || 'default'} />
-                      </ListItem>
+                      <div key={m.id} className="flex items-center justify-between py-2 border-b border-[var(--border)] last:border-0">
+                        <div>
+                          <p className="text-sm font-medium text-[var(--text-high)]">{m.user_email}</p>
+                          <p className="text-xs text-[var(--text-low)]">Joined {new Date(m.joined_at).toLocaleDateString()}</p>
+                        </div>
+                        <Badge variant={ROLE_COLORS[m.role] || 'secondary'}>{m.role}</Badge>
+                      </div>
                     ))}
-                  </List>
+                  </div>
                 ) : (
-                  <Skeleton variant="rectangular" height={100} />
+                  <Skeleton className="h-[100px]" />
                 )}
               </CardContent>
             </Card>
-          </Grid>
+          </div>
         )}
-      </Grid>
+      </div>
 
       {/* Create Dialog */}
-      <Dialog open={createOpen} onClose={() => setCreateOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Create Workspace</DialogTitle>
+      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent>
-          <TextField fullWidth label="Name" value={newName} onChange={(e) => setNewName(e.target.value)} sx={{ mt: 1, mb: 2 }} />
-          <TextField fullWidth label="Description (optional)" value={newDesc} onChange={(e) => setNewDesc(e.target.value)} multiline rows={2} />
+          <DialogHeader>
+            <DialogTitle>Create Workspace</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div>
+              <label className="text-sm font-medium text-[var(--text-high)] mb-1.5 block">Name</label>
+              <Input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Workspace name" />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-[var(--text-high)] mb-1.5 block">Description (optional)</label>
+              <Textarea value={newDesc} onChange={(e) => setNewDesc(e.target.value)} rows={2} placeholder="Description" />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setCreateOpen(false)}>Cancel</Button>
+            <Button onClick={handleCreate} disabled={!newName.trim()}>Create</Button>
+          </DialogFooter>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setCreateOpen(false)}>Cancel</Button>
-          <Button variant="contained" onClick={handleCreate} disabled={!newName.trim()}>Create</Button>
-        </DialogActions>
       </Dialog>
 
       {/* Invite Dialog */}
-      <Dialog open={!!inviteOpen} onClose={() => setInviteOpen(null)} maxWidth="sm" fullWidth>
-        <DialogTitle>Invite Member</DialogTitle>
+      <Dialog open={!!inviteOpen} onOpenChange={(open) => { if (!open) setInviteOpen(null); }}>
         <DialogContent>
-          <TextField fullWidth label="Email" value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} sx={{ mt: 1, mb: 2 }} />
-          <TextField
-            fullWidth select label="Role" value={inviteRole} onChange={(e) => setInviteRole(e.target.value)}
-            SelectProps={{ native: true }}
-          >
-            <option value="viewer">Viewer</option>
-            <option value="editor">Editor</option>
-          </TextField>
+          <DialogHeader>
+            <DialogTitle>Invite Member</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div>
+              <label className="text-sm font-medium text-[var(--text-high)] mb-1.5 block">Email</label>
+              <Input value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} placeholder="user@example.com" />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-[var(--text-high)] mb-1.5 block">Role</label>
+              <Select value={inviteRole} onValueChange={setInviteRole}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="viewer">Viewer</SelectItem>
+                  <SelectItem value="editor">Editor</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setInviteOpen(null)}>Cancel</Button>
+            <Button onClick={handleInvite} disabled={!inviteEmail.trim()}>Invite</Button>
+          </DialogFooter>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setInviteOpen(null)}>Cancel</Button>
-          <Button variant="contained" onClick={handleInvite} disabled={!inviteEmail.trim()}>Invite</Button>
-        </DialogActions>
       </Dialog>
-    </Box>
+    </div>
   );
 }

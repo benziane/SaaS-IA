@@ -2,56 +2,19 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  Avatar,
-  AvatarGroup,
-  Badge,
-  Box,
-  Button,
-  Chip,
-  Collapse,
-  Divider,
-  IconButton,
-  List,
-  ListItemButton,
-  ListItemIcon,
-  ListItemText,
-  Menu,
-  MenuItem,
-  Paper,
-  Stack,
-  TextField,
-  ToggleButton,
-  ToggleButtonGroup,
-  Tooltip,
-  Typography,
-} from '@mui/material';
-import AddIcon from '@mui/icons-material/Add';
-import ArticleIcon from '@mui/icons-material/Article';
-import BoltIcon from '@mui/icons-material/Bolt';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
-import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
-import ChevronRightIcon from '@mui/icons-material/ChevronRight';
-import CircleIcon from '@mui/icons-material/Circle';
-import CloudDoneIcon from '@mui/icons-material/CloudDone';
-import CloudOffIcon from '@mui/icons-material/CloudOff';
-import CodeIcon from '@mui/icons-material/Code';
-import CommentIcon from '@mui/icons-material/Comment';
-import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
-import ExpandLessIcon from '@mui/icons-material/ExpandLess';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
-import FormatBoldIcon from '@mui/icons-material/FormatBold';
-import FormatItalicIcon from '@mui/icons-material/FormatItalic';
-import FormatListBulletedIcon from '@mui/icons-material/FormatListBulleted';
-import FormatUnderlinedIcon from '@mui/icons-material/FormatUnderlined';
-import HistoryIcon from '@mui/icons-material/History';
-import ReplyIcon from '@mui/icons-material/Reply';
-import RestoreIcon from '@mui/icons-material/Restore';
-import SendIcon from '@mui/icons-material/Send';
-import SyncIcon from '@mui/icons-material/Sync';
-import TitleIcon from '@mui/icons-material/Title';
-import WifiIcon from '@mui/icons-material/Wifi';
+  Plus, FileText, Zap, CheckCircle2, CheckCircle, ChevronLeft, ChevronRight,
+  Circle, CloudOff, Cloud, Code, MessageSquare, Trash2, ChevronDown, ChevronUp,
+  Bold, Italic, Underline, List, History, Reply, RotateCcw, Send,
+  RefreshCw, Type, Wifi,
+} from 'lucide-react';
+
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/lib/design-hub/components/Button';
+import { Input } from '@/lib/design-hub/components/Input';
+import { Textarea } from '@/lib/design-hub/components/Textarea';
+import { Separator } from '@/lib/design-hub/components/Separator';
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/lib/design-hub/components/Tooltip';
+import { Avatar, AvatarFallback } from '@/lib/design-hub/components/Avatar';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -120,103 +83,32 @@ const MOCK_USERS: CollabUser[] = [
 ];
 
 const MOCK_DOCUMENTS: WorkspaceDocument[] = [
-  {
-    id: 'doc-1',
-    title: 'Product Requirements - Q1 2026',
-    lastModified: '2026-03-25T14:30:00Z',
-    contributors: ['Alice Martin', 'Bob Dupont'],
-    isActive: true,
-    wordCount: 2340,
-  },
-  {
-    id: 'doc-2',
-    title: 'Technical Architecture Notes',
-    lastModified: '2026-03-24T10:15:00Z',
-    contributors: ['Claire Bernard', 'Alice Martin'],
-    isActive: false,
-    wordCount: 1856,
-  },
-  {
-    id: 'doc-3',
-    title: 'Sprint Retrospective - Week 12',
-    lastModified: '2026-03-23T16:45:00Z',
-    contributors: ['Bob Dupont'],
-    isActive: false,
-    wordCount: 620,
-  },
-  {
-    id: 'doc-4',
-    title: 'API Integration Guide',
-    lastModified: '2026-03-22T09:00:00Z',
-    contributors: ['Alice Martin', 'Claire Bernard', 'Bob Dupont'],
-    isActive: false,
-    wordCount: 4120,
-  },
-  {
-    id: 'doc-5',
-    title: 'User Research Findings',
-    lastModified: '2026-03-20T11:30:00Z',
-    contributors: ['Claire Bernard'],
-    isActive: false,
-    wordCount: 1450,
-  },
+  { id: 'doc-1', title: 'Product Requirements - Q1 2026', lastModified: '2026-03-25T14:30:00Z', contributors: ['Alice Martin', 'Bob Dupont'], isActive: true, wordCount: 2340 },
+  { id: 'doc-2', title: 'Technical Architecture Notes', lastModified: '2026-03-24T10:15:00Z', contributors: ['Claire Bernard', 'Alice Martin'], isActive: false, wordCount: 1856 },
+  { id: 'doc-3', title: 'Sprint Retrospective - Week 12', lastModified: '2026-03-23T16:45:00Z', contributors: ['Bob Dupont'], isActive: false, wordCount: 620 },
+  { id: 'doc-4', title: 'API Integration Guide', lastModified: '2026-03-22T09:00:00Z', contributors: ['Alice Martin', 'Claire Bernard', 'Bob Dupont'], isActive: false, wordCount: 4120 },
+  { id: 'doc-5', title: 'User Research Findings', lastModified: '2026-03-20T11:30:00Z', contributors: ['Claire Bernard'], isActive: false, wordCount: 1450 },
 ];
 
 const MOCK_COMMENTS: DocComment[] = [
   {
-    id: 'c1',
-    authorId: 'u2',
-    authorName: 'Bob Dupont',
-    authorColor: '#4CAF50',
+    id: 'c1', authorId: 'u2', authorName: 'Bob Dupont', authorColor: '#4CAF50',
     content: 'Should we add more detail on the authentication flow here? The current description is a bit vague for the backend team.',
-    timestamp: '2026-03-25T13:15:00Z',
-    resolved: false,
-    selection: 'authentication requirements',
-    replies: [
-      {
-        id: 'r1',
-        authorId: 'u1',
-        authorName: 'Alice Martin',
-        content: 'Good point. I\'ll add a sequence diagram in the next revision.',
-        timestamp: '2026-03-25T13:22:00Z',
-      },
-    ],
+    timestamp: '2026-03-25T13:15:00Z', resolved: false, selection: 'authentication requirements',
+    replies: [{ id: 'r1', authorId: 'u1', authorName: 'Alice Martin', content: 'Good point. I\'ll add a sequence diagram in the next revision.', timestamp: '2026-03-25T13:22:00Z' }],
   },
   {
-    id: 'c2',
-    authorId: 'u3',
-    authorName: 'Claire Bernard',
-    authorColor: '#FF9800',
+    id: 'c2', authorId: 'u3', authorName: 'Claire Bernard', authorColor: '#FF9800',
     content: 'This section needs to be reviewed by the security team before we finalize.',
-    timestamp: '2026-03-25T12:00:00Z',
-    resolved: false,
-    selection: 'data encryption policy',
-    replies: [],
+    timestamp: '2026-03-25T12:00:00Z', resolved: false, selection: 'data encryption policy', replies: [],
   },
   {
-    id: 'c3',
-    authorId: 'u1',
-    authorName: 'Alice Martin',
-    authorColor: '#2196F3',
+    id: 'c3', authorId: 'u1', authorName: 'Alice Martin', authorColor: '#2196F3',
     content: 'Updated the performance targets based on last week\'s benchmarks.',
-    timestamp: '2026-03-24T16:30:00Z',
-    resolved: true,
-    selection: 'performance requirements',
+    timestamp: '2026-03-24T16:30:00Z', resolved: true, selection: 'performance requirements',
     replies: [
-      {
-        id: 'r2',
-        authorId: 'u2',
-        authorName: 'Bob Dupont',
-        content: 'Looks good. The new numbers align with our SLA.',
-        timestamp: '2026-03-24T16:45:00Z',
-      },
-      {
-        id: 'r3',
-        authorId: 'u3',
-        authorName: 'Claire Bernard',
-        content: 'Confirmed. Marking as resolved.',
-        timestamp: '2026-03-24T17:00:00Z',
-      },
+      { id: 'r2', authorId: 'u2', authorName: 'Bob Dupont', content: 'Looks good. The new numbers align with our SLA.', timestamp: '2026-03-24T16:45:00Z' },
+      { id: 'r3', authorId: 'u3', authorName: 'Claire Bernard', content: 'Confirmed. Marking as resolved.', timestamp: '2026-03-24T17:00:00Z' },
     ],
   },
 ];
@@ -271,21 +163,11 @@ function formatTimestamp(iso: string): string {
 }
 
 function formatFullTimestamp(iso: string): string {
-  return new Date(iso).toLocaleString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+  return new Date(iso).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
 
 function getInitials(name: string): string {
-  return name
-    .split(' ')
-    .map((p) => p[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2);
+  return name.split(' ').map((p) => p[0]).join('').toUpperCase().slice(0, 2);
 }
 
 function countWords(html: string): number {
@@ -302,14 +184,8 @@ function countChars(html: string): number {
 // Sub-components
 // ---------------------------------------------------------------------------
 
-/** Sidebar: list of workspace documents */
 function DocumentSidebar({
-  documents,
-  selectedId,
-  onSelect,
-  onCreateNew,
-  collapsed,
-  onToggle,
+  documents, selectedId, onSelect, onCreateNew, collapsed, onToggle,
 }: {
   documents: WorkspaceDocument[];
   selectedId: string;
@@ -319,232 +195,157 @@ function DocumentSidebar({
   onToggle: () => void;
 }) {
   return (
-    <Box
-      sx={{
-        width: collapsed ? 48 : 280,
-        minWidth: collapsed ? 48 : 280,
-        borderRight: 1,
-        borderColor: 'divider',
-        display: 'flex',
-        flexDirection: 'column',
-        bgcolor: 'background.paper',
-        transition: 'width 0.2s, min-width 0.2s',
-        overflow: 'hidden',
-      }}
+    <div
+      className="flex flex-col bg-[var(--bg-surface)] overflow-hidden transition-all duration-200"
+      style={{ width: collapsed ? 48 : 280, minWidth: collapsed ? 48 : 280, borderRight: '1px solid var(--border)' }}
     >
-      {/* Header */}
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: collapsed ? 'center' : 'space-between', p: 1.5, minHeight: 56 }}>
+      <div className={`flex items-center ${collapsed ? 'justify-center' : 'justify-between'} p-3 min-h-[56px]`}>
         {!collapsed && (
-          <Typography variant="subtitle2" sx={{ fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5, color: 'text.secondary', fontSize: '0.7rem' }}>
-            Documents
-          </Typography>
+          <span className="text-[0.7rem] font-bold uppercase tracking-wider text-[var(--text-low)]">Documents</span>
         )}
-        <IconButton size="small" onClick={onToggle}>
-          {collapsed ? <ChevronRightIcon fontSize="small" /> : <ChevronLeftIcon fontSize="small" />}
-        </IconButton>
-      </Box>
+        <button type="button" onClick={onToggle} className="p-1 text-[var(--text-low)] hover:text-[var(--text-high)] transition-colors" aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}>
+          {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+        </button>
+      </div>
 
       {!collapsed && (
         <>
-          <Box sx={{ px: 1.5, pb: 1 }}>
-            <Button
-              fullWidth
-              variant="outlined"
-              size="small"
-              startIcon={<AddIcon />}
-              onClick={onCreateNew}
-              sx={{ justifyContent: 'flex-start', textTransform: 'none' }}
-            >
-              New Document
+          <div className="px-3 pb-2">
+            <Button variant="outline" size="sm" className="w-full justify-start" onClick={onCreateNew}>
+              <Plus className="h-4 w-4 mr-2" /> New Document
             </Button>
-          </Box>
+          </div>
 
-          <Divider />
+          <Separator />
 
-          <List sx={{ flex: 1, overflow: 'auto', py: 0.5 }}>
+          <div className="flex-1 overflow-auto py-1">
             {documents.map((doc) => (
-              <ListItemButton
+              <button
                 key={doc.id}
-                selected={doc.id === selectedId}
+                type="button"
                 onClick={() => onSelect(doc.id)}
-                sx={{
-                  mx: 0.5,
-                  borderRadius: 1,
-                  mb: 0.25,
-                  py: 1,
-                  '&.Mui-selected': { bgcolor: 'action.selected' },
-                }}
+                className={`w-full text-left mx-1 rounded px-3 py-2 mb-0.5 flex items-start gap-2 transition-colors ${doc.id === selectedId ? 'bg-[var(--bg-elevated)]' : 'hover:bg-[var(--bg-elevated)]'}`}
               >
-                <ListItemIcon sx={{ minWidth: 32 }}>
-                  <Badge
-                    variant="dot"
-                    color="success"
-                    invisible={!doc.isActive}
-                    anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-                  >
-                    <ArticleIcon fontSize="small" color={doc.id === selectedId ? 'primary' : 'action'} />
-                  </Badge>
-                </ListItemIcon>
-                <ListItemText
-                  primary={doc.title}
-                  secondary={formatTimestamp(doc.lastModified)}
-                  primaryTypographyProps={{
-                    variant: 'body2',
-                    fontWeight: doc.id === selectedId ? 600 : 400,
-                    noWrap: true,
-                    sx: { fontSize: '0.82rem' },
-                  }}
-                  secondaryTypographyProps={{ variant: 'caption', noWrap: true }}
-                />
-              </ListItemButton>
+                <div className="relative mt-0.5">
+                  <FileText className={`h-4 w-4 ${doc.id === selectedId ? 'text-[var(--accent)]' : 'text-[var(--text-low)]'}`} />
+                  {doc.isActive && <div className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-green-500 border border-[var(--bg-surface)]" />}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className={`text-[0.82rem] truncate ${doc.id === selectedId ? 'font-semibold text-[var(--text-high)]' : 'text-[var(--text-mid)]'}`}>{doc.title}</p>
+                  <p className="text-xs text-[var(--text-low)] truncate">{formatTimestamp(doc.lastModified)}</p>
+                </div>
+              </button>
             ))}
-          </List>
+          </div>
 
-          <Divider />
-          <Box sx={{ p: 1.5 }}>
-            <Typography variant="caption" color="text.secondary">
-              {documents.length} documents
-            </Typography>
-          </Box>
+          <Separator />
+          <div className="p-3">
+            <span className="text-xs text-[var(--text-low)]">{documents.length} documents</span>
+          </div>
         </>
       )}
-    </Box>
+    </div>
   );
 }
 
-/** Toolbar for the rich text editor */
 function EditorToolbar({
-  onCommand,
-  activeFormats,
+  onCommand, activeFormats,
 }: {
   onCommand: (cmd: string, value?: string) => void;
   activeFormats: Set<string>;
 }) {
-  const [headingAnchor, setHeadingAnchor] = useState<null | HTMLElement>(null);
+  const [headingOpen, setHeadingOpen] = useState(false);
 
   const handleHeading = (level: HeadingLevel) => {
     onCommand('formatBlock', `<${level}>`);
-    setHeadingAnchor(null);
+    setHeadingOpen(false);
   };
 
   return (
-    <Paper
-      variant="outlined"
-      sx={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 0.25,
-        px: 1,
-        py: 0.5,
-        borderRadius: '8px 8px 0 0',
-        borderBottom: 'none',
-        flexWrap: 'wrap',
-      }}
-    >
-      <ToggleButtonGroup size="small" sx={{ '& .MuiToggleButton-root': { border: 'none', borderRadius: 1, px: 1 } }}>
-        <ToggleButton
-          value="bold"
-          selected={activeFormats.has('bold')}
-          onClick={() => onCommand('bold')}
-          aria-label="Bold"
-        >
-          <FormatBoldIcon fontSize="small" />
-        </ToggleButton>
-        <ToggleButton
-          value="italic"
-          selected={activeFormats.has('italic')}
-          onClick={() => onCommand('italic')}
-          aria-label="Italic"
-        >
-          <FormatItalicIcon fontSize="small" />
-        </ToggleButton>
-        <ToggleButton
-          value="underline"
-          selected={activeFormats.has('underline')}
-          onClick={() => onCommand('underline')}
-          aria-label="Underline"
-        >
-          <FormatUnderlinedIcon fontSize="small" />
-        </ToggleButton>
-      </ToggleButtonGroup>
+    <div className="flex items-center gap-1 px-2 py-1 border border-[var(--border)] border-b-0 rounded-t-lg flex-wrap bg-[var(--bg-surface)]">
+      <div className="flex">
+        <button type="button" onClick={() => onCommand('bold')} className={`p-1.5 rounded transition-colors ${activeFormats.has('bold') ? 'bg-[var(--bg-elevated)] text-[var(--text-high)]' : 'text-[var(--text-mid)] hover:bg-[var(--bg-elevated)]'}`} aria-label="Bold">
+          <Bold className="h-4 w-4" />
+        </button>
+        <button type="button" onClick={() => onCommand('italic')} className={`p-1.5 rounded transition-colors ${activeFormats.has('italic') ? 'bg-[var(--bg-elevated)] text-[var(--text-high)]' : 'text-[var(--text-mid)] hover:bg-[var(--bg-elevated)]'}`} aria-label="Italic">
+          <Italic className="h-4 w-4" />
+        </button>
+        <button type="button" onClick={() => onCommand('underline')} className={`p-1.5 rounded transition-colors ${activeFormats.has('underline') ? 'bg-[var(--bg-elevated)] text-[var(--text-high)]' : 'text-[var(--text-mid)] hover:bg-[var(--bg-elevated)]'}`} aria-label="Underline">
+          <Underline className="h-4 w-4" />
+        </button>
+      </div>
 
-      <Divider orientation="vertical" flexItem sx={{ mx: 0.5 }} />
+      <Separator orientation="vertical" className="h-5 mx-1" />
 
-      {/* Heading dropdown */}
-      <Tooltip title="Heading">
-        <IconButton size="small" onClick={(e) => setHeadingAnchor(e.currentTarget)}>
-          <TitleIcon fontSize="small" />
-        </IconButton>
-      </Tooltip>
-      <Menu anchorEl={headingAnchor} open={!!headingAnchor} onClose={() => setHeadingAnchor(null)}>
-        <MenuItem onClick={() => handleHeading('h1')}>
-          <Typography variant="h6" sx={{ fontWeight: 700 }}>Heading 1</Typography>
-        </MenuItem>
-        <MenuItem onClick={() => handleHeading('h2')}>
-          <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>Heading 2</Typography>
-        </MenuItem>
-        <MenuItem onClick={() => handleHeading('h3')}>
-          <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>Heading 3</Typography>
-        </MenuItem>
-        <Divider />
-        <MenuItem onClick={() => { onCommand('formatBlock', '<p>'); setHeadingAnchor(null); }}>
-          <Typography variant="body2">Normal text</Typography>
-        </MenuItem>
-      </Menu>
+      <div className="relative">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button type="button" onClick={() => setHeadingOpen(!headingOpen)} className="p-1.5 text-[var(--text-mid)] hover:bg-[var(--bg-elevated)] rounded transition-colors" aria-label="Heading">
+              <Type className="h-4 w-4" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent>Heading</TooltipContent>
+        </Tooltip>
+        {headingOpen && (
+          <div className="absolute top-full left-0 mt-1 z-50 bg-[var(--bg-surface)] border border-[var(--border)] rounded-md shadow-lg py-1 min-w-[140px]">
+            <button type="button" onClick={() => handleHeading('h1')} className="w-full text-left px-3 py-1.5 hover:bg-[var(--bg-elevated)] text-lg font-bold text-[var(--text-high)]">Heading 1</button>
+            <button type="button" onClick={() => handleHeading('h2')} className="w-full text-left px-3 py-1.5 hover:bg-[var(--bg-elevated)] text-base font-semibold text-[var(--text-high)]">Heading 2</button>
+            <button type="button" onClick={() => handleHeading('h3')} className="w-full text-left px-3 py-1.5 hover:bg-[var(--bg-elevated)] text-sm font-semibold text-[var(--text-high)]">Heading 3</button>
+            <Separator className="my-1" />
+            <button type="button" onClick={() => { onCommand('formatBlock', '<p>'); setHeadingOpen(false); }} className="w-full text-left px-3 py-1.5 hover:bg-[var(--bg-elevated)] text-sm text-[var(--text-mid)]">Normal text</button>
+          </div>
+        )}
+      </div>
 
-      <Tooltip title="Bullet List">
-        <IconButton size="small" onClick={() => onCommand('insertUnorderedList')}>
-          <FormatListBulletedIcon fontSize="small" />
-        </IconButton>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button type="button" onClick={() => onCommand('insertUnorderedList')} className="p-1.5 text-[var(--text-mid)] hover:bg-[var(--bg-elevated)] rounded transition-colors" aria-label="Bullet List">
+            <List className="h-4 w-4" />
+          </button>
+        </TooltipTrigger>
+        <TooltipContent>Bullet List</TooltipContent>
       </Tooltip>
 
-      <Tooltip title="Code Block">
-        <IconButton size="small" onClick={() => onCommand('formatBlock', '<pre>')}>
-          <CodeIcon fontSize="small" />
-        </IconButton>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button type="button" onClick={() => onCommand('formatBlock', '<pre>')} className="p-1.5 text-[var(--text-mid)] hover:bg-[var(--bg-elevated)] rounded transition-colors" aria-label="Code Block">
+            <Code className="h-4 w-4" />
+          </button>
+        </TooltipTrigger>
+        <TooltipContent>Code Block</TooltipContent>
       </Tooltip>
-    </Paper>
+    </div>
   );
 }
 
-/** Presence bar showing connected users */
 function PresenceBar({ users }: { users: CollabUser[] }) {
   const onlineUsers = users.filter((u) => u.isOnline);
   return (
-    <Stack direction="row" alignItems="center" spacing={1.5}>
-      <Chip
-        icon={<WifiIcon sx={{ fontSize: 14 }} />}
-        label={`${onlineUsers.length} user${onlineUsers.length !== 1 ? 's' : ''} online`}
-        size="small"
-        color="success"
-        variant="outlined"
-        sx={{ fontWeight: 500 }}
-      />
-      <AvatarGroup
-        max={5}
-        sx={{
-          '& .MuiAvatar-root': { width: 30, height: 30, fontSize: '0.75rem', fontWeight: 600 },
-        }}
-      >
-        {onlineUsers.map((u) => (
-          <Tooltip key={u.id} title={`${u.name} - Line ${u.cursorLine}, Col ${u.cursorChar}`} arrow>
-            <Avatar sx={{ bgcolor: u.color, cursor: 'pointer' }}>
-              {getInitials(u.name)}
-            </Avatar>
+    <div className="flex items-center gap-3">
+      <Badge variant="outline" className="flex items-center gap-1.5 font-medium">
+        <Wifi className="h-3.5 w-3.5 text-green-400" />
+        {onlineUsers.length} user{onlineUsers.length !== 1 ? 's' : ''} online
+      </Badge>
+      <div className="flex -space-x-2">
+        {onlineUsers.slice(0, 5).map((u) => (
+          <Tooltip key={u.id}>
+            <TooltipTrigger asChild>
+              <Avatar className="w-[30px] h-[30px] border-2 border-[var(--bg-surface)] cursor-pointer">
+                <AvatarFallback style={{ backgroundColor: u.color }} className="text-[0.75rem] text-white font-semibold">
+                  {getInitials(u.name)}
+                </AvatarFallback>
+              </Avatar>
+            </TooltipTrigger>
+            <TooltipContent>{u.name} - Line {u.cursorLine}, Col {u.cursorChar}</TooltipContent>
           </Tooltip>
         ))}
-      </AvatarGroup>
-    </Stack>
+      </div>
+    </div>
   );
 }
 
-/** Comments panel */
 function CommentsPanel({
-  comments,
-  onResolve,
-  onReply,
-  onDelete,
-  onAdd,
+  comments, onResolve, onReply, onDelete, onAdd,
 }: {
   comments: DocComment[];
   onResolve: (id: string) => void;
@@ -574,182 +375,120 @@ function CommentsPanel({
   };
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      <Box sx={{ p: 1.5, borderBottom: 1, borderColor: 'divider' }}>
-        <Typography variant="subtitle2" sx={{ fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5, color: 'text.secondary', fontSize: '0.7rem' }}>
+    <div className="flex flex-col h-full">
+      <div className="p-3 border-b border-[var(--border)]">
+        <span className="text-[0.7rem] font-bold uppercase tracking-wider text-[var(--text-low)]">
           Comments ({openComments.length})
-        </Typography>
-      </Box>
+        </span>
+      </div>
 
-      {/* New comment input */}
-      <Box sx={{ p: 1.5, borderBottom: 1, borderColor: 'divider' }}>
-        <TextField
-          fullWidth
-          size="small"
-          multiline
-          minRows={2}
-          maxRows={4}
+      <div className="p-3 border-b border-[var(--border)]">
+        <Textarea
+          rows={2}
           placeholder="Add a comment..."
           value={newComment}
           onChange={(e) => setNewComment(e.target.value)}
-          sx={{ mb: 1 }}
+          className="mb-2"
         />
-        <Button
-          size="small"
-          variant="contained"
-          disabled={!newComment.trim()}
-          onClick={handleAdd}
-          startIcon={<SendIcon />}
-          sx={{ textTransform: 'none' }}
-        >
-          Comment
+        <Button size="sm" disabled={!newComment.trim()} onClick={handleAdd}>
+          <Send className="h-3.5 w-3.5 mr-1.5" /> Comment
         </Button>
-      </Box>
+      </div>
 
-      {/* Open comments */}
-      <Box sx={{ flex: 1, overflow: 'auto' }}>
+      <div className="flex-1 overflow-auto">
         {openComments.length === 0 && (
-          <Box sx={{ p: 3, textAlign: 'center' }}>
-            <CommentIcon sx={{ fontSize: 40, color: 'text.disabled', mb: 1 }} />
-            <Typography variant="body2" color="text.secondary">
-              No open comments
-            </Typography>
-          </Box>
+          <div className="p-6 text-center">
+            <MessageSquare className="h-10 w-10 text-[var(--text-low)] mx-auto mb-2" />
+            <p className="text-sm text-[var(--text-mid)]">No open comments</p>
+          </div>
         )}
 
         {openComments.map((comment) => (
-          <Box key={comment.id} sx={{ p: 1.5, borderBottom: 1, borderColor: 'divider' }}>
-            {/* Highlighted selection reference */}
-            <Chip
-              label={comment.selection}
-              size="small"
-              variant="outlined"
-              sx={{ mb: 1, fontSize: '0.7rem', borderStyle: 'dashed' }}
-            />
+          <div key={comment.id} className="p-3 border-b border-[var(--border)]">
+            <Badge variant="outline" className="mb-2 text-[0.7rem] border-dashed">{comment.selection}</Badge>
 
-            {/* Comment header */}
-            <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 0.5 }}>
-              <Avatar sx={{ width: 24, height: 24, fontSize: '0.65rem', bgcolor: comment.authorColor }}>
-                {getInitials(comment.authorName)}
+            <div className="flex items-center gap-2 mb-1">
+              <Avatar className="w-6 h-6">
+                <AvatarFallback style={{ backgroundColor: comment.authorColor }} className="text-[0.65rem] text-white">{getInitials(comment.authorName)}</AvatarFallback>
               </Avatar>
-              <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.82rem' }}>
-                {comment.authorName}
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                {formatTimestamp(comment.timestamp)}
-              </Typography>
-            </Stack>
+              <span className="text-[0.82rem] font-semibold text-[var(--text-high)]">{comment.authorName}</span>
+              <span className="text-xs text-[var(--text-low)]">{formatTimestamp(comment.timestamp)}</span>
+            </div>
 
-            {/* Comment body */}
-            <Typography variant="body2" sx={{ ml: 4, mb: 1, color: 'text.primary', lineHeight: 1.5 }}>
-              {comment.content}
-            </Typography>
+            <p className="text-sm text-[var(--text-high)] ml-8 mb-2 leading-relaxed">{comment.content}</p>
 
-            {/* Replies */}
             {comment.replies.length > 0 && (
-              <Box sx={{ ml: 4, pl: 1.5, borderLeft: 2, borderColor: 'divider', mb: 1 }}>
+              <div className="ml-8 pl-3 border-l-2 border-[var(--border)] mb-2">
                 {comment.replies.map((reply) => (
-                  <Box key={reply.id} sx={{ mb: 1 }}>
-                    <Stack direction="row" alignItems="center" spacing={0.5} sx={{ mb: 0.25 }}>
-                      <Typography variant="caption" sx={{ fontWeight: 600 }}>
-                        {reply.authorName}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {formatTimestamp(reply.timestamp)}
-                      </Typography>
-                    </Stack>
-                    <Typography variant="body2" sx={{ fontSize: '0.8rem', color: 'text.secondary' }}>
-                      {reply.content}
-                    </Typography>
-                  </Box>
+                  <div key={reply.id} className="mb-2">
+                    <div className="flex items-center gap-1 mb-0.5">
+                      <span className="text-xs font-semibold text-[var(--text-high)]">{reply.authorName}</span>
+                      <span className="text-xs text-[var(--text-low)]">{formatTimestamp(reply.timestamp)}</span>
+                    </div>
+                    <p className="text-[0.8rem] text-[var(--text-mid)]">{reply.content}</p>
+                  </div>
                 ))}
-              </Box>
+              </div>
             )}
 
-            {/* Reply input */}
             {replyingTo === comment.id ? (
-              <Box sx={{ ml: 4, mt: 0.5 }}>
-                <TextField
-                  fullWidth
-                  size="small"
+              <div className="ml-8 mt-1">
+                <Input
                   placeholder="Reply..."
                   value={replyText}
                   onChange={(e) => setReplyText(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault();
-                      handleReply(comment.id);
-                    }
-                  }}
-                  sx={{ mb: 0.5 }}
+                  onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleReply(comment.id); } }}
+                  className="mb-1"
                 />
-                <Stack direction="row" spacing={0.5}>
-                  <Button size="small" onClick={() => handleReply(comment.id)} disabled={!replyText.trim()} sx={{ textTransform: 'none', minWidth: 0 }}>
-                    Reply
-                  </Button>
-                  <Button size="small" onClick={() => { setReplyingTo(null); setReplyText(''); }} sx={{ textTransform: 'none', minWidth: 0 }}>
-                    Cancel
-                  </Button>
-                </Stack>
-              </Box>
+                <div className="flex gap-1">
+                  <Button size="sm" variant="ghost" onClick={() => handleReply(comment.id)} disabled={!replyText.trim()}>Reply</Button>
+                  <Button size="sm" variant="ghost" onClick={() => { setReplyingTo(null); setReplyText(''); }}>Cancel</Button>
+                </div>
+              </div>
             ) : (
-              <Stack direction="row" spacing={0.5} sx={{ ml: 4 }}>
-                <Button size="small" startIcon={<ReplyIcon sx={{ fontSize: 14 }} />} onClick={() => setReplyingTo(comment.id)} sx={{ textTransform: 'none', fontSize: '0.75rem', minWidth: 0 }}>
-                  Reply
+              <div className="flex gap-1 ml-8">
+                <Button size="sm" variant="ghost" onClick={() => setReplyingTo(comment.id)} className="text-[0.75rem]">
+                  <Reply className="h-3.5 w-3.5 mr-1" /> Reply
                 </Button>
-                <Button size="small" startIcon={<CheckCircleOutlineIcon sx={{ fontSize: 14 }} />} onClick={() => onResolve(comment.id)} sx={{ textTransform: 'none', fontSize: '0.75rem', minWidth: 0 }}>
-                  Resolve
+                <Button size="sm" variant="ghost" onClick={() => onResolve(comment.id)} className="text-[0.75rem]">
+                  <CheckCircle className="h-3.5 w-3.5 mr-1" /> Resolve
                 </Button>
-                <IconButton size="small" onClick={() => onDelete(comment.id)} sx={{ ml: 'auto' }}>
-                  <DeleteOutlineIcon sx={{ fontSize: 14 }} />
-                </IconButton>
-              </Stack>
+                <button type="button" onClick={() => onDelete(comment.id)} className="ml-auto p-1 text-[var(--text-low)] hover:text-red-400 transition-colors" aria-label="Delete comment">
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              </div>
             )}
-          </Box>
+          </div>
         ))}
 
-        {/* Resolved section */}
         {resolvedComments.length > 0 && (
           <>
-            <ListItemButton onClick={() => setShowResolved(!showResolved)} sx={{ py: 1 }}>
-              <ListItemIcon sx={{ minWidth: 28 }}>
-                <CheckCircleIcon fontSize="small" color="success" />
-              </ListItemIcon>
-              <ListItemText
-                primary={`${resolvedComments.length} resolved`}
-                primaryTypographyProps={{ variant: 'body2', color: 'text.secondary', fontSize: '0.82rem' }}
-              />
-              {showResolved ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
-            </ListItemButton>
-            <Collapse in={showResolved}>
-              {resolvedComments.map((comment) => (
-                <Box key={comment.id} sx={{ p: 1.5, borderBottom: 1, borderColor: 'divider', opacity: 0.7 }}>
-                  <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 0.5 }}>
-                    <Avatar sx={{ width: 20, height: 20, fontSize: '0.6rem', bgcolor: comment.authorColor }}>
-                      {getInitials(comment.authorName)}
-                    </Avatar>
-                    <Typography variant="caption" sx={{ fontWeight: 600 }}>{comment.authorName}</Typography>
-                    <CheckCircleIcon sx={{ fontSize: 14, color: 'success.main' }} />
-                  </Stack>
-                  <Typography variant="body2" sx={{ ml: 3.5, fontSize: '0.8rem', color: 'text.secondary', textDecoration: 'line-through' }}>
-                    {comment.content}
-                  </Typography>
-                </Box>
-              ))}
-            </Collapse>
+            <button type="button" onClick={() => setShowResolved(!showResolved)} className="w-full flex items-center gap-2 px-3 py-2 hover:bg-[var(--bg-elevated)] transition-colors">
+              <CheckCircle2 className="h-4 w-4 text-green-400" />
+              <span className="text-[0.82rem] text-[var(--text-mid)]">{resolvedComments.length} resolved</span>
+              <span className="ml-auto">{showResolved ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}</span>
+            </button>
+            {showResolved && resolvedComments.map((comment) => (
+              <div key={comment.id} className="p-3 border-b border-[var(--border)] opacity-70">
+                <div className="flex items-center gap-2 mb-1">
+                  <Avatar className="w-5 h-5">
+                    <AvatarFallback style={{ backgroundColor: comment.authorColor }} className="text-[0.6rem] text-white">{getInitials(comment.authorName)}</AvatarFallback>
+                  </Avatar>
+                  <span className="text-xs font-semibold text-[var(--text-mid)]">{comment.authorName}</span>
+                  <CheckCircle2 className="h-3.5 w-3.5 text-green-400" />
+                </div>
+                <p className="text-[0.8rem] text-[var(--text-low)] ml-7 line-through">{comment.content}</p>
+              </div>
+            ))}
           </>
         )}
-      </Box>
-    </Box>
+      </div>
+    </div>
   );
 }
 
-/** Version history drawer */
 function VersionHistory({
-  versions,
-  open,
-  onToggle,
-  onRestore,
+  versions, open, onToggle, onRestore,
 }: {
   versions: VersionEntry[];
   open: boolean;
@@ -757,98 +496,61 @@ function VersionHistory({
   onRestore: (id: string) => void;
 }) {
   return (
-    <Box sx={{ borderTop: 1, borderColor: 'divider', bgcolor: 'background.paper' }}>
-      {/* Toggle header */}
-      <ListItemButton onClick={onToggle} sx={{ py: 0.75, px: 2 }}>
-        <ListItemIcon sx={{ minWidth: 28 }}>
-          <HistoryIcon fontSize="small" />
-        </ListItemIcon>
-        <ListItemText
-          primary="Version History"
-          primaryTypographyProps={{ variant: 'body2', fontWeight: 600, fontSize: '0.82rem' }}
-        />
-        <Chip label={`${versions.length} versions`} size="small" variant="outlined" sx={{ mr: 1, fontSize: '0.7rem' }} />
-        {open ? <ExpandMoreIcon fontSize="small" /> : <ExpandLessIcon fontSize="small" />}
-      </ListItemButton>
+    <div className="border-t border-[var(--border)] bg-[var(--bg-surface)]">
+      <button type="button" onClick={onToggle} className="w-full flex items-center gap-2 px-4 py-2 hover:bg-[var(--bg-elevated)] transition-colors">
+        <History className="h-4 w-4" />
+        <span className="text-[0.82rem] font-semibold text-[var(--text-high)]">Version History</span>
+        <Badge variant="outline" className="ml-2 text-[0.7rem]">{versions.length} versions</Badge>
+        <span className="ml-auto">{open ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}</span>
+      </button>
 
-      <Collapse in={open}>
-        <Box sx={{ maxHeight: 260, overflow: 'auto', px: 2, pb: 1.5 }}>
+      {open && (
+        <div className="max-h-[260px] overflow-auto px-4 pb-3">
           {versions.map((v, idx) => (
-            <Box
+            <div
               key={v.id}
-              sx={{
-                display: 'flex',
-                alignItems: 'flex-start',
-                gap: 1.5,
-                py: 1.25,
-                borderBottom: idx < versions.length - 1 ? 1 : 0,
-                borderColor: 'divider',
-              }}
+              className={`flex items-start gap-3 py-2.5 ${idx < versions.length - 1 ? 'border-b border-[var(--border)]' : ''}`}
             >
-              {/* Timeline indicator */}
-              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', pt: 0.5 }}>
-                <FiberManualRecordIcon sx={{ fontSize: 10, color: v.authorColor }} />
-                {idx < versions.length - 1 && (
-                  <Box sx={{ width: 1.5, flex: 1, bgcolor: 'divider', mt: 0.5, minHeight: 24 }} />
-                )}
-              </Box>
+              <div className="flex flex-col items-center pt-1">
+                <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: v.authorColor }} />
+                {idx < versions.length - 1 && <div className="w-px flex-1 bg-[var(--border)] mt-1 min-h-[24px]" />}
+              </div>
 
-              {/* Content */}
-              <Box sx={{ flex: 1, minWidth: 0 }}>
-                <Stack direction="row" alignItems="center" spacing={0.5} sx={{ mb: 0.25 }}>
-                  <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.82rem' }}>
-                    {v.authorName}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    {formatFullTimestamp(v.timestamp)}
-                  </Typography>
-                </Stack>
-                <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem', mb: 0.5 }}>
-                  {v.summary}
-                </Typography>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1 mb-0.5">
+                  <span className="text-[0.82rem] font-semibold text-[var(--text-high)]">{v.authorName}</span>
+                  <span className="text-xs text-[var(--text-low)]">{formatFullTimestamp(v.timestamp)}</span>
+                </div>
+                <p className="text-[0.8rem] text-[var(--text-mid)] mb-1">{v.summary}</p>
 
-                {/* Diff indicators */}
-                <Stack direction="row" spacing={1} alignItems="center">
-                  {v.additions > 0 && (
-                    <Typography variant="caption" sx={{ color: 'success.main', fontWeight: 600, fontFamily: 'monospace' }}>
-                      +{v.additions}
-                    </Typography>
-                  )}
-                  {v.deletions > 0 && (
-                    <Typography variant="caption" sx={{ color: 'error.main', fontWeight: 600, fontFamily: 'monospace' }}>
-                      -{v.deletions}
-                    </Typography>
-                  )}
-                  {/* Visual bar */}
-                  <Box sx={{ display: 'flex', height: 6, borderRadius: 3, overflow: 'hidden', flex: 1, maxWidth: 80 }}>
-                    <Box sx={{ width: `${(v.additions / (v.additions + v.deletions)) * 100}%`, bgcolor: 'success.main' }} />
-                    <Box sx={{ width: `${(v.deletions / (v.additions + v.deletions)) * 100}%`, bgcolor: 'error.main' }} />
-                  </Box>
-                </Stack>
-              </Box>
+                <div className="flex items-center gap-2">
+                  {v.additions > 0 && <span className="text-xs font-semibold font-mono text-green-400">+{v.additions}</span>}
+                  {v.deletions > 0 && <span className="text-xs font-semibold font-mono text-red-400">-{v.deletions}</span>}
+                  <div className="flex h-1.5 rounded-full overflow-hidden flex-1 max-w-[80px]">
+                    <div className="bg-green-500" style={{ width: `${(v.additions / (v.additions + v.deletions)) * 100}%` }} />
+                    <div className="bg-red-500" style={{ width: `${(v.deletions / (v.additions + v.deletions)) * 100}%` }} />
+                  </div>
+                </div>
+              </div>
 
-              {/* Restore button */}
-              <Tooltip title="Restore this version" arrow>
-                <IconButton size="small" onClick={() => onRestore(v.id)} sx={{ mt: 0.25 }}>
-                  <RestoreIcon fontSize="small" />
-                </IconButton>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button type="button" onClick={() => onRestore(v.id)} className="p-1 text-[var(--text-low)] hover:text-[var(--text-high)] transition-colors mt-0.5" aria-label="Restore this version">
+                    <RotateCcw className="h-4 w-4" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>Restore this version</TooltipContent>
               </Tooltip>
-            </Box>
+            </div>
           ))}
-        </Box>
-      </Collapse>
-    </Box>
+        </div>
+      )}
+    </div>
   );
 }
 
-/** Status bar at the bottom */
 function StatusBar({
-  connectionStatus,
-  lastSaved,
-  isSyncing,
-  documentId,
-  wordCount,
-  charCount,
+  connectionStatus, lastSaved, isSyncing, documentId, wordCount, charCount,
 }: {
   connectionStatus: ConnectionStatus;
   lastSaved: string;
@@ -857,69 +559,47 @@ function StatusBar({
   wordCount: number;
   charCount: number;
 }) {
-  const statusConfig: Record<ConnectionStatus, { icon: React.ReactNode; label: string; color: string }> = {
-    connected: { icon: <CloudDoneIcon sx={{ fontSize: 14 }} />, label: 'Connected', color: 'success.main' },
-    reconnecting: { icon: <SyncIcon sx={{ fontSize: 14, animation: 'spin 1s linear infinite', '@keyframes spin': { from: { transform: 'rotate(0deg)' }, to: { transform: 'rotate(360deg)' } } }} />, label: 'Reconnecting...', color: 'warning.main' },
-    offline: { icon: <CloudOffIcon sx={{ fontSize: 14 }} />, label: 'Offline', color: 'error.main' },
+  const statusConfig: Record<ConnectionStatus, { icon: React.ReactNode; label: string; className: string }> = {
+    connected: { icon: <Cloud className="h-3.5 w-3.5" />, label: 'Connected', className: 'text-green-400' },
+    reconnecting: { icon: <RefreshCw className="h-3.5 w-3.5 animate-spin" />, label: 'Reconnecting...', className: 'text-amber-400' },
+    offline: { icon: <CloudOff className="h-3.5 w-3.5" />, label: 'Offline', className: 'text-red-400' },
   };
 
   const cfg = statusConfig[connectionStatus];
 
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        px: 2,
-        py: 0.5,
-        borderTop: 1,
-        borderColor: 'divider',
-        bgcolor: 'background.default',
-        minHeight: 32,
-      }}
-    >
-      <Stack direction="row" alignItems="center" spacing={2}>
-        {/* Connection status */}
-        <Stack direction="row" alignItems="center" spacing={0.5}>
-          <Box sx={{ color: cfg.color, display: 'flex', alignItems: 'center' }}>{cfg.icon}</Box>
-          <Typography variant="caption" sx={{ color: cfg.color, fontWeight: 500 }}>
-            {cfg.label}
-          </Typography>
-        </Stack>
+    <div className="flex items-center justify-between px-4 py-1 border-t border-[var(--border)] bg-[var(--bg-app)] min-h-[32px]">
+      <div className="flex items-center gap-4">
+        <div className={`flex items-center gap-1 ${cfg.className}`}>
+          {cfg.icon}
+          <span className="text-xs font-medium">{cfg.label}</span>
+        </div>
 
-        <Divider orientation="vertical" flexItem />
+        <Separator orientation="vertical" className="h-4" />
 
-        {/* Sync indicator */}
-        <Stack direction="row" alignItems="center" spacing={0.5}>
+        <div className="flex items-center gap-1">
           {isSyncing ? (
             <>
-              <SyncIcon sx={{ fontSize: 14, color: 'info.main', animation: 'spin 1s linear infinite', '@keyframes spin': { from: { transform: 'rotate(0deg)' }, to: { transform: 'rotate(360deg)' } } }} />
-              <Typography variant="caption" color="info.main">Syncing...</Typography>
+              <RefreshCw className="h-3.5 w-3.5 text-blue-400 animate-spin" />
+              <span className="text-xs text-blue-400">Syncing...</span>
             </>
           ) : (
             <>
-              <CheckCircleIcon sx={{ fontSize: 14, color: 'success.main' }} />
-              <Typography variant="caption" color="text.secondary">Saved {formatTimestamp(lastSaved)}</Typography>
+              <CheckCircle2 className="h-3.5 w-3.5 text-green-400" />
+              <span className="text-xs text-[var(--text-low)]">Saved {formatTimestamp(lastSaved)}</span>
             </>
           )}
-        </Stack>
-      </Stack>
+        </div>
+      </div>
 
-      <Stack direction="row" alignItems="center" spacing={2}>
-        {/* Word/char count */}
-        <Typography variant="caption" color="text.secondary">
+      <div className="flex items-center gap-4">
+        <span className="text-xs text-[var(--text-low)]">
           {wordCount.toLocaleString()} words | {charCount.toLocaleString()} chars
-        </Typography>
-
-        <Divider orientation="vertical" flexItem />
-
-        {/* Document ID */}
-        <Typography variant="caption" color="text.disabled" sx={{ fontFamily: 'monospace', fontSize: '0.65rem' }}>
-          {documentId}
-        </Typography>
-      </Stack>
-    </Box>
+        </span>
+        <Separator orientation="vertical" className="h-4" />
+        <span className="text-[0.65rem] text-[var(--text-low)] font-mono">{documentId}</span>
+      </div>
+    </div>
   );
 }
 
@@ -928,7 +608,6 @@ function StatusBar({
 // ---------------------------------------------------------------------------
 
 export default function CollaboratePage() {
-  // State
   const [documents, setDocuments] = useState<WorkspaceDocument[]>(MOCK_DOCUMENTS);
   const [selectedDocId, setSelectedDocId] = useState('doc-1');
   const [editorContent, setEditorContent] = useState(INITIAL_CONTENT);
@@ -947,19 +626,14 @@ export default function CollaboratePage() {
 
   const editorRef = useRef<HTMLDivElement>(null);
 
-  // Simulate periodic syncing
   useEffect(() => {
     const interval = setInterval(() => {
       setIsSyncing(true);
-      setTimeout(() => {
-        setIsSyncing(false);
-        setLastSaved(new Date().toISOString());
-      }, 800);
+      setTimeout(() => { setIsSyncing(false); setLastSaved(new Date().toISOString()); }, 800);
     }, 15000);
     return () => clearInterval(interval);
   }, []);
 
-  // Simulate connection status changes (reconnecting blip)
   useEffect(() => {
     const timeout = setTimeout(() => {
       setConnectionStatus('reconnecting');
@@ -968,7 +642,6 @@ export default function CollaboratePage() {
     return () => clearTimeout(timeout);
   }, []);
 
-  // Track active formatting from selection
   const updateActiveFormats = useCallback(() => {
     const formats = new Set<string>();
     if (document.queryCommandState('bold')) formats.add('bold');
@@ -977,60 +650,37 @@ export default function CollaboratePage() {
     setActiveFormats(formats);
   }, []);
 
-  // Editor command handler
   const handleEditorCommand = useCallback((cmd: string, value?: string) => {
     document.execCommand(cmd, false, value);
     editorRef.current?.focus();
     updateActiveFormats();
   }, [updateActiveFormats]);
 
-  // Handle content changes
   const handleContentChange = useCallback(() => {
-    if (editorRef.current) {
-      setEditorContent(editorRef.current.innerHTML);
-    }
+    if (editorRef.current) setEditorContent(editorRef.current.innerHTML);
   }, []);
 
-  // Computed values
   const wordCount = useMemo(() => countWords(editorContent), [editorContent]);
   const charCount = useMemo(() => countChars(editorContent), [editorContent]);
 
-  // Document selection
-  const handleSelectDoc = useCallback((id: string) => {
-    setSelectedDocId(id);
-    // In a real app, would load document content from backend/Yjs
-  }, []);
+  const handleSelectDoc = useCallback((id: string) => { setSelectedDocId(id); }, []);
 
-  // Create new document
   const handleCreateDoc = useCallback(() => {
     const newDoc: WorkspaceDocument = {
-      id: `doc-${Date.now()}`,
-      title: 'Untitled Document',
-      lastModified: new Date().toISOString(),
-      contributors: ['You'],
-      isActive: true,
-      wordCount: 0,
+      id: `doc-${Date.now()}`, title: 'Untitled Document', lastModified: new Date().toISOString(),
+      contributors: ['You'], isActive: true, wordCount: 0,
     };
     setDocuments((prev) => [newDoc, ...prev]);
     setSelectedDocId(newDoc.id);
   }, []);
 
-  // Comment actions
   const handleResolveComment = useCallback((id: string) => {
     setComments((prev) => prev.map((c) => (c.id === id ? { ...c, resolved: true } : c)));
   }, []);
 
   const handleReplyComment = useCallback((commentId: string, text: string) => {
-    const newReply: CommentReply = {
-      id: `r-${Date.now()}`,
-      authorId: 'current-user',
-      authorName: 'You',
-      content: text,
-      timestamp: new Date().toISOString(),
-    };
-    setComments((prev) =>
-      prev.map((c) => (c.id === commentId ? { ...c, replies: [...c.replies, newReply] } : c))
-    );
+    const newReply: CommentReply = { id: `r-${Date.now()}`, authorId: 'current-user', authorName: 'You', content: text, timestamp: new Date().toISOString() };
+    setComments((prev) => prev.map((c) => (c.id === commentId ? { ...c, replies: [...c.replies, newReply] } : c)));
   }, []);
 
   const handleDeleteComment = useCallback((id: string) => {
@@ -1039,241 +689,118 @@ export default function CollaboratePage() {
 
   const handleAddComment = useCallback((content: string) => {
     const newComment: DocComment = {
-      id: `c-${Date.now()}`,
-      authorId: 'current-user',
-      authorName: 'You',
-      authorColor: '#9C27B0',
-      content,
-      timestamp: new Date().toISOString(),
-      resolved: false,
-      selection: 'selected text',
-      replies: [],
+      id: `c-${Date.now()}`, authorId: 'current-user', authorName: 'You', authorColor: '#9C27B0',
+      content, timestamp: new Date().toISOString(), resolved: false, selection: 'selected text', replies: [],
     };
     setComments((prev) => [newComment, ...prev]);
   }, []);
 
   const handleRestoreVersion = useCallback((_versionId: string) => {
-    // In a real app, this would restore document content from the version
     setIsSyncing(true);
-    setTimeout(() => {
-      setIsSyncing(false);
-      setLastSaved(new Date().toISOString());
-    }, 1500);
+    setTimeout(() => { setIsSyncing(false); setLastSaved(new Date().toISOString()); }, 1500);
   }, []);
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 64px)', overflow: 'hidden' }}>
-      {/* Top bar */}
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          px: 2,
-          py: 1,
-          borderBottom: 1,
-          borderColor: 'divider',
-          bgcolor: 'background.paper',
-          minHeight: 48,
-        }}
-      >
-        <Stack direction="row" alignItems="center" spacing={2}>
-          <BoltIcon color="primary" />
-          <Typography variant="h6" sx={{ fontWeight: 700, fontSize: '1.1rem' }}>
-            Collaborative Editor
-          </Typography>
-          <Chip
-            label="Real-time"
-            size="small"
-            color="info"
-            variant="outlined"
-            icon={<CircleIcon sx={{ fontSize: '8px !important', color: 'success.main' }} />}
-            sx={{ fontSize: '0.7rem' }}
+    <TooltipProvider>
+      <div className="flex flex-col h-[calc(100vh-64px)] overflow-hidden">
+        {/* Top bar */}
+        <div className="flex items-center justify-between px-4 py-2 border-b border-[var(--border)] bg-[var(--bg-surface)] min-h-[48px]">
+          <div className="flex items-center gap-4">
+            <Zap className="h-5 w-5 text-[var(--accent)]" />
+            <h2 className="text-lg font-bold text-[var(--text-high)]">Collaborative Editor</h2>
+            <Badge variant="outline" className="flex items-center gap-1.5 text-[0.7rem]">
+              <Circle className="h-2 w-2 text-green-400 fill-green-400" /> Real-time
+            </Badge>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <PresenceBar users={users} />
+            <Separator orientation="vertical" className="h-6" />
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  onClick={() => setCommentsPanelOpen(!commentsPanelOpen)}
+                  className={`relative p-1.5 rounded transition-colors ${commentsPanelOpen ? 'text-[var(--accent)] bg-[var(--accent)]/10' : 'text-[var(--text-mid)] hover:bg-[var(--bg-elevated)]'}`}
+                  aria-label={commentsPanelOpen ? 'Hide comments' : 'Show comments'}
+                >
+                  <MessageSquare className="h-4 w-4" />
+                  {comments.filter((c) => !c.resolved).length > 0 && (
+                    <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500 text-white text-[9px] flex items-center justify-center font-semibold">
+                      {Math.min(comments.filter((c) => !c.resolved).length, 9)}
+                    </span>
+                  )}
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>{commentsPanelOpen ? 'Hide comments' : 'Show comments'}</TooltipContent>
+            </Tooltip>
+          </div>
+        </div>
+
+        {/* Main content area */}
+        <div className="flex flex-1 overflow-hidden">
+          <DocumentSidebar
+            documents={documents} selectedId={selectedDocId} onSelect={handleSelectDoc}
+            onCreateNew={handleCreateDoc} collapsed={sidebarCollapsed}
+            onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
           />
-        </Stack>
 
-        <Stack direction="row" alignItems="center" spacing={2}>
-          <PresenceBar users={users} />
-          <Divider orientation="vertical" flexItem />
-          <Tooltip title={commentsPanelOpen ? 'Hide comments' : 'Show comments'}>
-            <IconButton
-              size="small"
-              onClick={() => setCommentsPanelOpen(!commentsPanelOpen)}
-              color={commentsPanelOpen ? 'primary' : 'default'}
-            >
-              <Badge badgeContent={comments.filter((c) => !c.resolved).length} color="error" max={9}>
-                <CommentIcon fontSize="small" />
-              </Badge>
-            </IconButton>
-          </Tooltip>
-        </Stack>
-      </Box>
+          {/* Editor area */}
+          <div className="flex-1 flex flex-col overflow-hidden">
+            {/* Collaborative editing indicator */}
+            <div className="px-4 py-1.5 bg-[var(--bg-elevated)] flex items-center gap-2">
+              <div className="flex gap-1">
+                {users.filter((u) => u.isOnline).map((u) => (
+                  <Tooltip key={u.id}>
+                    <TooltipTrigger asChild>
+                      <div className="w-2 h-2 rounded-full" style={{ backgroundColor: u.color, animation: 'pulse 2s infinite' }} />
+                    </TooltipTrigger>
+                    <TooltipContent>{u.name} is editing</TooltipContent>
+                  </Tooltip>
+                ))}
+              </div>
+              <span className="text-[0.7rem] text-[var(--text-low)]">
+                {users.filter((u) => u.isOnline).length} collaborators editing | Yjs WebSocket: awaiting backend connection
+              </span>
+            </div>
 
-      {/* Main content area */}
-      <Box sx={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
-        {/* Document sidebar */}
-        <DocumentSidebar
-          documents={documents}
-          selectedId={selectedDocId}
-          onSelect={handleSelectDoc}
-          onCreateNew={handleCreateDoc}
-          collapsed={sidebarCollapsed}
-          onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
-        />
+            {/* Toolbar */}
+            <div className="px-4 pt-2">
+              <EditorToolbar onCommand={handleEditorCommand} activeFormats={activeFormats} />
+            </div>
 
-        {/* Editor area */}
-        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-          {/* Collaborative editing indicator */}
-          <Box sx={{ px: 2, py: 0.75, bgcolor: 'action.hover', display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Box sx={{ display: 'flex', gap: 0.5 }}>
-              {users.filter((u) => u.isOnline).map((u) => (
-                <Tooltip key={u.id} title={`${u.name} is editing`} arrow>
-                  <Box
-                    sx={{
-                      width: 8,
-                      height: 8,
-                      borderRadius: '50%',
-                      bgcolor: u.color,
-                      animation: 'pulse 2s infinite',
-                      '@keyframes pulse': {
-                        '0%, 100%': { opacity: 1 },
-                        '50%': { opacity: 0.4 },
-                      },
-                    }}
-                  />
-                </Tooltip>
-              ))}
-            </Box>
-            <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
-              {users.filter((u) => u.isOnline).length} collaborators editing | Yjs WebSocket: awaiting backend connection
-            </Typography>
-          </Box>
+            {/* Editor */}
+            <div className="flex-1 overflow-auto px-4 pb-2">
+              <div className="min-h-full border border-[var(--border)] border-t-0 rounded-b-lg">
+                <div
+                  ref={editorRef}
+                  contentEditable
+                  suppressContentEditableWarning
+                  dangerouslySetInnerHTML={{ __html: INITIAL_CONTENT }}
+                  onInput={handleContentChange}
+                  onMouseUp={updateActiveFormats}
+                  onKeyUp={updateActiveFormats}
+                  className="p-6 min-h-[400px] outline-none text-[0.95rem] leading-7 text-[var(--text-high)] [&_h1]:text-[1.75rem] [&_h1]:font-bold [&_h1]:mt-4 [&_h1]:mb-2 [&_h1]:border-b [&_h1]:border-[var(--border)] [&_h1]:pb-1 [&_h2]:text-[1.35rem] [&_h2]:font-semibold [&_h2]:mt-5 [&_h2]:mb-1.5 [&_h3]:text-[1.1rem] [&_h3]:font-semibold [&_h3]:mt-4 [&_h3]:mb-1 [&_h3]:text-[var(--text-mid)] [&_p]:mb-2 [&_ul]:pl-6 [&_ul]:mb-2 [&_ol]:pl-6 [&_ol]:mb-2 [&_li]:mb-1 [&_pre]:bg-[var(--bg-elevated)] [&_pre]:p-4 [&_pre]:rounded [&_pre]:font-mono [&_pre]:text-[0.85rem] [&_pre]:overflow-auto [&_pre]:mb-2 [&_code]:bg-[var(--bg-elevated)] [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_code]:font-mono [&_code]:text-[0.85rem]"
+                />
+              </div>
+            </div>
 
-          {/* Toolbar */}
-          <Box sx={{ px: 2, pt: 1 }}>
-            <EditorToolbar onCommand={handleEditorCommand} activeFormats={activeFormats} />
-          </Box>
+            <VersionHistory versions={versions} open={versionHistoryOpen} onToggle={() => setVersionHistoryOpen(!versionHistoryOpen)} onRestore={handleRestoreVersion} />
+          </div>
 
-          {/* Editor */}
-          <Box sx={{ flex: 1, overflow: 'auto', px: 2, pb: 1 }}>
-            <Paper
-              variant="outlined"
-              sx={{
-                minHeight: '100%',
-                borderRadius: '0 0 8px 8px',
-                p: 0,
-              }}
-            >
-              <Box
-                ref={editorRef}
-                contentEditable
-                suppressContentEditableWarning
-                dangerouslySetInnerHTML={{ __html: INITIAL_CONTENT }}
-                onInput={handleContentChange}
-                onMouseUp={updateActiveFormats}
-                onKeyUp={updateActiveFormats}
-                sx={{
-                  p: 3,
-                  minHeight: 400,
-                  outline: 'none',
-                  fontFamily: '"Inter", "Roboto", sans-serif',
-                  fontSize: '0.95rem',
-                  lineHeight: 1.7,
-                  color: 'text.primary',
-                  '& h1': {
-                    fontSize: '1.75rem',
-                    fontWeight: 700,
-                    mt: 2,
-                    mb: 1,
-                    color: 'text.primary',
-                    borderBottom: 1,
-                    borderColor: 'divider',
-                    pb: 0.5,
-                  },
-                  '& h2': {
-                    fontSize: '1.35rem',
-                    fontWeight: 600,
-                    mt: 2.5,
-                    mb: 0.75,
-                    color: 'text.primary',
-                  },
-                  '& h3': {
-                    fontSize: '1.1rem',
-                    fontWeight: 600,
-                    mt: 2,
-                    mb: 0.5,
-                    color: 'text.secondary',
-                  },
-                  '& p': {
-                    mb: 1,
-                    color: 'text.primary',
-                  },
-                  '& ul, & ol': {
-                    pl: 3,
-                    mb: 1,
-                  },
-                  '& li': {
-                    mb: 0.5,
-                  },
-                  '& pre': {
-                    bgcolor: 'action.hover',
-                    p: 2,
-                    borderRadius: 1,
-                    fontFamily: '"Fira Code", "JetBrains Mono", monospace',
-                    fontSize: '0.85rem',
-                    overflow: 'auto',
-                    mb: 1,
-                  },
-                  '& code': {
-                    bgcolor: 'action.hover',
-                    px: 0.5,
-                    py: 0.25,
-                    borderRadius: 0.5,
-                    fontFamily: '"Fira Code", "JetBrains Mono", monospace',
-                    fontSize: '0.85rem',
-                  },
-                  // Simulated remote cursors
-                  '&::after': {
-                    content: '""',
-                    display: 'none',
-                  },
-                }}
+          {/* Comments panel (right) */}
+          {commentsPanelOpen && (
+            <div className="w-[320px] min-w-[320px] h-full bg-[var(--bg-surface)] overflow-hidden flex flex-col border-l border-[var(--border)]">
+              <CommentsPanel
+                comments={comments} onResolve={handleResolveComment} onReply={handleReplyComment}
+                onDelete={handleDeleteComment} onAdd={handleAddComment}
               />
-            </Paper>
-          </Box>
+            </div>
+          )}
+        </div>
 
-          {/* Version history drawer */}
-          <VersionHistory
-            versions={versions}
-            open={versionHistoryOpen}
-            onToggle={() => setVersionHistoryOpen(!versionHistoryOpen)}
-            onRestore={handleRestoreVersion}
-          />
-        </Box>
-
-        {/* Comments panel (right) */}
-        <Collapse in={commentsPanelOpen} orientation="horizontal" sx={{ borderLeft: 1, borderColor: 'divider' }}>
-          <Box sx={{ width: 320, minWidth: 320, height: '100%', bgcolor: 'background.paper', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-            <CommentsPanel
-              comments={comments}
-              onResolve={handleResolveComment}
-              onReply={handleReplyComment}
-              onDelete={handleDeleteComment}
-              onAdd={handleAddComment}
-            />
-          </Box>
-        </Collapse>
-      </Box>
-
-      {/* Status bar */}
-      <StatusBar
-        connectionStatus={connectionStatus}
-        lastSaved={lastSaved}
-        isSyncing={isSyncing}
-        documentId={selectedDocId}
-        wordCount={wordCount}
-        charCount={charCount}
-      />
-    </Box>
+        <StatusBar connectionStatus={connectionStatus} lastSaved={lastSaved} isSyncing={isSyncing} documentId={selectedDocId} wordCount={wordCount} charCount={charCount} />
+      </div>
+    </TooltipProvider>
   );
 }

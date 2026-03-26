@@ -2,37 +2,20 @@
 
 import { useState } from 'react';
 import {
-  Alert,
-  Box,
-  Button,
-  Card,
-  CardActions,
-  CardContent,
-  Chip,
-  CircularProgress,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  Divider,
-  FormControl,
-  Grid,
-  IconButton,
-  InputLabel,
-  MenuItem,
-  Select,
-  Skeleton,
-  TextField,
-  Tooltip,
-  Typography,
-} from '@mui/material';
-import AddIcon from '@mui/icons-material/Add';
-import DeleteIcon from '@mui/icons-material/Delete';
-import SlideshowIcon from '@mui/icons-material/Slideshow';
-import DownloadIcon from '@mui/icons-material/Download';
-import NavigateBeforeIcon from '@mui/icons-material/NavigateBefore';
-import NavigateNextIcon from '@mui/icons-material/NavigateNext';
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+  Plus, Trash2, Presentation, Download, ChevronLeft, ChevronRight, Copy, Loader2,
+} from 'lucide-react';
+
+import { Card, CardContent, CardFooter } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/lib/design-hub/components/Button';
+import { Input } from '@/lib/design-hub/components/Input';
+import { Textarea } from '@/lib/design-hub/components/Textarea';
+import { Skeleton } from '@/lib/design-hub/components/Skeleton';
+import { Separator } from '@/lib/design-hub/components/Separator';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/lib/design-hub/components/Select';
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/lib/design-hub/components/Tooltip';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/lib/design-hub/components/Dialog';
 
 import {
   useCreatePresentation,
@@ -40,7 +23,7 @@ import {
   useExportPresentation,
   usePresentations,
 } from '@/features/presentation-gen/hooks/usePresentationGen';
-import type { Presentation, SlideContent } from '@/features/presentation-gen/types';
+import type { Presentation as PresentationType, SlideContent } from '@/features/presentation-gen/types';
 
 const TEMPLATE_OPTIONS = [
   { id: 'default', label: 'Default' },
@@ -53,10 +36,10 @@ const TEMPLATE_OPTIONS = [
 
 const STYLE_OPTIONS = ['professional', 'creative', 'minimal', 'corporate', 'academic', 'dark', 'colorful'];
 
-const STATUS_COLORS: Record<string, 'default' | 'success' | 'error' | 'info'> = {
-  generating: 'info',
+const STATUS_VARIANTS: Record<string, 'default' | 'success' | 'destructive' | 'secondary'> = {
+  generating: 'secondary',
   ready: 'success',
-  error: 'error',
+  error: 'destructive',
 };
 
 export default function PresentationsPage() {
@@ -75,7 +58,7 @@ export default function PresentationsPage() {
   const [sourceText, setSourceText] = useState('');
 
   // Viewer state
-  const [activePresentation, setActivePresentation] = useState<Presentation | null>(null);
+  const [activePresentation, setActivePresentation] = useState<PresentationType | null>(null);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [exportOpen, setExportOpen] = useState(false);
   const [exportFormat, setExportFormat] = useState<'html' | 'markdown' | 'pdf'>('html');
@@ -137,352 +120,341 @@ export default function PresentationsPage() {
   const slide = slides[currentSlide] || null;
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
-        <Box>
-          <Typography variant="h4" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <SlideshowIcon color="primary" /> Presentations
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
+    <div className="p-6">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-3xl font-bold text-[var(--text-high)] flex items-center gap-2">
+            <Presentation className="h-8 w-8 text-[var(--accent)]" /> Presentations
+          </h1>
+          <p className="text-sm text-[var(--text-mid)]">
             Generate AI-powered slide decks from topics, text, or transcriptions
-          </Typography>
-        </Box>
-        <Button variant="contained" startIcon={<AddIcon />} onClick={() => setCreateOpen(true)}>
-          New Presentation
+          </p>
+        </div>
+        <Button onClick={() => setCreateOpen(true)}>
+          <Plus className="h-4 w-4 mr-2" /> New Presentation
         </Button>
-      </Box>
+      </div>
 
-      <Grid container spacing={3}>
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
         {/* Presentations List */}
-        <Grid item xs={12} md={4}>
+        <div className="md:col-span-4">
           <Card>
-            <CardContent>
-              <Typography variant="h6" sx={{ mb: 2 }}>
-                My Presentations
-              </Typography>
+            <CardContent className="p-6">
+              <h3 className="text-lg font-semibold text-[var(--text-high)] mb-4">My Presentations</h3>
               {isLoading ? (
-                <Skeleton variant="rectangular" height={200} />
+                <Skeleton className="h-52 rounded-lg" />
               ) : !presentations?.length ? (
-                <Box sx={{ textAlign: 'center', py: 4 }}>
-                  <SlideshowIcon sx={{ fontSize: 48, color: 'text.disabled', mb: 1 }} />
-                  <Typography color="text.secondary">No presentations yet</Typography>
-                  <Button size="small" onClick={() => setCreateOpen(true)} sx={{ mt: 1 }}>
+                <div className="text-center py-8">
+                  <Presentation className="h-12 w-12 text-[var(--text-low)] mx-auto mb-2" />
+                  <p className="text-[var(--text-mid)]">No presentations yet</p>
+                  <Button size="sm" variant="outline" className="mt-2" onClick={() => setCreateOpen(true)}>
                     Create your first presentation
                   </Button>
-                </Box>
+                </div>
               ) : (
                 presentations.map((pres) => (
                   <Card
                     key={pres.id}
-                    variant="outlined"
-                    sx={{
-                      mb: 1,
-                      cursor: 'pointer',
-                      bgcolor: activePresentation?.id === pres.id ? 'action.selected' : 'transparent',
-                      '&:hover': { bgcolor: 'action.hover' },
-                    }}
+                    className={`mb-2 cursor-pointer border border-[var(--border)] transition-colors hover:bg-[var(--bg-hover)] ${
+                      activePresentation?.id === pres.id ? 'bg-[var(--bg-surface)]' : ''
+                    }`}
                     onClick={() => {
                       setActivePresentation(pres);
                       setCurrentSlide(0);
                     }}
                   >
-                    <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
-                      <Typography variant="subtitle2">{pres.title}</Typography>
-                      <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
+                    <CardContent className="py-3 px-4">
+                      <p className="text-sm font-medium text-[var(--text-high)]">{pres.title}</p>
+                      <span className="text-xs text-[var(--text-mid)] block mt-1">
                         {pres.topic.substring(0, 80)}{pres.topic.length > 80 ? '...' : ''}
-                      </Typography>
-                      <Box sx={{ display: 'flex', gap: 0.5, mt: 0.5, flexWrap: 'wrap' }}>
-                        <Chip label={pres.template} size="small" variant="outlined" />
-                        <Chip label={`${pres.num_slides} slides`} size="small" variant="outlined" />
-                        <Chip
-                          label={pres.status}
-                          size="small"
-                          color={STATUS_COLORS[pres.status] || 'default'}
-                        />
-                      </Box>
+                      </span>
+                      <div className="flex gap-1 mt-1 flex-wrap">
+                        <Badge variant="outline">{pres.template}</Badge>
+                        <Badge variant="outline">{pres.num_slides} slides</Badge>
+                        <Badge variant={STATUS_VARIANTS[pres.status] || 'default'}>{pres.status}</Badge>
+                      </div>
                     </CardContent>
-                    <CardActions sx={{ pt: 0, justifyContent: 'flex-end' }}>
-                      <IconButton
-                        size="small"
-                        color="error"
+                    <CardFooter className="justify-end pt-0 px-4 pb-2">
+                      <button
+                        type="button"
+                        title="Delete"
+                        className="p-1 rounded hover:bg-red-100 text-red-500"
                         onClick={(e) => {
                           e.stopPropagation();
                           deleteMutation.mutate(pres.id);
                           if (activePresentation?.id === pres.id) setActivePresentation(null);
                         }}
                       >
-                        <DeleteIcon fontSize="small" />
-                      </IconButton>
-                    </CardActions>
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </CardFooter>
                   </Card>
                 ))
               )}
             </CardContent>
           </Card>
-        </Grid>
+        </div>
 
         {/* Slide Viewer */}
-        <Grid item xs={12} md={8}>
+        <div className="md:col-span-8">
           {activePresentation && slide ? (
             <Card>
-              <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-                  <Typography variant="h6">{activePresentation.title}</Typography>
-                  <Box sx={{ display: 'flex', gap: 1 }}>
-                    <Tooltip title="Export">
-                      <IconButton size="small" onClick={() => setExportOpen(true)}>
-                        <DownloadIcon />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Copy slide content">
-                      <IconButton size="small" onClick={() => handleCopy(slide.content)}>
-                        <ContentCopyIcon />
-                      </IconButton>
-                    </Tooltip>
-                  </Box>
-                </Box>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-[var(--text-high)]">{activePresentation.title}</h3>
+                  <div className="flex gap-2">
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button type="button" title="Export" className="p-1.5 rounded hover:bg-[var(--bg-hover)]" onClick={() => setExportOpen(true)}>
+                            <Download className="h-5 w-5 text-[var(--text-mid)]" />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent>Export</TooltipContent>
+                      </Tooltip>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button type="button" title="Copy slide content" className="p-1.5 rounded hover:bg-[var(--bg-hover)]" onClick={() => handleCopy(slide.content)}>
+                            <Copy className="h-5 w-5 text-[var(--text-mid)]" />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent>Copy slide content</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                </div>
 
                 {/* Slide display */}
-                <Card
-                  variant="outlined"
-                  sx={{
-                    minHeight: 400,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'center',
-                    p: 4,
-                    bgcolor: 'grey.50',
-                  }}
-                >
-                  <Typography
-                    variant={slide.layout === 'title_slide' ? 'h3' : 'h5'}
-                    sx={{
-                      mb: 2,
-                      textAlign: slide.layout === 'title_slide' || slide.layout === 'section_header' ? 'center' : 'left',
-                      fontWeight: 'bold',
-                    }}
+                <Card className="min-h-[400px] flex flex-col justify-center p-8 bg-gray-50 dark:bg-gray-900 border border-[var(--border)]">
+                  <h2
+                    className={`mb-4 font-bold ${
+                      slide.layout === 'title_slide' ? 'text-3xl text-center' : 'text-xl'
+                    } ${
+                      slide.layout === 'section_header' ? 'text-center' : ''
+                    } text-[var(--text-high)]`}
                   >
                     {slide.title}
-                  </Typography>
-                  <Typography
-                    variant="body1"
-                    sx={{
-                      whiteSpace: 'pre-wrap',
-                      lineHeight: 1.8,
-                      textAlign: slide.layout === 'quote' ? 'center' : 'left',
-                      fontStyle: slide.layout === 'quote' ? 'italic' : 'normal',
-                    }}
+                  </h2>
+                  <p
+                    className={`text-[var(--text-high)] whitespace-pre-wrap leading-relaxed ${
+                      slide.layout === 'quote' ? 'text-center italic' : ''
+                    }`}
                   >
                     {slide.content}
-                  </Typography>
+                  </p>
                   {slide.notes && (
-                    <Box sx={{ mt: 3, pt: 2, borderTop: '1px dashed', borderColor: 'divider' }}>
-                      <Typography variant="caption" color="text.secondary">
+                    <div className="mt-6 pt-4 border-t border-dashed border-[var(--border)]">
+                      <span className="text-xs text-[var(--text-mid)]">
                         Speaker notes: {slide.notes}
-                      </Typography>
-                    </Box>
+                      </span>
+                    </div>
                   )}
                 </Card>
 
                 {/* Navigation */}
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2, mt: 2 }}>
-                  <IconButton
+                <div className="flex items-center justify-center gap-4 mt-4">
+                  <button
+                    type="button"
+                    title="Previous slide"
+                    className="p-1.5 rounded hover:bg-[var(--bg-hover)] disabled:opacity-40"
                     onClick={() => setCurrentSlide((prev) => Math.max(0, prev - 1))}
                     disabled={currentSlide === 0}
                   >
-                    <NavigateBeforeIcon />
-                  </IconButton>
-                  <Typography variant="body2" color="text.secondary">
+                    <ChevronLeft className="h-5 w-5 text-[var(--text-mid)]" />
+                  </button>
+                  <span className="text-sm text-[var(--text-mid)]">
                     Slide {currentSlide + 1} / {slides.length}
-                  </Typography>
-                  <IconButton
+                  </span>
+                  <button
+                    type="button"
+                    title="Next slide"
+                    className="p-1.5 rounded hover:bg-[var(--bg-hover)] disabled:opacity-40"
                     onClick={() => setCurrentSlide((prev) => Math.min(slides.length - 1, prev + 1))}
                     disabled={currentSlide === slides.length - 1}
                   >
-                    <NavigateNextIcon />
-                  </IconButton>
-                </Box>
+                    <ChevronRight className="h-5 w-5 text-[var(--text-mid)]" />
+                  </button>
+                </div>
 
                 {/* Slide thumbnails */}
-                <Box sx={{ display: 'flex', gap: 1, mt: 2, overflowX: 'auto', pb: 1 }}>
+                <div className="flex gap-1 mt-4 overflow-x-auto pb-2">
                   {slides.map((s, idx) => (
-                    <Chip
+                    <Badge
                       key={idx}
-                      label={`${idx + 1}. ${s.title.substring(0, 20)}${s.title.length > 20 ? '...' : ''}`}
-                      size="small"
-                      variant={idx === currentSlide ? 'filled' : 'outlined'}
-                      color={idx === currentSlide ? 'primary' : 'default'}
+                      variant={idx === currentSlide ? 'default' : 'outline'}
+                      className="cursor-pointer shrink-0"
                       onClick={() => setCurrentSlide(idx)}
-                      sx={{ flexShrink: 0 }}
-                    />
+                    >
+                      {idx + 1}. {s.title.substring(0, 20)}{s.title.length > 20 ? '...' : ''}
+                    </Badge>
                   ))}
-                </Box>
+                </div>
 
-                <Divider sx={{ my: 2 }} />
-                <Box sx={{ display: 'flex', gap: 2 }}>
-                  <Typography variant="caption" color="text.secondary">
-                    Template: {activePresentation.template}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    Style: {activePresentation.style}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    Layout: {slide.layout}
-                  </Typography>
-                </Box>
+                <Separator className="my-4" />
+                <div className="flex gap-4">
+                  <span className="text-xs text-[var(--text-mid)]">Template: {activePresentation.template}</span>
+                  <span className="text-xs text-[var(--text-mid)]">Style: {activePresentation.style}</span>
+                  <span className="text-xs text-[var(--text-mid)]">Layout: {slide.layout}</span>
+                </div>
               </CardContent>
             </Card>
           ) : (
             <Card>
-              <CardContent sx={{ textAlign: 'center', py: 8 }}>
-                <SlideshowIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
-                <Typography variant="h6" color="text.secondary">
+              <CardContent className="text-center py-16 px-6">
+                <Presentation className="h-16 w-16 text-[var(--text-low)] mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-[var(--text-mid)]">
                   Select a presentation or create a new one
-                </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                </h3>
+                <p className="text-sm text-[var(--text-mid)] mt-2">
                   Enter a topic, choose a template, and let AI generate your slide deck
-                </Typography>
+                </p>
               </CardContent>
             </Card>
           )}
-        </Grid>
-      </Grid>
+        </div>
+      </div>
 
       {/* Create Presentation Dialog */}
-      <Dialog open={createOpen} onClose={() => setCreateOpen(false)} maxWidth="md" fullWidth>
-        <DialogTitle>New Presentation</DialogTitle>
-        <DialogContent>
-          <TextField
-            fullWidth
-            label="Title"
-            placeholder="e.g., Introduction to AI in Healthcare"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            sx={{ mt: 1, mb: 2 }}
-          />
-          <TextField
-            fullWidth
-            multiline
-            rows={3}
-            label="Topic / Description"
-            placeholder="Describe the subject, key points, and goals for this presentation"
-            value={topic}
-            onChange={(e) => setTopic(e.target.value)}
-            sx={{ mb: 2 }}
-          />
-          <TextField
-            fullWidth
-            multiline
-            rows={4}
-            label="Source Text (optional)"
-            placeholder="Paste any reference material, article, or notes to base the presentation on"
-            value={sourceText}
-            onChange={(e) => setSourceText(e.target.value)}
-            sx={{ mb: 2 }}
-          />
-          <Grid container spacing={2}>
-            <Grid item xs={6} sm={3}>
-              <TextField
-                fullWidth
-                size="small"
-                type="number"
-                label="Slides"
-                value={numSlides}
-                onChange={(e) => setNumSlides(Math.max(3, Math.min(50, parseInt(e.target.value) || 10)))}
-                inputProps={{ min: 3, max: 50 }}
-              />
-            </Grid>
-            <Grid item xs={6} sm={3}>
-              <FormControl fullWidth size="small">
-                <InputLabel>Template</InputLabel>
-                <Select value={template} label="Template" onChange={(e) => setTemplate(e.target.value)}>
-                  {TEMPLATE_OPTIONS.map((t) => (
-                    <MenuItem key={t.id} value={t.id}>
-                      {t.label}
-                    </MenuItem>
-                  ))}
+      <Dialog open={createOpen} onOpenChange={(v) => { if (!v) setCreateOpen(false); }}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>New Presentation</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 mt-2">
+            <Input
+              placeholder="Title (e.g., Introduction to AI in Healthcare)"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+            />
+            <Textarea
+              rows={3}
+              placeholder="Topic / Description - Describe the subject, key points, and goals"
+              value={topic}
+              onChange={(e) => setTopic(e.target.value)}
+            />
+            <Textarea
+              rows={4}
+              placeholder="Source Text (optional) - Paste any reference material, article, or notes"
+              value={sourceText}
+              onChange={(e) => setSourceText(e.target.value)}
+            />
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <div>
+                <label className="text-xs text-[var(--text-mid)] mb-1 block">Slides</label>
+                <Input
+                  type="number"
+                  value={numSlides}
+                  onChange={(e) => setNumSlides(Math.max(3, Math.min(50, parseInt(e.target.value) || 10)))}
+                  min={3}
+                  max={50}
+                />
+              </div>
+              <div>
+                <label className="text-xs text-[var(--text-mid)] mb-1 block">Template</label>
+                <Select value={template} onValueChange={setTemplate}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Template" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {TEMPLATE_OPTIONS.map((t) => (
+                      <SelectItem key={t.id} value={t.id}>{t.label}</SelectItem>
+                    ))}
+                  </SelectContent>
                 </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={6} sm={3}>
-              <FormControl fullWidth size="small">
-                <InputLabel>Style</InputLabel>
-                <Select value={style} label="Style" onChange={(e) => setStyle(e.target.value)}>
-                  {STYLE_OPTIONS.map((s) => (
-                    <MenuItem key={s} value={s}>
-                      {s.charAt(0).toUpperCase() + s.slice(1)}
-                    </MenuItem>
-                  ))}
+              </div>
+              <div>
+                <label className="text-xs text-[var(--text-mid)] mb-1 block">Style</label>
+                <Select value={style} onValueChange={setStyle}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Style" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {STYLE_OPTIONS.map((s) => (
+                      <SelectItem key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</SelectItem>
+                    ))}
+                  </SelectContent>
                 </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={6} sm={3}>
-              <FormControl fullWidth size="small">
-                <InputLabel>Language</InputLabel>
-                <Select value={language} label="Language" onChange={(e) => setLanguage(e.target.value)}>
-                  <MenuItem value="fr">French</MenuItem>
-                  <MenuItem value="en">English</MenuItem>
-                  <MenuItem value="es">Spanish</MenuItem>
-                  <MenuItem value="de">German</MenuItem>
+              </div>
+              <div>
+                <label className="text-xs text-[var(--text-mid)] mb-1 block">Language</label>
+                <Select value={language} onValueChange={setLanguage}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Language" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="fr">French</SelectItem>
+                    <SelectItem value="en">English</SelectItem>
+                    <SelectItem value="es">Spanish</SelectItem>
+                    <SelectItem value="de">German</SelectItem>
+                  </SelectContent>
                 </Select>
-              </FormControl>
-            </Grid>
-          </Grid>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCreateOpen(false)}>Cancel</Button>
+            <Button
+              onClick={handleCreate}
+              disabled={!title.trim() || !topic.trim() || createMutation.isPending}
+            >
+              {createMutation.isPending ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Presentation className="h-4 w-4 mr-2" />
+              )}
+              {createMutation.isPending ? 'Generating...' : 'Generate Presentation'}
+            </Button>
+          </DialogFooter>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setCreateOpen(false)}>Cancel</Button>
-          <Button
-            variant="contained"
-            onClick={handleCreate}
-            disabled={!title.trim() || !topic.trim() || createMutation.isPending}
-            startIcon={createMutation.isPending ? <CircularProgress size={16} color="inherit" /> : <SlideshowIcon />}
-          >
-            {createMutation.isPending ? 'Generating...' : 'Generate Presentation'}
-          </Button>
-        </DialogActions>
       </Dialog>
 
       {/* Export Dialog */}
-      <Dialog open={exportOpen} onClose={() => setExportOpen(false)} maxWidth="xs" fullWidth>
-        <DialogTitle>Export Presentation</DialogTitle>
-        <DialogContent>
-          <FormControl fullWidth sx={{ mt: 1 }}>
-            <InputLabel>Format</InputLabel>
-            <Select
-              value={exportFormat}
-              label="Format"
-              onChange={(e) => setExportFormat(e.target.value as 'html' | 'markdown' | 'pdf')}
-            >
-              <MenuItem value="html">HTML (interactive)</MenuItem>
-              <MenuItem value="markdown">Markdown</MenuItem>
-              <MenuItem value="pdf">PDF (requires marp-cli)</MenuItem>
+      <Dialog open={exportOpen} onOpenChange={(v) => { if (!v) setExportOpen(false); }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Export Presentation</DialogTitle>
+          </DialogHeader>
+          <div className="mt-2">
+            <label className="text-xs text-[var(--text-mid)] mb-1 block">Format</label>
+            <Select value={exportFormat} onValueChange={(v) => setExportFormat(v as 'html' | 'markdown' | 'pdf')}>
+              <SelectTrigger>
+                <SelectValue placeholder="Format" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="html">HTML (interactive)</SelectItem>
+                <SelectItem value="markdown">Markdown</SelectItem>
+                <SelectItem value="pdf">PDF (requires marp-cli)</SelectItem>
+              </SelectContent>
             </Select>
-          </FormControl>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setExportOpen(false)}>Cancel</Button>
+            <Button
+              onClick={handleExport}
+              disabled={exportMutation.isPending}
+            >
+              {exportMutation.isPending ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Download className="h-4 w-4 mr-2" />
+              )}
+              {exportMutation.isPending ? 'Exporting...' : 'Export'}
+            </Button>
+          </DialogFooter>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setExportOpen(false)}>Cancel</Button>
-          <Button
-            variant="contained"
-            onClick={handleExport}
-            disabled={exportMutation.isPending}
-            startIcon={exportMutation.isPending ? <CircularProgress size={16} color="inherit" /> : <DownloadIcon />}
-          >
-            {exportMutation.isPending ? 'Exporting...' : 'Export'}
-          </Button>
-        </DialogActions>
       </Dialog>
 
       {/* Errors */}
       {createMutation.isError && (
-        <Alert severity="error" sx={{ mt: 2 }}>
-          {createMutation.error?.message}
+        <Alert variant="destructive" className="mt-4">
+          <AlertDescription>{createMutation.error?.message}</AlertDescription>
         </Alert>
       )}
       {exportMutation.isError && (
-        <Alert severity="error" sx={{ mt: 2 }}>
-          {exportMutation.error?.message}
+        <Alert variant="destructive" className="mt-4">
+          <AlertDescription>{exportMutation.error?.message}</AlertDescription>
         </Alert>
       )}
-    </Box>
+    </div>
   );
 }

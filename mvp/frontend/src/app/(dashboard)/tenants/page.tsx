@@ -1,33 +1,28 @@
 'use client';
 
-import {
-  Alert,
-  Box,
-  Button,
-  Card,
-  CardContent,
-  Chip,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  Grid,
-  IconButton,
-  Skeleton,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  TextField,
-  MenuItem,
-  Typography,
-} from '@mui/material';
-import AddIcon from '@mui/icons-material/Add';
-import EditIcon from '@mui/icons-material/Edit';
-import PaletteIcon from '@mui/icons-material/Palette';
 import { useState } from 'react';
+import { Plus, Pencil, Palette } from 'lucide-react';
+
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/lib/design-hub/components/Alert';
+import { Button } from '@/lib/design-hub/components/Button';
+import { Input } from '@/lib/design-hub/components/Input';
+import { Skeleton } from '@/lib/design-hub/components/Skeleton';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/lib/design-hub/components/Select';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogFooter,
+  DialogTitle,
+} from '@/lib/design-hub/components/Dialog';
 
 import {
   useCreateTenant,
@@ -46,28 +41,23 @@ import { extractErrorMessage } from '@/lib/apiClient';
 const PLAN_OPTIONS = ['free', 'pro', 'enterprise'] as const;
 
 function PlanChip({ plan }: { plan: string }) {
-  const colorMap: Record<string, 'default' | 'primary' | 'secondary'> = {
-    free: 'default',
-    pro: 'primary',
-    enterprise: 'secondary',
+  const colorMap: Record<string, 'secondary' | 'default' | 'warning'> = {
+    free: 'secondary',
+    pro: 'default',
+    enterprise: 'warning',
   };
   return (
-    <Chip
-      label={plan.charAt(0).toUpperCase() + plan.slice(1)}
-      color={colorMap[plan] || 'default'}
-      size="small"
-    />
+    <Badge variant={colorMap[plan] || 'secondary'}>
+      {plan.charAt(0).toUpperCase() + plan.slice(1)}
+    </Badge>
   );
 }
 
 function StatusChip({ active }: { active: boolean }) {
   return (
-    <Chip
-      label={active ? 'Active' : 'Inactive'}
-      color={active ? 'success' : 'error'}
-      size="small"
-      variant="outlined"
-    />
+    <Badge variant={active ? 'success' : 'destructive'}>
+      {active ? 'Active' : 'Inactive'}
+    </Badge>
   );
 }
 
@@ -108,95 +98,85 @@ function CreateTenantDialog({
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>Create New Tenant</DialogTitle>
+    <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
       <DialogContent>
-        {error && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {error}
-          </Alert>
-        )}
-        <TextField
-          label="Organization Name"
-          fullWidth
-          required
-          margin="normal"
-          value={form.name}
-          onChange={(e) => handleNameChange(e.target.value)}
-        />
-        <TextField
-          label="Slug"
-          fullWidth
-          required
-          margin="normal"
-          value={form.slug}
-          onChange={(e) => setForm((prev) => ({ ...prev, slug: e.target.value }))}
-          helperText="URL-friendly identifier (lowercase, hyphens allowed)"
-        />
-        <TextField
-          label="Plan"
-          fullWidth
-          select
-          margin="normal"
-          value={form.plan}
-          onChange={(e) =>
-            setForm((prev) => ({
-              ...prev,
-              plan: e.target.value as TenantCreateRequest['plan'],
-            }))
-          }
-        >
-          {PLAN_OPTIONS.map((p) => (
-            <MenuItem key={p} value={p}>
-              {p.charAt(0).toUpperCase() + p.slice(1)}
-            </MenuItem>
-          ))}
-        </TextField>
-        <Grid container spacing={2}>
-          <Grid item xs={6}>
-            <TextField
-              label="Max Users"
-              type="number"
-              fullWidth
-              margin="normal"
-              value={form.max_users}
-              onChange={(e) =>
-                setForm((prev) => ({
-                  ...prev,
-                  max_users: parseInt(e.target.value, 10) || 5,
-                }))
-              }
-              inputProps={{ min: 1, max: 10000 }}
+        <DialogHeader>
+          <DialogTitle>Create New Tenant</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4 py-2">
+          {error && (
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+          <div>
+            <label className="text-sm font-medium text-[var(--text-high)] mb-1.5 block">Organization Name</label>
+            <Input
+              value={form.name}
+              onChange={(e) => handleNameChange(e.target.value)}
+              required
             />
-          </Grid>
-          <Grid item xs={6}>
-            <TextField
-              label="Max Storage (MB)"
-              type="number"
-              fullWidth
-              margin="normal"
-              value={form.max_storage_mb}
-              onChange={(e) =>
-                setForm((prev) => ({
-                  ...prev,
-                  max_storage_mb: parseInt(e.target.value, 10) || 1000,
-                }))
-              }
-              inputProps={{ min: 100, max: 1000000 }}
+          </div>
+          <div>
+            <label className="text-sm font-medium text-[var(--text-high)] mb-1.5 block">Slug</label>
+            <Input
+              value={form.slug}
+              onChange={(e) => setForm((prev) => ({ ...prev, slug: e.target.value }))}
+              required
             />
-          </Grid>
-        </Grid>
+            <p className="text-xs text-[var(--text-low)] mt-1">URL-friendly identifier (lowercase, hyphens allowed)</p>
+          </div>
+          <div>
+            <label className="text-sm font-medium text-[var(--text-high)] mb-1.5 block">Plan</label>
+            <Select
+              value={form.plan}
+              onValueChange={(v) => setForm((prev) => ({ ...prev, plan: v as TenantCreateRequest['plan'] }))}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {PLAN_OPTIONS.map((p) => (
+                  <SelectItem key={p} value={p}>
+                    {p.charAt(0).toUpperCase() + p.slice(1)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm font-medium text-[var(--text-high)] mb-1.5 block">Max Users</label>
+              <Input
+                type="number"
+                value={form.max_users}
+                onChange={(e) => setForm((prev) => ({ ...prev, max_users: parseInt(e.target.value, 10) || 5 }))}
+                min={1}
+                max={10000}
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-[var(--text-high)] mb-1.5 block">Max Storage (MB)</label>
+              <Input
+                type="number"
+                value={form.max_storage_mb}
+                onChange={(e) => setForm((prev) => ({ ...prev, max_storage_mb: parseInt(e.target.value, 10) || 1000 }))}
+                min={100}
+                max={1000000}
+              />
+            </div>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={onClose}>Cancel</Button>
+          <Button
+            onClick={handleSubmit}
+            disabled={createMutation.isPending || !form.name || !form.slug}
+          >
+            {createMutation.isPending ? 'Creating...' : 'Create'}
+          </Button>
+        </DialogFooter>
       </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
-        <Button
-          variant="contained"
-          onClick={handleSubmit}
-          disabled={createMutation.isPending || !form.name || !form.slug}
-        >
-          {createMutation.isPending ? 'Creating...' : 'Create'}
-        </Button>
-      </DialogActions>
     </Dialog>
   );
 }
@@ -243,98 +223,90 @@ function EditTenantDialog({
   if (!tenant) return null;
 
   return (
-    <Dialog open={!!tenant} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>Edit Tenant: {tenant.name}</DialogTitle>
+    <Dialog open={!!tenant} onOpenChange={(o) => { if (!o) onClose(); }}>
       <DialogContent>
-        {error && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {error}
-          </Alert>
-        )}
-        <TextField
-          label="Organization Name"
-          fullWidth
-          margin="normal"
-          value={form.name || ''}
-          onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
-        />
-        <TextField
-          label="Plan"
-          fullWidth
-          select
-          margin="normal"
-          value={form.plan || tenant.plan}
-          onChange={(e) =>
-            setForm((prev) => ({
-              ...prev,
-              plan: e.target.value as TenantUpdateRequest['plan'],
-            }))
-          }
-        >
-          {PLAN_OPTIONS.map((p) => (
-            <MenuItem key={p} value={p}>
-              {p.charAt(0).toUpperCase() + p.slice(1)}
-            </MenuItem>
-          ))}
-        </TextField>
-        <TextField
-          label="Status"
-          fullWidth
-          select
-          margin="normal"
-          value={form.is_active !== undefined ? String(form.is_active) : 'true'}
-          onChange={(e) =>
-            setForm((prev) => ({ ...prev, is_active: e.target.value === 'true' }))
-          }
-        >
-          <MenuItem value="true">Active</MenuItem>
-          <MenuItem value="false">Inactive</MenuItem>
-        </TextField>
-        <Grid container spacing={2}>
-          <Grid item xs={6}>
-            <TextField
-              label="Max Users"
-              type="number"
-              fullWidth
-              margin="normal"
-              value={form.max_users ?? tenant.max_users}
-              onChange={(e) =>
-                setForm((prev) => ({
-                  ...prev,
-                  max_users: parseInt(e.target.value, 10) || 5,
-                }))
-              }
-              inputProps={{ min: 1, max: 10000 }}
+        <DialogHeader>
+          <DialogTitle>Edit Tenant: {tenant.name}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4 py-2">
+          {error && (
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+          <div>
+            <label className="text-sm font-medium text-[var(--text-high)] mb-1.5 block">Organization Name</label>
+            <Input
+              value={form.name || ''}
+              onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
             />
-          </Grid>
-          <Grid item xs={6}>
-            <TextField
-              label="Max Storage (MB)"
-              type="number"
-              fullWidth
-              margin="normal"
-              value={form.max_storage_mb ?? tenant.max_storage_mb}
-              onChange={(e) =>
-                setForm((prev) => ({
-                  ...prev,
-                  max_storage_mb: parseInt(e.target.value, 10) || 1000,
-                }))
-              }
-              inputProps={{ min: 100, max: 1000000 }}
-            />
-          </Grid>
-        </Grid>
+          </div>
+          <div>
+            <label className="text-sm font-medium text-[var(--text-high)] mb-1.5 block">Plan</label>
+            <Select
+              value={form.plan || tenant.plan}
+              onValueChange={(v) => setForm((prev) => ({ ...prev, plan: v as TenantUpdateRequest['plan'] }))}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {PLAN_OPTIONS.map((p) => (
+                  <SelectItem key={p} value={p}>
+                    {p.charAt(0).toUpperCase() + p.slice(1)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <label className="text-sm font-medium text-[var(--text-high)] mb-1.5 block">Status</label>
+            <Select
+              value={form.is_active !== undefined ? String(form.is_active) : 'true'}
+              onValueChange={(v) => setForm((prev) => ({ ...prev, is_active: v === 'true' }))}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="true">Active</SelectItem>
+                <SelectItem value="false">Inactive</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm font-medium text-[var(--text-high)] mb-1.5 block">Max Users</label>
+              <Input
+                type="number"
+                value={form.max_users ?? tenant.max_users}
+                onChange={(e) => setForm((prev) => ({ ...prev, max_users: parseInt(e.target.value, 10) || 5 }))}
+                min={1}
+                max={10000}
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-[var(--text-high)] mb-1.5 block">Max Storage (MB)</label>
+              <Input
+                type="number"
+                value={form.max_storage_mb ?? tenant.max_storage_mb}
+                onChange={(e) => setForm((prev) => ({ ...prev, max_storage_mb: parseInt(e.target.value, 10) || 1000 }))}
+                min={100}
+                max={1000000}
+              />
+            </div>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={onClose}>Cancel</Button>
+          <Button
+            onClick={handleSubmit}
+            disabled={updateMutation.isPending}
+          >
+            {updateMutation.isPending ? 'Saving...' : 'Save Changes'}
+          </Button>
+        </DialogFooter>
       </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
-        <Button
-          variant="contained"
-          onClick={handleSubmit}
-          disabled={updateMutation.isPending}
-        >
-          {updateMutation.isPending ? 'Saving...' : 'Save Changes'}
-        </Button>
-      </DialogActions>
     </Dialog>
   );
 }
@@ -376,80 +348,71 @@ function BrandingDialog({
   if (!tenant) return null;
 
   return (
-    <Dialog open={!!tenant} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>Branding: {tenant.name}</DialogTitle>
+    <Dialog open={!!tenant} onOpenChange={(o) => { if (!o) onClose(); }}>
       <DialogContent>
-        {error && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {error}
-          </Alert>
-        )}
-        <TextField
-          label="Logo URL"
-          fullWidth
-          margin="normal"
-          value={form.logo_url || ''}
-          onChange={(e) => setForm((prev) => ({ ...prev, logo_url: e.target.value }))}
-          placeholder="https://cdn.example.com/logo.png"
-        />
-        <TextField
-          label="Primary Color"
-          fullWidth
-          margin="normal"
-          value={form.primary_color || ''}
-          onChange={(e) =>
-            setForm((prev) => ({ ...prev, primary_color: e.target.value }))
-          }
-          placeholder="#1976d2"
-          helperText="Hex color code (e.g., #1976d2)"
-        />
-        <TextField
-          label="Favicon URL"
-          fullWidth
-          margin="normal"
-          value={form.favicon || ''}
-          onChange={(e) => setForm((prev) => ({ ...prev, favicon: e.target.value }))}
-          placeholder="https://cdn.example.com/favicon.ico"
-        />
-        <TextField
-          label="Custom Domain"
-          fullWidth
-          margin="normal"
-          value={form.custom_domain || ''}
-          onChange={(e) =>
-            setForm((prev) => ({ ...prev, custom_domain: e.target.value }))
-          }
-          placeholder="app.yourcompany.com"
-          helperText="Custom domain for white-label access"
-        />
-        {form.primary_color && /^#[0-9a-fA-F]{6}$/.test(form.primary_color) && (
-          <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Typography variant="body2" color="text.secondary">
-              Preview:
-            </Typography>
-            <Box
-              sx={{
-                width: 40,
-                height: 40,
-                borderRadius: 1,
-                backgroundColor: form.primary_color,
-                border: '1px solid',
-                borderColor: 'divider',
-              }}
+        <DialogHeader>
+          <DialogTitle>Branding: {tenant.name}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4 py-2">
+          {error && (
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+          <div>
+            <label className="text-sm font-medium text-[var(--text-high)] mb-1.5 block">Logo URL</label>
+            <Input
+              value={form.logo_url || ''}
+              onChange={(e) => setForm((prev) => ({ ...prev, logo_url: e.target.value }))}
+              placeholder="https://cdn.example.com/logo.png"
             />
-          </Box>
-        )}
+          </div>
+          <div>
+            <label className="text-sm font-medium text-[var(--text-high)] mb-1.5 block">Primary Color</label>
+            <Input
+              value={form.primary_color || ''}
+              onChange={(e) => setForm((prev) => ({ ...prev, primary_color: e.target.value }))}
+              placeholder="#1976d2"
+            />
+            <p className="text-xs text-[var(--text-low)] mt-1">Hex color code (e.g., #1976d2)</p>
+          </div>
+          <div>
+            <label className="text-sm font-medium text-[var(--text-high)] mb-1.5 block">Favicon URL</label>
+            <Input
+              value={form.favicon || ''}
+              onChange={(e) => setForm((prev) => ({ ...prev, favicon: e.target.value }))}
+              placeholder="https://cdn.example.com/favicon.ico"
+            />
+          </div>
+          <div>
+            <label className="text-sm font-medium text-[var(--text-high)] mb-1.5 block">Custom Domain</label>
+            <Input
+              value={form.custom_domain || ''}
+              onChange={(e) => setForm((prev) => ({ ...prev, custom_domain: e.target.value }))}
+              placeholder="app.yourcompany.com"
+            />
+            <p className="text-xs text-[var(--text-low)] mt-1">Custom domain for white-label access</p>
+          </div>
+          {form.primary_color && /^#[0-9a-fA-F]{6}$/.test(form.primary_color) && (
+            <div className="flex items-center gap-4">
+              <span className="text-sm text-[var(--text-mid)]">Preview:</span>
+              <div
+                className="w-10 h-10 rounded border border-[var(--border)]"
+                style={{ backgroundColor: form.primary_color }}
+              />
+            </div>
+          )}
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={onClose}>Cancel</Button>
+          <Button
+            onClick={handleSubmit}
+            disabled={brandingMutation.isPending}
+          >
+            {brandingMutation.isPending ? 'Saving...' : 'Save Branding'}
+          </Button>
+        </DialogFooter>
       </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
-        <Button
-          variant="contained"
-          onClick={handleSubmit}
-          disabled={brandingMutation.isPending}
-        >
-          {brandingMutation.isPending ? 'Saving...' : 'Save Branding'}
-        </Button>
-      </DialogActions>
     </Dialog>
   );
 }
@@ -462,165 +425,138 @@ export default function TenantsPage() {
 
   if (isLoading) {
     return (
-      <Box sx={{ p: 3 }}>
-        <Skeleton variant="text" width={300} height={40} sx={{ mb: 2 }} />
-        <Skeleton variant="rectangular" height={400} />
-      </Box>
+      <div className="p-6">
+        <Skeleton className="w-72 h-10 mb-4" />
+        <Skeleton className="h-[400px]" />
+      </div>
     );
   }
 
   if (error) {
     return (
-      <Box sx={{ p: 3 }}>
-        <Alert severity="error">
-          Failed to load tenants. You may not have admin access.
+      <div className="p-6">
+        <Alert variant="destructive">
+          <AlertDescription>
+            Failed to load tenants. You may not have admin access.
+          </AlertDescription>
         </Alert>
-      </Box>
+      </div>
     );
   }
 
   const tenants = data?.tenants || [];
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          mb: 3,
-        }}
-      >
-        <Box>
-          <Typography variant="h4">Tenant Management</Typography>
-          <Typography variant="body2" color="text.secondary">
+    <div className="p-6">
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-[var(--text-high)]">Tenant Management</h1>
+          <p className="text-sm text-[var(--text-mid)]">
             {data?.count || 0} organization{(data?.count || 0) !== 1 ? 's' : ''} registered
-          </Typography>
-        </Box>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => setCreateOpen(true)}
-        >
-          New Tenant
+          </p>
+        </div>
+        <Button onClick={() => setCreateOpen(true)}>
+          <Plus className="h-4 w-4 mr-1" /> New Tenant
         </Button>
-      </Box>
+      </div>
 
       {/* Summary Cards */}
-      <Grid container spacing={2} sx={{ mb: 3 }}>
-        <Grid item xs={12} sm={4}>
-          <Card>
-            <CardContent>
-              <Typography variant="h3" color="primary">
-                {tenants.length}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Total Tenants
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={4}>
-          <Card>
-            <CardContent>
-              <Typography variant="h3" color="success.main">
-                {tenants.filter((t) => t.is_active).length}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Active
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={4}>
-          <Card>
-            <CardContent>
-              <Typography variant="h3" color="secondary">
-                {tenants.filter((t) => t.plan === 'enterprise').length}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Enterprise
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+        <Card>
+          <CardContent className="p-6">
+            <p className="text-4xl font-bold text-[var(--accent)]">{tenants.length}</p>
+            <p className="text-sm text-[var(--text-mid)]">Total Tenants</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6">
+            <p className="text-4xl font-bold text-green-400">
+              {tenants.filter((t) => t.is_active).length}
+            </p>
+            <p className="text-sm text-[var(--text-mid)]">Active</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6">
+            <p className="text-4xl font-bold text-purple-400">
+              {tenants.filter((t) => t.plan === 'enterprise').length}
+            </p>
+            <p className="text-sm text-[var(--text-mid)]">Enterprise</p>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Tenants Table */}
       <Card>
-        <TableContainer>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Organization</TableCell>
-                <TableCell>Slug</TableCell>
-                <TableCell>Plan</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell align="right">Max Users</TableCell>
-                <TableCell align="right">Storage (MB)</TableCell>
-                <TableCell>Created</TableCell>
-                <TableCell align="center">Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-[var(--border)]">
+                <th className="text-left py-3 px-4 font-medium text-[var(--text-mid)]">Organization</th>
+                <th className="text-left py-3 px-4 font-medium text-[var(--text-mid)]">Slug</th>
+                <th className="text-left py-3 px-4 font-medium text-[var(--text-mid)]">Plan</th>
+                <th className="text-left py-3 px-4 font-medium text-[var(--text-mid)]">Status</th>
+                <th className="text-right py-3 px-4 font-medium text-[var(--text-mid)]">Max Users</th>
+                <th className="text-right py-3 px-4 font-medium text-[var(--text-mid)]">Storage (MB)</th>
+                <th className="text-left py-3 px-4 font-medium text-[var(--text-mid)]">Created</th>
+                <th className="text-center py-3 px-4 font-medium text-[var(--text-mid)]">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
               {tenants.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={8} align="center">
-                    <Typography variant="body2" color="text.secondary" sx={{ py: 4 }}>
+                <tr>
+                  <td colSpan={8} className="text-center py-8">
+                    <p className="text-[var(--text-mid)]">
                       No tenants yet. Create your first organization to get started.
-                    </Typography>
-                  </TableCell>
-                </TableRow>
+                    </p>
+                  </td>
+                </tr>
               ) : (
                 tenants.map((tenant) => (
-                  <TableRow key={tenant.id} hover>
-                    <TableCell>
-                      <Typography variant="body2" fontWeight={600}>
-                        {tenant.name}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2" fontFamily="monospace" color="text.secondary">
-                        {tenant.slug}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
+                  <tr key={tenant.id} className="border-b border-[var(--border)] hover:bg-[var(--bg-elevated)] transition-colors">
+                    <td className="py-3 px-4">
+                      <span className="font-semibold text-[var(--text-high)]">{tenant.name}</span>
+                    </td>
+                    <td className="py-3 px-4">
+                      <code className="font-mono text-[var(--text-mid)]">{tenant.slug}</code>
+                    </td>
+                    <td className="py-3 px-4">
                       <PlanChip plan={tenant.plan} />
-                    </TableCell>
-                    <TableCell>
+                    </td>
+                    <td className="py-3 px-4">
                       <StatusChip active={tenant.is_active} />
-                    </TableCell>
-                    <TableCell align="right">{tenant.max_users}</TableCell>
-                    <TableCell align="right">
+                    </td>
+                    <td className="py-3 px-4 text-right text-[var(--text-high)]">{tenant.max_users}</td>
+                    <td className="py-3 px-4 text-right text-[var(--text-high)]">
                       {tenant.max_storage_mb.toLocaleString()}
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2" color="text.secondary">
-                        {new Date(tenant.created_at).toLocaleDateString()}
-                      </Typography>
-                    </TableCell>
-                    <TableCell align="center">
-                      <IconButton
-                        size="small"
+                    </td>
+                    <td className="py-3 px-4 text-[var(--text-mid)]">
+                      {new Date(tenant.created_at).toLocaleDateString()}
+                    </td>
+                    <td className="py-3 px-4 text-center">
+                      <button
+                        type="button"
+                        className="p-1.5 rounded hover:bg-[var(--bg-elevated)] text-[var(--text-mid)] hover:text-[var(--text-high)] transition-colors inline-block"
                         onClick={() => setEditTenant(tenant)}
                         title="Edit tenant"
                       >
-                        <EditIcon fontSize="small" />
-                      </IconButton>
-                      <IconButton
-                        size="small"
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                      <button
+                        type="button"
+                        className="p-1.5 rounded hover:bg-[var(--bg-elevated)] text-[var(--text-mid)] hover:text-[var(--text-high)] transition-colors inline-block"
                         onClick={() => setBrandingTenant(tenant)}
                         title="Edit branding"
                       >
-                        <PaletteIcon fontSize="small" />
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
+                        <Palette className="h-4 w-4" />
+                      </button>
+                    </td>
+                  </tr>
                 ))
               )}
-            </TableBody>
-          </Table>
-        </TableContainer>
+            </tbody>
+          </table>
+        </div>
       </Card>
 
       {/* Dialogs */}
@@ -634,6 +570,6 @@ export default function TenantsPage() {
           onClose={() => setBrandingTenant(null)}
         />
       )}
-    </Box>
+    </div>
   );
 }

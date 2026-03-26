@@ -3,62 +3,34 @@
 /**
  * Transcription Debug Page - Grade S++
  * Real-time debugging interface for YouTube transcription
- * Uses Sneat template design system with Material-UI
  */
 
 import { useState, useEffect, useRef } from 'react';
 import {
-  Card,
-  CardContent,
-  CardHeader,
-  Typography,
-  TextField,
-  Button,
-  Box,
-  Chip,
-  Alert,
-  CircularProgress,
-  Paper,
-  Divider,
-  LinearProgress,
-  Stack,
-  IconButton,
-  Tooltip,
-  useTheme,
-  Modal,
-  Backdrop,
-  Fade,
-} from '@mui/material';
+  Play, CheckCircle2, AlertCircle, Clock, Bug, Download, Volume2,
+  Copy, RefreshCw, FlaskConical, X, Loader2,
+} from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import { Button } from '@/lib/design-hub/components/Button';
+import { Input } from '@/lib/design-hub/components/Input';
+import { Separator } from '@/lib/design-hub/components/Separator';
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/lib/design-hub/components/Tooltip';
 import {
-  PlayArrow,
-  CheckCircle,
-  Error as ErrorIcon,
-  AccessTime,
-  BugReport,
-  Download,
-  VolumeUp,
-  ContentCopy,
-  Refresh,
-  Science,
-  Close,
-} from '@mui/icons-material';
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+} from '@/lib/design-hub/components/Dialog';
 import apiClient, { extractErrorMessage } from '@/lib/apiClient';
 
 /* ========================================================================
    URL UTILITIES
    ======================================================================== */
 
-/**
- * Returns the base API URL from environment or fallback.
- */
 function getApiBaseUrl(): string {
   return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8004';
 }
 
-/**
- * Derives a WebSocket URL from the HTTP API base URL.
- * Replaces http:// with ws:// and https:// with wss://.
- */
 function getWsBaseUrl(): string {
   const base = getApiBaseUrl();
   return base.replace(/^http/, 'ws');
@@ -78,17 +50,10 @@ interface DebugStep {
 }
 
 /* ========================================================================
-   UTILITIES
-   ======================================================================== */
-
-/* ========================================================================
    COMPONENT
    ======================================================================== */
 
 export default function TranscriptionDebugPage() {
-  // Theme
-  const theme = useTheme();
-  
   // State
   const [videoUrl, setVideoUrl] = useState('https://youtu.be/C49V1SArjtY');
   const [jobId, setJobId] = useState<string | null>(null);
@@ -96,18 +61,18 @@ export default function TranscriptionDebugPage() {
   const [debugSteps, setDebugSteps] = useState<DebugStep[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [finalResult, setFinalResult] = useState<any>(null);
-  
+
   // Backend test state
   const [isBackendTestRunning, setIsBackendTestRunning] = useState(false);
   const [backendTestResult, setBackendTestResult] = useState<any>(null);
   const [showBackendTestModal, setShowBackendTestModal] = useState(false);
-  
+
   // AI Content Restructuring state
   const [isReformattingGemini, setIsReformattingGemini] = useState(false);
   const [isReformattingGroq, setIsReformattingGroq] = useState(false);
   const [geminiResult, setGeminiResult] = useState<string | null>(null);
   const [groqResult, setGroqResult] = useState<string | null>(null);
-  
+
   // Refs
   const wsRef = useRef<WebSocket | null>(null);
   const stepsEndRef = useRef<HTMLDivElement>(null);
@@ -116,12 +81,10 @@ export default function TranscriptionDebugPage() {
      EFFECTS
      ======================================================================== */
 
-  // Auto-scroll to bottom when new steps arrive
   useEffect(() => {
     stepsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [debugSteps]);
 
-  // Cleanup WebSocket on unmount
   useEffect(() => {
     return () => {
       if (wsRef.current) {
@@ -148,16 +111,13 @@ export default function TranscriptionDebugPage() {
 
       if (message.type === 'debug_step') {
         setDebugSteps((prev) => {
-          // Check if a step with the same name already exists
           const existingIndex = prev.findIndex(s => s.step === message.step.step);
-          
+
           if (existingIndex !== -1) {
-            // Update existing step
             const updated = [...prev];
             updated[existingIndex] = message.step;
             return updated;
           } else {
-            // Add new step
             return [...prev, message.step];
           }
         });
@@ -176,7 +136,6 @@ export default function TranscriptionDebugPage() {
 
     wsRef.current = ws;
 
-    // Send ping every 30 seconds to keep connection alive
     const pingInterval = setInterval(() => {
       if (ws.readyState === WebSocket.OPEN) {
         ws.send('ping');
@@ -205,43 +164,36 @@ export default function TranscriptionDebugPage() {
     setIsProcessing(true);
 
     try {
-      // Generate a unique job ID for this transcription
       const tempJobId = `debug-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
       setJobId(tempJobId);
-      
-      // STEP 1: Connect WebSocket FIRST (before starting transcription)
+
       console.log('[Debug] Connecting WebSocket first...');
       connectWebSocket(tempJobId);
-      
-      // Wait for WebSocket to be ready
+
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      
-      // STEP 2: Start transcription (synchronous endpoint that waits for completion)
+
       console.log('[Debug] Starting transcription with job_id:', tempJobId);
       const response = await apiClient.post(`/api/transcription/debug/transcribe/${tempJobId}`, {
         video_url: videoUrl
       }, {
-        timeout: 300000 // 5 minutes for transcription (YouTube download + AssemblyAI + AI Router)
+        timeout: 300000
       });
 
       const result = response.data;
       console.log('[Debug] Transcription complete:', result);
-      
-      // Update with final result
+
       setFinalResult(result);
       setIsProcessing(false);
-      
-      // Close WebSocket
+
       if (wsRef.current) {
         wsRef.current.close();
       }
-      
+
     } catch (err: any) {
       console.error('[Debug] Error:', err);
       setError(err.message || 'An error occurred');
       setIsProcessing(false);
-      
-      // Close WebSocket on error
+
       if (wsRef.current) {
         wsRef.current.close();
       }
@@ -264,13 +216,13 @@ export default function TranscriptionDebugPage() {
     setIsBackendTestRunning(true);
     setBackendTestResult(null);
     setError(null);
-    
+
     try {
       const response = await apiClient.post('/api/transcription/debug/run-backend-test');
       const result = response.data;
       setBackendTestResult(result);
       setShowBackendTestModal(true);
-      
+
     } catch (err: any) {
       console.error('[Backend Test] Error:', err);
       setError(err.message || 'Failed to run backend test');
@@ -290,13 +242,13 @@ export default function TranscriptionDebugPage() {
       setError('No transcription text available to reformat');
       return;
     }
-    
+
     const setLoading = provider === 'gemini' ? setIsReformattingGemini : setIsReformattingGroq;
     const setResult = provider === 'gemini' ? setGeminiResult : setGroqResult;
-    
+
     setLoading(true);
     setError(null);
-    
+
     try {
       const response = await apiClient.post('/api/ai-assistant/process-text', {
         text: finalResult.text,
@@ -304,9 +256,9 @@ export default function TranscriptionDebugPage() {
         provider: provider,
         language: finalResult.language_code || 'auto'
       });
-      
+
       setResult(response.data.processed_text);
-      
+
     } catch (err: any) {
       console.error(`[${provider.toUpperCase()}] Reformat error:`, err);
       const errorMessage = extractErrorMessage(err);
@@ -347,7 +299,7 @@ export default function TranscriptionDebugPage() {
 
     const logsJson = JSON.stringify(logs, null, 2);
     navigator.clipboard.writeText(logsJson);
-    alert('✅ All logs copied to clipboard! You can now paste them to share.');
+    alert('All logs copied to clipboard! You can now paste them to share.');
   };
 
   /* ========================================================================
@@ -357,28 +309,37 @@ export default function TranscriptionDebugPage() {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'SUCCESS':
-        return <CheckCircle sx={{ color: 'success.main' }} />;
+        return <CheckCircle2 className="h-5 w-5 text-green-400" />;
       case 'ERROR':
       case 'FAILED':
-        return <ErrorIcon sx={{ color: 'error.main' }} />;
+        return <AlertCircle className="h-5 w-5 text-red-400" />;
       case 'IN_PROGRESS':
-        return <CircularProgress size={20} />;
+        return <Loader2 className="h-5 w-5 animate-spin text-[var(--accent)]" />;
       default:
-        return <AccessTime sx={{ color: 'text.secondary' }} />;
+        return <Clock className="h-5 w-5 text-[var(--text-low)]" />;
     }
   };
 
-  const getStatusColor = (status: string): 'success' | 'error' | 'info' | 'default' => {
+  const getStatusVariant = (status: string): 'success' | 'destructive' | 'default' | 'secondary' => {
     switch (status) {
       case 'SUCCESS':
         return 'success';
       case 'ERROR':
       case 'FAILED':
-        return 'error';
+        return 'destructive';
       case 'IN_PROGRESS':
-        return 'info';
-      default:
         return 'default';
+      default:
+        return 'secondary';
+    }
+  };
+
+  const getBorderColor = (status: string): string => {
+    switch (status) {
+      case 'SUCCESS': return 'border-l-green-500';
+      case 'ERROR': case 'FAILED': return 'border-l-red-500';
+      case 'IN_PROGRESS': return 'border-l-blue-500';
+      default: return 'border-l-[var(--border)]';
     }
   };
 
@@ -387,615 +348,460 @@ export default function TranscriptionDebugPage() {
      ======================================================================== */
 
   return (
-    <Box sx={{ p: 3 }}>
-      {/* Header Card */}
-      <Card sx={{ mb: 3 }}>
-        <CardHeader
-          avatar={<BugReport sx={{ fontSize: 32, color: 'primary.main' }} />}
-          title={
-            <Typography variant="h4" component="h1">
-              Transcription Debug
-            </Typography>
-          }
-          subheader="Real-time debugging interface for YouTube transcription"
-          action={
-            debugSteps.length > 0 && (
-              <Tooltip title="Reset">
-                <IconButton onClick={handleReset} color="primary">
-                  <Refresh />
-                </IconButton>
-              </Tooltip>
-            )
-          }
-        />
-        <CardContent>
-          <Stack spacing={2}>
-            <TextField
-              fullWidth
-              label="YouTube URL"
-              placeholder="https://youtu.be/..."
-              value={videoUrl}
-              onChange={(e) => setVideoUrl(e.target.value)}
-              disabled={isProcessing}
-              variant="outlined"
-              helperText="Enter a YouTube video URL to start debugging"
-            />
-            
-            <Button
-              variant="contained"
-              size="large"
-              onClick={startTranscription}
-              disabled={isProcessing || !videoUrl.trim()}
-              startIcon={isProcessing ? <CircularProgress size={20} color="inherit" /> : <PlayArrow />}
-              fullWidth
-            >
-              {isProcessing ? 'Processing...' : 'Start Debug Transcription'}
-            </Button>
+    <TooltipProvider>
+      <div className="p-6">
+        {/* Header Card */}
+        <Card className="mb-6">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Bug className="h-8 w-8 text-[var(--accent)]" />
+                <div>
+                  <CardTitle className="text-2xl">Transcription Debug</CardTitle>
+                  <CardDescription>Real-time debugging interface for YouTube transcription</CardDescription>
+                </div>
+              </div>
+              {debugSteps.length > 0 && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      type="button"
+                      onClick={handleReset}
+                      className="p-2 text-[var(--accent)] hover:bg-[var(--bg-elevated)] rounded-md transition-colors"
+                      aria-label="Reset"
+                    >
+                      <RefreshCw className="h-5 w-5" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>Reset</TooltipContent>
+                </Tooltip>
+              )}
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col gap-4">
+              <div>
+                <label className="block text-sm font-medium text-[var(--text-mid)] mb-1.5">
+                  YouTube URL
+                </label>
+                <Input
+                  placeholder="https://youtu.be/..."
+                  value={videoUrl}
+                  onChange={(e) => setVideoUrl(e.target.value)}
+                  disabled={isProcessing}
+                />
+                <p className="mt-1 text-xs text-[var(--text-low)]">
+                  Enter a YouTube video URL to start debugging
+                </p>
+              </div>
 
-            <Divider sx={{ my: 2 }}>
-              <Chip label="OR" size="small" />
-            </Divider>
-
-            <Button
-              variant="outlined"
-              size="large"
-              color="secondary"
-              onClick={runBackendTest}
-              disabled={isBackendTestRunning || isProcessing}
-              startIcon={isBackendTestRunning ? <CircularProgress size={20} color="inherit" /> : <Science />}
-              fullWidth
-            >
-              {isBackendTestRunning ? 'Running Backend Test...' : '🧪 Run Full Backend Test (Python)'}
-            </Button>
-
-            <Alert severity="info" icon={<Science />}>
-              <Typography variant="body2">
-                <strong>Backend Test:</strong> Runs the complete transcription pipeline in Python (backend-only).
-                This test uses the default video and displays the final result with AI improvements.
-              </Typography>
-            </Alert>
-
-            {jobId && (
-              <Alert 
-                severity="info" 
-                action={
-                  <Tooltip title="Copy Job ID">
-                    <IconButton size="small" onClick={copyJobId}>
-                      <ContentCopy fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                }
-              >
-                <strong>Job ID:</strong> {jobId}
-              </Alert>
-            )}
-
-            {error && (
-              <Alert severity="error" onClose={() => setError(null)}>
-                {error}
-              </Alert>
-            )}
-          </Stack>
-        </CardContent>
-        
-        {isProcessing && <LinearProgress />}
-      </Card>
-
-      {/* Debug Logs Export */}
-      {debugSteps.length > 0 && (
-        <Card sx={{ mb: 3, bgcolor: 'info.lighter' }}>
-          <CardHeader
-            avatar={<ContentCopy sx={{ color: 'info.main' }} />}
-            title="Export Debug Logs"
-            subheader="Copy all logs to share for debugging"
-            action={
               <Button
-                variant="contained"
-                color="info"
-                startIcon={<ContentCopy />}
-                onClick={copyAllLogs}
+                size="lg"
+                className="w-full"
+                onClick={startTranscription}
+                disabled={isProcessing || !videoUrl.trim()}
               >
-                Copy All Logs
-              </Button>
-            }
-          />
-          <CardContent>
-            <Alert severity="info">
-              Click "Copy All Logs" to copy all transcription data (steps, errors, results) to your clipboard in JSON format. 
-              You can then paste it to share for debugging.
-            </Alert>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Debug Steps */}
-      {debugSteps.length > 0 && (
-        <Card>
-          <CardHeader 
-            title={`Debug Steps (${debugSteps.length})`}
-            subheader="Real-time transcription process"
-          />
-          <CardContent>
-            <Box sx={{ maxHeight: 600, overflowY: 'auto' }}>
-              <Stack spacing={2}>
-                {debugSteps.map((step, index) => (
-                  <Paper
-                    key={index}
-                    elevation={2}
-                    sx={{
-                      p: 2,
-                      borderLeft: 4,
-                      borderColor: step.status === 'SUCCESS' ? 'success.main' : 
-                                  step.status === 'ERROR' || step.status === 'FAILED' ? 'error.main' :
-                                  step.status === 'IN_PROGRESS' ? 'info.main' : 'grey.300',
-                      bgcolor: theme.palette.mode === 'dark' ? 'background.default' : 'background.paper',
-                    }}
-                  >
-                    <Stack spacing={1}>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          {getStatusIcon(step.status)}
-                          <Typography variant="subtitle1" fontWeight="bold">
-                            {step.step}
-                          </Typography>
-                          <Chip
-                            label={step.status}
-                            color={getStatusColor(step.status)}
-                            size="small"
-                          />
-                        </Box>
-                        <Chip
-                          label={`${step.duration_seconds.toFixed(2)}s`}
-                          variant="outlined"
-                          size="small"
-                        />
-                      </Box>
-
-                      {step.data && Object.keys(step.data).length > 0 && (
-                        <>
-                          <Paper 
-                            variant="outlined" 
-                            sx={{ 
-                              p: 2, 
-                              bgcolor: theme.palette.mode === 'dark' ? 'grey.900' : 'grey.50',
-                              maxHeight: 300,
-                              overflowY: 'auto'
-                            }}
-                          >
-                            <Typography variant="caption" fontWeight="bold" color="text.secondary">
-                              Data:
-                            </Typography>
-                            <pre style={{ 
-                              fontSize: '0.75rem', 
-                              overflow: 'auto', 
-                              margin: '8px 0 0 0',
-                              whiteSpace: 'pre-wrap',
-                              wordBreak: 'break-word'
-                            }}>
-                              {JSON.stringify(step.data, null, 2)}
-                            </pre>
-                          </Paper>
-                          
-                          {/* Audio download buttons for step 2 */}
-                          {step.step.includes('AUDIO DOWNLOAD') && 
-                           step.status === 'SUCCESS' && 
-                           step.data['📤 OUTPUT']?.audio_download_url && (
-                            <Stack direction="row" spacing={1}>
-                              <Button
-                                variant="contained"
-                                color="primary"
-                                size="small"
-                                startIcon={<VolumeUp />}
-                                onClick={async () => {
-                                  try {
-                                    const token = localStorage.getItem('auth_token');
-                                    const url = `${getApiBaseUrl()}${step.data['📤 OUTPUT'].audio_download_url}`;
-
-                                    const response = await fetch(url, {
-                                      headers: {
-                                        'Authorization': `Bearer ${token}`
-                                      }
-                                    });
-
-                                    if (!response.ok) {
-                                      throw new Error('Failed to load audio');
-                                    }
-                                    
-                                    const blob = await response.blob();
-                                    const blobUrl = URL.createObjectURL(blob);
-                                    window.open(blobUrl, '_blank');
-                                  } catch (err: any) {
-                                    alert('Failed to load audio: ' + err.message);
-                                  }
-                                }}
-                              >
-                                🎧 Listen to Audio
-                              </Button>
-                              <Button
-                                variant="outlined"
-                                size="small"
-                                startIcon={<Download />}
-                                onClick={async () => {
-                                  try {
-                                    const token = localStorage.getItem('auth_token');
-                                    const url = `${getApiBaseUrl()}${step.data['📤 OUTPUT'].audio_download_url}`;
-
-                                    const response = await fetch(url, {
-                                      headers: {
-                                        'Authorization': `Bearer ${token}`
-                                      }
-                                    });
-
-                                    if (!response.ok) {
-                                      throw new Error('Failed to download audio');
-                                    }
-                                    
-                                    const blob = await response.blob();
-                                    const blobUrl = URL.createObjectURL(blob);
-                                    const link = document.createElement('a');
-                                    link.href = blobUrl;
-                                    link.download = step.data['📤 OUTPUT'].audio_file_name || 'audio.webm';
-                                    link.click();
-                                    URL.revokeObjectURL(blobUrl);
-                                  } catch (err: any) {
-                                    alert('Failed to download audio: ' + err.message);
-                                  }
-                                }}
-                              >
-                                Download Audio
-                              </Button>
-                              <Typography variant="caption" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', ml: 1 }}>
-                                ⏰ Available for {step.data['📤 OUTPUT'].audio_available_for || '30 minutes'}
-                              </Typography>
-                            </Stack>
-                          )}
-                        </>
-                      )}
-
-                      {step.error && (
-                        <Alert severity="error">
-                          <Typography variant="caption" fontWeight="bold">
-                            Error:
-                          </Typography>
-                          <Typography variant="body2">{step.error}</Typography>
-                        </Alert>
-                      )}
-                    </Stack>
-                  </Paper>
-                ))}
-                <div ref={stepsEndRef} />
-              </Stack>
-            </Box>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Final Result */}
-      {finalResult && (
-        <Card sx={{ mt: 3, borderTop: 4, borderColor: 'success.main' }}>
-          <CardHeader
-            avatar={<CheckCircle sx={{ fontSize: 32, color: 'success.main' }} />}
-            title={
-              <Typography variant="h5" color="success.main">
-                Transcription Complete
-              </Typography>
-            }
-            subheader="All steps completed successfully"
-          />
-          <CardContent>
-            <Stack spacing={3}>
-              {/* Statistics */}
-              <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 3 }}>
-                <Paper sx={{ p: 2, textAlign: 'center', bgcolor: 'success.lighter' }}>
-                  <Typography variant="caption" color="text.secondary">
-                    Confidence
-                  </Typography>
-                  <Typography variant="h3" fontWeight="bold" color="success.main">
-                    {(finalResult.confidence * 100).toFixed(1)}%
-                  </Typography>
-                </Paper>
-                <Paper sx={{ p: 2, textAlign: 'center', bgcolor: 'info.lighter' }}>
-                  <Typography variant="caption" color="text.secondary">
-                    Duration
-                  </Typography>
-                  <Typography variant="h3" fontWeight="bold" color="info.main">
-                    {finalResult.duration_seconds}s
-                  </Typography>
-                </Paper>
-                <Paper sx={{ p: 2, textAlign: 'center', bgcolor: 'primary.lighter' }}>
-                  <Typography variant="caption" color="text.secondary">
-                    Text Length
-                  </Typography>
-                  <Typography variant="h3" fontWeight="bold" color="primary.main">
-                    {finalResult.text?.length || 0}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    characters
-                  </Typography>
-                </Paper>
-              </Box>
-
-              <Divider />
-
-              {/* Transcribed Text */}
-              <Box>
-                <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
-                  Transcribed Text (Raw):
-                </Typography>
-                <Paper
-                  variant="outlined"
-                  sx={{
-                    p: 2,
-                    maxHeight: 300,
-                    overflowY: 'auto',
-                    bgcolor: theme.palette.mode === 'dark' ? 'grey.900' : 'grey.50',
-                  }}
-                >
-                  <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
-                    {finalResult.text}
-                  </Typography>
-                </Paper>
-              </Box>
-
-              <Divider />
-
-              {/* AI Content Restructuring Section */}
-              <Box>
-                <Typography variant="h6" fontWeight="bold" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  🤖 AI Content Restructuring
-                  <Chip label="FREE" color="success" size="small" />
-                </Typography>
-                <Typography variant="body2" color="text.secondary" gutterBottom>
-                  Transform the raw transcription into professional, engaging content. The AI will improve structure, clarity, and flow while preserving all original information. Maximum +50% enrichment.
-                </Typography>
-                
-                <Stack direction="row" spacing={2} sx={{ mt: 2, mb: 3 }}>
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    onClick={() => reformatWithAI('gemini')}
-                    disabled={isReformattingGemini || isReformattingGroq}
-                    startIcon={isReformattingGemini ? <CircularProgress size={20} color="inherit" /> : null}
-                  >
-                    {isReformattingGemini ? 'Restructuring...' : '✨ Restructure with Gemini'}
-                  </Button>
-                  
-                  <Button
-                    variant="contained"
-                    color="secondary"
-                    onClick={() => reformatWithAI('groq')}
-                    disabled={isReformattingGemini || isReformattingGroq}
-                    startIcon={isReformattingGroq ? <CircularProgress size={20} color="inherit" /> : null}
-                  >
-                    {isReformattingGroq ? 'Restructuring...' : '⚡ Restructure with Groq'}
-                  </Button>
-                </Stack>
-
-                {/* Gemini Result */}
-                {geminiResult && (
-                  <Box sx={{ mb: 2 }}>
-                    <Typography variant="subtitle2" fontWeight="bold" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      ✨ Gemini Result
-                      <Chip label="FREE 🆓" color="success" size="small" />
-                    </Typography>
-                    <Paper
-                      variant="outlined"
-                      sx={{
-                        p: 2,
-                        maxHeight: 400,
-                        overflowY: 'auto',
-                        bgcolor: theme.palette.mode === 'dark' ? 'grey.900' : 'grey.50',
-                        borderLeft: 4,
-                        borderColor: 'primary.main',
-                      }}
-                    >
-                      <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
-                        {geminiResult}
-                      </Typography>
-                    </Paper>
-                    <Button
-                      size="small"
-                      startIcon={<ContentCopy />}
-                      onClick={() => {
-                        navigator.clipboard.writeText(geminiResult);
-                        alert('Gemini result copied to clipboard!');
-                      }}
-                      sx={{ mt: 1 }}
-                    >
-                      Copy Gemini Result
-                    </Button>
-                  </Box>
-                )}
-
-                {/* Groq Result */}
-                {groqResult && (
-                  <Box>
-                    <Typography variant="subtitle2" fontWeight="bold" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      ⚡ Groq Result
-                      <Chip label="FREE 🆓" color="success" size="small" />
-                    </Typography>
-                    <Paper
-                      variant="outlined"
-                      sx={{
-                        p: 2,
-                        maxHeight: 400,
-                        overflowY: 'auto',
-                        bgcolor: theme.palette.mode === 'dark' ? 'grey.900' : 'grey.50',
-                        borderLeft: 4,
-                        borderColor: 'secondary.main',
-                      }}
-                    >
-                      <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
-                        {groqResult}
-                      </Typography>
-                    </Paper>
-                    <Button
-                      size="small"
-                      startIcon={<ContentCopy />}
-                      onClick={() => {
-                        navigator.clipboard.writeText(groqResult);
-                        alert('Groq result copied to clipboard!');
-                      }}
-                      sx={{ mt: 1 }}
-                    >
-                      Copy Groq Result
-                    </Button>
-                  </Box>
-                )}
-              </Box>
-            </Stack>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Backend Test Result Modal */}
-      <Modal
-        open={showBackendTestModal}
-        onClose={() => setShowBackendTestModal(false)}
-        closeAfterTransition
-        BackdropComponent={Backdrop}
-        BackdropProps={{
-          timeout: 500,
-        }}
-      >
-        <Fade in={showBackendTestModal}>
-          <Box
-            sx={{
-              position: 'absolute',
-              top: '50%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
-              width: { xs: '90%', sm: '80%', md: '70%', lg: '60%' },
-              maxHeight: '90vh',
-              bgcolor: 'background.paper',
-              boxShadow: 24,
-              borderRadius: 2,
-              overflow: 'hidden',
-              display: 'flex',
-              flexDirection: 'column',
-            }}
-          >
-            {/* Modal Header */}
-            <Box
-              sx={{
-                p: 2,
-                borderBottom: 1,
-                borderColor: 'divider',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                bgcolor: backendTestResult?.success ? 'success.lighter' : 'error.lighter',
-              }}
-            >
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                {backendTestResult?.success ? (
-                  <CheckCircle sx={{ color: 'success.main', fontSize: 32 }} />
+                {isProcessing ? (
+                  <><Loader2 className="h-5 w-5 animate-spin mr-2" /> Processing...</>
                 ) : (
-                  <ErrorIcon sx={{ color: 'error.main', fontSize: 32 }} />
+                  <><Play className="h-5 w-5 mr-2" /> Start Debug Transcription</>
                 )}
-                <Typography variant="h5" fontWeight="bold">
-                  Backend Test Result
-                </Typography>
-              </Box>
-              <IconButton onClick={() => setShowBackendTestModal(false)}>
-                <Close />
-              </IconButton>
-            </Box>
+              </Button>
 
-            {/* Modal Content */}
-            <Box sx={{ p: 3, overflowY: 'auto', flex: 1 }}>
+              <div className="relative flex items-center">
+                <Separator className="flex-1" />
+                <Badge variant="outline" className="mx-3">OR</Badge>
+                <Separator className="flex-1" />
+              </div>
+
+              <Button
+                variant="outline"
+                size="lg"
+                className="w-full"
+                onClick={runBackendTest}
+                disabled={isBackendTestRunning || isProcessing}
+              >
+                {isBackendTestRunning ? (
+                  <><Loader2 className="h-5 w-5 animate-spin mr-2" /> Running Backend Test...</>
+                ) : (
+                  <><FlaskConical className="h-5 w-5 mr-2" /> Run Full Backend Test (Python)</>
+                )}
+              </Button>
+
+              <Alert variant="info">
+                <FlaskConical className="h-4 w-4" />
+                <AlertDescription>
+                  <strong>Backend Test:</strong> Runs the complete transcription pipeline in Python (backend-only).
+                  This test uses the default video and displays the final result with AI improvements.
+                </AlertDescription>
+              </Alert>
+
+              {jobId && (
+                <Alert variant="info">
+                  <div className="flex items-center justify-between w-full">
+                    <span><strong>Job ID:</strong> {jobId}</span>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button type="button" onClick={copyJobId} className="p-1 text-[var(--text-mid)] hover:text-[var(--text-high)] transition-colors" aria-label="Copy Job ID">
+                          <Copy className="h-4 w-4" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent>Copy Job ID</TooltipContent>
+                    </Tooltip>
+                  </div>
+                </Alert>
+              )}
+
+              {error && (
+                <Alert variant="destructive">
+                  <AlertDescription className="flex items-center justify-between">
+                    {error}
+                    <button type="button" onClick={() => setError(null)} className="p-1 text-red-400 hover:text-red-300" aria-label="Dismiss error">
+                      <X className="h-4 w-4" />
+                    </button>
+                  </AlertDescription>
+                </Alert>
+              )}
+            </div>
+          </CardContent>
+
+          {isProcessing && <Progress value={undefined} className="h-1" />}
+        </Card>
+
+        {/* Debug Logs Export */}
+        {debugSteps.length > 0 && (
+          <Card className="mb-6 bg-[var(--accent)]/5">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Copy className="h-5 w-5 text-[var(--accent)]" />
+                  <div>
+                    <CardTitle className="text-base">Export Debug Logs</CardTitle>
+                    <CardDescription>Copy all logs to share for debugging</CardDescription>
+                  </div>
+                </div>
+                <Button onClick={copyAllLogs}>
+                  <Copy className="h-4 w-4 mr-2" /> Copy All Logs
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <Alert variant="info">
+                <AlertDescription>
+                  Click &quot;Copy All Logs&quot; to copy all transcription data (steps, errors, results) to your clipboard in JSON format.
+                  You can then paste it to share for debugging.
+                </AlertDescription>
+              </Alert>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Debug Steps */}
+        {debugSteps.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Debug Steps ({debugSteps.length})</CardTitle>
+              <CardDescription>Real-time transcription process</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="max-h-[600px] overflow-y-auto">
+                <div className="flex flex-col gap-4">
+                  {debugSteps.map((step, index) => (
+                    <div
+                      key={index}
+                      className={`rounded-lg border border-[var(--border)] border-l-4 ${getBorderColor(step.status)} bg-[var(--bg-surface)] p-4`}
+                    >
+                      <div className="flex flex-col gap-2">
+                        <div className="flex justify-between items-center">
+                          <div className="flex items-center gap-2">
+                            {getStatusIcon(step.status)}
+                            <span className="font-semibold text-[var(--text-high)]">{step.step}</span>
+                            <Badge variant={getStatusVariant(step.status)}>{step.status}</Badge>
+                          </div>
+                          <Badge variant="outline">{step.duration_seconds.toFixed(2)}s</Badge>
+                        </div>
+
+                        {step.data && Object.keys(step.data).length > 0 && (
+                          <>
+                            <div className="rounded-md border border-[var(--border)] bg-[var(--bg-elevated)] p-3 max-h-[300px] overflow-y-auto">
+                              <span className="text-xs font-semibold text-[var(--text-low)]">Data:</span>
+                              <pre className="text-xs overflow-auto mt-2 whitespace-pre-wrap break-words text-[var(--text-mid)]">
+                                {JSON.stringify(step.data, null, 2)}
+                              </pre>
+                            </div>
+
+                            {/* Audio download buttons for step 2 */}
+                            {step.step.includes('AUDIO DOWNLOAD') &&
+                             step.status === 'SUCCESS' &&
+                             step.data['📤 OUTPUT']?.audio_download_url && (
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <Button
+                                  size="sm"
+                                  onClick={async () => {
+                                    try {
+                                      const token = localStorage.getItem('auth_token');
+                                      const url = `${getApiBaseUrl()}${step.data['📤 OUTPUT'].audio_download_url}`;
+                                      const response = await fetch(url, {
+                                        headers: { 'Authorization': `Bearer ${token}` }
+                                      });
+                                      if (!response.ok) throw new Error('Failed to load audio');
+                                      const blob = await response.blob();
+                                      const blobUrl = URL.createObjectURL(blob);
+                                      window.open(blobUrl, '_blank');
+                                    } catch (err: any) {
+                                      alert('Failed to load audio: ' + err.message);
+                                    }
+                                  }}
+                                >
+                                  <Volume2 className="h-4 w-4 mr-1" /> Listen to Audio
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={async () => {
+                                    try {
+                                      const token = localStorage.getItem('auth_token');
+                                      const url = `${getApiBaseUrl()}${step.data['📤 OUTPUT'].audio_download_url}`;
+                                      const response = await fetch(url, {
+                                        headers: { 'Authorization': `Bearer ${token}` }
+                                      });
+                                      if (!response.ok) throw new Error('Failed to download audio');
+                                      const blob = await response.blob();
+                                      const blobUrl = URL.createObjectURL(blob);
+                                      const link = document.createElement('a');
+                                      link.href = blobUrl;
+                                      link.download = step.data['📤 OUTPUT'].audio_file_name || 'audio.webm';
+                                      link.click();
+                                      URL.revokeObjectURL(blobUrl);
+                                    } catch (err: any) {
+                                      alert('Failed to download audio: ' + err.message);
+                                    }
+                                  }}
+                                >
+                                  <Download className="h-4 w-4 mr-1" /> Download Audio
+                                </Button>
+                                <span className="text-xs text-[var(--text-low)]">
+                                  Available for {step.data['📤 OUTPUT'].audio_available_for || '30 minutes'}
+                                </span>
+                              </div>
+                            )}
+                          </>
+                        )}
+
+                        {step.error && (
+                          <Alert variant="destructive">
+                            <AlertDescription>
+                              <span className="font-semibold text-xs">Error:</span>
+                              <p className="text-sm">{step.error}</p>
+                            </AlertDescription>
+                          </Alert>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                  <div ref={stepsEndRef} />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Final Result */}
+        {finalResult && (
+          <Card className="mt-6 border-t-4 border-t-green-500">
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <CheckCircle2 className="h-8 w-8 text-green-400" />
+                <div>
+                  <CardTitle className="text-xl text-green-400">Transcription Complete</CardTitle>
+                  <CardDescription>All steps completed successfully</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col gap-6">
+                {/* Statistics */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="rounded-lg border border-green-500/20 bg-green-500/5 p-4 text-center">
+                    <span className="text-xs text-[var(--text-low)]">Confidence</span>
+                    <p className="text-3xl font-bold text-green-400">{(finalResult.confidence * 100).toFixed(1)}%</p>
+                  </div>
+                  <div className="rounded-lg border border-blue-500/20 bg-blue-500/5 p-4 text-center">
+                    <span className="text-xs text-[var(--text-low)]">Duration</span>
+                    <p className="text-3xl font-bold text-blue-400">{finalResult.duration_seconds}s</p>
+                  </div>
+                  <div className="rounded-lg border border-[var(--accent)]/20 bg-[var(--accent)]/5 p-4 text-center">
+                    <span className="text-xs text-[var(--text-low)]">Text Length</span>
+                    <p className="text-3xl font-bold text-[var(--accent)]">{finalResult.text?.length || 0}</p>
+                    <span className="text-xs text-[var(--text-low)]">characters</span>
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* Transcribed Text */}
+                <div>
+                  <h4 className="font-semibold text-[var(--text-high)] mb-2">Transcribed Text (Raw):</h4>
+                  <div className="rounded-md border border-[var(--border)] bg-[var(--bg-elevated)] p-4 max-h-[300px] overflow-y-auto">
+                    <p className="text-sm text-[var(--text-mid)] whitespace-pre-wrap">{finalResult.text}</p>
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* AI Content Restructuring Section */}
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <h4 className="text-lg font-semibold text-[var(--text-high)]">AI Content Restructuring</h4>
+                    <Badge variant="success">FREE</Badge>
+                  </div>
+                  <p className="text-sm text-[var(--text-mid)] mb-4">
+                    Transform the raw transcription into professional, engaging content. The AI will improve structure, clarity, and flow while preserving all original information. Maximum +50% enrichment.
+                  </p>
+
+                  <div className="flex gap-3 mb-6">
+                    <Button
+                      onClick={() => reformatWithAI('gemini')}
+                      disabled={isReformattingGemini || isReformattingGroq}
+                    >
+                      {isReformattingGemini ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                      {isReformattingGemini ? 'Restructuring...' : 'Restructure with Gemini'}
+                    </Button>
+
+                    <Button
+                      variant="secondary"
+                      onClick={() => reformatWithAI('groq')}
+                      disabled={isReformattingGemini || isReformattingGroq}
+                    >
+                      {isReformattingGroq ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                      {isReformattingGroq ? 'Restructuring...' : 'Restructure with Groq'}
+                    </Button>
+                  </div>
+
+                  {/* Gemini Result */}
+                  {geminiResult && (
+                    <div className="mb-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <h5 className="font-semibold text-sm text-[var(--text-high)]">Gemini Result</h5>
+                        <Badge variant="success">FREE</Badge>
+                      </div>
+                      <div className="rounded-md border border-[var(--border)] border-l-4 border-l-[var(--accent)] bg-[var(--bg-elevated)] p-4 max-h-[400px] overflow-y-auto">
+                        <p className="text-sm text-[var(--text-mid)] whitespace-pre-wrap">{geminiResult}</p>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="mt-2"
+                        onClick={() => {
+                          navigator.clipboard.writeText(geminiResult);
+                          alert('Gemini result copied to clipboard!');
+                        }}
+                      >
+                        <Copy className="h-4 w-4 mr-1" /> Copy Gemini Result
+                      </Button>
+                    </div>
+                  )}
+
+                  {/* Groq Result */}
+                  {groqResult && (
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <h5 className="font-semibold text-sm text-[var(--text-high)]">Groq Result</h5>
+                        <Badge variant="success">FREE</Badge>
+                      </div>
+                      <div className="rounded-md border border-[var(--border)] border-l-4 border-l-purple-500 bg-[var(--bg-elevated)] p-4 max-h-[400px] overflow-y-auto">
+                        <p className="text-sm text-[var(--text-mid)] whitespace-pre-wrap">{groqResult}</p>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="mt-2"
+                        onClick={() => {
+                          navigator.clipboard.writeText(groqResult);
+                          alert('Groq result copied to clipboard!');
+                        }}
+                      >
+                        <Copy className="h-4 w-4 mr-1" /> Copy Groq Result
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Backend Test Result Modal */}
+        <Dialog open={showBackendTestModal} onOpenChange={setShowBackendTestModal}>
+          <DialogContent className="max-w-[70vw] max-h-[90vh] flex flex-col">
+            <DialogHeader className={backendTestResult?.success ? 'bg-green-500/10 -mx-6 -mt-6 px-6 pt-6 pb-4 rounded-t-lg' : 'bg-red-500/10 -mx-6 -mt-6 px-6 pt-6 pb-4 rounded-t-lg'}>
+              <div className="flex items-center gap-3">
+                {backendTestResult?.success ? (
+                  <CheckCircle2 className="h-8 w-8 text-green-400" />
+                ) : (
+                  <AlertCircle className="h-8 w-8 text-red-400" />
+                )}
+                <DialogTitle className="text-xl">Backend Test Result</DialogTitle>
+              </div>
+            </DialogHeader>
+
+            <div className="overflow-y-auto flex-1 py-4">
               {backendTestResult && (
-                <Stack spacing={3}>
+                <div className="flex flex-col gap-4">
                   {/* Status */}
-                  <Alert severity={backendTestResult.success ? 'success' : 'error'}>
-                    <Typography variant="body1" fontWeight="bold">
-                      {backendTestResult.success ? '✅ Test Completed Successfully' : '❌ Test Failed'}
-                    </Typography>
-                    <Typography variant="caption">
-                      Exit Code: {backendTestResult.exit_code} | Timestamp: {new Date(backendTestResult.timestamp).toLocaleString()}
-                    </Typography>
+                  <Alert variant={backendTestResult.success ? 'success' : 'destructive'}>
+                    <AlertDescription>
+                      <p className="font-semibold">
+                        {backendTestResult.success ? 'Test Completed Successfully' : 'Test Failed'}
+                      </p>
+                      <p className="text-xs mt-1">
+                        Exit Code: {backendTestResult.exit_code} | Timestamp: {new Date(backendTestResult.timestamp).toLocaleString()}
+                      </p>
+                    </AlertDescription>
                   </Alert>
 
                   {/* Output */}
-                  <Box>
-                    <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
-                      Test Output:
-                    </Typography>
-                    <Paper
-                      variant="outlined"
-                      sx={{
-                        p: 2,
-                        maxHeight: 500,
-                        overflowY: 'auto',
-                        bgcolor: theme.palette.mode === 'dark' ? 'grey.900' : 'grey.50',
-                        fontFamily: 'monospace',
-                      }}
-                    >
-                      <pre style={{ 
-                        margin: 0, 
-                        whiteSpace: 'pre-wrap', 
-                        wordBreak: 'break-word',
-                        fontSize: '0.875rem'
-                      }}>
+                  <div>
+                    <h4 className="font-semibold text-[var(--text-high)] mb-2">Test Output:</h4>
+                    <div className="rounded-md border border-[var(--border)] bg-[var(--bg-elevated)] p-4 max-h-[500px] overflow-y-auto font-mono">
+                      <pre className="whitespace-pre-wrap break-words text-sm text-[var(--text-mid)]">
                         {backendTestResult.output}
                       </pre>
-                    </Paper>
-                  </Box>
+                    </div>
+                  </div>
 
                   {/* Error (if any) */}
                   {backendTestResult.error && (
-                    <Box>
-                      <Typography variant="subtitle1" fontWeight="bold" gutterBottom color="error">
-                        Error Output:
-                      </Typography>
-                      <Paper
-                        variant="outlined"
-                        sx={{
-                          p: 2,
-                          maxHeight: 300,
-                          overflowY: 'auto',
-                          bgcolor: 'error.lighter',
-                          fontFamily: 'monospace',
-                        }}
-                      >
-                        <pre style={{ 
-                          margin: 0, 
-                          whiteSpace: 'pre-wrap', 
-                          wordBreak: 'break-word',
-                          fontSize: '0.875rem',
-                          color: theme.palette.error.main
-                        }}>
+                    <div>
+                      <h4 className="font-semibold text-red-400 mb-2">Error Output:</h4>
+                      <div className="rounded-md border border-red-500/30 bg-red-500/5 p-4 max-h-[300px] overflow-y-auto font-mono">
+                        <pre className="whitespace-pre-wrap break-words text-sm text-red-400">
                           {backendTestResult.error}
                         </pre>
-                      </Paper>
-                    </Box>
+                      </div>
+                    </div>
                   )}
-
-                  {/* Actions */}
-                  <Stack direction="row" spacing={2} justifyContent="flex-end">
-                    <Button
-                      variant="outlined"
-                      startIcon={<ContentCopy />}
-                      onClick={() => {
-                        navigator.clipboard.writeText(JSON.stringify(backendTestResult, null, 2));
-                        alert('Test result copied to clipboard!');
-                      }}
-                    >
-                      Copy Full Result
-                    </Button>
-                    <Button
-                      variant="contained"
-                      onClick={() => setShowBackendTestModal(false)}
-                    >
-                      Close
-                    </Button>
-                  </Stack>
-                </Stack>
+                </div>
               )}
-            </Box>
-          </Box>
-        </Fade>
-      </Modal>
-    </Box>
+            </div>
+
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  navigator.clipboard.writeText(JSON.stringify(backendTestResult, null, 2));
+                  alert('Test result copied to clipboard!');
+                }}
+              >
+                <Copy className="h-4 w-4 mr-2" /> Copy Full Result
+              </Button>
+              <Button onClick={() => setShowBackendTestModal(false)}>
+                Close
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+    </TooltipProvider>
   );
 }

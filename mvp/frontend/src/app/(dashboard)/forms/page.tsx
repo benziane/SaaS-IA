@@ -2,52 +2,22 @@
 
 import { useState } from 'react';
 import {
-  Alert,
-  Box,
-  Button,
-  Card,
-  CardActions,
-  CardContent,
-  Chip,
-  CircularProgress,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  FormControl,
-  FormControlLabel,
-  Grid,
-  IconButton,
-  InputLabel,
-  LinearProgress,
-  MenuItem,
-  Select,
-  Skeleton,
-  Switch,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  TextField,
-  Tooltip,
-  Typography,
-} from '@mui/material';
-import AddIcon from '@mui/icons-material/Add';
-import DeleteIcon from '@mui/icons-material/Delete';
-import EditIcon from '@mui/icons-material/Edit';
-import DynamicFormIcon from '@mui/icons-material/DynamicForm';
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-import BarChartIcon from '@mui/icons-material/BarChart';
-import ListAltIcon from '@mui/icons-material/ListAlt';
-import PublishIcon from '@mui/icons-material/Publish';
-import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
-import BlockIcon from '@mui/icons-material/Block';
-import LinkIcon from '@mui/icons-material/Link';
-import GradeIcon from '@mui/icons-material/Grade';
-import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
-import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
+  Plus, Trash2, Pencil, Copy, BarChart3, List, Upload, Sparkles,
+  Ban, Link, Star, ArrowUp, ArrowDown, Loader2, FileText,
+} from 'lucide-react';
+
+import { Card, CardContent, CardFooter } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Progress } from '@/components/ui/progress';
+import { Button } from '@/lib/design-hub/components/Button';
+import { Input } from '@/lib/design-hub/components/Input';
+import { Textarea } from '@/lib/design-hub/components/Textarea';
+import { Skeleton } from '@/lib/design-hub/components/Skeleton';
+import { Switch } from '@/lib/design-hub/components/Switch';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/lib/design-hub/components/Select';
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/lib/design-hub/components/Tooltip';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/lib/design-hub/components/Dialog';
 
 import {
   useForms,
@@ -76,10 +46,10 @@ const FIELD_TYPES = [
 
 const STYLE_OPTIONS = ['conversational', 'classic', 'quiz', 'survey'];
 
-const STATUS_COLORS: Record<string, 'default' | 'success' | 'error'> = {
+const STATUS_VARIANTS: Record<string, 'default' | 'success' | 'destructive'> = {
   draft: 'default',
   published: 'success',
-  closed: 'error',
+  closed: 'destructive',
 };
 
 export default function FormsPage() {
@@ -196,722 +166,655 @@ export default function FormsPage() {
   };
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
-        <Box>
-          <Typography variant="h4" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <DynamicFormIcon color="primary" /> AI Forms
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
+    <div className="p-6">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-3xl font-bold text-[var(--text-high)] flex items-center gap-2">
+            <FileText className="h-8 w-8 text-[var(--accent)]" /> AI Forms
+          </h1>
+          <p className="text-sm text-[var(--text-mid)]">
             Create AI-powered forms with smart validation, response analysis, and AI-generated fields
-          </Typography>
-        </Box>
-        <Box sx={{ display: 'flex', gap: 1 }}>
-          <Button
-            variant="outlined"
-            startIcon={<AutoAwesomeIcon />}
-            onClick={() => setGenerateOpen(true)}
-          >
-            AI Generate
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setGenerateOpen(true)}>
+            <Sparkles className="h-4 w-4 mr-2" /> AI Generate
           </Button>
-          <Button variant="contained" startIcon={<AddIcon />} onClick={() => setCreateOpen(true)}>
-            New Form
+          <Button onClick={() => setCreateOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" /> New Form
           </Button>
-        </Box>
-      </Box>
+        </div>
+      </div>
 
       {isLoading ? (
-        <Grid container spacing={3}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
           {[1, 2, 3].map((i) => (
-            <Grid item xs={12} sm={6} md={4} key={i}>
-              <Skeleton variant="rectangular" height={200} sx={{ borderRadius: 2 }} />
-            </Grid>
+            <Skeleton key={i} className="h-52 rounded-lg" />
           ))}
-        </Grid>
+        </div>
       ) : !forms?.length ? (
         <Card>
-          <CardContent sx={{ textAlign: 'center', py: 8 }}>
-            <DynamicFormIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
-            <Typography variant="h6" color="text.secondary">
-              No forms yet
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 1, mb: 2 }}>
+          <CardContent className="text-center py-16 px-6">
+            <FileText className="h-16 w-16 text-[var(--text-low)] mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-[var(--text-mid)]">No forms yet</h3>
+            <p className="text-sm text-[var(--text-mid)] mt-2 mb-4">
               Create your first AI-powered form or let AI generate one for you
-            </Typography>
-            <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
-              <Button
-                variant="outlined"
-                startIcon={<AutoAwesomeIcon />}
-                onClick={() => setGenerateOpen(true)}
-              >
-                AI Generate
+            </p>
+            <div className="flex gap-2 justify-center">
+              <Button variant="outline" onClick={() => setGenerateOpen(true)}>
+                <Sparkles className="h-4 w-4 mr-2" /> AI Generate
               </Button>
-              <Button variant="contained" startIcon={<AddIcon />} onClick={() => setCreateOpen(true)}>
-                Create Form
+              <Button onClick={() => setCreateOpen(true)}>
+                <Plus className="h-4 w-4 mr-2" /> Create Form
               </Button>
-            </Box>
+            </div>
           </CardContent>
         </Card>
       ) : (
-        <Grid container spacing={3}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
           {forms.map((form) => (
-            <Grid item xs={12} sm={6} md={4} key={form.id}>
-              <Card
-                variant="outlined"
-                sx={{
-                  height: '100%',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  '&:hover': { borderColor: 'primary.main' },
-                }}
-              >
-                <CardContent sx={{ flexGrow: 1 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
-                    <Typography variant="h6" noWrap sx={{ maxWidth: '70%' }}>
-                      {form.title}
-                    </Typography>
-                    <Chip
-                      label={form.status}
-                      size="small"
-                      color={STATUS_COLORS[form.status] || 'default'}
-                    />
-                  </Box>
+            <Card
+              key={form.id}
+              className="flex flex-col h-full border border-[var(--border)] hover:border-[var(--accent)] transition-colors"
+            >
+              <CardContent className="flex-1 p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-lg font-semibold text-[var(--text-high)] truncate max-w-[70%]">
+                    {form.title}
+                  </h3>
+                  <Badge variant={STATUS_VARIANTS[form.status] || 'default'}>
+                    {form.status}
+                  </Badge>
+                </div>
 
-                  {form.description && (
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      sx={{
-                        mb: 1.5,
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        display: '-webkit-box',
-                        WebkitLineClamp: 2,
-                        WebkitBoxOrient: 'vertical',
-                      }}
-                    >
-                      {form.description}
-                    </Typography>
-                  )}
+                {form.description && (
+                  <p className="text-sm text-[var(--text-mid)] mb-3 line-clamp-2">
+                    {form.description}
+                  </p>
+                )}
 
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 1.5 }}>
-                    <Chip label={`${form.fields.length} fields`} size="small" variant="outlined" color="primary" />
-                    <Chip label={form.style} size="small" variant="outlined" />
-                    {form.is_public && <Chip label="Public" size="small" color="info" />}
-                  </Box>
+                <div className="flex flex-wrap gap-1 mb-3">
+                  <Badge variant="outline" className="text-[var(--accent)]">{form.fields.length} fields</Badge>
+                  <Badge variant="outline">{form.style}</Badge>
+                  {form.is_public && <Badge variant="secondary">Public</Badge>}
+                </div>
 
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                      <ListAltIcon fontSize="small" color="action" />
-                      <Typography variant="caption" color="text.secondary">
-                        {form.responses_count} response{form.responses_count !== 1 ? 's' : ''}
-                      </Typography>
-                    </Box>
-                  </Box>
-                </CardContent>
+                <div className="flex items-center gap-1">
+                  <List className="h-3.5 w-3.5 text-[var(--text-mid)]" />
+                  <span className="text-xs text-[var(--text-mid)]">
+                    {form.responses_count} response{form.responses_count !== 1 ? 's' : ''}
+                  </span>
+                </div>
+              </CardContent>
 
-                <CardActions sx={{ justifyContent: 'flex-end', pt: 0 }}>
+              <CardFooter className="justify-end gap-1 px-4 pb-3 pt-0">
+                <TooltipProvider>
                   {form.status === 'draft' && (
-                    <Tooltip title="Publish">
-                      <IconButton
-                        size="small"
-                        color="success"
-                        onClick={() => publishMutation.mutate(form.id)}
-                        disabled={publishMutation.isPending}
-                      >
-                        <PublishIcon fontSize="small" />
-                      </IconButton>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          type="button"
+                          title="Publish"
+                          className="p-1.5 rounded hover:bg-green-100 text-green-600"
+                          onClick={() => publishMutation.mutate(form.id)}
+                          disabled={publishMutation.isPending}
+                        >
+                          <Upload className="h-4 w-4" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent>Publish</TooltipContent>
                     </Tooltip>
                   )}
                   {form.status === 'published' && (
-                    <Tooltip title="Close">
-                      <IconButton
-                        size="small"
-                        color="warning"
-                        onClick={() => closeMutation.mutate(form.id)}
-                        disabled={closeMutation.isPending}
-                      >
-                        <BlockIcon fontSize="small" />
-                      </IconButton>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          type="button"
+                          title="Close"
+                          className="p-1.5 rounded hover:bg-yellow-100 text-yellow-600"
+                          onClick={() => closeMutation.mutate(form.id)}
+                          disabled={closeMutation.isPending}
+                        >
+                          <Ban className="h-4 w-4" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent>Close</TooltipContent>
                     </Tooltip>
                   )}
                   {form.share_token && (
-                    <Tooltip title="Copy Share Link">
-                      <IconButton
-                        size="small"
-                        onClick={() => handleCopy(`${window.location.origin}/forms/public/${form.share_token}`)}
-                      >
-                        <LinkIcon fontSize="small" />
-                      </IconButton>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          type="button"
+                          title="Copy Share Link"
+                          className="p-1.5 rounded hover:bg-[var(--bg-hover)]"
+                          onClick={() => handleCopy(`${window.location.origin}/forms/public/${form.share_token}`)}
+                        >
+                          <Link className="h-4 w-4 text-[var(--text-mid)]" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent>Copy Share Link</TooltipContent>
                     </Tooltip>
                   )}
-                  <Tooltip title="Responses">
-                    <IconButton
-                      size="small"
-                      onClick={() => {
-                        setResponsesFormId(form.id);
-                        setResponsesOpen(true);
-                      }}
-                    >
-                      <ListAltIcon fontSize="small" />
-                    </IconButton>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        type="button"
+                        title="Responses"
+                        className="p-1.5 rounded hover:bg-[var(--bg-hover)]"
+                        onClick={() => {
+                          setResponsesFormId(form.id);
+                          setResponsesOpen(true);
+                        }}
+                      >
+                        <List className="h-4 w-4 text-[var(--text-mid)]" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent>Responses</TooltipContent>
                   </Tooltip>
-                  <Tooltip title="Analytics">
-                    <IconButton
-                      size="small"
-                      onClick={() => {
-                        setAnalyticsFormId(form.id);
-                        setAnalyticsOpen(true);
-                      }}
-                    >
-                      <BarChartIcon fontSize="small" />
-                    </IconButton>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        type="button"
+                        title="Analytics"
+                        className="p-1.5 rounded hover:bg-[var(--bg-hover)]"
+                        onClick={() => {
+                          setAnalyticsFormId(form.id);
+                          setAnalyticsOpen(true);
+                        }}
+                      >
+                        <BarChart3 className="h-4 w-4 text-[var(--text-mid)]" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent>Analytics</TooltipContent>
                   </Tooltip>
-                  <Tooltip title="Details">
-                    <IconButton size="small" onClick={() => setDetailForm(form)}>
-                      <EditIcon fontSize="small" />
-                    </IconButton>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        type="button"
+                        title="Details"
+                        className="p-1.5 rounded hover:bg-[var(--bg-hover)]"
+                        onClick={() => setDetailForm(form)}
+                      >
+                        <Pencil className="h-4 w-4 text-[var(--text-mid)]" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent>Details</TooltipContent>
                   </Tooltip>
-                  <Tooltip title="Delete">
-                    <IconButton
-                      size="small"
-                      color="error"
-                      onClick={() => deleteMutation.mutate(form.id)}
-                      disabled={deleteMutation.isPending}
-                    >
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        type="button"
+                        title="Delete"
+                        className="p-1.5 rounded hover:bg-red-100 text-red-500"
+                        onClick={() => deleteMutation.mutate(form.id)}
+                        disabled={deleteMutation.isPending}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent>Delete</TooltipContent>
                   </Tooltip>
-                </CardActions>
-              </Card>
-            </Grid>
+                </TooltipProvider>
+              </CardFooter>
+            </Card>
           ))}
-        </Grid>
+        </div>
       )}
 
       {/* Create Form Dialog */}
-      <Dialog open={createOpen} onClose={() => setCreateOpen(false)} maxWidth="md" fullWidth>
-        <DialogTitle>New Form</DialogTitle>
-        <DialogContent>
-          <TextField
-            fullWidth
-            label="Form Title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="e.g., Customer Feedback Survey"
-            sx={{ mt: 1, mb: 2 }}
-          />
-          <TextField
-            fullWidth
-            label="Description (optional)"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="Brief description of the form"
-            sx={{ mb: 2 }}
-          />
-          <Grid container spacing={2} sx={{ mb: 2 }}>
-            <Grid item xs={6}>
-              <FormControl fullWidth size="small">
-                <InputLabel>Style</InputLabel>
-                <Select value={style} label="Style" onChange={(e) => setStyle(e.target.value)}>
-                  {STYLE_OPTIONS.map((s) => (
-                    <MenuItem key={s} value={s}>
-                      {s.charAt(0).toUpperCase() + s.slice(1)}
-                    </MenuItem>
-                  ))}
+      <Dialog open={createOpen} onOpenChange={(v) => { if (!v) setCreateOpen(false); }}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>New Form</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 mt-2">
+            <Input
+              placeholder="Form Title (e.g., Customer Feedback Survey)"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+            />
+            <Input
+              placeholder="Description (optional)"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+            />
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs text-[var(--text-mid)] mb-1 block">Style</label>
+                <Select value={style} onValueChange={setStyle}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Style" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {STYLE_OPTIONS.map((s) => (
+                      <SelectItem key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</SelectItem>
+                    ))}
+                  </SelectContent>
                 </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={6}>
-              <FormControlLabel
-                control={<Switch checked={isPublic} onChange={(e) => setIsPublic(e.target.checked)} />}
-                label="Public form"
-              />
-            </Grid>
-          </Grid>
-          <TextField
-            fullWidth
-            label="Thank You Message (optional)"
-            value={thankYouMessage}
-            onChange={(e) => setThankYouMessage(e.target.value)}
-            placeholder="Message shown after submission"
-            sx={{ mb: 2 }}
-          />
+              </div>
+              <div className="flex items-center gap-2 pt-5">
+                <Switch checked={isPublic} onCheckedChange={setIsPublic} />
+                <label className="text-sm text-[var(--text-high)]">Public form</label>
+              </div>
+            </div>
+            <Input
+              placeholder="Thank You Message (optional)"
+              value={thankYouMessage}
+              onChange={(e) => setThankYouMessage(e.target.value)}
+            />
 
-          {/* Fields Builder */}
-          <Box sx={{ mb: 2 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
-              <Typography variant="subtitle2">Fields</Typography>
-              <Button size="small" startIcon={<AddIcon />} onClick={handleAddField}>
-                Add Field
-              </Button>
-            </Box>
+            {/* Fields Builder */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-sm font-medium text-[var(--text-high)]">Fields</p>
+                <Button size="sm" variant="outline" onClick={handleAddField}>
+                  <Plus className="h-3.5 w-3.5 mr-1" /> Add Field
+                </Button>
+              </div>
 
-            {editFields.map((field, index) => (
-              <Card key={field.field_id} variant="outlined" sx={{ mb: 1, p: 1.5 }}>
-                <Grid container spacing={1} alignItems="center">
-                  <Grid item xs={4}>
-                    <TextField
-                      fullWidth
-                      size="small"
-                      label="Label"
-                      value={field.label}
-                      onChange={(e) => handleUpdateField(index, { label: e.target.value })}
-                    />
-                  </Grid>
-                  <Grid item xs={2}>
-                    <FormControl fullWidth size="small">
-                      <InputLabel>Type</InputLabel>
+              {editFields.map((field, index) => (
+                <Card key={field.field_id} className="mb-2 p-3 border border-[var(--border)]">
+                  <div className="grid grid-cols-12 gap-2 items-center">
+                    <div className="col-span-4">
+                      <Input
+                        placeholder="Label"
+                        value={field.label}
+                        onChange={(e) => handleUpdateField(index, { label: e.target.value })}
+                      />
+                    </div>
+                    <div className="col-span-2">
                       <Select
                         value={field.type}
-                        label="Type"
-                        onChange={(e) =>
+                        onValueChange={(val) =>
                           handleUpdateField(index, {
-                            type: e.target.value as FormField['type'],
-                            options:
-                              e.target.value === 'select' || e.target.value === 'multiselect'
-                                ? field.options || []
-                                : null,
+                            type: val as FormField['type'],
+                            options: val === 'select' || val === 'multiselect' ? field.options || [] : null,
                           })
                         }
                       >
-                        {FIELD_TYPES.map((ft) => (
-                          <MenuItem key={ft.value} value={ft.value}>
-                            {ft.label}
-                          </MenuItem>
-                        ))}
+                        <SelectTrigger>
+                          <SelectValue placeholder="Type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {FIELD_TYPES.map((ft) => (
+                            <SelectItem key={ft.value} value={ft.value}>{ft.label}</SelectItem>
+                          ))}
+                        </SelectContent>
                       </Select>
-                    </FormControl>
-                  </Grid>
-                  <Grid item xs={2}>
-                    <FormControlLabel
-                      control={
-                        <Switch
-                          size="small"
-                          checked={field.required}
-                          onChange={(e) => handleUpdateField(index, { required: e.target.checked })}
-                        />
-                      }
-                      label="Req"
-                    />
-                  </Grid>
-                  {(field.type === 'select' || field.type === 'multiselect') && (
-                    <Grid item xs={2}>
-                      <TextField
-                        fullWidth
-                        size="small"
-                        label="Options (comma)"
-                        value={(field.options || []).join(', ')}
-                        onChange={(e) =>
-                          handleUpdateField(index, {
-                            options: e.target.value.split(',').map((o) => o.trim()).filter(Boolean),
-                          })
-                        }
+                    </div>
+                    <div className="col-span-2 flex items-center gap-1">
+                      <Switch
+                        checked={field.required}
+                        onCheckedChange={(v) => handleUpdateField(index, { required: v })}
                       />
-                    </Grid>
-                  )}
-                  <Grid item xs={field.type === 'select' || field.type === 'multiselect' ? 2 : 4} sx={{ textAlign: 'right' }}>
-                    <IconButton
-                      size="small"
-                      onClick={() => handleMoveField(index, 'up')}
-                      disabled={index === 0}
-                    >
-                      <ArrowUpwardIcon fontSize="small" />
-                    </IconButton>
-                    <IconButton
-                      size="small"
-                      onClick={() => handleMoveField(index, 'down')}
-                      disabled={index === editFields.length - 1}
-                    >
-                      <ArrowDownwardIcon fontSize="small" />
-                    </IconButton>
-                    <IconButton size="small" color="error" onClick={() => handleRemoveField(index)}>
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
-                  </Grid>
-                </Grid>
-              </Card>
-            ))}
+                      <span className="text-xs text-[var(--text-mid)]">Req</span>
+                    </div>
+                    {(field.type === 'select' || field.type === 'multiselect') && (
+                      <div className="col-span-2">
+                        <Input
+                          placeholder="Options (comma)"
+                          value={(field.options || []).join(', ')}
+                          onChange={(e) =>
+                            handleUpdateField(index, {
+                              options: e.target.value.split(',').map((o) => o.trim()).filter(Boolean),
+                            })
+                          }
+                        />
+                      </div>
+                    )}
+                    <div className={`${field.type === 'select' || field.type === 'multiselect' ? 'col-span-2' : 'col-span-4'} flex justify-end gap-0.5`}>
+                      <button type="button" title="Move up" className="p-1 rounded hover:bg-[var(--bg-hover)]" onClick={() => handleMoveField(index, 'up')} disabled={index === 0}>
+                        <ArrowUp className="h-4 w-4 text-[var(--text-mid)]" />
+                      </button>
+                      <button type="button" title="Move down" className="p-1 rounded hover:bg-[var(--bg-hover)]" onClick={() => handleMoveField(index, 'down')} disabled={index === editFields.length - 1}>
+                        <ArrowDown className="h-4 w-4 text-[var(--text-mid)]" />
+                      </button>
+                      <button type="button" title="Remove" className="p-1 rounded hover:bg-red-100 text-red-500" onClick={() => handleRemoveField(index)}>
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                </Card>
+              ))}
 
-            {editFields.length === 0 && (
-              <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 2 }}>
-                No fields added yet. Click &quot;Add Field&quot; to start building.
-              </Typography>
-            )}
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setCreateOpen(false)}>Cancel</Button>
-          <Button
-            variant="contained"
-            onClick={handleCreate}
-            disabled={!title.trim() || createMutation.isPending}
-            startIcon={
-              createMutation.isPending ? (
-                <CircularProgress size={16} color="inherit" />
+              {editFields.length === 0 && (
+                <p className="text-sm text-[var(--text-mid)] text-center py-4">
+                  No fields added yet. Click &quot;Add Field&quot; to start building.
+                </p>
+              )}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCreateOpen(false)}>Cancel</Button>
+            <Button
+              onClick={handleCreate}
+              disabled={!title.trim() || createMutation.isPending}
+            >
+              {createMutation.isPending ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
               ) : (
-                <DynamicFormIcon />
-              )
-            }
-          >
-            Create Form
-          </Button>
-        </DialogActions>
+                <FileText className="h-4 w-4 mr-2" />
+              )}
+              Create Form
+            </Button>
+          </DialogFooter>
+        </DialogContent>
       </Dialog>
 
       {/* AI Generate Dialog */}
-      <Dialog open={generateOpen} onClose={() => setGenerateOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <AutoAwesomeIcon color="primary" /> AI Form Generator
-          </Box>
-        </DialogTitle>
-        <DialogContent>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Describe the form you want and AI will generate the fields for you.
-          </Typography>
-          <TextField
-            fullWidth
-            multiline
-            rows={4}
-            label="Describe your form"
-            value={generatePrompt}
-            onChange={(e) => setGeneratePrompt(e.target.value)}
-            placeholder="e.g., A customer satisfaction survey for an e-commerce platform with questions about delivery, product quality, and support experience"
-            sx={{ mb: 2 }}
-          />
-          <TextField
-            fullWidth
-            type="number"
-            label="Number of fields"
-            value={generateNumFields}
-            onChange={(e) => setGenerateNumFields(Math.max(1, Math.min(30, parseInt(e.target.value) || 5)))}
-            inputProps={{ min: 1, max: 30 }}
-            size="small"
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setGenerateOpen(false)}>Cancel</Button>
-          <Button
-            variant="contained"
-            onClick={handleGenerate}
-            disabled={!generatePrompt.trim() || generateMutation.isPending}
-            startIcon={
-              generateMutation.isPending ? (
-                <CircularProgress size={16} color="inherit" />
+      <Dialog open={generateOpen} onOpenChange={(v) => { if (!v) setGenerateOpen(false); }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-[var(--accent)]" /> AI Form Generator
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 mt-2">
+            <p className="text-sm text-[var(--text-mid)]">
+              Describe the form you want and AI will generate the fields for you.
+            </p>
+            <Textarea
+              rows={4}
+              placeholder="e.g., A customer satisfaction survey for an e-commerce platform with questions about delivery, product quality, and support experience"
+              value={generatePrompt}
+              onChange={(e) => setGeneratePrompt(e.target.value)}
+            />
+            <Input
+              type="number"
+              placeholder="Number of fields"
+              value={generateNumFields}
+              onChange={(e) => setGenerateNumFields(Math.max(1, Math.min(30, parseInt(e.target.value) || 5)))}
+              min={1}
+              max={30}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setGenerateOpen(false)}>Cancel</Button>
+            <Button
+              onClick={handleGenerate}
+              disabled={!generatePrompt.trim() || generateMutation.isPending}
+            >
+              {generateMutation.isPending ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
               ) : (
-                <AutoAwesomeIcon />
-              )
-            }
-          >
-            Generate
-          </Button>
-        </DialogActions>
+                <Sparkles className="h-4 w-4 mr-2" />
+              )}
+              Generate
+            </Button>
+          </DialogFooter>
+        </DialogContent>
       </Dialog>
 
       {/* Form Detail Dialog */}
-      <Dialog open={!!detailForm} onClose={() => setDetailForm(null)} maxWidth="md" fullWidth>
+      <Dialog open={!!detailForm} onOpenChange={(v) => { if (!v) setDetailForm(null); }}>
         {detailForm && (
-          <>
-            <DialogTitle>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <DynamicFormIcon color="primary" />
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5 text-[var(--accent)]" />
                 {detailForm.title}
-                <Chip
-                  label={detailForm.status}
-                  size="small"
-                  color={STATUS_COLORS[detailForm.status] || 'default'}
-                />
-              </Box>
-            </DialogTitle>
-            <DialogContent dividers>
+                <Badge variant={STATUS_VARIANTS[detailForm.status] || 'default'}>{detailForm.status}</Badge>
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 border-t border-[var(--border)] pt-4">
               {detailForm.description && (
-                <Box sx={{ mb: 2 }}>
-                  <Typography variant="caption" color="text.secondary">Description</Typography>
-                  <Typography variant="body2">{detailForm.description}</Typography>
-                </Box>
+                <div>
+                  <span className="text-xs text-[var(--text-mid)]">Description</span>
+                  <p className="text-sm text-[var(--text-high)]">{detailForm.description}</p>
+                </div>
               )}
 
-              <Grid container spacing={2} sx={{ mb: 2 }}>
-                <Grid item xs={3}>
-                  <Typography variant="caption" color="text.secondary">Style</Typography>
-                  <Typography variant="body2">{detailForm.style}</Typography>
-                </Grid>
-                <Grid item xs={3}>
-                  <Typography variant="caption" color="text.secondary">Fields</Typography>
-                  <Typography variant="body2">{detailForm.fields.length}</Typography>
-                </Grid>
-                <Grid item xs={3}>
-                  <Typography variant="caption" color="text.secondary">Responses</Typography>
-                  <Typography variant="body2">{detailForm.responses_count}</Typography>
-                </Grid>
-                <Grid item xs={3}>
-                  <Typography variant="caption" color="text.secondary">Public</Typography>
-                  <Typography variant="body2">{detailForm.is_public ? 'Yes' : 'No'}</Typography>
-                </Grid>
-              </Grid>
+              <div className="grid grid-cols-4 gap-4">
+                <div>
+                  <span className="text-xs text-[var(--text-mid)]">Style</span>
+                  <p className="text-sm text-[var(--text-high)]">{detailForm.style}</p>
+                </div>
+                <div>
+                  <span className="text-xs text-[var(--text-mid)]">Fields</span>
+                  <p className="text-sm text-[var(--text-high)]">{detailForm.fields.length}</p>
+                </div>
+                <div>
+                  <span className="text-xs text-[var(--text-mid)]">Responses</span>
+                  <p className="text-sm text-[var(--text-high)]">{detailForm.responses_count}</p>
+                </div>
+                <div>
+                  <span className="text-xs text-[var(--text-mid)]">Public</span>
+                  <p className="text-sm text-[var(--text-high)]">{detailForm.is_public ? 'Yes' : 'No'}</p>
+                </div>
+              </div>
 
               {detailForm.share_token && (
-                <Box sx={{ mb: 2 }}>
-                  <Typography variant="caption" color="text.secondary">Share Token</Typography>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Typography
-                      variant="body2"
-                      fontFamily="monospace"
-                      sx={{ bgcolor: 'action.hover', px: 1, py: 0.5, borderRadius: 0.5 }}
-                    >
+                <div>
+                  <span className="text-xs text-[var(--text-mid)]">Share Token</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-mono bg-[var(--bg-surface)] px-2 py-1 rounded">
                       {detailForm.share_token}
-                    </Typography>
-                    <IconButton size="small" onClick={() => handleCopy(detailForm.share_token!)}>
-                      <ContentCopyIcon fontSize="small" />
-                    </IconButton>
-                  </Box>
-                </Box>
+                    </span>
+                    <button type="button" title="Copy" className="p-1 rounded hover:bg-[var(--bg-hover)]" onClick={() => handleCopy(detailForm.share_token!)}>
+                      <Copy className="h-4 w-4 text-[var(--text-mid)]" />
+                    </button>
+                  </div>
+                </div>
               )}
 
               {detailForm.thank_you_message && (
-                <Box sx={{ mb: 2 }}>
-                  <Typography variant="caption" color="text.secondary">Thank You Message</Typography>
-                  <Typography variant="body2">{detailForm.thank_you_message}</Typography>
-                </Box>
+                <div>
+                  <span className="text-xs text-[var(--text-mid)]">Thank You Message</span>
+                  <p className="text-sm text-[var(--text-high)]">{detailForm.thank_you_message}</p>
+                </div>
               )}
 
-              <Typography variant="subtitle2" sx={{ mb: 1 }}>Fields</Typography>
-              <TableContainer>
-                <Table size="small">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Label</TableCell>
-                      <TableCell>Type</TableCell>
-                      <TableCell>Required</TableCell>
-                      <TableCell>Options</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {detailForm.fields.map((field) => (
-                      <TableRow key={field.field_id}>
-                        <TableCell>{field.label}</TableCell>
-                        <TableCell>
-                          <Chip label={field.type} size="small" variant="outlined" />
-                        </TableCell>
-                        <TableCell>{field.required ? 'Yes' : 'No'}</TableCell>
-                        <TableCell>
-                          {field.options ? field.options.join(', ') : '-'}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            </DialogContent>
-            <DialogActions>
-              <Button onClick={() => setDetailForm(null)}>Close</Button>
-            </DialogActions>
-          </>
+              <div>
+                <p className="text-sm font-medium text-[var(--text-high)] mb-2">Fields</p>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-[var(--border)]">
+                        <th className="text-left py-2 px-3 text-[var(--text-mid)] font-medium">Label</th>
+                        <th className="text-left py-2 px-3 text-[var(--text-mid)] font-medium">Type</th>
+                        <th className="text-left py-2 px-3 text-[var(--text-mid)] font-medium">Required</th>
+                        <th className="text-left py-2 px-3 text-[var(--text-mid)] font-medium">Options</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {detailForm.fields.map((field) => (
+                        <tr key={field.field_id} className="border-b border-[var(--border)]">
+                          <td className="py-2 px-3 text-[var(--text-high)]">{field.label}</td>
+                          <td className="py-2 px-3"><Badge variant="outline">{field.type}</Badge></td>
+                          <td className="py-2 px-3 text-[var(--text-high)]">{field.required ? 'Yes' : 'No'}</td>
+                          <td className="py-2 px-3 text-[var(--text-mid)]">{field.options ? field.options.join(', ') : '-'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setDetailForm(null)}>Close</Button>
+            </DialogFooter>
+          </DialogContent>
         )}
       </Dialog>
 
       {/* Responses Dialog */}
-      <Dialog
-        open={responsesOpen}
-        onClose={() => setResponsesOpen(false)}
-        maxWidth="lg"
-        fullWidth
-      >
-        <DialogTitle>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <ListAltIcon color="primary" /> Form Responses
-          </Box>
-        </DialogTitle>
-        <DialogContent>
+      <Dialog open={responsesOpen} onOpenChange={(v) => { if (!v) setResponsesOpen(false); }}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <List className="h-5 w-5 text-[var(--accent)]" /> Form Responses
+            </DialogTitle>
+          </DialogHeader>
           {responses ? (
             responses.length === 0 ? (
-              <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 4 }}>
-                No responses yet.
-              </Typography>
+              <p className="text-sm text-[var(--text-mid)] text-center py-8">No responses yet.</p>
             ) : (
-              <TableContainer>
-                <Table size="small">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Submitted</TableCell>
-                      <TableCell>Answers</TableCell>
-                      <TableCell>Score</TableCell>
-                      <TableCell>Analysis</TableCell>
-                      <TableCell>Actions</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-[var(--border)]">
+                      <th className="text-left py-2 px-3 text-[var(--text-mid)] font-medium">Submitted</th>
+                      <th className="text-left py-2 px-3 text-[var(--text-mid)] font-medium">Answers</th>
+                      <th className="text-left py-2 px-3 text-[var(--text-mid)] font-medium">Score</th>
+                      <th className="text-left py-2 px-3 text-[var(--text-mid)] font-medium">Analysis</th>
+                      <th className="text-left py-2 px-3 text-[var(--text-mid)] font-medium">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
                     {responses.map((resp) => (
-                      <TableRow key={resp.id}>
-                        <TableCell>
+                      <tr key={resp.id} className="border-b border-[var(--border)]">
+                        <td className="py-2 px-3 text-[var(--text-high)]">
                           {new Date(resp.submitted_at).toLocaleString()}
-                        </TableCell>
-                        <TableCell sx={{ maxWidth: 300 }}>
-                          <Typography
-                            variant="body2"
-                            noWrap
-                            sx={{
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                            }}
-                          >
+                        </td>
+                        <td className="py-2 px-3 max-w-[300px]">
+                          <span className="text-sm text-[var(--text-high)] truncate block">
                             {JSON.stringify(resp.answers)}
-                          </Typography>
-                        </TableCell>
-                        <TableCell>
+                          </span>
+                        </td>
+                        <td className="py-2 px-3">
                           {resp.score !== null ? (
-                            <Chip
-                              label={`${(resp.score * 100).toFixed(0)}%`}
-                              size="small"
-                              color={resp.score >= 0.7 ? 'success' : resp.score >= 0.4 ? 'warning' : 'error'}
-                            />
-                          ) : (
-                            '-'
-                          )}
-                        </TableCell>
-                        <TableCell sx={{ maxWidth: 200 }}>
-                          <Typography variant="body2" noWrap>
+                            <Badge variant={resp.score >= 0.7 ? 'success' : resp.score >= 0.4 ? 'warning' : 'destructive'}>
+                              {(resp.score * 100).toFixed(0)}%
+                            </Badge>
+                          ) : '-'}
+                        </td>
+                        <td className="py-2 px-3 max-w-[200px]">
+                          <span className="text-sm text-[var(--text-high)] truncate block">
                             {resp.analysis || '-'}
-                          </Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Tooltip title="AI Score">
-                            <IconButton
-                              size="small"
-                              onClick={() =>
-                                scoreMutation.mutate({
-                                  formId: responsesFormId!,
-                                  responseId: resp.id,
-                                })
-                              }
-                              disabled={scoreMutation.isPending}
-                            >
-                              <GradeIcon fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-                        </TableCell>
-                      </TableRow>
+                          </span>
+                        </td>
+                        <td className="py-2 px-3">
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <button
+                                  type="button"
+                                  title="AI Score"
+                                  className="p-1 rounded hover:bg-[var(--bg-hover)]"
+                                  onClick={() =>
+                                    scoreMutation.mutate({
+                                      formId: responsesFormId!,
+                                      responseId: resp.id,
+                                    })
+                                  }
+                                  disabled={scoreMutation.isPending}
+                                >
+                                  <Star className="h-4 w-4 text-[var(--text-mid)]" />
+                                </button>
+                              </TooltipTrigger>
+                              <TooltipContent>AI Score</TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </td>
+                      </tr>
                     ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
+                  </tbody>
+                </table>
+              </div>
             )
           ) : (
-            <Box sx={{ textAlign: 'center', py: 4 }}>
-              <CircularProgress />
-            </Box>
+            <div className="flex justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin text-[var(--accent)]" />
+            </div>
           )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setResponsesOpen(false)}>Close</Button>
+          </DialogFooter>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setResponsesOpen(false)}>Close</Button>
-        </DialogActions>
       </Dialog>
 
       {/* Analytics Dialog */}
-      <Dialog open={analyticsOpen} onClose={() => setAnalyticsOpen(false)} maxWidth="md" fullWidth>
-        <DialogTitle>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <BarChartIcon color="primary" /> Form Analytics
-          </Box>
-        </DialogTitle>
-        <DialogContent>
+      <Dialog open={analyticsOpen} onOpenChange={(v) => { if (!v) setAnalyticsOpen(false); }}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <BarChart3 className="h-5 w-5 text-[var(--accent)]" /> Form Analytics
+            </DialogTitle>
+          </DialogHeader>
           {analytics ? (
-            <Box>
-              <Grid container spacing={2} sx={{ mb: 3 }}>
-                <Grid item xs={4}>
-                  <Card variant="outlined">
-                    <CardContent sx={{ textAlign: 'center' }}>
-                      <Typography variant="h4">{analytics.total_responses}</Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        Total Responses
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-                <Grid item xs={4}>
-                  <Card variant="outlined">
-                    <CardContent sx={{ textAlign: 'center' }}>
-                      <Typography variant="h4">
-                        {(analytics.completion_rate * 100).toFixed(0)}%
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        Completion Rate
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-                <Grid item xs={4}>
-                  <Card variant="outlined">
-                    <CardContent sx={{ textAlign: 'center' }}>
-                      <Typography variant="h4">
-                        {Object.keys(analytics.field_stats).length}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        Fields Tracked
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              </Grid>
+            <div className="space-y-6">
+              <div className="grid grid-cols-3 gap-4">
+                <Card className="border border-[var(--border)]">
+                  <CardContent className="text-center p-4">
+                    <p className="text-3xl font-bold text-[var(--text-high)]">{analytics.total_responses}</p>
+                    <span className="text-xs text-[var(--text-mid)]">Total Responses</span>
+                  </CardContent>
+                </Card>
+                <Card className="border border-[var(--border)]">
+                  <CardContent className="text-center p-4">
+                    <p className="text-3xl font-bold text-[var(--text-high)]">
+                      {(analytics.completion_rate * 100).toFixed(0)}%
+                    </p>
+                    <span className="text-xs text-[var(--text-mid)]">Completion Rate</span>
+                  </CardContent>
+                </Card>
+                <Card className="border border-[var(--border)]">
+                  <CardContent className="text-center p-4">
+                    <p className="text-3xl font-bold text-[var(--text-high)]">
+                      {Object.keys(analytics.field_stats).length}
+                    </p>
+                    <span className="text-xs text-[var(--text-mid)]">Fields Tracked</span>
+                  </CardContent>
+                </Card>
+              </div>
 
               {/* Field stats */}
-              <Typography variant="subtitle2" sx={{ mb: 1 }}>Field Statistics</Typography>
-              {Object.entries(analytics.field_stats).map(([fieldId, stat]) => (
-                <Box key={fieldId} sx={{ mb: 1.5 }}>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                    <Typography variant="body2">{stat.label}</Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {stat.response_count} responses ({(stat.fill_rate * 100).toFixed(0)}%)
-                    </Typography>
-                  </Box>
-                  <LinearProgress
-                    variant="determinate"
-                    value={stat.fill_rate * 100}
-                    sx={{ height: 6, borderRadius: 3 }}
-                  />
-                  {stat.average !== undefined && (
-                    <Typography variant="caption" color="text.secondary">
-                      Avg: {stat.average} | Min: {stat.min} | Max: {stat.max}
-                    </Typography>
-                  )}
-                </Box>
-              ))}
+              <div>
+                <p className="text-sm font-medium text-[var(--text-high)] mb-2">Field Statistics</p>
+                {Object.entries(analytics.field_stats).map(([fieldId, stat]) => (
+                  <div key={fieldId} className="mb-3">
+                    <div className="flex justify-between mb-1">
+                      <span className="text-sm text-[var(--text-high)]">{stat.label}</span>
+                      <span className="text-xs text-[var(--text-mid)]">
+                        {stat.response_count} responses ({(stat.fill_rate * 100).toFixed(0)}%)
+                      </span>
+                    </div>
+                    <Progress value={stat.fill_rate * 100} className="h-1.5" />
+                    {stat.average !== undefined && (
+                      <span className="text-xs text-[var(--text-mid)]">
+                        Avg: {stat.average} | Min: {stat.min} | Max: {stat.max}
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
 
               {/* AI Insights */}
               {analytics.ai_insights && (
-                <Box sx={{ mt: 3 }}>
-                  <Typography variant="subtitle2" sx={{ mb: 1 }}>AI Insights</Typography>
-                  <Card variant="outlined">
-                    <CardContent>
-                      <Typography
-                        variant="body2"
-                        sx={{ whiteSpace: 'pre-wrap' }}
-                      >
+                <div>
+                  <p className="text-sm font-medium text-[var(--text-high)] mb-2">AI Insights</p>
+                  <Card className="border border-[var(--border)]">
+                    <CardContent className="p-4">
+                      <p className="text-sm text-[var(--text-high)] whitespace-pre-wrap">
                         {analytics.ai_insights}
-                      </Typography>
+                      </p>
                     </CardContent>
                   </Card>
-                </Box>
+                </div>
               )}
-            </Box>
+            </div>
           ) : (
-            <Box sx={{ textAlign: 'center', py: 4 }}>
-              <CircularProgress />
-            </Box>
+            <div className="flex justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin text-[var(--accent)]" />
+            </div>
           )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAnalyticsOpen(false)}>Close</Button>
+          </DialogFooter>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setAnalyticsOpen(false)}>Close</Button>
-        </DialogActions>
       </Dialog>
 
       {createMutation.isError && (
-        <Alert severity="error" sx={{ mt: 2 }}>{createMutation.error?.message}</Alert>
+        <Alert variant="destructive" className="mt-4">
+          <AlertDescription>{createMutation.error?.message}</AlertDescription>
+        </Alert>
       )}
       {generateMutation.isError && (
-        <Alert severity="error" sx={{ mt: 2 }}>{generateMutation.error?.message}</Alert>
+        <Alert variant="destructive" className="mt-4">
+          <AlertDescription>{generateMutation.error?.message}</AlertDescription>
+        </Alert>
       )}
-    </Box>
+    </div>
   );
 }

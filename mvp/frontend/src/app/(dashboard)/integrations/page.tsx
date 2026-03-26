@@ -2,41 +2,20 @@
 
 import { useState } from 'react';
 import {
-  Alert,
-  Box,
-  Button,
-  Card,
-  CardActions,
-  CardContent,
-  Chip,
-  CircularProgress,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  FormControl,
-  Grid,
-  IconButton,
-  InputLabel,
-  MenuItem,
-  Select,
-  Skeleton,
-  Tab,
-  Tabs,
-  TextField,
-  Tooltip,
-  Typography,
-} from '@mui/material';
-import AddIcon from '@mui/icons-material/Add';
-import DeleteIcon from '@mui/icons-material/Delete';
-import LinkIcon from '@mui/icons-material/Link';
-import PlayArrowIcon from '@mui/icons-material/PlayArrow';
-import WebhookIcon from '@mui/icons-material/Webhook';
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import ErrorIcon from '@mui/icons-material/Error';
-import HubIcon from '@mui/icons-material/Hub';
-import SettingsInputComponentIcon from '@mui/icons-material/SettingsInputComponent';
+  Plus, Trash2, Link2, Play, Webhook, Copy, CheckCircle, XCircle,
+  Network, Settings2, Loader2,
+} from 'lucide-react';
+
+import { Card, CardContent, CardFooter } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/lib/design-hub/components/Button';
+import { Input } from '@/lib/design-hub/components/Input';
+import { Skeleton } from '@/lib/design-hub/components/Skeleton';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/lib/design-hub/components/Tabs';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/lib/design-hub/components/Select';
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/lib/design-hub/components/Tooltip';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/lib/design-hub/components/Dialog';
 
 import {
   useConnectors,
@@ -51,16 +30,16 @@ import {
 } from '@/features/integration-hub/hooks/useIntegrationHub';
 import type { IntegrationConnector, ProviderInfo } from '@/features/integration-hub/types';
 
-const STATUS_COLORS: Record<string, 'success' | 'error' | 'default' | 'warning'> = {
+const STATUS_VARIANTS: Record<string, 'success' | 'destructive' | 'default' | 'warning'> = {
   active: 'success',
-  error: 'error',
+  error: 'destructive',
   disabled: 'default',
 };
 
-const EVENT_STATUS_COLORS: Record<string, 'info' | 'success' | 'error' | 'default'> = {
-  received: 'info',
+const EVENT_STATUS_VARIANTS: Record<string, 'secondary' | 'success' | 'destructive' | 'default'> = {
+  received: 'secondary',
   processed: 'success',
-  failed: 'error',
+  failed: 'destructive',
 };
 
 const PROVIDER_ICONS: Record<string, string> = {
@@ -78,14 +57,8 @@ const PROVIDER_ICONS: Record<string, string> = {
 };
 
 const ACTION_MODULES = [
-  'transcription',
-  'knowledge',
-  'content_studio',
-  'sentiment',
-  'ai_workflows',
-  'web_crawler',
-  'agents',
-  'data_analyst',
+  'transcription', 'knowledge', 'content_studio', 'sentiment',
+  'ai_workflows', 'web_crawler', 'agents', 'data_analyst',
 ];
 
 export default function IntegrationsPage() {
@@ -98,7 +71,7 @@ export default function IntegrationsPage() {
   const createTriggerMutation = useCreateTrigger();
   const deleteTriggerMutation = useDeleteTrigger();
 
-  const [tab, setTab] = useState(0);
+  const [tab, setTab] = useState('providers');
   const [createOpen, setCreateOpen] = useState(false);
   const [triggerOpen, setTriggerOpen] = useState(false);
   const [selectedConnector, setSelectedConnector] = useState<string | null>(null);
@@ -163,340 +136,295 @@ export default function IntegrationsPage() {
     navigator.clipboard.writeText(url);
   };
 
+  const activeConnectors = connectors?.filter((c: IntegrationConnector) => c.is_active) || [];
+
   return (
-    <Box sx={{ p: 3 }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
-        <Box>
-          <Typography variant="h4" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <HubIcon color="primary" /> Integration Hub
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
+    <div className="p-6">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-3xl font-bold text-[var(--text-high)] flex items-center gap-2">
+            <Network className="h-8 w-8 text-[var(--accent)]" /> Integration Hub
+          </h1>
+          <p className="text-sm text-[var(--text-mid)]">
             Connect external services via webhooks, OAuth2, and API keys
-          </Typography>
-        </Box>
-        <Box sx={{ display: 'flex', gap: 1 }}>
-          <Button
-            variant="outlined"
-            startIcon={<SettingsInputComponentIcon />}
-            onClick={() => setTriggerOpen(true)}
-            disabled={!connectors?.length}
-          >
-            New Trigger
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setTriggerOpen(true)} disabled={!connectors?.length}>
+            <Settings2 className="h-4 w-4 mr-2" /> New Trigger
           </Button>
-          <Button variant="contained" startIcon={<AddIcon />} onClick={() => setCreateOpen(true)}>
-            New Connector
+          <Button onClick={() => setCreateOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" /> New Connector
           </Button>
-        </Box>
-      </Box>
+        </div>
+      </div>
 
-      <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 3 }}>
-        <Tab label={`Providers (${providers?.length || 0})`} />
-        <Tab label={`Connected (${connectors?.filter((c: IntegrationConnector) => c.is_active).length || 0})`} />
-        <Tab label="Events Log" />
-        <Tab label={`Triggers (${triggers?.length || 0})`} />
-      </Tabs>
+      <Tabs value={tab} onValueChange={setTab}>
+        <TabsList className="mb-6">
+          <TabsTrigger value="providers">Providers ({providers?.length || 0})</TabsTrigger>
+          <TabsTrigger value="connected">Connected ({activeConnectors.length})</TabsTrigger>
+          <TabsTrigger value="events">Events Log</TabsTrigger>
+          <TabsTrigger value="triggers">Triggers ({triggers?.length || 0})</TabsTrigger>
+        </TabsList>
 
-      {/* Tab 0: Available Providers */}
-      {tab === 0 && (
-        <>
+        {/* Tab 0: Available Providers */}
+        <TabsContent value="providers">
           {providersLoading ? (
-            <Grid container spacing={2}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
               {[1, 2, 3, 4, 5, 6].map((i) => (
-                <Grid item xs={12} sm={6} md={4} key={i}>
-                  <Skeleton variant="rectangular" height={160} sx={{ borderRadius: 1 }} />
-                </Grid>
+                <Skeleton key={i} className="h-40 rounded-lg" />
               ))}
-            </Grid>
+            </div>
           ) : (
-            <Grid container spacing={2}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
               {providers?.map((provider: ProviderInfo) => {
                 const connected = connectors?.find(
                   (c: IntegrationConnector) => c.provider === provider.slug && c.is_active
                 );
                 return (
-                  <Grid item xs={12} sm={6} md={4} key={provider.slug}>
-                    <Card
-                      variant="outlined"
-                      sx={{
-                        height: '100%',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        borderLeft: 4,
-                        borderLeftColor: PROVIDER_ICONS[provider.slug] || '#757575',
-                      }}
-                    >
-                      <CardContent sx={{ flex: 1 }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
-                          <Typography variant="subtitle1" fontWeight="bold">
-                            {provider.name}
-                          </Typography>
-                          {connected && (
-                            <Chip label="Connected" size="small" color="success" variant="outlined" />
-                          )}
-                        </Box>
-                        <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
-                          {provider.description}
-                        </Typography>
-                        <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
-                          {provider.supported_types.map((t: string) => (
-                            <Chip key={t} label={t} size="small" variant="outlined" />
-                          ))}
-                        </Box>
-                      </CardContent>
-                      <CardActions sx={{ px: 2, pb: 2 }}>
-                        <Button
-                          size="small"
-                          variant={connected ? 'outlined' : 'contained'}
-                          startIcon={connected ? <CheckCircleIcon /> : <LinkIcon />}
-                          onClick={() => {
-                            if (!connected) {
-                              setNewProvider(provider.slug);
-                              setNewName(`${provider.name} Integration`);
-                              setNewType(provider.supported_types[0] || 'webhook');
-                              setCreateOpen(true);
-                            }
-                          }}
-                          disabled={!!connected}
-                        >
-                          {connected ? 'Connected' : 'Connect'}
-                        </Button>
-                      </CardActions>
-                    </Card>
-                  </Grid>
+                  <Card
+                    key={provider.slug}
+                    className="flex flex-col h-full border-l-4"
+                    style={{ borderLeftColor: PROVIDER_ICONS[provider.slug] || '#757575' }}
+                  >
+                    <CardContent className="flex-1 p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-bold text-[var(--text-high)]">{provider.name}</span>
+                        {connected && <Badge variant="outline" className="text-green-600 border-green-600">Connected</Badge>}
+                      </div>
+                      <p className="text-sm text-[var(--text-mid)] mb-3">{provider.description}</p>
+                      <div className="flex gap-1 flex-wrap">
+                        {provider.supported_types.map((t: string) => (
+                          <Badge key={t} variant="outline">{t}</Badge>
+                        ))}
+                      </div>
+                    </CardContent>
+                    <CardFooter className="px-4 pb-4">
+                      <Button
+                        size="sm"
+                        variant={connected ? 'outline' : 'default'}
+                        disabled={!!connected}
+                        onClick={() => {
+                          if (!connected) {
+                            setNewProvider(provider.slug);
+                            setNewName(`${provider.name} Integration`);
+                            setNewType(provider.supported_types[0] || 'webhook');
+                            setCreateOpen(true);
+                          }
+                        }}
+                      >
+                        {connected ? (
+                          <><CheckCircle className="h-3.5 w-3.5 mr-1" /> Connected</>
+                        ) : (
+                          <><Link2 className="h-3.5 w-3.5 mr-1" /> Connect</>
+                        )}
+                      </Button>
+                    </CardFooter>
+                  </Card>
                 );
               })}
-            </Grid>
+            </div>
           )}
-        </>
-      )}
+        </TabsContent>
 
-      {/* Tab 1: Connected Integrations */}
-      {tab === 1 && (
-        <>
+        {/* Tab 1: Connected Integrations */}
+        <TabsContent value="connected">
           {connectorsLoading ? (
-            <Grid container spacing={3}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
               {[1, 2, 3].map((i) => (
-                <Grid item xs={12} sm={6} md={4} key={i}>
-                  <Skeleton variant="rectangular" height={200} sx={{ borderRadius: 1 }} />
-                </Grid>
+                <Skeleton key={i} className="h-52 rounded-lg" />
               ))}
-            </Grid>
-          ) : !connectors?.filter((c: IntegrationConnector) => c.is_active).length ? (
+            </div>
+          ) : !activeConnectors.length ? (
             <Card>
-              <CardContent sx={{ textAlign: 'center', py: 8 }}>
-                <HubIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
-                <Typography variant="h6" color="text.secondary">No integrations connected</Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 1, mb: 2 }}>
+              <CardContent className="text-center py-16 px-6">
+                <Network className="h-16 w-16 text-[var(--text-low)] mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-[var(--text-mid)]">No integrations connected</h3>
+                <p className="text-sm text-[var(--text-mid)] mt-2 mb-4">
                   Connect an external service to start receiving events
-                </Typography>
-                <Button variant="contained" onClick={() => setTab(0)}>Browse Providers</Button>
+                </p>
+                <Button onClick={() => setTab('providers')}>Browse Providers</Button>
               </CardContent>
             </Card>
           ) : (
-            <Grid container spacing={3}>
-              {connectors
-                ?.filter((c: IntegrationConnector) => c.is_active)
-                .map((connector: IntegrationConnector) => (
-                  <Grid item xs={12} sm={6} md={4} key={connector.id}>
-                    <Card variant="outlined" sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-                      <CardContent sx={{ flex: 1 }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
-                          <Typography variant="subtitle1" fontWeight="bold" noWrap>
-                            {connector.name}
-                          </Typography>
-                          <Chip
-                            label={connector.status}
-                            size="small"
-                            color={STATUS_COLORS[connector.status] || 'default'}
-                          />
-                        </Box>
-                        <Box sx={{ display: 'flex', gap: 0.5, mb: 1.5 }}>
-                          <Chip label={connector.provider} size="small" variant="outlined" />
-                          <Chip label={connector.type} size="small" variant="outlined" />
-                        </Box>
-                        <Typography variant="body2" color="text.secondary">
-                          {connector.events_received} events received
-                        </Typography>
-                        {connector.last_event_at && (
-                          <Typography variant="caption" color="text.secondary">
-                            Last event: {new Date(connector.last_event_at).toLocaleString()}
-                          </Typography>
-                        )}
-                        {connector.webhook_url && (
-                          <Box sx={{ mt: 1.5 }}>
-                            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
-                              Webhook URL:
-                            </Typography>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                              <Typography
-                                variant="caption"
-                                sx={{
-                                  fontFamily: 'monospace',
-                                  bgcolor: 'action.hover',
-                                  px: 1,
-                                  py: 0.5,
-                                  borderRadius: 0.5,
-                                  overflow: 'hidden',
-                                  textOverflow: 'ellipsis',
-                                  whiteSpace: 'nowrap',
-                                  flex: 1,
-                                }}
-                              >
-                                {connector.webhook_url}
-                              </Typography>
-                              <Tooltip title="Copy URL">
-                                <IconButton size="small" onClick={() => copyWebhookUrl(connector.webhook_url!)}>
-                                  <ContentCopyIcon fontSize="small" />
-                                </IconButton>
-                              </Tooltip>
-                            </Box>
-                          </Box>
-                        )}
-                      </CardContent>
-                      <CardActions sx={{ justifyContent: 'space-between', px: 2, pb: 2 }}>
-                        <Box>
-                          <IconButton
-                            size="small"
-                            color="error"
-                            onClick={() => deleteConnectorMutation.mutate(connector.id)}
-                          >
-                            <DeleteIcon fontSize="small" />
-                          </IconButton>
-                          <IconButton
-                            size="small"
-                            onClick={() => setSelectedConnector(
-                              selectedConnector === connector.id ? null : connector.id
-                            )}
-                          >
-                            <WebhookIcon fontSize="small" />
-                          </IconButton>
-                        </Box>
-                        <Button
-                          variant="outlined"
-                          size="small"
-                          startIcon={
-                            testConnectorMutation.isPending
-                              ? <CircularProgress size={14} color="inherit" />
-                              : <PlayArrowIcon />
-                          }
-                          onClick={() => handleTest(connector.id)}
-                          disabled={testConnectorMutation.isPending}
-                        >
-                          Test
-                        </Button>
-                      </CardActions>
-                    </Card>
-                  </Grid>
-                ))}
-            </Grid>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+              {activeConnectors.map((connector: IntegrationConnector) => (
+                <Card key={connector.id} className="flex flex-col h-full border border-[var(--border)]">
+                  <CardContent className="flex-1 p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-bold text-[var(--text-high)] truncate">{connector.name}</span>
+                      <Badge variant={STATUS_VARIANTS[connector.status] || 'default'}>{connector.status}</Badge>
+                    </div>
+                    <div className="flex gap-1 mb-3">
+                      <Badge variant="outline">{connector.provider}</Badge>
+                      <Badge variant="outline">{connector.type}</Badge>
+                    </div>
+                    <p className="text-sm text-[var(--text-mid)]">{connector.events_received} events received</p>
+                    {connector.last_event_at && (
+                      <span className="text-xs text-[var(--text-mid)]">
+                        Last event: {new Date(connector.last_event_at).toLocaleString()}
+                      </span>
+                    )}
+                    {connector.webhook_url && (
+                      <div className="mt-3">
+                        <span className="text-xs text-[var(--text-mid)] block mb-1">Webhook URL:</span>
+                        <div className="flex items-center gap-1">
+                          <span className="text-xs font-mono bg-[var(--bg-surface)] px-2 py-1 rounded truncate flex-1">
+                            {connector.webhook_url}
+                          </span>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <button type="button" title="Copy URL" className="p-1 rounded hover:bg-[var(--bg-hover)]" onClick={() => copyWebhookUrl(connector.webhook_url!)}>
+                                  <Copy className="h-3.5 w-3.5 text-[var(--text-mid)]" />
+                                </button>
+                              </TooltipTrigger>
+                              <TooltipContent>Copy URL</TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                  <CardFooter className="justify-between px-4 pb-4 pt-0">
+                    <div className="flex gap-1">
+                      <button type="button" title="Delete" className="p-1.5 rounded hover:bg-red-100 text-red-500" onClick={() => deleteConnectorMutation.mutate(connector.id)}>
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                      <button
+                        type="button"
+                        title="View events"
+                        className="p-1.5 rounded hover:bg-[var(--bg-hover)]"
+                        onClick={() => setSelectedConnector(selectedConnector === connector.id ? null : connector.id)}
+                      >
+                        <Webhook className="h-4 w-4 text-[var(--text-mid)]" />
+                      </button>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleTest(connector.id)}
+                      disabled={testConnectorMutation.isPending}
+                    >
+                      {testConnectorMutation.isPending ? (
+                        <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />
+                      ) : (
+                        <Play className="h-3.5 w-3.5 mr-1" />
+                      )}
+                      Test
+                    </Button>
+                  </CardFooter>
+                </Card>
+              ))}
+            </div>
           )}
-        </>
-      )}
 
-      {/* Tab 2: Events Log */}
-      {tab === 2 && (
-        <Box>
+          {/* Events panel for selected connector */}
+          {selectedConnector && events && (
+            <Card className="mt-6">
+              <CardContent className="p-6">
+                <h3 className="text-lg font-semibold text-[var(--text-high)] mb-4">Recent Events</h3>
+                {events.length === 0 ? (
+                  <p className="text-sm text-[var(--text-mid)]">No events received yet</p>
+                ) : (
+                  events.slice(0, 10).map((event) => (
+                    <Card key={event.id} className="mb-2 border border-[var(--border)]">
+                      <CardContent className="py-2 px-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Badge variant={EVENT_STATUS_VARIANTS[event.status] || 'default'}>{event.status}</Badge>
+                            <Badge variant="outline">{event.event_type}</Badge>
+                          </div>
+                          <span className="text-xs text-[var(--text-mid)]">
+                            {new Date(event.created_at).toLocaleString()}
+                          </span>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))
+                )}
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        {/* Tab 2: Events Log */}
+        <TabsContent value="events">
           {!selectedConnector ? (
             <Card>
-              <CardContent sx={{ textAlign: 'center', py: 6 }}>
-                <WebhookIcon sx={{ fontSize: 48, color: 'text.disabled', mb: 1 }} />
-                <Typography color="text.secondary">
+              <CardContent className="text-center py-12 px-6">
+                <Webhook className="h-12 w-12 text-[var(--text-low)] mx-auto mb-2" />
+                <p className="text-[var(--text-mid)]">
                   Select a connector from the Connected tab to view its events
-                </Typography>
-                {connectors && connectors.filter((c: IntegrationConnector) => c.is_active).length > 0 && (
-                  <Box sx={{ mt: 2, display: 'flex', gap: 1, justifyContent: 'center', flexWrap: 'wrap' }}>
-                    {connectors
-                      .filter((c: IntegrationConnector) => c.is_active)
-                      .map((c: IntegrationConnector) => (
-                        <Chip
-                          key={c.id}
-                          label={c.name}
-                          clickable
-                          onClick={() => setSelectedConnector(c.id)}
-                          variant="outlined"
-                        />
-                      ))}
-                  </Box>
+                </p>
+                {activeConnectors.length > 0 && (
+                  <div className="mt-4 flex gap-2 justify-center flex-wrap">
+                    {activeConnectors.map((c: IntegrationConnector) => (
+                      <Badge
+                        key={c.id}
+                        variant="outline"
+                        className="cursor-pointer hover:bg-[var(--bg-hover)]"
+                        onClick={() => setSelectedConnector(c.id)}
+                      >
+                        {c.name}
+                      </Badge>
+                    ))}
+                  </div>
                 )}
               </CardContent>
             </Card>
           ) : (
-            <Box>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                <Typography variant="h6">
+            <div>
+              <div className="flex items-center gap-2 mb-4">
+                <h3 className="text-lg font-semibold text-[var(--text-high)]">
                   Events for: {connectors?.find((c: IntegrationConnector) => c.id === selectedConnector)?.name}
-                </Typography>
-                <Chip
-                  label="Clear"
-                  size="small"
-                  variant="outlined"
-                  onDelete={() => setSelectedConnector(null)}
-                />
-              </Box>
+                </h3>
+                <Badge variant="outline" className="cursor-pointer" onClick={() => setSelectedConnector(null)}>
+                  Clear
+                </Badge>
+              </div>
               {!events?.length ? (
                 <Card>
-                  <CardContent sx={{ textAlign: 'center', py: 4 }}>
-                    <Typography color="text.secondary">No events received yet</Typography>
+                  <CardContent className="text-center py-8 px-6">
+                    <p className="text-[var(--text-mid)]">No events received yet</p>
                   </CardContent>
                 </Card>
               ) : (
                 events.map((event) => (
-                  <Card key={event.id} variant="outlined" sx={{ mb: 1 }}>
-                    <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <Chip
-                            label={event.status}
-                            size="small"
-                            color={EVENT_STATUS_COLORS[event.status] || 'default'}
-                          />
-                          <Chip label={event.event_type} size="small" variant="outlined" />
-                        </Box>
-                        <Typography variant="caption" color="text.secondary">
+                  <Card key={event.id} className="mb-2 border border-[var(--border)]">
+                    <CardContent className="py-3 px-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Badge variant={EVENT_STATUS_VARIANTS[event.status] || 'default'}>{event.status}</Badge>
+                          <Badge variant="outline">{event.event_type}</Badge>
+                        </div>
+                        <span className="text-xs text-[var(--text-mid)]">
                           {new Date(event.created_at).toLocaleString()}
-                        </Typography>
-                      </Box>
-                      <Box
-                        sx={{
-                          mt: 1,
-                          p: 1,
-                          bgcolor: 'action.hover',
-                          borderRadius: 1,
-                          fontSize: '0.8rem',
-                          fontFamily: 'monospace',
-                          maxHeight: 100,
-                          overflow: 'auto',
-                        }}
-                      >
+                        </span>
+                      </div>
+                      <div className="mt-2 p-2 bg-[var(--bg-surface)] rounded text-xs font-mono max-h-24 overflow-auto">
                         {JSON.stringify(event.payload, null, 2).substring(0, 500)}
-                      </Box>
+                      </div>
                     </CardContent>
                   </Card>
                 ))
               )}
-            </Box>
+            </div>
           )}
-        </Box>
-      )}
+        </TabsContent>
 
-      {/* Tab 3: Triggers */}
-      {tab === 3 && (
-        <Box>
+        {/* Tab 3: Triggers */}
+        <TabsContent value="triggers">
           {!triggers?.length ? (
             <Card>
-              <CardContent sx={{ textAlign: 'center', py: 6 }}>
-                <SettingsInputComponentIcon sx={{ fontSize: 48, color: 'text.disabled', mb: 1 }} />
-                <Typography variant="h6" color="text.secondary">No triggers configured</Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 1, mb: 2 }}>
+              <CardContent className="text-center py-12 px-6">
+                <Settings2 className="h-12 w-12 text-[var(--text-low)] mx-auto mb-2" />
+                <h3 className="text-lg font-semibold text-[var(--text-mid)]">No triggers configured</h3>
+                <p className="text-sm text-[var(--text-mid)] mt-2 mb-4">
                   Create a trigger to automatically run actions when events are received
-                </Typography>
-                <Button
-                  variant="contained"
-                  startIcon={<AddIcon />}
-                  onClick={() => setTriggerOpen(true)}
-                  disabled={!connectors?.length}
-                >
-                  New Trigger
+                </p>
+                <Button onClick={() => setTriggerOpen(true)} disabled={!connectors?.length}>
+                  <Plus className="h-4 w-4 mr-2" /> New Trigger
                 </Button>
               </CardContent>
             </Card>
@@ -506,247 +434,219 @@ export default function IntegrationsPage() {
                 (c: IntegrationConnector) => c.id === trigger.connector_id
               );
               return (
-                <Card key={trigger.id} variant="outlined" sx={{ mb: 1 }}>
-                  <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Typography variant="subtitle2">
+                <Card key={trigger.id} className="mb-2 border border-[var(--border)]">
+                  <CardContent className="py-3 px-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-[var(--text-high)]">
                           {connector?.name || 'Unknown'}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
+                        </span>
+                        <span className="text-sm text-[var(--text-mid)]">
                           on <strong>{trigger.event_type}</strong> {'->'} <strong>{trigger.action_module}</strong>
-                        </Typography>
-                      </Box>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Chip
-                          label={`${trigger.executions} runs`}
-                          size="small"
-                          variant="outlined"
-                        />
-                        <Chip
-                          label={trigger.is_active ? 'Active' : 'Inactive'}
-                          size="small"
-                          color={trigger.is_active ? 'success' : 'default'}
-                        />
-                        <IconButton
-                          size="small"
-                          color="error"
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline">{trigger.executions} runs</Badge>
+                        <Badge variant={trigger.is_active ? 'success' : 'default'}>
+                          {trigger.is_active ? 'Active' : 'Inactive'}
+                        </Badge>
+                        <button
+                          type="button"
+                          title="Delete"
+                          className="p-1 rounded hover:bg-red-100 text-red-500"
                           onClick={() => deleteTriggerMutation.mutate(trigger.id)}
                         >
-                          <DeleteIcon fontSize="small" />
-                        </IconButton>
-                      </Box>
-                    </Box>
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
                   </CardContent>
                 </Card>
               );
             })
           )}
-        </Box>
-      )}
-
-      {/* Events panel for selected connector (inline on Connected tab) */}
-      {tab === 1 && selectedConnector && events && (
-        <Card sx={{ mt: 3 }}>
-          <CardContent>
-            <Typography variant="h6" sx={{ mb: 2 }}>
-              Recent Events
-            </Typography>
-            {events.length === 0 ? (
-              <Typography color="text.secondary">No events received yet</Typography>
-            ) : (
-              events.slice(0, 10).map((event) => (
-                <Card key={event.id} variant="outlined" sx={{ mb: 1 }}>
-                  <CardContent sx={{ py: 1, '&:last-child': { pb: 1 } }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Chip
-                          label={event.status}
-                          size="small"
-                          color={EVENT_STATUS_COLORS[event.status] || 'default'}
-                        />
-                        <Chip label={event.event_type} size="small" variant="outlined" />
-                      </Box>
-                      <Typography variant="caption" color="text.secondary">
-                        {new Date(event.created_at).toLocaleString()}
-                      </Typography>
-                    </Box>
-                  </CardContent>
-                </Card>
-              ))
-            )}
-          </CardContent>
-        </Card>
-      )}
+        </TabsContent>
+      </Tabs>
 
       {/* Test Result Dialog */}
-      <Dialog open={!!testResult} onClose={() => setTestResult(null)} maxWidth="sm" fullWidth>
-        <DialogTitle>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            {testResult?.success ? (
-              <CheckCircleIcon color="success" />
-            ) : (
-              <ErrorIcon color="error" />
-            )}
-            Connection Test
-          </Box>
-        </DialogTitle>
-        <DialogContent>
-          {testResult && (
-            <Box>
-              <Alert severity={testResult.success ? 'success' : 'error'} sx={{ mb: 2 }}>
-                {testResult.message as string}
-              </Alert>
-              <Typography variant="body2">
-                Provider: <strong>{testResult.provider as string}</strong>
-              </Typography>
-              <Typography variant="body2">
-                Type: <strong>{testResult.type as string}</strong>
-              </Typography>
-              {Boolean(testResult.webhook_url) && (
-                <Box sx={{ mt: 1 }}>
-                  <Typography variant="body2">Webhook URL:</Typography>
-                  <Typography
-                    variant="caption"
-                    sx={{ fontFamily: 'monospace', bgcolor: 'action.hover', p: 1, borderRadius: 0.5, display: 'block', mt: 0.5 }}
-                  >
-                    {testResult.webhook_url as string}
-                  </Typography>
-                </Box>
+      <Dialog open={!!testResult} onOpenChange={(v) => { if (!v) setTestResult(null); }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {testResult?.success ? (
+                <CheckCircle className="h-5 w-5 text-green-500" />
+              ) : (
+                <XCircle className="h-5 w-5 text-red-500" />
               )}
-            </Box>
+              Connection Test
+            </DialogTitle>
+          </DialogHeader>
+          {testResult && (
+            <div className="space-y-3">
+              <Alert variant={testResult.success ? 'default' : 'destructive'}>
+                <AlertDescription>{testResult.message as string}</AlertDescription>
+              </Alert>
+              <p className="text-sm text-[var(--text-high)]">
+                Provider: <strong>{testResult.provider as string}</strong>
+              </p>
+              <p className="text-sm text-[var(--text-high)]">
+                Type: <strong>{testResult.type as string}</strong>
+              </p>
+              {Boolean(testResult.webhook_url) && (
+                <div>
+                  <p className="text-sm text-[var(--text-high)]">Webhook URL:</p>
+                  <span className="text-xs font-mono bg-[var(--bg-surface)] p-2 rounded block mt-1">
+                    {testResult.webhook_url as string}
+                  </span>
+                </div>
+              )}
+            </div>
           )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setTestResult(null)}>Close</Button>
+          </DialogFooter>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setTestResult(null)}>Close</Button>
-        </DialogActions>
       </Dialog>
 
       {/* Create Connector Dialog */}
-      <Dialog open={createOpen} onClose={() => setCreateOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>New Integration Connector</DialogTitle>
-        <DialogContent>
-          <TextField
-            fullWidth
-            label="Connector Name"
-            value={newName}
-            onChange={(e) => setNewName(e.target.value)}
-            sx={{ mt: 1, mb: 2 }}
-          />
-          <FormControl fullWidth sx={{ mb: 2 }}>
-            <InputLabel>Provider</InputLabel>
-            <Select
-              value={newProvider}
-              label="Provider"
-              onChange={(e) => {
-                setNewProvider(e.target.value);
-                const prov = providers?.find((p: ProviderInfo) => p.slug === e.target.value);
-                if (prov) {
-                  setNewType(prov.supported_types[0] || 'webhook');
-                  if (!newName) setNewName(`${prov.name} Integration`);
-                }
-              }}
+      <Dialog open={createOpen} onOpenChange={(v) => { if (!v) setCreateOpen(false); }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>New Integration Connector</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 mt-2">
+            <Input
+              placeholder="Connector Name"
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+            />
+            <div>
+              <label className="text-xs text-[var(--text-mid)] mb-1 block">Provider</label>
+              <Select
+                value={newProvider}
+                onValueChange={(val) => {
+                  setNewProvider(val);
+                  const prov = providers?.find((p: ProviderInfo) => p.slug === val);
+                  if (prov) {
+                    setNewType(prov.supported_types[0] || 'webhook');
+                    if (!newName) setNewName(`${prov.name} Integration`);
+                  }
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select provider" />
+                </SelectTrigger>
+                <SelectContent>
+                  {providers?.map((p: ProviderInfo) => (
+                    <SelectItem key={p.slug} value={p.slug}>{p.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="text-xs text-[var(--text-mid)] mb-1 block">Type</label>
+              <Select value={newType} onValueChange={setNewType}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  {(selectedProviderInfo?.supported_types || ['webhook', 'oauth2', 'api_key']).map(
+                    (t: string) => (
+                      <SelectItem key={t} value={t}>{t}</SelectItem>
+                    )
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+            {selectedProviderInfo && (
+              <div className="p-3 bg-[var(--bg-surface)] rounded">
+                <span className="text-xs text-[var(--text-mid)]">
+                  Supported events: {selectedProviderInfo.events.join(', ')}
+                </span>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCreateOpen(false)}>Cancel</Button>
+            <Button
+              onClick={handleCreateConnector}
+              disabled={!newName.trim() || !newProvider || createConnectorMutation.isPending}
             >
-              {providers?.map((p: ProviderInfo) => (
-                <MenuItem key={p.slug} value={p.slug}>{p.name}</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <FormControl fullWidth sx={{ mb: 2 }}>
-            <InputLabel>Type</InputLabel>
-            <Select value={newType} label="Type" onChange={(e) => setNewType(e.target.value)}>
-              {(selectedProviderInfo?.supported_types || ['webhook', 'oauth2', 'api_key']).map(
-                (t: string) => (
-                  <MenuItem key={t} value={t}>{t}</MenuItem>
-                )
-              )}
-            </Select>
-          </FormControl>
-          {selectedProviderInfo && (
-            <Box sx={{ p: 1.5, bgcolor: 'action.hover', borderRadius: 1 }}>
-              <Typography variant="caption" color="text.secondary">
-                Supported events: {selectedProviderInfo.events.join(', ')}
-              </Typography>
-            </Box>
-          )}
+              {createConnectorMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Create'}
+            </Button>
+          </DialogFooter>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setCreateOpen(false)}>Cancel</Button>
-          <Button
-            variant="contained"
-            onClick={handleCreateConnector}
-            disabled={!newName.trim() || !newProvider || createConnectorMutation.isPending}
-          >
-            {createConnectorMutation.isPending ? <CircularProgress size={20} /> : 'Create'}
-          </Button>
-        </DialogActions>
       </Dialog>
 
       {/* Create Trigger Dialog */}
-      <Dialog open={triggerOpen} onClose={() => setTriggerOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>New Event Trigger</DialogTitle>
-        <DialogContent>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            When an event occurs on a connector, automatically execute an action in a platform module.
-          </Typography>
-          <FormControl fullWidth sx={{ mt: 1, mb: 2 }}>
-            <InputLabel>Connector</InputLabel>
-            <Select
-              value={triggerConnectorId}
-              label="Connector"
-              onChange={(e) => setTriggerConnectorId(e.target.value)}
+      <Dialog open={triggerOpen} onOpenChange={(v) => { if (!v) setTriggerOpen(false); }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>New Event Trigger</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 mt-2">
+            <p className="text-sm text-[var(--text-mid)]">
+              When an event occurs on a connector, automatically execute an action in a platform module.
+            </p>
+            <div>
+              <label className="text-xs text-[var(--text-mid)] mb-1 block">Connector</label>
+              <Select value={triggerConnectorId} onValueChange={setTriggerConnectorId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select connector" />
+                </SelectTrigger>
+                <SelectContent>
+                  {activeConnectors.map((c: IntegrationConnector) => (
+                    <SelectItem key={c.id} value={c.id}>{c.name} ({c.provider})</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <Input
+              placeholder="Event Type (e.g., push, payment_intent.succeeded, message)"
+              value={triggerEventType}
+              onChange={(e) => setTriggerEventType(e.target.value)}
+            />
+            <div>
+              <label className="text-xs text-[var(--text-mid)] mb-1 block">Action Module</label>
+              <Select value={triggerActionModule} onValueChange={setTriggerActionModule}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select module" />
+                </SelectTrigger>
+                <SelectContent>
+                  {ACTION_MODULES.map((m) => (
+                    <SelectItem key={m} value={m}>{m.replace(/_/g, ' ')}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setTriggerOpen(false)}>Cancel</Button>
+            <Button
+              onClick={handleCreateTrigger}
+              disabled={
+                !triggerConnectorId ||
+                !triggerEventType.trim() ||
+                !triggerActionModule ||
+                createTriggerMutation.isPending
+              }
             >
-              {connectors
-                ?.filter((c: IntegrationConnector) => c.is_active)
-                .map((c: IntegrationConnector) => (
-                  <MenuItem key={c.id} value={c.id}>{c.name} ({c.provider})</MenuItem>
-                ))}
-            </Select>
-          </FormControl>
-          <TextField
-            fullWidth
-            label="Event Type"
-            placeholder="e.g., push, payment_intent.succeeded, message"
-            value={triggerEventType}
-            onChange={(e) => setTriggerEventType(e.target.value)}
-            sx={{ mb: 2 }}
-          />
-          <FormControl fullWidth sx={{ mb: 2 }}>
-            <InputLabel>Action Module</InputLabel>
-            <Select
-              value={triggerActionModule}
-              label="Action Module"
-              onChange={(e) => setTriggerActionModule(e.target.value)}
-            >
-              {ACTION_MODULES.map((m) => (
-                <MenuItem key={m} value={m}>{m.replace(/_/g, ' ')}</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+              {createTriggerMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Create Trigger'}
+            </Button>
+          </DialogFooter>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setTriggerOpen(false)}>Cancel</Button>
-          <Button
-            variant="contained"
-            onClick={handleCreateTrigger}
-            disabled={
-              !triggerConnectorId ||
-              !triggerEventType.trim() ||
-              !triggerActionModule ||
-              createTriggerMutation.isPending
-            }
-          >
-            {createTriggerMutation.isPending ? <CircularProgress size={20} /> : 'Create Trigger'}
-          </Button>
-        </DialogActions>
       </Dialog>
 
       {createConnectorMutation.isError && (
-        <Alert severity="error" sx={{ mt: 2 }}>{createConnectorMutation.error?.message}</Alert>
+        <Alert variant="destructive" className="mt-4">
+          <AlertDescription>{createConnectorMutation.error?.message}</AlertDescription>
+        </Alert>
       )}
       {createTriggerMutation.isError && (
-        <Alert severity="error" sx={{ mt: 2 }}>{createTriggerMutation.error?.message}</Alert>
+        <Alert variant="destructive" className="mt-4">
+          <AlertDescription>{createTriggerMutation.error?.message}</AlertDescription>
+        </Alert>
       )}
-    </Box>
+    </div>
   );
 }

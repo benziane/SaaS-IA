@@ -1,24 +1,22 @@
 'use client';
 
 import { useState } from 'react';
+import { Loader2 } from 'lucide-react';
+
+import { Card, CardContent, CardFooter } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/lib/design-hub/components/Alert';
+import { Button } from '@/lib/design-hub/components/Button';
+import { Input } from '@/lib/design-hub/components/Input';
+import { Textarea } from '@/lib/design-hub/components/Textarea';
+import { Skeleton } from '@/lib/design-hub/components/Skeleton';
 import {
-  Alert,
-  Box,
-  Button,
-  Card,
-  CardActions,
-  CardContent,
-  Chip,
-  CircularProgress,
   Dialog,
-  DialogActions,
   DialogContent,
+  DialogHeader,
+  DialogFooter,
   DialogTitle,
-  Grid,
-  Skeleton,
-  TextField,
-  Typography,
-} from '@mui/material';
+} from '@/lib/design-hub/components/Dialog';
 
 import {
   useCreatePipeline,
@@ -28,9 +26,9 @@ import {
 } from '@/features/pipelines/hooks/usePipelines';
 import type { PipelineExecution } from '@/features/pipelines/types';
 
-const STATUS_COLORS: Record<string, 'default' | 'primary' | 'success' | 'error' | 'warning'> = {
-  draft: 'default',
-  active: 'primary',
+const STATUS_COLORS: Record<string, 'default' | 'secondary' | 'success' | 'destructive' | 'warning'> = {
+  draft: 'secondary',
+  active: 'default',
   archived: 'warning',
 };
 
@@ -73,156 +71,156 @@ export default function PipelinesPage() {
 
   if (isLoading) {
     return (
-      <Box sx={{ p: 3 }}>
-        <Skeleton variant="text" width={200} height={40} sx={{ mb: 2 }} />
-        <Grid container spacing={3}>
+      <div className="p-6">
+        <Skeleton className="w-48 h-10 mb-4" />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {[1, 2, 3].map((i) => (
-            <Grid item xs={12} md={4} key={i}>
-              <Skeleton variant="rectangular" height={180} />
-            </Grid>
+            <Skeleton key={i} className="h-[180px]" />
           ))}
-        </Grid>
-      </Box>
+        </div>
+      </div>
     );
   }
 
   if (error) {
     return (
-      <Box sx={{ p: 3 }}>
-        <Alert severity="error">Failed to load pipelines.</Alert>
-      </Box>
+      <div className="p-6">
+        <Alert variant="destructive">
+          <AlertDescription>Failed to load pipelines.</AlertDescription>
+        </Alert>
+      </div>
     );
   }
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4">AI Pipelines</Typography>
-        <Button variant="contained" onClick={() => setCreateOpen(true)}>
+    <div className="p-6">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold text-[var(--text-high)]">AI Pipelines</h1>
+        <Button onClick={() => setCreateOpen(true)}>
           Create Pipeline
         </Button>
-      </Box>
+      </div>
 
       {execResult && (
         <Alert
-          severity={execResult.status === 'completed' ? 'success' : execResult.status === 'failed' ? 'error' : 'info'}
-          sx={{ mb: 3 }}
-          onClose={() => setExecResult(null)}
+          variant={execResult.status === 'completed' ? 'success' : execResult.status === 'failed' ? 'destructive' : 'info'}
+          className="mb-6"
         >
-          Pipeline execution {execResult.status}.
-          {execResult.error && ` Error: ${execResult.error}`}
-          {execResult.status === 'completed' && ` (${execResult.total_steps} steps completed)`}
+          <AlertDescription>
+            Pipeline execution {execResult.status}.
+            {execResult.error && ` Error: ${execResult.error}`}
+            {execResult.status === 'completed' && ` (${execResult.total_steps} steps completed)`}
+          </AlertDescription>
         </Alert>
       )}
 
       {!pipelines?.length ? (
         <Card>
-          <CardContent sx={{ textAlign: 'center', py: 6 }}>
-            <Typography variant="h6" color="text.secondary" sx={{ mb: 1 }}>
+          <CardContent className="text-center py-12">
+            <h2 className="text-lg font-semibold text-[var(--text-mid)] mb-2">
               No pipelines yet
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            </h2>
+            <p className="text-sm text-[var(--text-mid)] mb-4">
               Create your first AI pipeline to chain operations like transcription, summarization, and translation.
-            </Typography>
-            <Button variant="outlined" onClick={() => setCreateOpen(true)}>
+            </p>
+            <Button variant="outline" onClick={() => setCreateOpen(true)}>
               Create Pipeline
             </Button>
           </CardContent>
         </Card>
       ) : (
-        <Grid container spacing={3}>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {pipelines.map((pipeline) => (
-            <Grid item xs={12} md={4} key={pipeline.id}>
-              <Card variant="outlined" sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-                <CardContent sx={{ flexGrow: 1 }}>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                    <Typography variant="h6" noWrap>
-                      {pipeline.name}
-                    </Typography>
-                    <Chip
-                      label={pipeline.status}
-                      size="small"
-                      color={STATUS_COLORS[pipeline.status] || 'default'}
-                    />
-                  </Box>
-                  {pipeline.description && (
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                      {pipeline.description}
-                    </Typography>
-                  )}
-                  <Typography variant="caption" color="text.secondary">
-                    {pipeline.steps.length} steps
-                  </Typography>
-                  <Box sx={{ mt: 1 }}>
-                    {pipeline.steps.map((step) => (
-                      <Chip
-                        key={step.id}
-                        label={step.type}
-                        size="small"
-                        variant="outlined"
-                        sx={{ mr: 0.5, mb: 0.5 }}
-                      />
-                    ))}
-                  </Box>
-                </CardContent>
-                <CardActions>
-                  <Button
-                    size="small"
-                    onClick={() => handleExecute(pipeline.id)}
-                    disabled={executeMutation.isPending}
-                  >
-                    {executeMutation.isPending ? <CircularProgress size={16} /> : 'Execute'}
-                  </Button>
-                  <Button
-                    size="small"
-                    color="error"
-                    onClick={() => deleteMutation.mutate(pipeline.id)}
-                    disabled={deleteMutation.isPending}
-                  >
-                    Delete
-                  </Button>
-                </CardActions>
-              </Card>
-            </Grid>
+            <Card key={pipeline.id} className="flex flex-col h-full border border-[var(--border)]">
+              <CardContent className="flex-1 p-6">
+                <div className="flex justify-between mb-2">
+                  <h3 className="text-lg font-semibold text-[var(--text-high)] truncate">
+                    {pipeline.name}
+                  </h3>
+                  <Badge variant={STATUS_COLORS[pipeline.status] || 'secondary'}>
+                    {pipeline.status}
+                  </Badge>
+                </div>
+                {pipeline.description && (
+                  <p className="text-sm text-[var(--text-mid)] mb-2">
+                    {pipeline.description}
+                  </p>
+                )}
+                <p className="text-xs text-[var(--text-low)]">
+                  {pipeline.steps.length} steps
+                </p>
+                <div className="mt-2 flex flex-wrap gap-1">
+                  {pipeline.steps.map((step) => (
+                    <Badge key={step.id} variant="outline" className="text-xs">
+                      {step.type}
+                    </Badge>
+                  ))}
+                </div>
+              </CardContent>
+              <CardFooter className="gap-2">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => handleExecute(pipeline.id)}
+                  disabled={executeMutation.isPending}
+                >
+                  {executeMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Execute'}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="text-red-400 hover:text-red-300"
+                  onClick={() => deleteMutation.mutate(pipeline.id)}
+                  disabled={deleteMutation.isPending}
+                >
+                  Delete
+                </Button>
+              </CardFooter>
+            </Card>
           ))}
-        </Grid>
+        </div>
       )}
 
       {/* Create Pipeline Dialog */}
-      <Dialog open={createOpen} onClose={() => setCreateOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Create Pipeline</DialogTitle>
+      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent>
-          <TextField
-            fullWidth
-            label="Pipeline Name"
-            value={newName}
-            onChange={(e) => setNewName(e.target.value)}
-            sx={{ mt: 1, mb: 2 }}
-          />
-          <TextField
-            fullWidth
-            label="Description (optional)"
-            value={newDesc}
-            onChange={(e) => setNewDesc(e.target.value)}
-            multiline
-            rows={2}
-          />
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
-            A default pipeline with Transcription and Summarize steps will be created.
-            You can edit the steps later.
-          </Typography>
+          <DialogHeader>
+            <DialogTitle>Create Pipeline</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div>
+              <label className="text-sm font-medium text-[var(--text-high)] mb-1.5 block">Pipeline Name</label>
+              <Input
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                placeholder="Pipeline Name"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-[var(--text-high)] mb-1.5 block">Description (optional)</label>
+              <Textarea
+                value={newDesc}
+                onChange={(e) => setNewDesc(e.target.value)}
+                placeholder="Description (optional)"
+                rows={2}
+              />
+            </div>
+            <p className="text-sm text-[var(--text-mid)]">
+              A default pipeline with Transcription and Summarize steps will be created.
+              You can edit the steps later.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setCreateOpen(false)}>Cancel</Button>
+            <Button
+              onClick={handleCreate}
+              disabled={!newName.trim() || createMutation.isPending}
+            >
+              {createMutation.isPending ? 'Creating...' : 'Create'}
+            </Button>
+          </DialogFooter>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setCreateOpen(false)}>Cancel</Button>
-          <Button
-            variant="contained"
-            onClick={handleCreate}
-            disabled={!newName.trim() || createMutation.isPending}
-          >
-            {createMutation.isPending ? 'Creating...' : 'Create'}
-          </Button>
-        </DialogActions>
       </Dialog>
-    </Box>
+    </div>
   );
 }

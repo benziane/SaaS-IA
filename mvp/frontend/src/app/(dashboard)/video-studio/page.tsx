@@ -1,17 +1,15 @@
 'use client';
 
 import { useState } from 'react';
-import {
-  Alert, Box, Button, Card, CardContent, Chip, CircularProgress,
-  Grid, Skeleton,
-  Slider, TextField, Typography,
-} from '@mui/material';
-import VideocamIcon from '@mui/icons-material/Videocam';
-import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
-import DeleteIcon from '@mui/icons-material/Delete';
-import IconButton from '@mui/material/IconButton';
-import MovieFilterIcon from '@mui/icons-material/MovieFilter';
-import PersonIcon from '@mui/icons-material/Person';
+import { Loader2, Video, Sparkles, Trash2, Clapperboard, User } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/lib/design-hub/components/Button';
+import { Input } from '@/lib/design-hub/components/Input';
+import { Textarea } from '@/lib/design-hub/components/Textarea';
+import { Skeleton } from '@/lib/design-hub/components/Skeleton';
+import { Slider } from '@/components/ui/slider';
 
 import { useDeleteVideo, useGenerateAvatar, useGenerateVideo, useVideos } from '@/features/video-gen/hooks/useVideoGen';
 
@@ -22,8 +20,8 @@ const VIDEO_TYPES = [
   { id: 'avatar_talking', label: 'Talking Avatar', icon: '🧑' },
 ];
 
-const STATUS_COLORS: Record<string, 'default' | 'info' | 'success' | 'error'> = {
-  pending: 'default', generating: 'info', processing: 'info', completed: 'success', failed: 'error',
+const STATUS_VARIANTS: Record<string, 'secondary' | 'default' | 'success' | 'destructive'> = {
+  pending: 'secondary', generating: 'default', processing: 'default', completed: 'success', failed: 'destructive',
 };
 
 export default function VideoStudioPage() {
@@ -49,114 +47,159 @@ export default function VideoStudioPage() {
   };
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h4" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <VideocamIcon color="primary" /> Video Studio
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
+    <div className="p-6">
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-[var(--text-high)] flex items-center gap-2">
+          <Video className="h-7 w-7 text-[var(--accent)]" /> Video Studio
+        </h1>
+        <p className="text-sm text-[var(--text-mid)]">
           Generate AI videos, highlight clips, talking avatars, and explainer videos
-        </Typography>
-      </Box>
+        </p>
+      </div>
 
-      <Grid container spacing={3}>
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
         {/* Generation */}
-        <Grid item xs={12} md={5}>
-          <Card sx={{ mb: 2 }}>
-            <CardContent>
-              <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-                <MovieFilterIcon /> Generate Video
-              </Typography>
-              <TextField fullWidth size="small" label="Title" value={title}
-                onChange={(e) => setTitle(e.target.value)} sx={{ mb: 2 }} />
-              <TextField fullWidth multiline rows={3} label="Prompt" placeholder="Describe the video you want to create..."
-                value={prompt} onChange={(e) => setPrompt(e.target.value)} sx={{ mb: 2 }} />
+        <div className="md:col-span-5">
+          <Card className="mb-4">
+            <CardContent className="p-6">
+              <h3 className="text-lg font-semibold text-[var(--text-high)] mb-4 flex items-center gap-2">
+                <Clapperboard className="h-5 w-5" /> Generate Video
+              </h3>
+              <Input
+                placeholder="Title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                className="mb-4"
+              />
+              <Textarea
+                rows={3}
+                placeholder="Describe the video you want to create..."
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                className="mb-4"
+              />
 
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 2 }}>
+              <div className="flex flex-wrap gap-1.5 mb-4">
                 {VIDEO_TYPES.filter((t) => t.id !== 'avatar_talking').map((t) => (
-                  <Chip key={t.id} label={`${t.icon} ${t.label}`} size="small"
-                    variant={videoType === t.id ? 'filled' : 'outlined'}
-                    color={videoType === t.id ? 'primary' : 'default'}
-                    onClick={() => setVideoType(t.id)} />
+                  <Badge
+                    key={t.id}
+                    variant={videoType === t.id ? 'default' : 'outline'}
+                    className="cursor-pointer"
+                    onClick={() => setVideoType(t.id)}
+                  >
+                    {t.icon} {t.label}
+                  </Badge>
                 ))}
-              </Box>
+              </div>
 
-              <Typography variant="caption" color="text.secondary">Duration: {duration}s</Typography>
-              <Slider value={duration} onChange={(_, v) => setDuration(v as number)}
-                min={5} max={120} step={5} valueLabelDisplay="auto" sx={{ mb: 2 }} />
+              <p className="text-xs text-[var(--text-low)] mb-1">Duration: {duration}s</p>
+              <Slider
+                value={[duration]}
+                onValueChange={(v) => setDuration(v[0] ?? 5)}
+                min={5}
+                max={120}
+                step={5}
+                className="mb-4"
+              />
 
-              <Button variant="contained" fullWidth onClick={handleGenerate}
+              <Button
+                className="w-full"
+                onClick={handleGenerate}
                 disabled={!title.trim() || !prompt.trim() || genMutation.isPending}
-                startIcon={genMutation.isPending ? <CircularProgress size={18} color="inherit" /> : <AutoAwesomeIcon />}>
-                {genMutation.isPending ? 'Generating...' : 'Generate Video'}
+              >
+                {genMutation.isPending ? (
+                  <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Generating...</>
+                ) : (
+                  <><Sparkles className="h-4 w-4 mr-2" /> Generate Video</>
+                )}
               </Button>
-              {genMutation.isError && <Alert severity="error" sx={{ mt: 1 }}>{genMutation.error.message}</Alert>}
+              {genMutation.isError && (
+                <Alert variant="destructive" className="mt-2">
+                  <AlertDescription>{genMutation.error.message}</AlertDescription>
+                </Alert>
+              )}
             </CardContent>
           </Card>
 
           {/* Avatar */}
           <Card>
-            <CardContent>
-              <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-                <PersonIcon /> Talking Avatar
-              </Typography>
-              <TextField fullWidth multiline rows={3} label="Script" placeholder="What should the avatar say?"
-                value={avatarText} onChange={(e) => setAvatarText(e.target.value)} sx={{ mb: 2 }} />
-              <Button variant="outlined" fullWidth onClick={handleAvatar}
+            <CardContent className="p-6">
+              <h3 className="text-lg font-semibold text-[var(--text-high)] mb-4 flex items-center gap-2">
+                <User className="h-5 w-5" /> Talking Avatar
+              </h3>
+              <Textarea
+                rows={3}
+                placeholder="What should the avatar say?"
+                value={avatarText}
+                onChange={(e) => setAvatarText(e.target.value)}
+                className="mb-4"
+              />
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={handleAvatar}
                 disabled={!avatarText.trim() || avatarMutation.isPending}
-                startIcon={avatarMutation.isPending ? <CircularProgress size={18} /> : <PersonIcon />}>
-                Generate Avatar Video
+              >
+                {avatarMutation.isPending ? (
+                  <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Generating...</>
+                ) : (
+                  <><User className="h-4 w-4 mr-2" /> Generate Avatar Video</>
+                )}
               </Button>
             </CardContent>
           </Card>
-        </Grid>
+        </div>
 
         {/* Gallery */}
-        <Grid item xs={12} md={7}>
+        <div className="md:col-span-7">
           <Card>
-            <CardContent>
-              <Typography variant="h6" sx={{ mb: 2 }}>Videos</Typography>
-              {isLoading ? <Skeleton variant="rectangular" height={400} /> : !videos?.length ? (
-                <Box sx={{ textAlign: 'center', py: 6 }}>
-                  <VideocamIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 1 }} />
-                  <Typography color="text.secondary">No videos yet</Typography>
-                </Box>
+            <CardContent className="p-6">
+              <h3 className="text-lg font-semibold text-[var(--text-high)] mb-4">Videos</h3>
+              {isLoading ? <Skeleton className="h-[400px] w-full" /> : !videos?.length ? (
+                <div className="text-center py-12">
+                  <Video className="h-16 w-16 text-[var(--text-low)] mx-auto mb-2" />
+                  <p className="text-[var(--text-mid)]">No videos yet</p>
+                </div>
               ) : (
-                <Grid container spacing={1.5}>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {videos.map((v) => (
-                    <Grid item xs={12} sm={6} key={v.id}>
-                      <Card variant="outlined">
-                        <Box sx={{ height: 120, bgcolor: 'action.hover', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          {v.status === 'completed' ? (
-                            <Typography variant="caption" sx={{ p: 1 }}>{v.title}</Typography>
-                          ) : v.status === 'failed' ? (
-                            <Typography color="error" variant="caption">Failed</Typography>
-                          ) : (
-                            <CircularProgress size={24} />
-                          )}
-                        </Box>
-                        <CardContent sx={{ py: 1, '&:last-child': { pb: 1 } }}>
-                          <Typography variant="subtitle2" noWrap>{v.title}</Typography>
-                          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 0.5 }}>
-                            <Box sx={{ display: 'flex', gap: 0.5 }}>
-                              <Chip label={v.video_type.replace('_', ' ')} size="small" variant="outlined" />
-                              <Chip label={v.status} size="small" color={STATUS_COLORS[v.status] || 'default'} />
-                              {v.duration_s && <Chip label={`${v.duration_s}s`} size="small" variant="outlined" />}
-                            </Box>
-                            <IconButton size="small" color="error" onClick={() => deleteMutation.mutate(v.id)}>
-                              <DeleteIcon fontSize="small" />
-                            </IconButton>
-                          </Box>
-                        </CardContent>
-                      </Card>
-                    </Grid>
+                    <Card key={v.id} className="border border-[var(--border)]">
+                      <div className="h-[120px] bg-[var(--bg-elevated)] flex items-center justify-center">
+                        {v.status === 'completed' ? (
+                          <span className="text-xs p-2 text-[var(--text-mid)]">{v.title}</span>
+                        ) : v.status === 'failed' ? (
+                          <span className="text-xs text-red-400">Failed</span>
+                        ) : (
+                          <Loader2 className="h-6 w-6 animate-spin text-[var(--accent)]" />
+                        )}
+                      </div>
+                      <CardContent className="py-2 px-3">
+                        <p className="text-sm font-medium text-[var(--text-high)] truncate">{v.title}</p>
+                        <div className="flex justify-between items-center mt-1">
+                          <div className="flex gap-1">
+                            <Badge variant="outline" className="text-[10px]">{v.video_type.replace('_', ' ')}</Badge>
+                            <Badge variant={STATUS_VARIANTS[v.status] || 'secondary'} className="text-[10px]">{v.status}</Badge>
+                            {v.duration_s && <Badge variant="outline" className="text-[10px]">{v.duration_s}s</Badge>}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => deleteMutation.mutate(v.id)}
+                            className="p-1 text-red-400 hover:text-red-300 transition-colors"
+                            aria-label="Delete video"
+                            title="Delete video"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </CardContent>
+                    </Card>
                   ))}
-                </Grid>
+                </div>
               )}
             </CardContent>
           </Card>
-        </Grid>
-      </Grid>
-    </Box>
+        </div>
+      </div>
+    </div>
   );
 }

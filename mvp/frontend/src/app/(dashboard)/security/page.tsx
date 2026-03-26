@@ -1,24 +1,27 @@
 'use client';
 
 import { useState } from 'react';
-import {
-  Alert, Box, Button, Card, CardContent, Chip, CircularProgress,
-  Divider,
-  FormControlLabel, Grid, LinearProgress, Skeleton, Switch,
-  TextField, Typography,
-} from '@mui/material';
-import SecurityIcon from '@mui/icons-material/Security';
-import ShieldIcon from '@mui/icons-material/Shield';
-import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
-import BugReportIcon from '@mui/icons-material/BugReport';
-import HistoryIcon from '@mui/icons-material/History';
+import { Shield, ShieldCheck, EyeOff, Bug, History, Loader2 } from 'lucide-react';
+
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/lib/design-hub/components/Alert';
+import { Progress } from '@/components/ui/progress';
+import { Button } from '@/lib/design-hub/components/Button';
+import { Textarea } from '@/lib/design-hub/components/Textarea';
+import { Skeleton } from '@/lib/design-hub/components/Skeleton';
+import { Switch } from '@/lib/design-hub/components/Switch';
+import { Separator } from '@/lib/design-hub/components/Separator';
 
 import {
   useAuditLogs, useGuardrails, useScanContent, useSecurityDashboard,
 } from '@/features/security/hooks/useSecurity';
 
-const SEVERITY_COLORS: Record<string, 'default' | 'info' | 'warning' | 'error'> = {
-  low: 'info', medium: 'warning', high: 'error', critical: 'error',
+const SEVERITY_COLORS: Record<string, 'secondary' | 'default' | 'warning' | 'destructive'> = {
+  low: 'default',
+  medium: 'warning',
+  high: 'destructive',
+  critical: 'destructive',
 };
 
 export default function SecurityPage() {
@@ -41,131 +44,153 @@ export default function SecurityPage() {
   };
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h4" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <SecurityIcon color="primary" /> Security Guardian
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
+    <div className="p-6">
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold flex items-center gap-2 text-[var(--text-high)]">
+          <Shield className="h-6 w-6 text-[var(--accent)]" /> Security Guardian
+        </h1>
+        <p className="text-sm text-[var(--text-mid)]">
           AI safety guardrails, PII detection, audit trails, and compliance monitoring
-        </Typography>
-      </Box>
+        </p>
+      </div>
 
       {/* Dashboard Stats */}
-      {dashLoading ? <Skeleton variant="rectangular" height={100} sx={{ mb: 3 }} /> : dashboard && (
-        <Grid container spacing={2} sx={{ mb: 3 }}>
+      {dashLoading ? <Skeleton className="h-[100px] mb-6" /> : dashboard && (
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-6">
           {[
-            { label: 'Total Scans', value: dashboard.total_scans, color: 'primary.main' },
-            { label: 'Issues Found', value: dashboard.issues_found, color: 'error.main' },
-            { label: 'PII Detected', value: dashboard.pii_detected, color: 'warning.main' },
-            { label: 'Prompts Blocked', value: dashboard.prompts_blocked, color: 'error.main' },
-            { label: 'Audit Entries', value: dashboard.audit_entries, color: 'info.main' },
+            { label: 'Total Scans', value: dashboard.total_scans, colorClass: 'text-[var(--accent)]' },
+            { label: 'Issues Found', value: dashboard.issues_found, colorClass: 'text-red-400' },
+            { label: 'PII Detected', value: dashboard.pii_detected, colorClass: 'text-amber-400' },
+            { label: 'Prompts Blocked', value: dashboard.prompts_blocked, colorClass: 'text-red-400' },
+            { label: 'Audit Entries', value: dashboard.audit_entries, colorClass: 'text-blue-400' },
           ].map((stat) => (
-            <Grid item xs={6} sm={2.4} key={stat.label}>
-              <Card variant="outlined">
-                <CardContent sx={{ textAlign: 'center', py: 1.5, '&:last-child': { pb: 1.5 } }}>
-                  <Typography variant="h4" sx={{ color: stat.color }}>{stat.value}</Typography>
-                  <Typography variant="caption" color="text.secondary">{stat.label}</Typography>
-                </CardContent>
-              </Card>
-            </Grid>
+            <Card key={stat.label} className="border border-[var(--border)]">
+              <CardContent className="text-center py-3 px-4">
+                <p className={`text-2xl font-bold ${stat.colorClass}`}>{stat.value}</p>
+                <p className="text-xs text-[var(--text-low)]">{stat.label}</p>
+              </CardContent>
+            </Card>
           ))}
-        </Grid>
+        </div>
       )}
 
-      <Grid container spacing={3}>
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
         {/* Scanner */}
-        <Grid item xs={12} md={7}>
+        <div className="md:col-span-7">
           <Card>
-            <CardContent>
-              <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-                <BugReportIcon /> Content Scanner
-              </Typography>
-              <TextField fullWidth multiline rows={6} label="Text to scan"
+            <CardContent className="p-6">
+              <h2 className="text-lg font-semibold text-[var(--text-high)] mb-4 flex items-center gap-2">
+                <Bug className="h-5 w-5" /> Content Scanner
+              </h2>
+              <Textarea
+                rows={6}
                 placeholder="Paste text to scan for PII, prompt injection, and safety issues..."
-                value={scanText} onChange={(e) => setScanText(e.target.value)} sx={{ mb: 2 }} />
+                value={scanText}
+                onChange={(e) => setScanText(e.target.value)}
+                className="mb-4"
+              />
 
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 2 }}>
+              <div className="flex flex-wrap gap-1.5 mb-4">
                 {['pii', 'prompt_injection', 'content_safety'].map((type) => (
-                  <Chip key={type} label={type.replace('_', ' ')} variant={scanTypes.includes(type) ? 'filled' : 'outlined'}
-                    color={scanTypes.includes(type) ? 'primary' : 'default'}
-                    onClick={() => toggleScanType(type)} />
+                  <button
+                    key={type}
+                    type="button"
+                    onClick={() => toggleScanType(type)}
+                    className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
+                      scanTypes.includes(type)
+                        ? 'bg-[var(--accent)] text-[var(--bg-app)]'
+                        : 'border border-[var(--border)] text-[var(--text-mid)] hover:bg-[var(--bg-elevated)]'
+                    }`}
+                  >
+                    {type.replace('_', ' ')}
+                  </button>
                 ))}
-              </Box>
+              </div>
 
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <FormControlLabel control={<Switch checked={autoRedact} onChange={(e) => setAutoRedact(e.target.checked)} />}
-                  label={<Typography variant="body2"><VisibilityOffIcon sx={{ fontSize: 16, mr: 0.5, verticalAlign: 'text-bottom' }} />Auto-redact PII</Typography>} />
-                <Button variant="contained" startIcon={
-                  scanMutation.isPending ? <CircularProgress size={16} color="inherit" /> : <ShieldIcon />
-                } onClick={handleScan} disabled={!scanText.trim() || scanMutation.isPending}>
+              <div className="flex items-center justify-between">
+                <label className="flex items-center gap-2 text-sm text-[var(--text-mid)]">
+                  <Switch checked={autoRedact} onCheckedChange={setAutoRedact} />
+                  <EyeOff className="h-4 w-4" />
+                  Auto-redact PII
+                </label>
+                <Button onClick={handleScan} disabled={!scanText.trim() || scanMutation.isPending}>
+                  {scanMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <ShieldCheck className="h-4 w-4 mr-1" />}
                   Scan
                 </Button>
-              </Box>
+              </div>
 
               {/* Scan Results */}
               {scanMutation.data && (
-                <Box sx={{ mt: 3 }}>
-                  <Divider sx={{ mb: 2 }} />
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                    <Typography variant="subtitle1">Scan Results</Typography>
-                    <Chip label={scanMutation.data.status} size="small"
-                      color={scanMutation.data.status === 'clean' ? 'success' : 'error'} />
+                <div className="mt-6">
+                  <Separator className="mb-4" />
+                  <div className="flex items-center gap-2 mb-4">
+                    <h3 className="text-base font-semibold text-[var(--text-high)]">Scan Results</h3>
+                    <Badge variant={scanMutation.data.status === 'clean' ? 'success' : 'destructive'}>
+                      {scanMutation.data.status}
+                    </Badge>
                     {scanMutation.data.severity && (
-                      <Chip label={scanMutation.data.severity} size="small"
-                        color={SEVERITY_COLORS[scanMutation.data.severity] || 'default'} />
+                      <Badge variant={SEVERITY_COLORS[scanMutation.data.severity] || 'secondary'}>
+                        {scanMutation.data.severity}
+                      </Badge>
                     )}
-                  </Box>
+                  </div>
 
                   {scanMutation.data.findings.length === 0 ? (
-                    <Alert severity="success">No security issues detected. Content is clean.</Alert>
+                    <Alert variant="success">
+                      <AlertDescription>No security issues detected. Content is clean.</AlertDescription>
+                    </Alert>
                   ) : (
                     scanMutation.data.findings.map((f, i) => (
-                      <Alert key={i} severity={f.severity === 'critical' || f.severity === 'high' ? 'error' : 'warning'}
-                        sx={{ mb: 1 }}>
-                        <Typography variant="subtitle2">[{f.type}] {f.description}</Typography>
-                        {f.suggestion && <Typography variant="caption">{f.suggestion}</Typography>}
+                      <Alert
+                        key={i}
+                        variant={f.severity === 'critical' || f.severity === 'high' ? 'destructive' : 'warning'}
+                        className="mb-2"
+                      >
+                        <AlertDescription>
+                          <span className="font-semibold">[{f.type}] {f.description}</span>
+                          {f.suggestion && <span className="block text-xs mt-0.5">{f.suggestion}</span>}
+                        </AlertDescription>
                       </Alert>
                     ))
                   )}
 
                   {scanMutation.data.auto_redacted && scanMutation.data.redacted_text && (
-                    <Box sx={{ mt: 2 }}>
-                      <Typography variant="subtitle2" sx={{ mb: 1 }}>Redacted Text</Typography>
-                      <Box sx={{ p: 2, bgcolor: 'action.hover', borderRadius: 1, fontFamily: 'monospace', fontSize: '0.85rem', whiteSpace: 'pre-wrap' }}>
+                    <div className="mt-4">
+                      <h4 className="text-sm font-semibold text-[var(--text-high)] mb-2">Redacted Text</h4>
+                      <div className="p-3 bg-[var(--bg-elevated)] rounded font-mono text-sm whitespace-pre-wrap">
                         {scanMutation.data.redacted_text}
-                      </Box>
-                    </Box>
+                      </div>
+                    </div>
                   )}
-                </Box>
+                </div>
               )}
             </CardContent>
           </Card>
-        </Grid>
+        </div>
 
         {/* Audit Log + Guardrails */}
-        <Grid item xs={12} md={5}>
-          <Card sx={{ mb: 3 }}>
-            <CardContent>
-              <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-                <HistoryIcon /> Recent Audit Log
-              </Typography>
+        <div className="md:col-span-5">
+          <Card className="mb-6">
+            <CardContent className="p-6">
+              <h2 className="text-lg font-semibold text-[var(--text-high)] mb-4 flex items-center gap-2">
+                <History className="h-5 w-5" /> Recent Audit Log
+              </h2>
               {!auditLogs?.length ? (
-                <Typography color="text.secondary">No audit entries yet</Typography>
+                <p className="text-[var(--text-mid)]">No audit entries yet</p>
               ) : (
                 auditLogs.slice(0, 10).map((log) => (
-                  <Box key={log.id} sx={{ mb: 1, pb: 1, borderBottom: 1, borderColor: 'divider' }}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <Box sx={{ display: 'flex', gap: 0.5 }}>
-                        <Chip label={log.action} size="small" variant="outlined" />
-                        <Chip label={log.module} size="small" variant="outlined" />
-                      </Box>
-                      {log.flagged && <Chip label="FLAGGED" size="small" color="error" />}
-                    </Box>
-                    <Typography variant="caption" color="text.secondary">
+                  <div key={log.id} className="mb-2 pb-2 border-b border-[var(--border)] last:border-0">
+                    <div className="flex justify-between">
+                      <div className="flex gap-1">
+                        <Badge variant="outline" className="text-xs">{log.action}</Badge>
+                        <Badge variant="outline" className="text-xs">{log.module}</Badge>
+                      </div>
+                      {log.flagged && <Badge variant="destructive" className="text-xs">FLAGGED</Badge>}
+                    </div>
+                    <p className="text-xs text-[var(--text-low)] mt-0.5">
                       {log.provider && `${log.provider} | `}{log.tokens_used} tokens | {new Date(log.created_at).toLocaleString()}
-                    </Typography>
-                  </Box>
+                    </p>
+                  </div>
                 ))
               )}
             </CardContent>
@@ -174,24 +199,29 @@ export default function SecurityPage() {
           {/* Risk Distribution */}
           {dashboard && (
             <Card>
-              <CardContent>
-                <Typography variant="h6" sx={{ mb: 2 }}>Risk Distribution</Typography>
+              <CardContent className="p-6">
+                <h2 className="text-lg font-semibold text-[var(--text-high)] mb-4">Risk Distribution</h2>
                 {Object.entries(dashboard.risk_distribution).map(([level, count]) => (
-                  <Box key={level} sx={{ mb: 1 }}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                      <Chip label={level} size="small" color={SEVERITY_COLORS[level] || 'default'} />
-                      <Typography variant="body2">{count}</Typography>
-                    </Box>
-                    <LinearProgress variant="determinate"
+                  <div key={level} className="mb-2">
+                    <div className="flex justify-between mb-1">
+                      <Badge variant={SEVERITY_COLORS[level] || 'secondary'} className="text-xs">{level}</Badge>
+                      <span className="text-sm text-[var(--text-high)]">{count}</span>
+                    </div>
+                    <Progress
                       value={dashboard.issues_found > 0 ? (count / Math.max(dashboard.issues_found, 1)) * 100 : 0}
-                      color={level === 'critical' || level === 'high' ? 'error' : level === 'medium' ? 'warning' : 'info'} />
-                  </Box>
+                      className={`h-1.5 ${
+                        level === 'critical' || level === 'high' ? '[&>div]:bg-red-500' :
+                        level === 'medium' ? '[&>div]:bg-amber-500' :
+                        '[&>div]:bg-blue-500'
+                      }`}
+                    />
+                  </div>
                 ))}
               </CardContent>
             </Card>
           )}
-        </Grid>
-      </Grid>
-    </Box>
+        </div>
+      </div>
+    </div>
   );
 }

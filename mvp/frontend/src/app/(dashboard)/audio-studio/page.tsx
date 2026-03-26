@@ -2,44 +2,23 @@
 
 import { useCallback, useRef, useState } from 'react';
 import {
-  Alert,
-  Box,
-  Button,
-  Card,
-  CardContent,
-  Chip,
-  CircularProgress,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  Divider,
-  FormControl,
-  Grid,
-  IconButton,
-  InputLabel,
-  LinearProgress,
-  MenuItem,
-  Select,
-  Slider,
-  Tab,
-  Tabs,
-  TextField,
-  Tooltip,
-  Typography,
-} from '@mui/material';
-import AudiotrackIcon from '@mui/icons-material/Audiotrack';
-import CloudUploadIcon from '@mui/icons-material/CloudUpload';
-import ContentCutIcon from '@mui/icons-material/ContentCut';
-import DeleteIcon from '@mui/icons-material/Delete';
-import DescriptionIcon from '@mui/icons-material/Description';
-import DownloadIcon from '@mui/icons-material/Download';
-import GraphicEqIcon from '@mui/icons-material/GraphicEq';
-import ListAltIcon from '@mui/icons-material/ListAlt';
-import MicIcon from '@mui/icons-material/Mic';
-import PodcastsIcon from '@mui/icons-material/Podcasts';
-import SpeedIcon from '@mui/icons-material/Speed';
-import VolumeUpIcon from '@mui/icons-material/VolumeUp';
+  Music, Upload, Scissors, Trash2, FileText, Download, AudioWaveform,
+  List, Mic, Podcast, Gauge, Volume2, Loader2,
+} from 'lucide-react';
+
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Progress } from '@/components/ui/progress';
+import { Slider } from '@/components/ui/slider';
+import { Button } from '@/lib/design-hub/components/Button';
+import { Input } from '@/lib/design-hub/components/Input';
+import { Textarea } from '@/lib/design-hub/components/Textarea';
+import { Separator } from '@/lib/design-hub/components/Separator';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/lib/design-hub/components/Tabs';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/lib/design-hub/components/Select';
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/lib/design-hub/components/Tooltip';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/lib/design-hub/components/Dialog';
 
 import {
   useAudioList,
@@ -56,11 +35,11 @@ import {
 import { getExportUrl } from '@/features/audio-studio/api';
 import type { AudioFile, Chapter, AudioEditOperation } from '@/features/audio-studio/types';
 
-const STATUS_COLORS: Record<string, 'default' | 'success' | 'error' | 'info' | 'warning'> = {
-  uploading: 'info',
+const STATUS_VARIANTS: Record<string, 'default' | 'success' | 'destructive' | 'secondary' | 'warning'> = {
+  uploading: 'secondary',
   ready: 'success',
   processing: 'warning',
-  failed: 'error',
+  failed: 'destructive',
 };
 
 function formatDuration(seconds: number): string {
@@ -81,25 +60,20 @@ function formatSize(kb: number): string {
 function MiniWaveform({ data }: { data: number[] | null }) {
   if (!data || data.length === 0) return null;
   const step = Math.max(1, Math.floor(data.length / 80));
-  const bars = [];
+  const bars: number[] = [];
   for (let i = 0; i < data.length; i += step) {
-    bars.push(data[i]);
+    bars.push(data[i] ?? 0);
   }
   return (
-    <Box sx={{ display: 'flex', alignItems: 'center', gap: '1px', height: 32 }}>
+    <div className="flex items-center gap-px h-8">
       {bars.slice(0, 80).map((v, i) => (
-        <Box
+        <div
           key={i}
-          sx={{
-            width: 2,
-            height: `${Math.max(4, (v ?? 0) * 32)}px`,
-            bgcolor: 'primary.main',
-            borderRadius: 1,
-            opacity: 0.7,
-          }}
+          className="w-0.5 rounded bg-[var(--accent)] opacity-70"
+          style={{ height: `${Math.max(4, (v ?? 0) * 32)}px` }}
         />
       ))}
-    </Box>
+    </div>
   );
 }
 
@@ -119,7 +93,7 @@ export default function AudioStudioPage() {
   const splitMutation = useSplitAudio();
   const createEpisodeMutation = useCreateEpisode();
 
-  const [tab, setTab] = useState(0);
+  const [tab, setTab] = useState('files');
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [selected, setSelected] = useState<AudioFile | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -154,489 +128,477 @@ export default function AudioStudioPage() {
   };
 
   return (
-    <Box sx={{ p: 3 }}>
+    <div className="p-6">
       {/* Header */}
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h4" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <AudiotrackIcon color="primary" /> Audio Studio
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold text-[var(--text-high)] flex items-center gap-2">
+          <Music className="h-8 w-8 text-[var(--accent)]" /> Audio Studio
+        </h1>
+        <p className="text-sm text-[var(--text-mid)]">
           Podcast and audio editing studio with AI-powered chapters, transcription, and RSS feed
-        </Typography>
-      </Box>
+        </p>
+      </div>
 
       {/* Tabs */}
-      <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 3 }}>
-        <Tab icon={<GraphicEqIcon />} label="Audio Files" />
-        <Tab icon={<PodcastsIcon />} label="Podcast Episodes" />
-      </Tabs>
+      <Tabs value={tab} onValueChange={setTab} className="mb-6">
+        <TabsList>
+          <TabsTrigger value="files" className="flex items-center gap-1.5">
+            <AudioWaveform className="h-4 w-4" /> Audio Files
+          </TabsTrigger>
+          <TabsTrigger value="episodes" className="flex items-center gap-1.5">
+            <Podcast className="h-4 w-4" /> Podcast Episodes
+          </TabsTrigger>
+        </TabsList>
 
-      {/* ============================================================
-          TAB 0: Audio Files
-          ============================================================ */}
-      {tab === 0 && (
-        <Grid container spacing={3}>
-          {/* Upload + Actions Panel */}
-          <Grid item xs={12} md={4}>
-            <Card>
-              <CardContent>
-                <Typography variant="h6" sx={{ mb: 2 }}>Upload Audio</Typography>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".mp3,.wav,.ogg,.flac,.m4a,.aac,.webm,.mp4,.wma"
-                  hidden
-                  onChange={handleUpload}
-                />
-                <Button
-                  fullWidth
-                  variant="contained"
-                  startIcon={<CloudUploadIcon />}
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={uploadMutation.isPending}
-                  sx={{ mb: 2 }}
-                >
-                  {uploadMutation.isPending ? 'Uploading...' : 'Choose Audio File'}
-                </Button>
-                {uploadProgress !== null && (
-                  <LinearProgress variant="determinate" value={uploadProgress} sx={{ mb: 2 }} />
-                )}
+        {/* ============================================================
+            TAB 0: Audio Files
+            ============================================================ */}
+        <TabsContent value="files">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+            {/* Upload + Actions Panel */}
+            <div className="md:col-span-4">
+              <Card>
+                <CardContent className="p-6">
+                  <h3 className="text-lg font-semibold text-[var(--text-high)] mb-4">Upload Audio</h3>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".mp3,.wav,.ogg,.flac,.m4a,.aac,.webm,.mp4,.wma"
+                    hidden
+                    onChange={handleUpload}
+                  />
+                  <Button
+                    className="w-full mb-4"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploadMutation.isPending}
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    {uploadMutation.isPending ? 'Uploading...' : 'Choose Audio File'}
+                  </Button>
+                  {uploadProgress !== null && (
+                    <Progress value={uploadProgress} className="mb-4" />
+                  )}
 
-                {uploadMutation.isError && (
-                  <Alert severity="error" sx={{ mb: 2 }}>
-                    Upload failed: {uploadMutation.error.message}
-                  </Alert>
-                )}
+                  {uploadMutation.isError && (
+                    <Alert variant="destructive" className="mb-4">
+                      <AlertDescription>Upload failed: {uploadMutation.error.message}</AlertDescription>
+                    </Alert>
+                  )}
 
-                <Divider sx={{ my: 2 }} />
+                  <Separator className="my-4" />
 
-                {/* Quick actions on selected file */}
-                {selected && (
-                  <>
-                    <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                      Selected: {selected.filename}
-                    </Typography>
-
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
-                      <Button
-                        size="small"
-                        variant="outlined"
-                        startIcon={<MicIcon />}
-                        onClick={() => transcribeMutation.mutate(selected.id)}
-                        disabled={transcribeMutation.isPending}
-                      >
-                        Transcribe
-                      </Button>
-                      <Button
-                        size="small"
-                        variant="outlined"
-                        startIcon={<ListAltIcon />}
-                        onClick={() => chaptersMutation.mutate(selected.id)}
-                        disabled={chaptersMutation.isPending}
-                      >
-                        Chapters
-                      </Button>
-                      <Button
-                        size="small"
-                        variant="outlined"
-                        startIcon={<DescriptionIcon />}
-                        onClick={() => showNotesMutation.mutate(selected.id)}
-                        disabled={showNotesMutation.isPending}
-                      >
-                        Show Notes
-                      </Button>
-                      <Button
-                        size="small"
-                        variant="outlined"
-                        startIcon={<ContentCutIcon />}
-                        onClick={() => splitMutation.mutate({ id: selected.id })}
-                        disabled={splitMutation.isPending}
-                      >
-                        Split
-                      </Button>
-                      <Button
-                        size="small"
-                        variant="outlined"
-                        startIcon={<SpeedIcon />}
-                        onClick={() => setEditDialogOpen(true)}
-                      >
-                        Edit
-                      </Button>
-                    </Box>
-
-                    {/* Export */}
-                    <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                      <FormControl size="small" sx={{ minWidth: 80 }}>
-                        <InputLabel>Format</InputLabel>
-                        <Select value={exportFormat} label="Format" onChange={(e) => setExportFormat(e.target.value)}>
-                          <MenuItem value="mp3">MP3</MenuItem>
-                          <MenuItem value="wav">WAV</MenuItem>
-                          <MenuItem value="ogg">OGG</MenuItem>
-                          <MenuItem value="flac">FLAC</MenuItem>
-                        </Select>
-                      </FormControl>
-                      <Button
-                        size="small"
-                        variant="contained"
-                        startIcon={<DownloadIcon />}
-                        href={getExportUrl(selected.id, exportFormat)}
-                        target="_blank"
-                      >
-                        Export
-                      </Button>
-                    </Box>
-
-                    <Divider sx={{ my: 2 }} />
-
-                    {/* Create Episode */}
-                    <Button
-                      fullWidth
-                      variant="contained"
-                      color="secondary"
-                      startIcon={<PodcastsIcon />}
-                      onClick={() => {
-                        setEpisodeTitle('');
-                        setEpisodeDescription('');
-                        setEpisodeDialogOpen(true);
-                      }}
-                    >
-                      Create Episode
-                    </Button>
-                  </>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Show notes result */}
-            {showNotesMutation.data && (
-              <Card sx={{ mt: 2 }}>
-                <CardContent>
-                  <Typography variant="h6" sx={{ mb: 1 }}>Show Notes</Typography>
-                  <Typography variant="body2" sx={{ mb: 1 }}>
-                    {showNotesMutation.data.show_notes.summary}
-                  </Typography>
-                  {showNotesMutation.data.show_notes.key_points.length > 0 && (
+                  {/* Quick actions on selected file */}
+                  {selected && (
                     <>
-                      <Typography variant="subtitle2">Key Points:</Typography>
-                      <ul>
-                        {showNotesMutation.data.show_notes.key_points.map((p, i) => (
-                          <li key={i}><Typography variant="body2">{p}</Typography></li>
-                        ))}
-                      </ul>
+                      <p className="text-sm font-medium text-[var(--text-high)] mb-2">
+                        Selected: {selected.filename}
+                      </p>
+
+                      <div className="flex flex-wrap gap-2 mb-4">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => transcribeMutation.mutate(selected.id)}
+                          disabled={transcribeMutation.isPending}
+                        >
+                          <Mic className="h-3.5 w-3.5 mr-1" /> Transcribe
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => chaptersMutation.mutate(selected.id)}
+                          disabled={chaptersMutation.isPending}
+                        >
+                          <List className="h-3.5 w-3.5 mr-1" /> Chapters
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => showNotesMutation.mutate(selected.id)}
+                          disabled={showNotesMutation.isPending}
+                        >
+                          <FileText className="h-3.5 w-3.5 mr-1" /> Show Notes
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => splitMutation.mutate({ id: selected.id })}
+                          disabled={splitMutation.isPending}
+                        >
+                          <Scissors className="h-3.5 w-3.5 mr-1" /> Split
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setEditDialogOpen(true)}
+                        >
+                          <Gauge className="h-3.5 w-3.5 mr-1" /> Edit
+                        </Button>
+                      </div>
+
+                      {/* Export */}
+                      <div className="flex gap-2 items-center">
+                        <Select value={exportFormat} onValueChange={setExportFormat}>
+                          <SelectTrigger className="w-24">
+                            <SelectValue placeholder="Format" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="mp3">MP3</SelectItem>
+                            <SelectItem value="wav">WAV</SelectItem>
+                            <SelectItem value="ogg">OGG</SelectItem>
+                            <SelectItem value="flac">FLAC</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <a href={getExportUrl(selected.id, exportFormat)} target="_blank" rel="noopener noreferrer">
+                          <Button size="sm">
+                            <Download className="h-3.5 w-3.5 mr-1" /> Export
+                          </Button>
+                        </a>
+                      </div>
+
+                      <Separator className="my-4" />
+
+                      {/* Create Episode */}
+                      <Button
+                        className="w-full"
+                        variant="secondary"
+                        onClick={() => {
+                          setEpisodeTitle('');
+                          setEpisodeDescription('');
+                          setEpisodeDialogOpen(true);
+                        }}
+                      >
+                        <Podcast className="h-4 w-4 mr-2" /> Create Episode
+                      </Button>
                     </>
                   )}
                 </CardContent>
               </Card>
-            )}
 
-            {/* Split result */}
-            {splitMutation.data && (
-              <Card sx={{ mt: 2 }}>
-                <CardContent>
-                  <Typography variant="h6" sx={{ mb: 1 }}>
-                    Split Result ({splitMutation.data.count} segments)
-                  </Typography>
-                  {splitMutation.data.segments.map((seg) => (
-                    <Typography key={seg.index} variant="body2">
-                      Segment {seg.index + 1}: {formatDuration(seg.start_seconds)} - {formatDuration(seg.end_seconds)} ({formatDuration(seg.duration_seconds)})
-                    </Typography>
-                  ))}
-                </CardContent>
-              </Card>
-            )}
-          </Grid>
-
-          {/* Audio List */}
-          <Grid item xs={12} md={8}>
-            {isLoading ? (
-              <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
-                <CircularProgress />
-              </Box>
-            ) : !audioFiles?.length ? (
-              <Card>
-                <CardContent sx={{ textAlign: 'center', py: 6 }}>
-                  <AudiotrackIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
-                  <Typography variant="h6" color="text.secondary">No audio files yet</Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Upload your first audio file to get started
-                  </Typography>
-                </CardContent>
-              </Card>
-            ) : (
-              audioFiles.map((audio) => (
-                <Card
-                  key={audio.id}
-                  sx={{
-                    mb: 2,
-                    cursor: 'pointer',
-                    border: selected?.id === audio.id ? 2 : 0,
-                    borderColor: 'primary.main',
-                  }}
-                  onClick={() => setSelected(audio)}
-                >
-                  <CardContent>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                      <Box sx={{ flex: 1 }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                          <AudiotrackIcon fontSize="small" color="primary" />
-                          <Typography variant="subtitle1" fontWeight={600}>
-                            {audio.filename}
-                          </Typography>
-                          <Chip
-                            label={audio.status}
-                            size="small"
-                            color={STATUS_COLORS[audio.status] || 'default'}
-                          />
-                        </Box>
-
-                        <Typography variant="body2" color="text.secondary">
-                          {formatDuration(audio.duration_seconds)} | {audio.sample_rate} Hz | {audio.channels}ch | {audio.format.toUpperCase()} | {formatSize(audio.file_size_kb)}
-                        </Typography>
-
-                        <MiniWaveform data={audio.waveform_data} />
-
-                        {/* Chapters */}
-                        {audio.chapters.length > 0 && (
-                          <Box sx={{ mt: 1, display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
-                            {audio.chapters.map((ch: Chapter, i: number) => (
-                              <Chip
-                                key={i}
-                                label={`${ch.title} (${formatDuration(ch.start_time)})`}
-                                size="small"
-                                variant="outlined"
-                              />
-                            ))}
-                          </Box>
-                        )}
-
-                        {/* Transcript snippet */}
-                        {audio.transcript && (
-                          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }} noWrap>
-                            {audio.transcript.slice(0, 150)}...
-                          </Typography>
-                        )}
-                      </Box>
-
-                      <Tooltip title="Delete">
-                        <IconButton
-                          size="small"
-                          color="error"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            deleteMutation.mutate(audio.id);
-                            if (selected?.id === audio.id) setSelected(null);
-                          }}
-                        >
-                          <DeleteIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    </Box>
-                  </CardContent>
-                </Card>
-              ))
-            )}
-          </Grid>
-        </Grid>
-      )}
-
-      {/* ============================================================
-          TAB 1: Podcast Episodes
-          ============================================================ */}
-      {tab === 1 && (
-        <Grid container spacing={3}>
-          <Grid item xs={12}>
-            {!episodes?.length ? (
-              <Card>
-                <CardContent sx={{ textAlign: 'center', py: 6 }}>
-                  <PodcastsIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
-                  <Typography variant="h6" color="text.secondary">No episodes yet</Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Select an audio file and create your first podcast episode
-                  </Typography>
-                </CardContent>
-              </Card>
-            ) : (
-              episodes.map((ep) => (
-                <Card key={ep.id} sx={{ mb: 2 }}>
-                  <CardContent>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                      <PodcastsIcon color="secondary" />
-                      <Typography variant="h6">{ep.title}</Typography>
-                      <Chip
-                        label={ep.is_published ? 'Published' : 'Draft'}
-                        size="small"
-                        color={ep.is_published ? 'success' : 'default'}
-                      />
-                    </Box>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                      {ep.description || 'No description'}
-                    </Typography>
-                    {ep.publish_date && (
-                      <Typography variant="caption" color="text.secondary">
-                        Published: {new Date(ep.publish_date).toLocaleDateString()}
-                      </Typography>
+              {/* Show notes result */}
+              {showNotesMutation.data && (
+                <Card className="mt-4">
+                  <CardContent className="p-6">
+                    <h3 className="text-lg font-semibold text-[var(--text-high)] mb-2">Show Notes</h3>
+                    <p className="text-sm text-[var(--text-mid)] mb-2">
+                      {showNotesMutation.data.show_notes.summary}
+                    </p>
+                    {showNotesMutation.data.show_notes.key_points.length > 0 && (
+                      <>
+                        <p className="text-sm font-medium text-[var(--text-high)]">Key Points:</p>
+                        <ul className="list-disc list-inside">
+                          {showNotesMutation.data.show_notes.key_points.map((p, i) => (
+                            <li key={i} className="text-sm text-[var(--text-mid)]">{p}</li>
+                          ))}
+                        </ul>
+                      </>
                     )}
                   </CardContent>
                 </Card>
-              ))
-            )}
-          </Grid>
-        </Grid>
-      )}
+              )}
+
+              {/* Split result */}
+              {splitMutation.data && (
+                <Card className="mt-4">
+                  <CardContent className="p-6">
+                    <h3 className="text-lg font-semibold text-[var(--text-high)] mb-2">
+                      Split Result ({splitMutation.data.count} segments)
+                    </h3>
+                    {splitMutation.data.segments.map((seg) => (
+                      <p key={seg.index} className="text-sm text-[var(--text-mid)]">
+                        Segment {seg.index + 1}: {formatDuration(seg.start_seconds)} - {formatDuration(seg.end_seconds)} ({formatDuration(seg.duration_seconds)})
+                      </p>
+                    ))}
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+
+            {/* Audio List */}
+            <div className="md:col-span-8">
+              {isLoading ? (
+                <div className="flex justify-center py-12">
+                  <Loader2 className="h-8 w-8 animate-spin text-[var(--accent)]" />
+                </div>
+              ) : !audioFiles?.length ? (
+                <Card>
+                  <CardContent className="text-center py-12 px-6">
+                    <Music className="h-16 w-16 text-[var(--text-low)] mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-[var(--text-mid)]">No audio files yet</h3>
+                    <p className="text-sm text-[var(--text-mid)]">
+                      Upload your first audio file to get started
+                    </p>
+                  </CardContent>
+                </Card>
+              ) : (
+                audioFiles.map((audio) => (
+                  <Card
+                    key={audio.id}
+                    className={`mb-3 cursor-pointer transition-colors hover:border-[var(--accent)] ${
+                      selected?.id === audio.id ? 'border-2 border-[var(--accent)]' : ''
+                    }`}
+                    onClick={() => setSelected(audio)}
+                  >
+                    <CardContent className="p-4">
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <Music className="h-4 w-4 text-[var(--accent)] shrink-0" />
+                            <span className="font-semibold text-[var(--text-high)] truncate">
+                              {audio.filename}
+                            </span>
+                            <Badge variant={STATUS_VARIANTS[audio.status] || 'default'}>
+                              {audio.status}
+                            </Badge>
+                          </div>
+
+                          <p className="text-sm text-[var(--text-mid)]">
+                            {formatDuration(audio.duration_seconds)} | {audio.sample_rate} Hz | {audio.channels}ch | {audio.format.toUpperCase()} | {formatSize(audio.file_size_kb)}
+                          </p>
+
+                          <MiniWaveform data={audio.waveform_data} />
+
+                          {/* Chapters */}
+                          {audio.chapters.length > 0 && (
+                            <div className="mt-2 flex gap-1 flex-wrap">
+                              {audio.chapters.map((ch: Chapter, i: number) => (
+                                <Badge key={i} variant="outline">
+                                  {ch.title} ({formatDuration(ch.start_time)})
+                                </Badge>
+                              ))}
+                            </div>
+                          )}
+
+                          {/* Transcript snippet */}
+                          {audio.transcript && (
+                            <p className="text-sm text-[var(--text-mid)] mt-2 truncate">
+                              {audio.transcript.slice(0, 150)}...
+                            </p>
+                          )}
+                        </div>
+
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <button
+                                type="button"
+                                title="Delete"
+                                className="p-1 rounded hover:bg-red-100 text-red-500"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  deleteMutation.mutate(audio.id);
+                                  if (selected?.id === audio.id) setSelected(null);
+                                }}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            </TooltipTrigger>
+                            <TooltipContent>Delete</TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
+            </div>
+          </div>
+        </TabsContent>
+
+        {/* ============================================================
+            TAB 1: Podcast Episodes
+            ============================================================ */}
+        <TabsContent value="episodes">
+          {!episodes?.length ? (
+            <Card>
+              <CardContent className="text-center py-12 px-6">
+                <Podcast className="h-16 w-16 text-[var(--text-low)] mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-[var(--text-mid)]">No episodes yet</h3>
+                <p className="text-sm text-[var(--text-mid)]">
+                  Select an audio file and create your first podcast episode
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            episodes.map((ep) => (
+              <Card key={ep.id} className="mb-3">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Podcast className="h-5 w-5 text-purple-500" />
+                    <h3 className="text-lg font-semibold text-[var(--text-high)]">{ep.title}</h3>
+                    <Badge variant={ep.is_published ? 'success' : 'default'}>
+                      {ep.is_published ? 'Published' : 'Draft'}
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-[var(--text-mid)] mb-2">
+                    {ep.description || 'No description'}
+                  </p>
+                  {ep.publish_date && (
+                    <span className="text-xs text-[var(--text-mid)]">
+                      Published: {new Date(ep.publish_date).toLocaleDateString()}
+                    </span>
+                  )}
+                </CardContent>
+              </Card>
+            ))
+          )}
+        </TabsContent>
+      </Tabs>
 
       {/* ============================================================
           EDIT DIALOG
           ============================================================ */}
-      <Dialog open={editDialogOpen} onClose={() => setEditDialogOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Edit Audio</DialogTitle>
-        <DialogContent>
+      <Dialog open={editDialogOpen} onOpenChange={(v) => { if (!v) setEditDialogOpen(false); }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Edit Audio</DialogTitle>
+          </DialogHeader>
           {selected && (
-            <Box sx={{ mt: 1 }}>
-              <Typography variant="subtitle2" sx={{ mb: 2 }}>
+            <div className="mt-2 space-y-4">
+              <p className="text-sm font-medium text-[var(--text-high)]">
                 {selected.filename} ({formatDuration(selected.duration_seconds)})
-              </Typography>
+              </p>
 
               {/* Trim */}
-              <Typography variant="body2" fontWeight={600}>Trim</Typography>
-              <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-                <TextField
-                  size="small"
-                  label="Start (s)"
-                  type="number"
-                  value={trimStart}
-                  onChange={(e) => setTrimStart(Number(e.target.value))}
-                />
-                <TextField
-                  size="small"
-                  label="End (s)"
-                  type="number"
-                  value={trimEnd || selected.duration_seconds}
-                  onChange={(e) => setTrimEnd(Number(e.target.value))}
-                />
+              <p className="text-sm font-semibold text-[var(--text-high)]">Trim</p>
+              <div className="flex gap-3 items-end">
+                <div className="flex-1">
+                  <label className="text-xs text-[var(--text-mid)]">Start (s)</label>
+                  <Input
+                    type="number"
+                    value={trimStart}
+                    onChange={(e) => setTrimStart(Number(e.target.value))}
+                  />
+                </div>
+                <div className="flex-1">
+                  <label className="text-xs text-[var(--text-mid)]">End (s)</label>
+                  <Input
+                    type="number"
+                    value={trimEnd || selected.duration_seconds}
+                    onChange={(e) => setTrimEnd(Number(e.target.value))}
+                  />
+                </div>
                 <Button
-                  variant="outlined"
-                  size="small"
+                  variant="outline"
+                  size="sm"
                   onClick={() => handleEdit('trim', { start: trimStart, end: trimEnd || selected.duration_seconds })}
                 >
                   Trim
                 </Button>
-              </Box>
+              </div>
 
-              <Divider sx={{ my: 2 }} />
+              <Separator />
 
               {/* Fade */}
-              <Typography variant="body2" fontWeight={600}>Fade (seconds)</Typography>
+              <p className="text-sm font-semibold text-[var(--text-high)]">Fade (seconds): {fadeDuration}</p>
               <Slider
-                value={fadeDuration}
+                value={[fadeDuration]}
                 min={0.5}
                 max={10}
                 step={0.5}
-                valueLabelDisplay="auto"
-                onChange={(_, v) => setFadeDuration(v as number)}
-                sx={{ mb: 1, maxWidth: 300 }}
+                onValueChange={(v) => setFadeDuration(v[0] ?? 0)}
+                className="max-w-[300px]"
               />
-              <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
-                <Button variant="outlined" size="small" onClick={() => handleEdit('fade_in', { duration: fadeDuration })}>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={() => handleEdit('fade_in', { duration: fadeDuration })}>
                   Fade In
                 </Button>
-                <Button variant="outlined" size="small" onClick={() => handleEdit('fade_out', { duration: fadeDuration })}>
+                <Button variant="outline" size="sm" onClick={() => handleEdit('fade_out', { duration: fadeDuration })}>
                   Fade Out
                 </Button>
-              </Box>
+              </div>
 
-              <Divider sx={{ my: 2 }} />
+              <Separator />
 
               {/* Speed */}
-              <Typography variant="body2" fontWeight={600}>Speed: {speedFactor}x</Typography>
+              <p className="text-sm font-semibold text-[var(--text-high)]">Speed: {speedFactor}x</p>
               <Slider
-                value={speedFactor}
+                value={[speedFactor]}
                 min={0.5}
                 max={3.0}
                 step={0.1}
-                valueLabelDisplay="auto"
-                onChange={(_, v) => setSpeedFactor(v as number)}
-                sx={{ mb: 1, maxWidth: 300 }}
+                onValueChange={(v) => setSpeedFactor(v[0] ?? 1)}
+                className="max-w-[300px]"
               />
-              <Button variant="outlined" size="small" onClick={() => handleEdit('speed_change', { factor: speedFactor })} sx={{ mb: 2 }}>
+              <Button variant="outline" size="sm" onClick={() => handleEdit('speed_change', { factor: speedFactor })}>
                 Apply Speed
               </Button>
 
-              <Divider sx={{ my: 2 }} />
+              <Separator />
 
               {/* One-click operations */}
-              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                <Button variant="contained" size="small" startIcon={<VolumeUpIcon />} onClick={() => handleEdit('normalize')}>
-                  Normalize
+              <div className="flex gap-2 flex-wrap">
+                <Button size="sm" onClick={() => handleEdit('normalize')}>
+                  <Volume2 className="h-3.5 w-3.5 mr-1" /> Normalize
                 </Button>
-                <Button variant="contained" size="small" onClick={() => handleEdit('noise_reduction')}>
+                <Button size="sm" onClick={() => handleEdit('noise_reduction')}>
                   Noise Reduction
                 </Button>
-              </Box>
-            </Box>
+              </div>
+            </div>
           )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditDialogOpen(false)}>Close</Button>
+          </DialogFooter>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setEditDialogOpen(false)}>Close</Button>
-        </DialogActions>
       </Dialog>
 
       {/* ============================================================
           CREATE EPISODE DIALOG
           ============================================================ */}
-      <Dialog open={episodeDialogOpen} onClose={() => setEpisodeDialogOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Create Podcast Episode</DialogTitle>
-        <DialogContent>
-          <TextField
-            fullWidth
-            label="Episode Title"
-            value={episodeTitle}
-            onChange={(e) => setEpisodeTitle(e.target.value)}
-            sx={{ mt: 1, mb: 2 }}
-          />
-          <TextField
-            fullWidth
-            multiline
-            rows={3}
-            label="Description"
-            value={episodeDescription}
-            onChange={(e) => setEpisodeDescription(e.target.value)}
-          />
+      <Dialog open={episodeDialogOpen} onOpenChange={(v) => { if (!v) setEpisodeDialogOpen(false); }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Create Podcast Episode</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 mt-2">
+            <Input
+              placeholder="Episode Title"
+              value={episodeTitle}
+              onChange={(e) => setEpisodeTitle(e.target.value)}
+            />
+            <Textarea
+              placeholder="Description"
+              rows={3}
+              value={episodeDescription}
+              onChange={(e) => setEpisodeDescription(e.target.value)}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEpisodeDialogOpen(false)}>Cancel</Button>
+            <Button
+              disabled={!episodeTitle.trim() || !selected || createEpisodeMutation.isPending}
+              onClick={() => {
+                if (!selected) return;
+                createEpisodeMutation.mutate(
+                  {
+                    title: episodeTitle,
+                    description: episodeDescription,
+                    audio_id: selected.id,
+                  },
+                  { onSuccess: () => { setEpisodeDialogOpen(false); setTab('episodes'); } },
+                );
+              }}
+            >
+              {createEpisodeMutation.isPending ? 'Creating...' : 'Create'}
+            </Button>
+          </DialogFooter>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setEpisodeDialogOpen(false)}>Cancel</Button>
-          <Button
-            variant="contained"
-            disabled={!episodeTitle.trim() || !selected || createEpisodeMutation.isPending}
-            onClick={() => {
-              if (!selected) return;
-              createEpisodeMutation.mutate(
-                {
-                  title: episodeTitle,
-                  description: episodeDescription,
-                  audio_id: selected.id,
-                },
-                { onSuccess: () => { setEpisodeDialogOpen(false); setTab(1); } },
-              );
-            }}
-          >
-            {createEpisodeMutation.isPending ? 'Creating...' : 'Create'}
-          </Button>
-        </DialogActions>
       </Dialog>
 
       {/* Loading overlays for mutations */}
       {(transcribeMutation.isPending || chaptersMutation.isPending || editMutation.isPending) && (
-        <Box sx={{ position: 'fixed', bottom: 24, right: 24, zIndex: 9999 }}>
-          <Card sx={{ p: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
-            <CircularProgress size={24} />
-            <Typography variant="body2">
+        <div className="fixed bottom-6 right-6 z-[9999]">
+          <Card className="p-4 flex items-center gap-3">
+            <Loader2 className="h-5 w-5 animate-spin text-[var(--accent)]" />
+            <span className="text-sm text-[var(--text-high)]">
               {transcribeMutation.isPending && 'Transcribing...'}
               {chaptersMutation.isPending && 'Generating chapters...'}
               {editMutation.isPending && 'Applying edits...'}
-            </Typography>
+            </span>
           </Card>
-        </Box>
+        </div>
       )}
-    </Box>
+    </div>
   );
 }

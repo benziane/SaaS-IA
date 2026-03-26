@@ -2,21 +2,36 @@
 
 import { useState } from 'react';
 import {
-  Alert, Box, Button, Card, CardContent, Chip, CircularProgress,
-  FormControl, Grid, IconButton, InputLabel, LinearProgress,
-  MenuItem, Select, Skeleton, Tab, Tabs, TextField, Tooltip, Typography,
-} from '@mui/material';
-import AnalyticsIcon from '@mui/icons-material/Analytics';
-import CodeIcon from '@mui/icons-material/Code';
-import DeleteIcon from '@mui/icons-material/Delete';
-import FolderIcon from '@mui/icons-material/Folder';
-import GitHubIcon from '@mui/icons-material/GitHub';
-import GradeIcon from '@mui/icons-material/Grade';
-import LayersIcon from '@mui/icons-material/Layers';
-import RefreshIcon from '@mui/icons-material/Refresh';
-import SearchIcon from '@mui/icons-material/Search';
-import SecurityIcon from '@mui/icons-material/Security';
-import WarningIcon from '@mui/icons-material/Warning';
+  BarChart3, Code, Folder, GitFork, Award, Layers,
+  Shield, AlertTriangle, Search, RefreshCw, Trash2, Loader2,
+} from 'lucide-react';
+
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/lib/design-hub/components/Alert';
+import { Progress } from '@/components/ui/progress';
+import { Button } from '@/lib/design-hub/components/Button';
+import { Input } from '@/lib/design-hub/components/Input';
+import { Skeleton } from '@/lib/design-hub/components/Skeleton';
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from '@/lib/design-hub/components/Tabs';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/lib/design-hub/components/Tooltip';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/lib/design-hub/components/Select';
 
 import { useRepoAnalyses, useRepoAnalyzerStatus } from '@/features/repo-analyzer/hooks/useRepoAnalyzer';
 import { useCreateAnalysis, useDeleteAnalysis } from '@/features/repo-analyzer/hooks/useRepoAnalyzerMutations';
@@ -39,11 +54,11 @@ const DEPTH_OPTIONS: { id: AnalysisDepth; label: string; desc: string }[] = [
   { id: 'deep', label: 'Deep', desc: '+ AI documentation analysis' },
 ];
 
-const STATUS_COLORS: Record<string, 'default' | 'info' | 'success' | 'error'> = {
-  pending: 'default',
-  running: 'info',
+const STATUS_COLORS: Record<string, 'secondary' | 'default' | 'success' | 'destructive'> = {
+  pending: 'secondary',
+  running: 'default',
   completed: 'success',
-  failed: 'error',
+  failed: 'destructive',
 };
 
 const GRADE_COLORS: Record<string, string> = {
@@ -60,259 +75,265 @@ const GRADE_COLORS: Record<string, string> = {
 function QualityGauge({ score, grade }: { score: number; grade: string }) {
   const color = GRADE_COLORS[grade] || '#9e9e9e';
   return (
-    <Box sx={{ position: 'relative', display: 'inline-flex' }}>
-      <CircularProgress
-        variant="determinate"
-        value={score}
-        size={100}
-        thickness={6}
-        sx={{ color, '& .MuiCircularProgress-circle': { strokeLinecap: 'round' } }}
-      />
-      <Box sx={{
-        top: 0, left: 0, bottom: 0, right: 0,
-        position: 'absolute', display: 'flex', flexDirection: 'column',
-        alignItems: 'center', justifyContent: 'center',
-      }}>
-        <Typography variant="h5" sx={{ fontWeight: 700, color }}>{grade}</Typography>
-        <Typography variant="caption" color="text.secondary">{score}/100</Typography>
-      </Box>
-    </Box>
+    <div className="relative inline-flex items-center justify-center">
+      <svg width="100" height="100" viewBox="0 0 100 100">
+        <circle cx="50" cy="50" r="42" fill="none" stroke="var(--bg-elevated)" strokeWidth="6" />
+        <circle
+          cx="50" cy="50" r="42" fill="none"
+          stroke={color} strokeWidth="6"
+          strokeLinecap="round"
+          strokeDasharray={`${score * 2.64} ${264 - score * 2.64}`}
+          transform="rotate(-90 50 50)"
+        />
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <span className="text-2xl font-bold" style={{ color }}>{grade}</span>
+        <span className="text-xs text-[var(--text-low)]">{score}/100</span>
+      </div>
+    </div>
   );
 }
 
 function ResultTabs({ results }: { results: AnalysisResults }) {
-  const [tab, setTab] = useState(0);
-
   const tabs: { label: string; key: string; icon: React.ReactElement }[] = [];
-  if (results.structure) tabs.push({ label: 'Structure', key: 'structure', icon: <FolderIcon /> });
-  if (results.tech_stack) tabs.push({ label: 'Tech Stack', key: 'tech_stack', icon: <CodeIcon /> });
-  if (results.quality) tabs.push({ label: 'Quality', key: 'quality', icon: <GradeIcon /> });
-  if (results.dependencies) tabs.push({ label: 'Dependencies', key: 'dependencies', icon: <LayersIcon /> });
-  if (results.security) tabs.push({ label: 'Security', key: 'security', icon: <SecurityIcon /> });
-  if (results.documentation) tabs.push({ label: 'Docs', key: 'documentation', icon: <AnalyticsIcon /> });
+  if (results.structure) tabs.push({ label: 'Structure', key: 'structure', icon: <Folder className="h-4 w-4" /> });
+  if (results.tech_stack) tabs.push({ label: 'Tech Stack', key: 'tech_stack', icon: <Code className="h-4 w-4" /> });
+  if (results.quality) tabs.push({ label: 'Quality', key: 'quality', icon: <Award className="h-4 w-4" /> });
+  if (results.dependencies) tabs.push({ label: 'Dependencies', key: 'dependencies', icon: <Layers className="h-4 w-4" /> });
+  if (results.security) tabs.push({ label: 'Security', key: 'security', icon: <Shield className="h-4 w-4" /> });
+  if (results.documentation) tabs.push({ label: 'Docs', key: 'documentation', icon: <BarChart3 className="h-4 w-4" /> });
 
-  if (tabs.length === 0) return <Typography color="text.secondary">No results available</Typography>;
-
-  const currentTab = (tabs[tab] || tabs[0])!;
+  if (tabs.length === 0) return <p className="text-[var(--text-mid)]">No results available</p>;
 
   return (
-    <Box>
-      <Tabs value={tab} onChange={(_, v) => setTab(v)} variant="scrollable" scrollButtons="auto" sx={{ mb: 2 }}>
+    <Tabs defaultValue={tabs[0]!.key}>
+      <TabsList className="mb-4">
         {tabs.map((t) => (
-          <Tab key={t.key} label={t.label} icon={t.icon} iconPosition="start" sx={{ minHeight: 48 }} />
+          <TabsTrigger key={t.key} value={t.key} className="flex items-center gap-1.5">
+            {t.icon} {t.label}
+          </TabsTrigger>
         ))}
-      </Tabs>
+      </TabsList>
 
       {/* Structure tab */}
-      {currentTab.key === 'structure' && results.structure && (
-        <Box>
-          <Grid container spacing={2} sx={{ mb: 2 }}>
-            <Grid item xs={6}>
-              <Typography variant="body2" color="text.secondary">Total Files</Typography>
-              <Typography variant="h6">{results.structure.total_files.toLocaleString()}</Typography>
-            </Grid>
-            <Grid item xs={6}>
-              <Typography variant="body2" color="text.secondary">Total Lines</Typography>
-              <Typography variant="h6">{results.structure.total_lines.toLocaleString()}</Typography>
-            </Grid>
-          </Grid>
+      {results.structure && (
+        <TabsContent value="structure">
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            <div>
+              <p className="text-sm text-[var(--text-mid)]">Total Files</p>
+              <p className="text-lg font-semibold text-[var(--text-high)]">{results.structure.total_files.toLocaleString()}</p>
+            </div>
+            <div>
+              <p className="text-sm text-[var(--text-mid)]">Total Lines</p>
+              <p className="text-lg font-semibold text-[var(--text-high)]">{results.structure.total_lines.toLocaleString()}</p>
+            </div>
+          </div>
           {results.structure.key_files.length > 0 && (
-            <Box>
-              <Typography variant="subtitle2" sx={{ mb: 1 }}>Key Files</Typography>
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+            <div>
+              <h4 className="text-sm font-semibold text-[var(--text-high)] mb-2">Key Files</h4>
+              <div className="flex flex-wrap gap-1">
                 {results.structure.key_files.map((f) => (
-                  <Chip key={f} label={f} size="small" variant="outlined" />
+                  <Badge key={f} variant="outline" className="text-xs">{f}</Badge>
                 ))}
-              </Box>
-            </Box>
+              </div>
+            </div>
           )}
           {results.structure.extension_counts && Object.keys(results.structure.extension_counts).length > 0 && (
-            <Box sx={{ mt: 2 }}>
-              <Typography variant="subtitle2" sx={{ mb: 1 }}>File Extensions</Typography>
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+            <div className="mt-4">
+              <h4 className="text-sm font-semibold text-[var(--text-high)] mb-2">File Extensions</h4>
+              <div className="flex flex-wrap gap-1">
                 {Object.entries(results.structure.extension_counts).slice(0, 15).map(([ext, count]) => (
-                  <Chip key={ext} label={`${ext}: ${count}`} size="small" variant="outlined" />
+                  <Badge key={ext} variant="outline" className="text-xs">{ext}: {count}</Badge>
                 ))}
-              </Box>
-            </Box>
+              </div>
+            </div>
           )}
-        </Box>
+        </TabsContent>
       )}
 
       {/* Tech Stack tab */}
-      {currentTab.key === 'tech_stack' && results.tech_stack && (
-        <Box>
-          <Typography variant="subtitle2" sx={{ mb: 1 }}>Languages</Typography>
-          <Box sx={{ mb: 2 }}>
+      {results.tech_stack && (
+        <TabsContent value="tech_stack">
+          <h4 className="text-sm font-semibold text-[var(--text-high)] mb-2">Languages</h4>
+          <div className="mb-4">
             {Object.entries(results.tech_stack.languages).map(([lang, pct]) => (
-              <Box key={lang} sx={{ mb: 0.5 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography variant="body2">{lang}</Typography>
-                  <Typography variant="body2" color="text.secondary">{pct}%</Typography>
-                </Box>
-                <LinearProgress variant="determinate" value={pct} sx={{ height: 6, borderRadius: 3 }} />
-              </Box>
+              <div key={lang} className="mb-1.5">
+                <div className="flex justify-between">
+                  <span className="text-sm text-[var(--text-high)]">{lang}</span>
+                  <span className="text-sm text-[var(--text-mid)]">{pct}%</span>
+                </div>
+                <Progress value={pct} className="h-1.5" />
+              </div>
             ))}
-          </Box>
+          </div>
           {results.tech_stack.frameworks.length > 0 && (
-            <Box sx={{ mb: 1 }}>
-              <Typography variant="subtitle2" sx={{ mb: 0.5 }}>Frameworks</Typography>
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+            <div className="mb-2">
+              <h4 className="text-sm font-semibold text-[var(--text-high)] mb-1">Frameworks</h4>
+              <div className="flex flex-wrap gap-1">
                 {results.tech_stack.frameworks.map((f) => (
-                  <Chip key={f} label={f} size="small" color="primary" variant="outlined" />
+                  <Badge key={f} variant="outline" className="text-xs border-blue-500/30 text-blue-400">{f}</Badge>
                 ))}
-              </Box>
-            </Box>
+              </div>
+            </div>
           )}
           {results.tech_stack.build_tools.length > 0 && (
-            <Box sx={{ mb: 1 }}>
-              <Typography variant="subtitle2" sx={{ mb: 0.5 }}>Build Tools</Typography>
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+            <div className="mb-2">
+              <h4 className="text-sm font-semibold text-[var(--text-high)] mb-1">Build Tools</h4>
+              <div className="flex flex-wrap gap-1">
                 {results.tech_stack.build_tools.map((t) => (
-                  <Chip key={t} label={t} size="small" variant="outlined" />
+                  <Badge key={t} variant="outline" className="text-xs">{t}</Badge>
                 ))}
-              </Box>
-            </Box>
+              </div>
+            </div>
           )}
-          <Box sx={{ display: 'flex', gap: 3, mt: 1 }}>
-            <Box>
-              <Typography variant="caption" color="text.secondary">Package Manager</Typography>
-              <Typography variant="body2">{results.tech_stack.package_manager}</Typography>
-            </Box>
-            <Box>
-              <Typography variant="caption" color="text.secondary">Runtime</Typography>
-              <Typography variant="body2">{results.tech_stack.runtime}</Typography>
-            </Box>
-          </Box>
-        </Box>
+          <div className="flex gap-6 mt-2">
+            <div>
+              <span className="text-xs text-[var(--text-low)]">Package Manager</span>
+              <p className="text-sm text-[var(--text-high)]">{results.tech_stack.package_manager}</p>
+            </div>
+            <div>
+              <span className="text-xs text-[var(--text-low)]">Runtime</span>
+              <p className="text-sm text-[var(--text-high)]">{results.tech_stack.runtime}</p>
+            </div>
+          </div>
+        </TabsContent>
       )}
 
       {/* Quality tab */}
-      {currentTab.key === 'quality' && results.quality && (
-        <Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, mb: 2 }}>
+      {results.quality && (
+        <TabsContent value="quality">
+          <div className="flex items-center gap-6 mb-4">
             <QualityGauge score={results.quality.score} grade={results.quality.grade} />
-            <Box>
+            <div>
               {results.quality.issues.length > 0 && (
-                <Box sx={{ mb: 1 }}>
-                  <Typography variant="subtitle2" color="error">Issues</Typography>
+                <div className="mb-2">
+                  <h4 className="text-sm font-semibold text-red-400">Issues</h4>
                   {results.quality.issues.map((issue, i) => (
-                    <Typography key={i} variant="body2" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                      <WarningIcon fontSize="inherit" color="error" /> {issue}
-                    </Typography>
+                    <p key={i} className="text-sm flex items-center gap-1">
+                      <AlertTriangle className="h-3 w-3 text-red-400" /> {issue}
+                    </p>
                   ))}
-                </Box>
+                </div>
               )}
-            </Box>
-          </Box>
+            </div>
+          </div>
           {results.quality.recommendations.length > 0 && (
-            <Box>
-              <Typography variant="subtitle2" sx={{ mb: 0.5 }}>Recommendations</Typography>
+            <div>
+              <h4 className="text-sm font-semibold text-[var(--text-high)] mb-1">Recommendations</h4>
               {results.quality.recommendations.map((rec, i) => (
-                <Typography key={i} variant="body2" color="text.secondary">
+                <p key={i} className="text-sm text-[var(--text-mid)]">
                   {i + 1}. {rec}
-                </Typography>
+                </p>
               ))}
-            </Box>
+            </div>
           )}
-        </Box>
+        </TabsContent>
       )}
 
       {/* Dependencies tab */}
-      {currentTab.key === 'dependencies' && results.dependencies && (
-        <Box>
-          <Grid container spacing={2} sx={{ mb: 2 }}>
-            <Grid item xs={4}>
-              <Typography variant="body2" color="text.secondary">Total</Typography>
-              <Typography variant="h6">{results.dependencies.total}</Typography>
-            </Grid>
-            <Grid item xs={4}>
-              <Typography variant="body2" color="text.secondary">Direct</Typography>
-              <Typography variant="h6">{results.dependencies.direct}</Typography>
-            </Grid>
-            <Grid item xs={4}>
-              <Typography variant="body2" color="text.secondary">Dev</Typography>
-              <Typography variant="h6">{results.dependencies.dev}</Typography>
-            </Grid>
-          </Grid>
+      {results.dependencies && (
+        <TabsContent value="dependencies">
+          <div className="grid grid-cols-3 gap-4 mb-4">
+            <div>
+              <p className="text-sm text-[var(--text-mid)]">Total</p>
+              <p className="text-lg font-semibold text-[var(--text-high)]">{results.dependencies.total}</p>
+            </div>
+            <div>
+              <p className="text-sm text-[var(--text-mid)]">Direct</p>
+              <p className="text-lg font-semibold text-[var(--text-high)]">{results.dependencies.direct}</p>
+            </div>
+            <div>
+              <p className="text-sm text-[var(--text-mid)]">Dev</p>
+              <p className="text-lg font-semibold text-[var(--text-high)]">{results.dependencies.dev}</p>
+            </div>
+          </div>
           {results.dependencies.outdated.length > 0 && (
-            <Box sx={{ mb: 1 }}>
-              <Typography variant="subtitle2" color="warning.main">Outdated</Typography>
+            <div className="mb-2">
+              <h4 className="text-sm font-semibold text-amber-400">Outdated</h4>
               {results.dependencies.outdated.map((d, i) => (
-                <Typography key={i} variant="body2">{d}</Typography>
+                <p key={i} className="text-sm text-[var(--text-high)]">{d}</p>
               ))}
-            </Box>
+            </div>
           )}
           {results.dependencies.vulnerabilities.length > 0 && (
-            <Alert severity="error" sx={{ mt: 1 }}>
-              {results.dependencies.vulnerabilities.length} vulnerability(ies) found
+            <Alert variant="destructive" className="mt-2">
+              <AlertDescription>
+                {results.dependencies.vulnerabilities.length} vulnerability(ies) found
+              </AlertDescription>
             </Alert>
           )}
           {results.dependencies.outdated.length === 0 && results.dependencies.vulnerabilities.length === 0 && (
-            <Alert severity="success">No outdated packages or vulnerabilities detected</Alert>
+            <Alert variant="success">
+              <AlertDescription>No outdated packages or vulnerabilities detected</AlertDescription>
+            </Alert>
           )}
-        </Box>
+        </TabsContent>
       )}
 
       {/* Security tab */}
-      {currentTab.key === 'security' && results.security && (
-        <Box>
-          <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-            <Chip
-              label={`Risk: ${results.security.risk_level.toUpperCase()}`}
-              color={
+      {results.security && (
+        <TabsContent value="security">
+          <div className="flex gap-2 mb-4">
+            <Badge
+              variant={
                 results.security.risk_level === 'low' ? 'success' :
                 results.security.risk_level === 'medium' ? 'warning' :
-                'error'
+                'destructive'
               }
-            />
+            >
+              Risk: {results.security.risk_level.toUpperCase()}
+            </Badge>
             {results.security.secrets_found > 0 && (
-              <Chip label={`${results.security.secrets_found} secret(s) found`} color="error" />
+              <Badge variant="destructive">{results.security.secrets_found} secret(s) found</Badge>
             )}
             {results.security.env_files_committed > 0 && (
-              <Chip label={`${results.security.env_files_committed} .env file(s) committed`} color="warning" />
+              <Badge variant="warning">{results.security.env_files_committed} .env file(s) committed</Badge>
             )}
-          </Box>
+          </div>
           {results.security.issues.length > 0 ? (
             results.security.issues.map((issue, i) => (
-              <Alert key={i} severity={issue.severity === 'critical' ? 'error' : 'warning'} sx={{ mb: 1 }}>
-                <Typography variant="body2"><strong>{issue.type}</strong>: {issue.message}</Typography>
+              <Alert key={i} variant={issue.severity === 'critical' ? 'destructive' : 'warning'} className="mb-2">
+                <AlertDescription>
+                  <strong>{issue.type}</strong>: {issue.message}
+                </AlertDescription>
               </Alert>
             ))
           ) : (
-            <Alert severity="success">No security issues detected</Alert>
+            <Alert variant="success">
+              <AlertDescription>No security issues detected</AlertDescription>
+            </Alert>
           )}
-        </Box>
+        </TabsContent>
       )}
 
       {/* Documentation tab */}
-      {currentTab.key === 'documentation' && results.documentation && (
-        <Box>
+      {results.documentation && (
+        <TabsContent value="documentation">
           {results.documentation.architecture_overview && (
-            <Box sx={{ mb: 2 }}>
-              <Typography variant="subtitle2" sx={{ mb: 0.5 }}>Architecture Overview</Typography>
-              <Typography variant="body2">{results.documentation.architecture_overview}</Typography>
-            </Box>
+            <div className="mb-4">
+              <h4 className="text-sm font-semibold text-[var(--text-high)] mb-1">Architecture Overview</h4>
+              <p className="text-sm text-[var(--text-mid)]">{results.documentation.architecture_overview}</p>
+            </div>
           )}
           {results.documentation.readme_suggestions.length > 0 && (
-            <Box sx={{ mb: 2 }}>
-              <Typography variant="subtitle2" sx={{ mb: 0.5 }}>README Suggestions</Typography>
+            <div className="mb-4">
+              <h4 className="text-sm font-semibold text-[var(--text-high)] mb-1">README Suggestions</h4>
               {results.documentation.readme_suggestions.map((s, i) => (
-                <Typography key={i} variant="body2" color="text.secondary">{i + 1}. {s}</Typography>
+                <p key={i} className="text-sm text-[var(--text-mid)]">{i + 1}. {s}</p>
               ))}
-            </Box>
+            </div>
           )}
           {results.documentation.api_docs_suggestions.length > 0 && (
-            <Box>
-              <Typography variant="subtitle2" sx={{ mb: 0.5 }}>API Docs Suggestions</Typography>
+            <div>
+              <h4 className="text-sm font-semibold text-[var(--text-high)] mb-1">API Docs Suggestions</h4>
               {results.documentation.api_docs_suggestions.map((s, i) => (
-                <Typography key={i} variant="body2" color="text.secondary">{i + 1}. {s}</Typography>
+                <p key={i} className="text-sm text-[var(--text-mid)]">{i + 1}. {s}</p>
               ))}
-            </Box>
+            </div>
           )}
-        </Box>
+        </TabsContent>
       )}
-    </Box>
+    </Tabs>
   );
 }
 
@@ -347,214 +368,238 @@ export default function RepoAnalyzerPage() {
     }
   };
 
+  const toggleAnalysisType = (type: AnalysisType) => {
+    setAnalysisTypes((prev) =>
+      prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type]
+    );
+  };
+
   return (
-    <Box sx={{ p: 3 }}>
+    <div className="p-6">
       {/* Header */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Box>
-          <Typography variant="h4" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <SearchIcon color="primary" /> Repo Analyzer
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h1 className="text-2xl font-bold flex items-center gap-2 text-[var(--text-high)]">
+            <Search className="h-6 w-6 text-[var(--accent)]" /> Repo Analyzer
+          </h1>
+          <p className="text-sm text-[var(--text-mid)]">
             Analyze GitHub repositories: tech stack, quality scoring, dependencies, security
-          </Typography>
-        </Box>
-        <Tooltip title="Refresh analyses">
-          <IconButton onClick={() => refetch()}>
-            <RefreshIcon />
-          </IconButton>
-        </Tooltip>
-      </Box>
+          </p>
+        </div>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button type="button" title="Refresh analyses" onClick={() => refetch()} className="p-2 rounded hover:bg-[var(--bg-elevated)] text-[var(--text-mid)] hover:text-[var(--text-high)] transition-colors">
+                <RefreshCw className="h-5 w-5" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>Refresh analyses</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </div>
 
       {/* Git status alert */}
       {!statusLoading && statusData && !statusData.installed && (
-        <Alert severity="warning" sx={{ mb: 3 }}>
-          <strong>git not installed.</strong> Running in mock mode with sample data.
+        <Alert variant="warning" className="mb-6">
+          <AlertDescription>
+            <strong>git not installed.</strong> Running in mock mode with sample data.
+          </AlertDescription>
         </Alert>
       )}
 
-      <Grid container spacing={3}>
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
         {/* Left panel: Analysis form */}
-        <Grid item xs={12} md={5}>
+        <div className="md:col-span-5">
           <Card>
-            <CardContent>
-              <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-                <GitHubIcon /> Analyze Repository
-              </Typography>
+            <CardContent className="p-6">
+              <h2 className="text-lg font-semibold text-[var(--text-high)] mb-4 flex items-center gap-2">
+                <GitFork className="h-5 w-5" /> Analyze Repository
+              </h2>
 
               {/* Repo URL input */}
-              <TextField
-                fullWidth
-                size="small"
-                label="Repository URL"
-                placeholder="https://github.com/owner/repo or owner/repo"
-                value={repoUrl}
-                onChange={(e) => setRepoUrl(e.target.value)}
-                onKeyDown={handleKeyDown}
-                sx={{ mb: 2 }}
-              />
+              <div className="mb-4">
+                <label className="text-sm font-medium text-[var(--text-high)] mb-1.5 block">Repository URL</label>
+                <Input
+                  placeholder="https://github.com/owner/repo or owner/repo"
+                  value={repoUrl}
+                  onChange={(e) => setRepoUrl(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                />
+              </div>
 
               {/* Analysis types */}
-              <FormControl fullWidth size="small" sx={{ mb: 2 }}>
-                <InputLabel>Analysis Types</InputLabel>
-                <Select
-                  multiple
-                  value={analysisTypes}
-                  onChange={(e) => setAnalysisTypes(e.target.value as AnalysisType[])}
-                  label="Analysis Types"
-                  renderValue={(selected) => (
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                      {selected.map((v) => (
-                        <Chip key={v} label={ANALYSIS_TYPE_OPTIONS.find((o) => o.id === v)?.label || v} size="small" />
-                      ))}
-                    </Box>
-                  )}
-                >
+              <div className="mb-4">
+                <label className="text-sm font-medium text-[var(--text-high)] mb-1.5 block">Analysis Types</label>
+                <div className="flex flex-wrap gap-1">
                   {ANALYSIS_TYPE_OPTIONS.map((opt) => (
-                    <MenuItem key={opt.id} value={opt.id}>{opt.label}</MenuItem>
+                    <button
+                      key={opt.id}
+                      type="button"
+                      onClick={() => toggleAnalysisType(opt.id)}
+                      className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
+                        analysisTypes.includes(opt.id)
+                          ? 'bg-[var(--accent)] text-[var(--bg-app)]'
+                          : 'border border-[var(--border)] text-[var(--text-mid)] hover:bg-[var(--bg-elevated)]'
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
                   ))}
-                </Select>
-              </FormControl>
+                </div>
+              </div>
 
               {/* Depth selector */}
-              <FormControl fullWidth size="small" sx={{ mb: 2 }}>
-                <InputLabel>Analysis Depth</InputLabel>
-                <Select
-                  value={depth}
-                  onChange={(e) => setDepth(e.target.value as AnalysisDepth)}
-                  label="Analysis Depth"
-                >
-                  {DEPTH_OPTIONS.map((opt) => (
-                    <MenuItem key={opt.id} value={opt.id}>
-                      {opt.label} - {opt.desc}
-                    </MenuItem>
-                  ))}
+              <div className="mb-4">
+                <label className="text-sm font-medium text-[var(--text-high)] mb-1.5 block">Analysis Depth</label>
+                <Select value={depth} onValueChange={(v) => setDepth(v as AnalysisDepth)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {DEPTH_OPTIONS.map((opt) => (
+                      <SelectItem key={opt.id} value={opt.id}>
+                        {opt.label} - {opt.desc}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
                 </Select>
-              </FormControl>
+              </div>
 
               {/* Analyze button */}
               <Button
-                variant="contained"
-                fullWidth
-                startIcon={createMutation.isPending ? <CircularProgress size={18} /> : <AnalyticsIcon />}
+                className="w-full"
+                size="lg"
                 onClick={handleAnalyze}
                 disabled={!repoUrl.trim() || createMutation.isPending}
-                size="large"
               >
+                {createMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <BarChart3 className="h-4 w-4 mr-2" />}
                 {createMutation.isPending ? 'Analyzing...' : 'Analyze Repository'}
               </Button>
 
               {createMutation.isError && (
-                <Alert severity="error" sx={{ mt: 2 }}>
-                  {createMutation.error?.message || 'Failed to start analysis'}
+                <Alert variant="destructive" className="mt-4">
+                  <AlertDescription>
+                    {createMutation.error?.message || 'Failed to start analysis'}
+                  </AlertDescription>
                 </Alert>
               )}
             </CardContent>
           </Card>
-        </Grid>
+        </div>
 
         {/* Right panel: Analysis history */}
-        <Grid item xs={12} md={7}>
+        <div className="md:col-span-7">
           <Card>
-            <CardContent>
-              <Typography variant="h6" sx={{ mb: 2 }}>
+            <CardContent className="p-6">
+              <h2 className="text-lg font-semibold text-[var(--text-high)] mb-4">
                 Analysis History
-              </Typography>
+              </h2>
 
               {analysesLoading ? (
-                <Box>
+                <div className="space-y-2">
                   {[1, 2, 3].map((i) => (
-                    <Skeleton key={i} variant="rectangular" height={80} sx={{ mb: 1, borderRadius: 1 }} />
+                    <Skeleton key={i} className="h-20 rounded" />
                   ))}
-                </Box>
+                </div>
               ) : !analysesData?.items.length ? (
-                <Typography color="text.secondary" sx={{ py: 4, textAlign: 'center' }}>
+                <p className="text-[var(--text-mid)] py-8 text-center">
                   No analyses yet. Enter a repo URL and start your first analysis.
-                </Typography>
+                </p>
               ) : (
                 analysesData.items.map((analysis: RepoAnalysis) => (
-                  <Card key={analysis.id} variant="outlined" sx={{ mb: 1.5 }}>
-                    <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
+                  <Card key={analysis.id} className="mb-3 border border-[var(--border)]">
+                    <CardContent className="py-3 px-4">
                       {/* Header */}
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1, minWidth: 0 }}>
-                          <Chip
-                            label={analysis.status}
-                            size="small"
-                            color={STATUS_COLORS[analysis.status] || 'default'}
-                          />
-                          <Typography variant="body2" fontWeight={600} noWrap>
+                      <div className="flex justify-between items-center mb-1">
+                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                          <Badge variant={STATUS_COLORS[analysis.status] || 'secondary'}>
+                            {analysis.status}
+                          </Badge>
+                          <span className="text-sm font-semibold text-[var(--text-high)] truncate">
                             {analysis.repo_name}
-                          </Typography>
-                          <Chip label={analysis.depth} size="small" variant="outlined" />
-                        </Box>
-                        <Box sx={{ display: 'flex', gap: 0.5 }}>
+                          </span>
+                          <Badge variant="outline" className="text-xs">{analysis.depth}</Badge>
+                        </div>
+                        <div className="flex gap-1">
                           {analysis.status === AnalysisStatus.COMPLETED && (
-                            <Tooltip title={expandedId === analysis.id ? 'Collapse' : 'View Results'}>
-                              <IconButton
-                                size="small"
-                                onClick={() => setExpandedId(expandedId === analysis.id ? null : analysis.id)}
-                              >
-                                <AnalyticsIcon fontSize="small" />
-                              </IconButton>
-                            </Tooltip>
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <button
+                                    type="button"
+                                    title={expandedId === analysis.id ? 'Collapse' : 'View Results'}
+                                    onClick={() => setExpandedId(expandedId === analysis.id ? null : analysis.id)}
+                                    className="p-1 rounded hover:bg-[var(--bg-elevated)] text-[var(--text-mid)]"
+                                  >
+                                    <BarChart3 className="h-4 w-4" />
+                                  </button>
+                                </TooltipTrigger>
+                                <TooltipContent>{expandedId === analysis.id ? 'Collapse' : 'View Results'}</TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
                           )}
-                          <Tooltip title="Delete">
-                            <IconButton
-                              size="small"
-                              onClick={() => deleteMutation.mutate(analysis.id)}
-                              disabled={deleteMutation.isPending}
-                            >
-                              <DeleteIcon fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-                        </Box>
-                      </Box>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <button
+                                  type="button"
+                                  title="Delete analysis"
+                                  onClick={() => deleteMutation.mutate(analysis.id)}
+                                  disabled={deleteMutation.isPending}
+                                  className="p-1 rounded hover:bg-[var(--bg-elevated)] text-[var(--text-mid)] disabled:opacity-50"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
+                              </TooltipTrigger>
+                              <TooltipContent>Delete</TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </div>
+                      </div>
 
                       {/* Repo URL */}
-                      <Typography variant="caption" color="text.secondary" noWrap>
+                      <p className="text-xs text-[var(--text-low)] truncate">
                         {analysis.repo_url} - {new Date(analysis.created_at).toLocaleString()}
-                      </Typography>
+                      </p>
 
                       {/* Quality badge for completed analyses */}
                       {analysis.status === AnalysisStatus.COMPLETED && analysis.results?.quality && (
-                        <Box sx={{ mt: 0.5, display: 'flex', gap: 1 }}>
-                          <Chip
-                            label={`${analysis.results.quality.grade} (${analysis.results.quality.score}/100)`}
-                            size="small"
-                            sx={{
-                              bgcolor: GRADE_COLORS[analysis.results.quality.grade] || '#9e9e9e',
-                              color: 'white',
-                              fontWeight: 600,
+                        <div className="mt-1 flex gap-2">
+                          <Badge
+                            className="text-xs font-semibold text-white"
+                            style={{
+                              backgroundColor: GRADE_COLORS[analysis.results.quality.grade] || '#9e9e9e',
                             }}
-                          />
+                          >
+                            {analysis.results.quality.grade} ({analysis.results.quality.score}/100)
+                          </Badge>
                           {analysis.results.tech_stack?.frameworks.slice(0, 3).map((f) => (
-                            <Chip key={f} label={f} size="small" variant="outlined" />
+                            <Badge key={f} variant="outline" className="text-xs">{f}</Badge>
                           ))}
-                        </Box>
+                        </div>
                       )}
 
                       {/* Progress bar for running */}
                       {(analysis.status === AnalysisStatus.RUNNING || analysis.status === AnalysisStatus.PENDING) && (
-                        <Box sx={{ mt: 1 }}>
-                          <LinearProgress
-                            variant={analysis.status === AnalysisStatus.RUNNING ? 'indeterminate' : 'indeterminate'}
-                          />
-                        </Box>
+                        <div className="mt-2">
+                          <div className="h-1.5 w-full bg-[var(--bg-elevated)] rounded-full overflow-hidden">
+                            <div className="h-full bg-[var(--accent)] rounded-full animate-pulse" style={{ width: '60%' }} />
+                          </div>
+                        </div>
                       )}
 
                       {/* Error */}
                       {analysis.status === AnalysisStatus.FAILED && analysis.error && (
-                        <Alert severity="error" sx={{ mt: 1, py: 0 }}>
-                          <Typography variant="caption">{analysis.error}</Typography>
+                        <Alert variant="destructive" className="mt-2 py-1">
+                          <AlertDescription className="text-xs">{analysis.error}</AlertDescription>
                         </Alert>
                       )}
 
                       {/* Expanded results */}
                       {expandedId === analysis.id && analysis.results && (
-                        <Box sx={{ mt: 2, pt: 2, borderTop: 1, borderColor: 'divider' }}>
+                        <div className="mt-4 pt-4 border-t border-[var(--border)]">
                           <ResultTabs results={analysis.results} />
-                        </Box>
+                        </div>
                       )}
                     </CardContent>
                   </Card>
@@ -562,8 +607,8 @@ export default function RepoAnalyzerPage() {
               )}
             </CardContent>
           </Card>
-        </Grid>
-      </Grid>
-    </Box>
+        </div>
+      </div>
+    </div>
   );
 }

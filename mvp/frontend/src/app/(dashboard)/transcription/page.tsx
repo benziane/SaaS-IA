@@ -8,59 +8,27 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
-  Alert,
-  Box,
-  Button,
-  Card,
-  CardContent,
-  Chip,
-  Collapse,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
-  Divider,
-  FormControl,
-  IconButton,
-  InputLabel,
-  LinearProgress,
-  MenuItem,
-  Paper,
-  Select,
-  Stack,
-  Tab,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Tabs,
-  TextField,
-  Tooltip,
-  Typography,
-} from '@mui/material';
-import {
-  AudioFile,
-  AutoFixHigh,
-  Chat,
-  Close,
-  CloudUpload,
-  ContentCopy,
-  Delete,
-  Download,
-  ExpandMore,
-  InsertLink,
-  Mic,
-  Refresh,
-  Stop,
-  Subtitles,
-  Visibility,
-} from '@mui/icons-material';
+  FileAudio, Sparkles, MessageSquare, X, CloudUpload, Copy, Trash2,
+  Download, ChevronDown, Link as LinkIcon, Mic, RefreshCw, Square,
+  Subtitles, Eye,
+} from 'lucide-react';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Controller, useForm } from 'react-hook-form';
+
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Progress } from '@/components/ui/progress';
+import { Button } from '@/lib/design-hub/components/Button';
+import { Input } from '@/lib/design-hub/components/Input';
+import { Separator } from '@/lib/design-hub/components/Separator';
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/lib/design-hub/components/Tooltip';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/lib/design-hub/components/Tabs';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/lib/design-hub/components/Select';
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
+} from '@/lib/design-hub/components/Dialog';
 
 import {
   useCreateTranscription,
@@ -114,20 +82,20 @@ const ACCEPTED_FORMATS_DISPLAY = 'MP3, WAV, MP4, M4A, OGG, WEBM, FLAC';
    HELPER FUNCTIONS
    ======================================================================== */
 
-function getStatusColor(
+function getStatusVariant(
   status: TranscriptionStatus
-): 'default' | 'primary' | 'success' | 'error' {
+): 'secondary' | 'default' | 'success' | 'destructive' {
   switch (status) {
     case TranscriptionStatus.PENDING:
-      return 'default';
+      return 'secondary';
     case TranscriptionStatus.PROCESSING:
-      return 'primary';
+      return 'default';
     case TranscriptionStatus.COMPLETED:
       return 'success';
     case TranscriptionStatus.FAILED:
-      return 'error';
+      return 'destructive';
     default:
-      return 'default';
+      return 'secondary';
   }
 }
 
@@ -148,11 +116,6 @@ function getLanguageLabel(code: string | null): string {
   return LANGUAGE_LABEL_MAP[code] ?? code.toUpperCase();
 }
 
-/**
- * Generate a basic SRT subtitle file from text and duration.
- * Splits text into segments of roughly 10 words each
- * and distributes timestamps evenly across the duration.
- */
 function generateSrt(text: string, durationSeconds: number | null): string {
   const words = text.split(/\s+/).filter(Boolean);
   const segmentSize = 10;
@@ -208,12 +171,12 @@ function formatFileSize(bytes: number): string {
 function getSourceIcon(sourceType: TranscriptionSourceType | undefined): JSX.Element {
   switch (sourceType) {
     case 'upload':
-      return <AudioFile fontSize="small" sx={{ color: 'info.main' }} />;
+      return <FileAudio className="h-4 w-4 text-blue-400" />;
     case 'url':
-      return <InsertLink fontSize="small" sx={{ color: 'warning.main' }} />;
+      return <LinkIcon className="h-4 w-4 text-amber-400" />;
     case 'youtube':
     default:
-      return <Subtitles fontSize="small" sx={{ color: 'error.main' }} />;
+      return <Subtitles className="h-4 w-4 text-red-400" />;
   }
 }
 
@@ -273,38 +236,32 @@ function ExportButtons({ transcription }: ExportButtonsProps): JSX.Element | nul
   };
 
   return (
-    <Stack direction="row" spacing={1}>
-      <Tooltip title={copied ? 'Copied!' : 'Copy to clipboard'}>
-        <Button
-          size="small"
-          variant="outlined"
-          startIcon={<ContentCopy />}
-          onClick={() => void handleCopy()}
-        >
-          {copied ? 'Copied' : 'Copy'}
-        </Button>
+    <div className="flex gap-2">
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button size="sm" variant="outline" onClick={() => void handleCopy()}>
+            <Copy className="h-3 w-3 mr-1" /> {copied ? 'Copied' : 'Copy'}
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>{copied ? 'Copied!' : 'Copy to clipboard'}</TooltipContent>
       </Tooltip>
-      <Tooltip title="Download as plain text file">
-        <Button
-          size="small"
-          variant="outlined"
-          startIcon={<Download />}
-          onClick={handleDownloadTxt}
-        >
-          TXT
-        </Button>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button size="sm" variant="outline" onClick={handleDownloadTxt}>
+            <Download className="h-3 w-3 mr-1" /> TXT
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>Download as plain text file</TooltipContent>
       </Tooltip>
-      <Tooltip title="Download as SRT subtitle file">
-        <Button
-          size="small"
-          variant="outlined"
-          startIcon={<Subtitles />}
-          onClick={handleDownloadSrt}
-        >
-          SRT
-        </Button>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button size="sm" variant="outline" onClick={handleDownloadSrt}>
+            <Subtitles className="h-3 w-3 mr-1" /> SRT
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>Download as SRT subtitle file</TooltipContent>
       </Tooltip>
-    </Stack>
+    </div>
   );
 }
 
@@ -325,7 +282,6 @@ function TranscriptionDetail({ transcription, onClose }: TranscriptionDetailProp
   const accumulatedTextRef = useRef('');
 
   const handleImproveWithAI = (): void => {
-    // Reset state for a new stream
     setImprovedText('');
     setStreamDone(false);
     setStreamError(null);
@@ -363,191 +319,168 @@ function TranscriptionDetail({ transcription, onClose }: TranscriptionDetailProp
   const showOriginalText = !streamDone;
 
   return (
-    <Card sx={{ mt: 3 }}>
-      <CardContent>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-          <Typography variant="h6" sx={{ fontWeight: 600 }}>
+    <Card className="mt-6">
+      <CardContent className="p-6">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-semibold text-[var(--text-high)]">
             Transcription Details
-          </Typography>
-          <IconButton onClick={onClose} size="small" aria-label="Close details">
-            <Close />
-          </IconButton>
-        </Box>
+          </h3>
+          <button type="button" onClick={onClose} className="p-1 text-[var(--text-low)] hover:text-[var(--text-high)] transition-colors" aria-label="Close details">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
 
         {/* Metadata row */}
-        <Stack direction="row" spacing={3} sx={{ mb: 2, flexWrap: 'wrap' }} useFlexGap>
-          <Box>
-            <Typography variant="caption" color="text.secondary">Status</Typography>
-            <Box>
-              <Chip
-                label={transcription.status}
-                color={getStatusColor(transcription.status)}
-                size="small"
-              />
-            </Box>
-          </Box>
-          <Box>
-            <Typography variant="caption" color="text.secondary">Language</Typography>
-            <Typography variant="body2">{getLanguageLabel(transcription.language)}</Typography>
-          </Box>
-          <Box>
-            <Typography variant="caption" color="text.secondary">Duration</Typography>
-            <Typography variant="body2">{formatDuration(transcription.duration_seconds)}</Typography>
-          </Box>
+        <div className="flex flex-wrap gap-6 mb-4">
+          <div>
+            <span className="text-xs text-[var(--text-low)]">Status</span>
+            <div className="mt-0.5">
+              <Badge variant={getStatusVariant(transcription.status)}>{transcription.status}</Badge>
+            </div>
+          </div>
+          <div>
+            <span className="text-xs text-[var(--text-low)]">Language</span>
+            <p className="text-sm text-[var(--text-mid)]">{getLanguageLabel(transcription.language)}</p>
+          </div>
+          <div>
+            <span className="text-xs text-[var(--text-low)]">Duration</span>
+            <p className="text-sm text-[var(--text-mid)]">{formatDuration(transcription.duration_seconds)}</p>
+          </div>
           {transcription.confidence !== null && (
-            <Box sx={{ minWidth: 160 }}>
-              <Typography variant="caption" color="text.secondary">
+            <div className="min-w-[160px]">
+              <span className="text-xs text-[var(--text-low)]">
                 Confidence: {(transcription.confidence * 100).toFixed(1)}%
-              </Typography>
-              <LinearProgress
-                variant="determinate"
+              </span>
+              <Progress
                 value={transcription.confidence * 100}
-                color={
-                  transcription.confidence >= 0.9
-                    ? 'success'
-                    : transcription.confidence >= 0.7
-                      ? 'primary'
-                      : 'warning'
-                }
-                sx={{ mt: 0.5, height: 6, borderRadius: 3 }}
+                className="mt-1 h-1.5"
               />
-            </Box>
+            </div>
           )}
-          <Box>
-            <Typography variant="caption" color="text.secondary">Created</Typography>
-            <Typography variant="body2">{formatDate(transcription.created_at)}</Typography>
-          </Box>
+          <div>
+            <span className="text-xs text-[var(--text-low)]">Created</span>
+            <p className="text-sm text-[var(--text-mid)]">{formatDate(transcription.created_at)}</p>
+          </div>
           {transcription.completed_at && (
-            <Box>
-              <Typography variant="caption" color="text.secondary">Completed</Typography>
-              <Typography variant="body2">{formatDate(transcription.completed_at)}</Typography>
-            </Box>
+            <div>
+              <span className="text-xs text-[var(--text-low)]">Completed</span>
+              <p className="text-sm text-[var(--text-mid)]">{formatDate(transcription.completed_at)}</p>
+            </div>
           )}
-        </Stack>
+        </div>
 
-        <Divider sx={{ mb: 2 }} />
+        <Separator className="mb-4" />
 
         {/* Error display */}
         {transcription.error && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {transcription.error}
+          <Alert variant="destructive" className="mb-4">
+            <AlertDescription>{transcription.error}</AlertDescription>
           </Alert>
         )}
 
         {/* Processing indicator */}
         {transcription.status === TranscriptionStatus.PROCESSING && (
-          <Box sx={{ mb: 2 }}>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+          <div className="mb-4">
+            <p className="text-sm text-[var(--text-mid)] mb-2">
               Transcription in progress...
-            </Typography>
-            <LinearProgress />
-          </Box>
+            </p>
+            <Progress />
+          </div>
         )}
 
         {/* Transcription text */}
         {transcription.text && (
-          <Box>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-              <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+          <div>
+            <div className="flex justify-between items-center mb-2">
+              <h4 className="text-sm font-semibold text-[var(--text-high)]">
                 {streamDone ? 'Original Transcription' : 'Transcription Text'}
-              </Typography>
-              <Stack direction="row" spacing={1} alignItems="center">
+              </h4>
+              <div className="flex gap-2 items-center">
                 <ExportButtons transcription={transcription} />
                 {transcription.status === TranscriptionStatus.COMPLETED && !isStreaming && (
                   <>
-                    <Tooltip title="Chat with AI about this transcription">
-                      <Button
-                        size="small"
-                        variant="outlined"
-                        color="primary"
-                        startIcon={<Chat />}
-                        onClick={() => router.push(`/chat?transcription_id=${transcription.id}`)}
-                      >
-                        Chat about this
-                      </Button>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => router.push(`/chat?transcription_id=${transcription.id}`)}
+                        >
+                          <MessageSquare className="h-3 w-3 mr-1" /> Chat about this
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Chat with AI about this transcription</TooltipContent>
                     </Tooltip>
-                    <Tooltip title="Improve transcription text using AI">
-                      <Button
-                        size="small"
-                        variant="outlined"
-                        color="secondary"
-                        startIcon={<AutoFixHigh />}
-                        onClick={handleImproveWithAI}
-                      >
-                        Improve with AI
-                      </Button>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={handleImproveWithAI}
+                        >
+                          <Sparkles className="h-3 w-3 mr-1" /> Improve with AI
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Improve transcription text using AI</TooltipContent>
                     </Tooltip>
                   </>
                 )}
                 {isStreaming && (
-                  <Tooltip title="Stop AI streaming">
-                    <Button
-                      size="small"
-                      variant="outlined"
-                      color="warning"
-                      startIcon={<Stop />}
-                      onClick={stopStream}
-                    >
-                      Stop
-                    </Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={stopStream}
+                      >
+                        <Square className="h-3 w-3 mr-1" /> Stop
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Stop AI streaming</TooltipContent>
                   </Tooltip>
                 )}
-              </Stack>
-            </Box>
+              </div>
+            </div>
 
             {showOriginalText && (
-              <Paper
-                variant="outlined"
-                sx={{
-                  p: 2,
-                  maxHeight: 400,
-                  overflow: 'auto',
-                  bgcolor: 'action.hover',
-                  fontFamily: 'inherit',
-                }}
-              >
-                <Typography
-                  variant="body2"
-                  sx={{
-                    whiteSpace: 'pre-wrap',
-                    wordBreak: 'break-word',
-                    lineHeight: 1.7,
-                  }}
-                >
+              <div className="rounded-md border border-[var(--border)] bg-[var(--bg-elevated)] p-4 max-h-[400px] overflow-auto">
+                <p className="text-sm text-[var(--text-mid)] whitespace-pre-wrap break-words leading-7">
                   {transcription.text}
-                </Typography>
-              </Paper>
+                </p>
+              </div>
             )}
             {showOriginalText && (
-              <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+              <span className="text-xs text-[var(--text-low)] mt-2 block">
                 {transcription.text.split(/\s+/).length} words
-              </Typography>
+              </span>
             )}
 
             {/* AI-Improved Text Section */}
             {showImprovedSection && (
-              <Box sx={{ mt: 3 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                  <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+              <div className="mt-6">
+                <div className="flex justify-between items-center mb-2">
+                  <h4 className="text-sm font-semibold text-[var(--text-high)]">
                     AI-Improved Text
-                  </Typography>
+                  </h4>
                   {streamDone && (
-                    <Tooltip title={copiedImproved ? 'Copied!' : 'Copy improved text to clipboard'}>
-                      <Button
-                        size="small"
-                        variant="outlined"
-                        startIcon={<ContentCopy />}
-                        onClick={() => void handleCopyImproved()}
-                      >
-                        {copiedImproved ? 'Copied' : 'Copy improved text'}
-                      </Button>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => void handleCopyImproved()}
+                        >
+                          <Copy className="h-3 w-3 mr-1" /> {copiedImproved ? 'Copied' : 'Copy improved text'}
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>{copiedImproved ? 'Copied!' : 'Copy improved text to clipboard'}</TooltipContent>
                     </Tooltip>
                   )}
-                </Box>
+                </div>
 
                 {streamError && (
-                  <Alert severity="error" sx={{ mb: 2 }}>
-                    {streamError}
+                  <Alert variant="destructive" className="mb-4">
+                    <AlertDescription>{streamError}</AlertDescription>
                   </Alert>
                 )}
 
@@ -557,9 +490,9 @@ function TranscriptionDetail({ transcription, onClose }: TranscriptionDetailProp
                   provider={streamProvider}
                   tokenCount={streamTokenCount}
                 />
-              </Box>
+              </div>
             )}
-          </Box>
+          </div>
         )}
       </CardContent>
     </Card>
@@ -662,128 +595,112 @@ function FileUploadForm({ onUploadComplete }: FileUploadFormProps): JSX.Element 
   };
 
   return (
-    <Box>
+    <div>
       {/* Drop zone */}
-      <Box
+      <div
         onDrop={handleDrop}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onClick={() => fileInputRef.current?.click()}
-        sx={{
-          border: '2px dashed',
-          borderColor: dragOver ? 'primary.main' : fileError ? 'error.main' : 'divider',
-          borderRadius: 2,
-          p: 4,
-          textAlign: 'center',
-          cursor: 'pointer',
-          transition: 'all 0.2s ease',
-          bgcolor: dragOver ? 'action.hover' : 'transparent',
-          '&:hover': {
-            borderColor: 'primary.main',
-            bgcolor: 'action.hover',
-          },
-        }}
+        className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-all
+          ${dragOver ? 'border-[var(--accent)] bg-[var(--bg-elevated)]' : fileError ? 'border-red-500' : 'border-[var(--border)] hover:border-[var(--accent)] hover:bg-[var(--bg-elevated)]'}`}
       >
         <input
           ref={fileInputRef}
           type="file"
           accept={ACCEPTED_EXTENSIONS}
           onChange={handleInputChange}
-          style={{ display: 'none' }}
+          className="hidden"
           aria-label="Select audio or video file"
         />
-        <CloudUpload sx={{ fontSize: 48, color: 'text.disabled', mb: 1 }} />
-        <Typography variant="body1" sx={{ fontWeight: 500 }}>
+        <CloudUpload className="h-12 w-12 text-[var(--text-low)] mx-auto mb-2" />
+        <p className="font-medium text-[var(--text-high)]">
           Drag and drop a file here, or click to browse
-        </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+        </p>
+        <p className="text-sm text-[var(--text-mid)] mt-2">
           Accepted formats: {ACCEPTED_FORMATS_DISPLAY}
-        </Typography>
-        <Typography variant="caption" color="text.secondary">
+        </p>
+        <p className="text-xs text-[var(--text-low)]">
           Maximum file size: 500 MB
-        </Typography>
-      </Box>
+        </p>
+      </div>
 
       {/* File error */}
       {fileError && (
-        <Alert severity="error" sx={{ mt: 2 }}>
-          {fileError}
+        <Alert variant="destructive" className="mt-4">
+          <AlertDescription>{fileError}</AlertDescription>
         </Alert>
       )}
 
       {/* File preview */}
       {selectedFile && (
-        <Paper variant="outlined" sx={{ mt: 2, p: 2 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Stack direction="row" spacing={2} alignItems="center">
-              <AudioFile color="primary" />
-              <Box>
-                <Typography variant="body2" sx={{ fontWeight: 600 }}>
+        <div className="rounded-md border border-[var(--border)] mt-4 p-4">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-3">
+              <FileAudio className="h-5 w-5 text-[var(--accent)]" />
+              <div>
+                <p className="text-sm font-semibold text-[var(--text-high)]">
                   {selectedFile.name}
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
+                </p>
+                <p className="text-xs text-[var(--text-low)]">
                   {formatFileSize(selectedFile.size)} -- {selectedFile.type || 'Unknown type'}
-                </Typography>
-              </Box>
-            </Stack>
-            <IconButton
-              size="small"
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
               onClick={handleClearFile}
               aria-label="Remove selected file"
               disabled={uploadMutation.isPending}
+              className="p-1 text-[var(--text-low)] hover:text-[var(--text-high)] disabled:opacity-50 transition-colors"
             >
-              <Close fontSize="small" />
-            </IconButton>
-          </Box>
-        </Paper>
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
       )}
 
       {/* Upload progress */}
       {uploadMutation.isPending && (
-        <Box sx={{ mt: 2 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-            <Typography variant="body2" color="text.secondary">
-              Uploading...
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              {uploadProgress}%
-            </Typography>
-          </Box>
-          <LinearProgress variant="determinate" value={uploadProgress} sx={{ height: 6, borderRadius: 3 }} />
-        </Box>
+        <div className="mt-4">
+          <div className="flex justify-between mb-1">
+            <span className="text-sm text-[var(--text-mid)]">Uploading...</span>
+            <span className="text-sm text-[var(--text-mid)]">{uploadProgress}%</span>
+          </div>
+          <Progress value={uploadProgress} className="h-1.5" />
+        </div>
       )}
 
       {/* Language selector and submit */}
-      <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start', mt: 2 }}>
-        <FormControl sx={{ minWidth: 160 }}>
-          <InputLabel id="upload-language-select-label">Language</InputLabel>
-          <Select
-            labelId="upload-language-select-label"
-            label="Language"
-            value={uploadLanguage}
-            onChange={(e) => setUploadLanguage(e.target.value)}
-            aria-label="Select transcription language"
-          >
-            {LANGUAGE_OPTIONS.map((opt) => (
-              <MenuItem key={opt.value} value={opt.value}>
-                {opt.label}
-              </MenuItem>
-            ))}
+      <div className="flex gap-4 items-start mt-4">
+        <div className="w-[160px]">
+          <label className="block text-xs text-[var(--text-low)] mb-1">Language</label>
+          <Select value={uploadLanguage} onValueChange={setUploadLanguage}>
+            <SelectTrigger aria-label="Select transcription language">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {LANGUAGE_OPTIONS.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
           </Select>
-        </FormControl>
-        <Button
-          variant="contained"
-          size="large"
-          disabled={!selectedFile || uploadMutation.isPending}
-          onClick={() => void handleUploadSubmit()}
-          startIcon={<CloudUpload />}
-          sx={{ minWidth: 130, height: 56 }}
-          aria-label="Upload and transcribe file"
-        >
-          {uploadMutation.isPending ? 'Uploading...' : 'Upload'}
-        </Button>
-      </Box>
-    </Box>
+        </div>
+        <div className="pt-5">
+          <Button
+            size="lg"
+            disabled={!selectedFile || uploadMutation.isPending}
+            onClick={() => void handleUploadSubmit()}
+            aria-label="Upload and transcribe file"
+          >
+            <CloudUpload className="h-4 w-4 mr-2" />
+            {uploadMutation.isPending ? 'Uploading...' : 'Upload'}
+          </Button>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -812,26 +729,26 @@ function RecordAudioTab({ onRecordingUploaded }: RecordAudioTabProps): JSX.Eleme
   );
 
   return (
-    <Stack spacing={3}>
-      <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
-        <FormControl sx={{ minWidth: 160 }}>
-          <InputLabel id="record-language-select-label">Language</InputLabel>
-          <Select
-            labelId="record-language-select-label"
-            label="Language"
-            value={recordLanguage}
-            onChange={(e) => setRecordLanguage(e.target.value)}
-            aria-label="Select recording language"
-            disabled={uploadMutation.isPending}
-          >
+    <div className="flex flex-col gap-6">
+      <div className="w-[160px]">
+        <label className="block text-xs text-[var(--text-low)] mb-1">Language</label>
+        <Select
+          value={recordLanguage}
+          onValueChange={setRecordLanguage}
+          disabled={uploadMutation.isPending}
+        >
+          <SelectTrigger aria-label="Select recording language">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
             {LANGUAGE_OPTIONS.map((opt) => (
-              <MenuItem key={opt.value} value={opt.value}>
+              <SelectItem key={opt.value} value={opt.value}>
                 {opt.label}
-              </MenuItem>
+              </SelectItem>
             ))}
-          </Select>
-        </FormControl>
-      </Box>
+          </SelectContent>
+        </Select>
+      </div>
 
       <AudioRecorder
         onRecordingComplete={(file) => void handleRecordingComplete(file)}
@@ -840,14 +757,14 @@ function RecordAudioTab({ onRecordingUploaded }: RecordAudioTabProps): JSX.Eleme
       />
 
       {uploadMutation.isPending && (
-        <Box sx={{ mt: 1 }}>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+        <div>
+          <p className="text-sm text-[var(--text-mid)] mb-1">
             Uploading recording for transcription...
-          </Typography>
-          <LinearProgress />
-        </Box>
+          </p>
+          <Progress />
+        </div>
       )}
-    </Stack>
+    </div>
   );
 }
 
@@ -858,7 +775,6 @@ function RecordAudioTab({ onRecordingUploaded }: RecordAudioTabProps): JSX.Eleme
 export default function TranscriptionPage(): JSX.Element {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [deleteDialogId, setDeleteDialogId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<number>(0);
 
   /* Queries & Mutations */
   const { data, isLoading, refetch } = useTranscriptions();
@@ -917,302 +833,271 @@ export default function TranscriptionPage(): JSX.Element {
      ======================================================================== */
 
   return (
-    <Box>
-      {/* Header */}
-      <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Box>
-          <Typography variant="h4" component="h1" gutterBottom sx={{ fontWeight: 600 }}>
-            Transcriptions
-          </Typography>
-          <Typography variant="body1" color="text.secondary">
-            Transcribe audio and video from YouTube, URL, file upload, or microphone recording
-          </Typography>
-        </Box>
-        <Tooltip title="Refresh list">
-          <IconButton onClick={handleRefresh} aria-label="Refresh transcriptions">
-            <Refresh />
-          </IconButton>
-        </Tooltip>
-      </Box>
+    <TooltipProvider>
+      <div>
+        {/* Header */}
+        <div className="mb-8 flex justify-between items-center">
+          <div>
+            <h1 className="text-2xl font-semibold text-[var(--text-high)] mb-1">
+              Transcriptions
+            </h1>
+            <p className="text-[var(--text-mid)]">
+              Transcribe audio and video from YouTube, URL, file upload, or microphone recording
+            </p>
+          </div>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button type="button" onClick={handleRefresh} className="p-2 text-[var(--text-mid)] hover:text-[var(--text-high)] hover:bg-[var(--bg-elevated)] rounded-md transition-colors" aria-label="Refresh transcriptions">
+                <RefreshCw className="h-5 w-5" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>Refresh list</TooltipContent>
+          </Tooltip>
+        </div>
 
-      {/* Create Form with Tabs */}
-      <Card sx={{ mb: 4 }}>
-        <CardContent>
-          <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
-            New Transcription
-          </Typography>
+        {/* Create Form with Tabs */}
+        <Card className="mb-8">
+          <CardContent className="p-6">
+            <h3 className="text-lg font-semibold text-[var(--text-high)] mb-4">
+              New Transcription
+            </h3>
 
-          <Tabs
-            value={activeTab}
-            onChange={(_, newValue: number) => setActiveTab(newValue)}
-            sx={{ mb: 3, borderBottom: 1, borderColor: 'divider' }}
-            aria-label="Transcription source type"
-          >
-            <Tab label="YouTube / URL" id="tab-url" aria-controls="tabpanel-url" />
-            <Tab label="Upload File" id="tab-upload" aria-controls="tabpanel-upload" />
-            <Tab label="Record Audio" id="tab-record" aria-controls="tabpanel-record" icon={<Mic />} iconPosition="start" />
-          </Tabs>
+            <Tabs defaultValue="url">
+              <TabsList className="mb-6">
+                <TabsTrigger value="url">YouTube / URL</TabsTrigger>
+                <TabsTrigger value="upload">Upload File</TabsTrigger>
+                <TabsTrigger value="record" className="flex items-center gap-1.5">
+                  <Mic className="h-3.5 w-3.5" /> Record Audio
+                </TabsTrigger>
+              </TabsList>
 
-          {/* Tab 1: YouTube / URL */}
-          <Box
-            role="tabpanel"
-            hidden={activeTab !== 0}
-            id="tabpanel-url"
-            aria-labelledby="tab-url"
-          >
-            {activeTab === 0 && (
-              <form onSubmit={handleSubmit(onSubmit)}>
-                <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
-                  <Controller
-                    name="video_url"
-                    control={control}
-                    render={({ field }) => (
-                      <TextField
-                        {...field}
-                        fullWidth
-                        label="YouTube Video URL"
-                        placeholder="https://www.youtube.com/watch?v=..."
-                        error={!!errors.video_url}
-                        helperText={errors.video_url?.message}
-                        inputProps={{
-                          'aria-label': 'YouTube video URL',
-                          'aria-required': 'true',
-                          'aria-invalid': !!errors.video_url,
-                        }}
-                      />
-                    )}
-                  />
-                  <Controller
-                    name="language"
-                    control={control}
-                    render={({ field }) => (
-                      <FormControl sx={{ minWidth: 160 }}>
-                        <InputLabel id="language-select-label">Language</InputLabel>
-                        <Select
-                          {...field}
-                          labelId="language-select-label"
-                          label="Language"
-                          value={field.value ?? 'auto'}
-                          aria-label="Select transcription language"
-                        >
-                          {LANGUAGE_OPTIONS.map(opt => (
-                            <MenuItem key={opt.value} value={opt.value}>
-                              {opt.label}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl>
-                    )}
-                  />
-                  <Button
-                    type="submit"
-                    variant="contained"
-                    size="large"
-                    disabled={isSubmitting || createMutation.isPending}
-                    sx={{ minWidth: 130, height: 56 }}
-                    aria-label="Start transcription"
-                  >
-                    {isSubmitting || createMutation.isPending ? 'Starting...' : 'Transcribe'}
-                  </Button>
-                </Box>
-              </form>
-            )}
-          </Box>
-
-          {/* Tab 2: Upload File */}
-          <Box
-            role="tabpanel"
-            hidden={activeTab !== 1}
-            id="tabpanel-upload"
-            aria-labelledby="tab-upload"
-          >
-            {activeTab === 1 && (
-              <FileUploadForm onUploadComplete={handleUploadComplete} />
-            )}
-          </Box>
-
-          {/* Tab 3: Record Audio */}
-          <Box
-            role="tabpanel"
-            hidden={activeTab !== 2}
-            id="tabpanel-record"
-            aria-labelledby="tab-record"
-          >
-            {activeTab === 2 && (
-              <RecordAudioTab onRecordingUploaded={handleUploadComplete} />
-            )}
-          </Box>
-        </CardContent>
-      </Card>
-
-      {/* Transcriptions Table */}
-      <Card>
-        <CardContent>
-          <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
-            Your Transcriptions
-          </Typography>
-
-          {isLoading ? (
-            <Box sx={{ py: 4, textAlign: 'center' }}>
-              <LinearProgress sx={{ mb: 2 }} />
-              <Typography variant="body2" color="text.secondary">
-                Loading transcriptions...
-              </Typography>
-            </Box>
-          ) : !data || data.items.length === 0 ? (
-            <Box sx={{ py: 6, textAlign: 'center' }}>
-              <Subtitles sx={{ fontSize: 48, color: 'text.disabled', mb: 2 }} />
-              <Typography variant="h6" color="text.secondary" gutterBottom>
-                No transcriptions yet
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                Use the form above to transcribe a YouTube video, upload an audio file, or record audio directly.
-              </Typography>
-            </Box>
-          ) : (
-            <TableContainer component={Paper} variant="outlined">
-              <Table aria-label="Transcriptions table">
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Source</TableCell>
-                    <TableCell>Status</TableCell>
-                    <TableCell>Language</TableCell>
-                    <TableCell>Date</TableCell>
-                    <TableCell align="right">Actions</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {data.items.map(transcription => (
-                    <TableRow
-                      key={transcription.id}
-                      hover
-                      selected={selectedId === transcription.id}
-                      sx={{ cursor: 'pointer' }}
-                    >
-                      <TableCell
-                        onClick={() =>
-                          setSelectedId(prev =>
-                            prev === transcription.id ? null : transcription.id
-                          )
-                        }
-                      >
-                        <Stack direction="row" spacing={1} alignItems="center">
-                          <Tooltip title={getSourceLabel(transcription.source_type)}>
-                            {getSourceIcon(transcription.source_type)}
-                          </Tooltip>
-                          <Typography
-                            variant="body2"
-                            sx={{
-                              maxWidth: 300,
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              whiteSpace: 'nowrap',
-                            }}
+              {/* Tab 1: YouTube / URL */}
+              <TabsContent value="url">
+                <form onSubmit={handleSubmit(onSubmit)}>
+                  <div className="flex gap-4 items-start">
+                    <Controller
+                      name="video_url"
+                      control={control}
+                      render={({ field }) => (
+                        <div className="flex-1">
+                          <Input
+                            {...field}
+                            placeholder="https://www.youtube.com/watch?v=..."
+                            className={errors.video_url ? 'border-red-500' : ''}
+                            aria-label="YouTube video URL"
+                            aria-required="true"
+                            aria-invalid={!!errors.video_url}
+                          />
+                          {errors.video_url && (
+                            <p className="mt-1 text-xs text-red-400">{errors.video_url.message}</p>
+                          )}
+                        </div>
+                      )}
+                    />
+                    <Controller
+                      name="language"
+                      control={control}
+                      render={({ field }) => (
+                        <div className="w-[160px]">
+                          <Select
+                            value={field.value ?? 'auto'}
+                            onValueChange={field.onChange}
                           >
-                            {getSourceDisplay(transcription)}
-                          </Typography>
-                        </Stack>
-                      </TableCell>
-                      <TableCell>
-                        <Chip
-                          label={transcription.status}
-                          color={getStatusColor(transcription.status)}
-                          size="small"
-                          variant={
-                            transcription.status === TranscriptionStatus.PROCESSING
-                              ? 'outlined'
-                              : 'filled'
-                          }
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="body2">
-                          {getLanguageLabel(transcription.language)}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="body2" color="text.secondary">
-                          {formatDate(transcription.created_at)}
-                        </Typography>
-                      </TableCell>
-                      <TableCell align="right">
-                        <Stack direction="row" spacing={0.5} justifyContent="flex-end">
-                          <Tooltip title="View details">
-                            <IconButton
-                              size="small"
-                              onClick={() =>
-                                setSelectedId(prev =>
-                                  prev === transcription.id ? null : transcription.id
-                                )
-                              }
-                              color={selectedId === transcription.id ? 'primary' : 'default'}
-                              aria-label={`View transcription details`}
-                            >
-                              {selectedId === transcription.id ? (
-                                <ExpandMore />
-                              ) : (
-                                <Visibility fontSize="small" />
-                              )}
-                            </IconButton>
-                          </Tooltip>
-                          <Tooltip title="Delete">
-                            <IconButton
-                              size="small"
-                              onClick={() => setDeleteDialogId(transcription.id)}
-                              disabled={deleteMutation.isPending}
-                              aria-label={`Delete transcription`}
-                              color="error"
-                            >
-                              <Delete fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-                        </Stack>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          )}
-        </CardContent>
-      </Card>
+                            <SelectTrigger aria-label="Select transcription language">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {LANGUAGE_OPTIONS.map(opt => (
+                                <SelectItem key={opt.value} value={opt.value}>
+                                  {opt.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
+                    />
+                    <Button
+                      type="submit"
+                      size="lg"
+                      disabled={isSubmitting || createMutation.isPending}
+                      aria-label="Start transcription"
+                    >
+                      {isSubmitting || createMutation.isPending ? 'Starting...' : 'Transcribe'}
+                    </Button>
+                  </div>
+                </form>
+              </TabsContent>
 
-      {/* Selected Transcription Detail Panel */}
-      <Collapse in={!!selectedTranscription} unmountOnExit>
+              {/* Tab 2: Upload File */}
+              <TabsContent value="upload">
+                <FileUploadForm onUploadComplete={handleUploadComplete} />
+              </TabsContent>
+
+              {/* Tab 3: Record Audio */}
+              <TabsContent value="record">
+                <RecordAudioTab onRecordingUploaded={handleUploadComplete} />
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+        </Card>
+
+        {/* Transcriptions Table */}
+        <Card>
+          <CardContent className="p-6">
+            <h3 className="text-lg font-semibold text-[var(--text-high)] mb-4">
+              Your Transcriptions
+            </h3>
+
+            {isLoading ? (
+              <div className="py-8 text-center">
+                <Progress className="mb-4" />
+                <p className="text-sm text-[var(--text-mid)]">
+                  Loading transcriptions...
+                </p>
+              </div>
+            ) : !data || data.items.length === 0 ? (
+              <div className="py-12 text-center">
+                <Subtitles className="h-12 w-12 text-[var(--text-low)] mx-auto mb-4" />
+                <h4 className="text-lg text-[var(--text-mid)] mb-2">
+                  No transcriptions yet
+                </h4>
+                <p className="text-sm text-[var(--text-mid)]">
+                  Use the form above to transcribe a YouTube video, upload an audio file, or record audio directly.
+                </p>
+              </div>
+            ) : (
+              <div className="rounded-md border border-[var(--border)] overflow-hidden">
+                <table className="w-full text-sm" aria-label="Transcriptions table">
+                  <thead>
+                    <tr className="border-b border-[var(--border)] bg-[var(--bg-elevated)]">
+                      <th className="text-left p-3 font-medium text-[var(--text-mid)]">Source</th>
+                      <th className="text-left p-3 font-medium text-[var(--text-mid)]">Status</th>
+                      <th className="text-left p-3 font-medium text-[var(--text-mid)]">Language</th>
+                      <th className="text-left p-3 font-medium text-[var(--text-mid)]">Date</th>
+                      <th className="text-right p-3 font-medium text-[var(--text-mid)]">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.items.map(transcription => (
+                      <tr
+                        key={transcription.id}
+                        className={`border-b border-[var(--border)] hover:bg-[var(--bg-elevated)] cursor-pointer transition-colors ${selectedId === transcription.id ? 'bg-[var(--bg-elevated)]' : ''}`}
+                      >
+                        <td
+                          className="p-3"
+                          onClick={() =>
+                            setSelectedId(prev =>
+                              prev === transcription.id ? null : transcription.id
+                            )
+                          }
+                        >
+                          <div className="flex items-center gap-2">
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <span>{getSourceIcon(transcription.source_type)}</span>
+                              </TooltipTrigger>
+                              <TooltipContent>{getSourceLabel(transcription.source_type)}</TooltipContent>
+                            </Tooltip>
+                            <span className="max-w-[300px] overflow-hidden text-ellipsis whitespace-nowrap text-[var(--text-mid)]">
+                              {getSourceDisplay(transcription)}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="p-3">
+                          <Badge
+                            variant={getStatusVariant(transcription.status)}
+                            className={transcription.status === TranscriptionStatus.PROCESSING ? 'border border-[var(--accent)]/30' : ''}
+                          >
+                            {transcription.status}
+                          </Badge>
+                        </td>
+                        <td className="p-3 text-[var(--text-mid)]">
+                          {getLanguageLabel(transcription.language)}
+                        </td>
+                        <td className="p-3 text-[var(--text-low)]">
+                          {formatDate(transcription.created_at)}
+                        </td>
+                        <td className="p-3">
+                          <div className="flex gap-1 justify-end">
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setSelectedId(prev =>
+                                      prev === transcription.id ? null : transcription.id
+                                    )
+                                  }
+                                  className={`p-1.5 rounded-md transition-colors ${selectedId === transcription.id ? 'text-[var(--accent)] bg-[var(--accent)]/10' : 'text-[var(--text-low)] hover:text-[var(--text-high)] hover:bg-[var(--bg-elevated)]'}`}
+                                  aria-label="View transcription details"
+                                >
+                                  {selectedId === transcription.id ? (
+                                    <ChevronDown className="h-4 w-4" />
+                                  ) : (
+                                    <Eye className="h-4 w-4" />
+                                  )}
+                                </button>
+                              </TooltipTrigger>
+                              <TooltipContent>View details</TooltipContent>
+                            </Tooltip>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <button
+                                  type="button"
+                                  onClick={() => setDeleteDialogId(transcription.id)}
+                                  disabled={deleteMutation.isPending}
+                                  className="p-1.5 rounded-md text-red-400 hover:text-red-300 hover:bg-red-500/10 disabled:opacity-50 transition-colors"
+                                  aria-label="Delete transcription"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
+                              </TooltipTrigger>
+                              <TooltipContent>Delete</TooltipContent>
+                            </Tooltip>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Selected Transcription Detail Panel */}
         {selectedTranscription && (
           <TranscriptionDetail
             transcription={selectedTranscription}
             onClose={() => setSelectedId(null)}
           />
         )}
-      </Collapse>
 
-      {/* Delete Confirmation Dialog */}
-      <Dialog
-        open={!!deleteDialogId}
-        onClose={() => setDeleteDialogId(null)}
-        aria-labelledby="delete-dialog-title"
-      >
-        <DialogTitle id="delete-dialog-title">Delete Transcription</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            Are you sure you want to delete this transcription? This action cannot be undone.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDeleteDialogId(null)} color="inherit">
-            Cancel
-          </Button>
-          <Button
-            onClick={() => void handleDeleteConfirm()}
-            color="error"
-            variant="contained"
-            disabled={deleteMutation.isPending}
-          >
-            {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Box>
+        {/* Delete Confirmation Dialog */}
+        <Dialog open={!!deleteDialogId} onOpenChange={(open) => !open && setDeleteDialogId(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Delete Transcription</DialogTitle>
+              <DialogDescription>
+                Are you sure you want to delete this transcription? This action cannot be undone.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="ghost" onClick={() => setDeleteDialogId(null)}>
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => void handleDeleteConfirm()}
+                disabled={deleteMutation.isPending}
+              >
+                {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+    </TooltipProvider>
   );
 }

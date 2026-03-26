@@ -2,43 +2,21 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  Alert,
-  Box,
-  Button,
-  Chip,
-  CircularProgress,
-  Divider,
-  FormControl,
-  IconButton,
-  InputLabel,
-  MenuItem,
-  Select,
-  Slider,
-  Snackbar,
-  TextField,
-  Tooltip,
-  Typography,
-} from '@mui/material';
-import PlayArrowIcon from '@mui/icons-material/PlayArrow';
-import PauseIcon from '@mui/icons-material/Pause';
-import StopIcon from '@mui/icons-material/Stop';
-import SkipNextIcon from '@mui/icons-material/SkipNext';
-import SkipPreviousIcon from '@mui/icons-material/SkipPrevious';
-import AddIcon from '@mui/icons-material/Add';
-import DeleteIcon from '@mui/icons-material/Delete';
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-import FileDownloadIcon from '@mui/icons-material/FileDownload';
-import MovieFilterIcon from '@mui/icons-material/MovieFilter';
-import ViewTimelineIcon from '@mui/icons-material/ViewTimeline';
-import TextFieldsIcon from '@mui/icons-material/TextFields';
-import ImageIcon from '@mui/icons-material/Image';
-import FormatListBulletedIcon from '@mui/icons-material/FormatListBulleted';
-import TitleIcon from '@mui/icons-material/Title';
-import WavingHandIcon from '@mui/icons-material/WavingHand';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import ZoomInIcon from '@mui/icons-material/ZoomIn';
-import ZoomOutIcon from '@mui/icons-material/ZoomOut';
+  Play, Pause, Square, SkipForward, SkipBack, Plus, Trash2, Copy,
+  Download, Clapperboard, Rows3, Type, Image, List, Hand,
+  ArrowLeft, ZoomIn, ZoomOut, Loader2, X,
+} from 'lucide-react';
 import Link from 'next/link';
+
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Slider } from '@/components/ui/slider';
+import { Button } from '@/lib/design-hub/components/Button';
+import { Input } from '@/lib/design-hub/components/Input';
+import { Textarea } from '@/lib/design-hub/components/Textarea';
+import { Separator } from '@/lib/design-hub/components/Separator';
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/lib/design-hub/components/Tooltip';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/lib/design-hub/components/Select';
 
 import { useGenerateVideo } from '@/features/video-gen/hooks/useVideoGen';
 
@@ -70,11 +48,11 @@ interface Composition {
 // ---------------------------------------------------------------------------
 
 const SCENE_TYPE_META: Record<SceneType, { label: string; icon: React.ReactNode; color: string }> = {
-  title_card:    { label: 'Title Card',    icon: <TitleIcon fontSize="small" />,              color: '#7c4dff' },
-  text_overlay:  { label: 'Text Overlay',  icon: <TextFieldsIcon fontSize="small" />,         color: '#00bfa5' },
-  image:         { label: 'Image',         icon: <ImageIcon fontSize="small" />,               color: '#ff6d00' },
-  bullet_points: { label: 'Bullets',       icon: <FormatListBulletedIcon fontSize="small" />,  color: '#2979ff' },
-  outro:         { label: 'Outro',         icon: <WavingHandIcon fontSize="small" />,          color: '#f50057' },
+  title_card:    { label: 'Title Card',    icon: <Type className="h-4 w-4" />,  color: '#7c4dff' },
+  text_overlay:  { label: 'Text Overlay',  icon: <Type className="h-4 w-4" />,  color: '#00bfa5' },
+  image:         { label: 'Image',         icon: <Image className="h-4 w-4" />, color: '#ff6d00' },
+  bullet_points: { label: 'Bullets',       icon: <List className="h-4 w-4" />,  color: '#2979ff' },
+  outro:         { label: 'Outro',         icon: <Hand className="h-4 w-4" />,  color: '#f50057' },
 };
 
 const TRANSITION_OPTIONS: { value: TransitionType; label: string }[] = [
@@ -292,65 +270,14 @@ function SceneRenderer({
     case 'title_card':
       return (
         <div style={baseStyle}>
-          <div
-            style={{
-              position: 'absolute',
-              inset: 0,
-              background: `radial-gradient(ellipse at 30% 20%, ${scene.bgColor}dd 0%, ${scene.bgColor} 70%)`,
-              opacity: 0.8,
-            }}
-          />
-          <div
-            style={{
-              position: 'absolute',
-              top: '10%',
-              left: '8%',
-              width: 180,
-              height: 180,
-              borderRadius: '50%',
-              background: `linear-gradient(135deg, ${scene.textColor}08, ${scene.textColor}15)`,
-              filter: 'blur(40px)',
-            }}
-          />
-          <div
-            style={{
-              position: 'absolute',
-              bottom: '15%',
-              right: '10%',
-              width: 120,
-              height: 120,
-              borderRadius: '50%',
-              background: `linear-gradient(135deg, ${scene.textColor}05, ${scene.textColor}12)`,
-              filter: 'blur(30px)',
-            }}
-          />
+          <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(ellipse at 30% 20%, ${scene.bgColor}dd 0%, ${scene.bgColor} 70%)`, opacity: 0.8 }} />
+          <div style={{ position: 'absolute', top: '10%', left: '8%', width: 180, height: 180, borderRadius: '50%', background: `linear-gradient(135deg, ${scene.textColor}08, ${scene.textColor}15)`, filter: 'blur(40px)' }} />
+          <div style={{ position: 'absolute', bottom: '15%', right: '10%', width: 120, height: 120, borderRadius: '50%', background: `linear-gradient(135deg, ${scene.textColor}05, ${scene.textColor}12)`, filter: 'blur(30px)' }} />
           <div style={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
             {scene.content.split('\n').map((line, i) => (
-              <div
-                key={i}
-                style={{
-                  fontSize: i === 0 ? scene.fontSize : scene.fontSize * 0.6,
-                  fontWeight: i === 0 ? 800 : 300,
-                  color: scene.textColor,
-                  letterSpacing: i === 0 ? '-1px' : '2px',
-                  lineHeight: 1.2,
-                  marginBottom: 8,
-                  textTransform: i > 0 ? 'uppercase' : 'none',
-                  animation: animationState === 'enter' ? `textReveal 0.8s ease-out ${i * 0.2}s both` : 'none',
-                }}
-              >
-                {line}
-              </div>
+              <div key={i} style={{ fontSize: i === 0 ? scene.fontSize : scene.fontSize * 0.6, fontWeight: i === 0 ? 800 : 300, color: scene.textColor, letterSpacing: i === 0 ? '-1px' : '2px', lineHeight: 1.2, marginBottom: 8, textTransform: i > 0 ? 'uppercase' : 'none', animation: animationState === 'enter' ? `textReveal 0.8s ease-out ${i * 0.2}s both` : 'none' }}>{line}</div>
             ))}
-            <div
-              style={{
-                width: 80,
-                height: 4,
-                background: `linear-gradient(90deg, transparent, ${scene.textColor}80, transparent)`,
-                margin: '20px auto 0',
-                borderRadius: 2,
-              }}
-            />
+            <div style={{ width: 80, height: 4, background: `linear-gradient(90deg, transparent, ${scene.textColor}80, transparent)`, margin: '20px auto 0', borderRadius: 2 }} />
           </div>
         </div>
       );
@@ -358,28 +285,10 @@ function SceneRenderer({
     case 'text_overlay':
       return (
         <div style={baseStyle}>
-          <div
-            style={{
-              position: 'absolute',
-              inset: 0,
-              background: `linear-gradient(135deg, ${scene.bgColor}, ${scene.bgColor}ee, ${scene.bgColor})`,
-            }}
-          />
+          <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(135deg, ${scene.bgColor}, ${scene.bgColor}ee, ${scene.bgColor})` }} />
           <div style={{ position: 'relative', zIndex: 1, textAlign: 'center', maxWidth: '80%' }}>
             {scene.content.split('\n').map((line, i) => (
-              <div
-                key={i}
-                style={{
-                  fontSize: scene.fontSize,
-                  fontWeight: i === 0 ? 700 : 400,
-                  color: scene.textColor,
-                  lineHeight: 1.4,
-                  marginBottom: 12,
-                  animation: animationState === 'enter' ? `textReveal 0.6s ease-out ${i * 0.15}s both` : 'none',
-                }}
-              >
-                {line}
-              </div>
+              <div key={i} style={{ fontSize: scene.fontSize, fontWeight: i === 0 ? 700 : 400, color: scene.textColor, lineHeight: 1.4, marginBottom: 12, animation: animationState === 'enter' ? `textReveal 0.6s ease-out ${i * 0.15}s both` : 'none' }}>{line}</div>
             ))}
           </div>
         </div>
@@ -391,38 +300,9 @@ function SceneRenderer({
         <div style={baseStyle}>
           <div style={{ position: 'relative', zIndex: 1, width: '75%' }}>
             {points.map((point, i) => (
-              <div
-                key={i}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 16,
-                  marginBottom: 20,
-                  animation: animationState === 'enter'
-                    ? `bulletSlideIn 0.5s ease-out ${i * 0.2}s both`
-                    : 'none',
-                }}
-              >
-                <div
-                  style={{
-                    width: 10,
-                    height: 10,
-                    borderRadius: '50%',
-                    background: `linear-gradient(135deg, ${scene.textColor}, ${scene.textColor}99)`,
-                    flexShrink: 0,
-                    boxShadow: `0 0 10px ${scene.textColor}40`,
-                  }}
-                />
-                <span
-                  style={{
-                    fontSize: scene.fontSize,
-                    color: scene.textColor,
-                    fontWeight: 500,
-                    lineHeight: 1.3,
-                  }}
-                >
-                  {point}
-                </span>
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 20, animation: animationState === 'enter' ? `bulletSlideIn 0.5s ease-out ${i * 0.2}s both` : 'none' }}>
+                <div style={{ width: 10, height: 10, borderRadius: '50%', background: `linear-gradient(135deg, ${scene.textColor}, ${scene.textColor}99)`, flexShrink: 0, boxShadow: `0 0 10px ${scene.textColor}40` }} />
+                <span style={{ fontSize: scene.fontSize, color: scene.textColor, fontWeight: 500, lineHeight: 1.3 }}>{point}</span>
               </div>
             ))}
           </div>
@@ -433,39 +313,12 @@ function SceneRenderer({
     case 'image':
       return (
         <div style={baseStyle}>
-          <div
-            style={{
-              width: '70%',
-              height: '60%',
-              borderRadius: 12,
-              background: `linear-gradient(135deg, ${scene.bgColor}cc, ${scene.bgColor}66)`,
-              border: `2px dashed ${scene.textColor}40`,
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 12,
-            }}
-          >
-            <ImageIcon style={{ fontSize: 48, color: `${scene.textColor}60` }} />
-            <span style={{ color: `${scene.textColor}80`, fontSize: 14 }}>
-              Image placeholder
-            </span>
+          <div style={{ width: '70%', height: '60%', borderRadius: 12, background: `linear-gradient(135deg, ${scene.bgColor}cc, ${scene.bgColor}66)`, border: `2px dashed ${scene.textColor}40`, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
+            <Image style={{ fontSize: 48, color: `${scene.textColor}60` }} />
+            <span style={{ color: `${scene.textColor}80`, fontSize: 14 }}>Image placeholder</span>
           </div>
           {scene.content && (
-            <div
-              style={{
-                position: 'absolute',
-                bottom: '10%',
-                fontSize: scene.fontSize * 0.6,
-                color: scene.textColor,
-                textAlign: 'center',
-                maxWidth: '80%',
-                fontWeight: 500,
-              }}
-            >
-              {scene.content}
-            </div>
+            <div style={{ position: 'absolute', bottom: '10%', fontSize: scene.fontSize * 0.6, color: scene.textColor, textAlign: 'center', maxWidth: '80%', fontWeight: 500 }}>{scene.content}</div>
           )}
         </div>
       );
@@ -473,42 +326,12 @@ function SceneRenderer({
     case 'outro':
       return (
         <div style={baseStyle}>
-          <div
-            style={{
-              position: 'absolute',
-              inset: 0,
-              background: `linear-gradient(135deg, ${scene.bgColor}ff, ${scene.bgColor}cc)`,
-              backgroundSize: '200% 200%',
-              animation: 'gradientBg 4s ease infinite',
-            }}
-          />
+          <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(135deg, ${scene.bgColor}ff, ${scene.bgColor}cc)`, backgroundSize: '200% 200%', animation: 'gradientBg 4s ease infinite' }} />
           <div style={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
             {scene.content.split('\n').map((line, i) => (
-              <div
-                key={i}
-                style={{
-                  fontSize: i === 0 ? scene.fontSize : scene.fontSize * 0.55,
-                  fontWeight: i === 0 ? 800 : 400,
-                  color: scene.textColor,
-                  letterSpacing: i === 0 ? '-0.5px' : '1px',
-                  lineHeight: 1.3,
-                  marginBottom: 10,
-                  animation: animationState === 'enter' ? `textReveal 0.8s ease-out ${i * 0.3}s both` : 'none',
-                }}
-              >
-                {line}
-              </div>
+              <div key={i} style={{ fontSize: i === 0 ? scene.fontSize : scene.fontSize * 0.55, fontWeight: i === 0 ? 800 : 400, color: scene.textColor, letterSpacing: i === 0 ? '-0.5px' : '1px', lineHeight: 1.3, marginBottom: 10, animation: animationState === 'enter' ? `textReveal 0.8s ease-out ${i * 0.3}s both` : 'none' }}>{line}</div>
             ))}
-            <div
-              style={{
-                width: 60,
-                height: 3,
-                background: scene.textColor,
-                margin: '16px auto 0',
-                borderRadius: 2,
-                opacity: 0.6,
-              }}
-            />
+            <div style={{ width: 60, height: 3, background: scene.textColor, margin: '16px auto 0', borderRadius: 2, opacity: 0.6 }} />
           </div>
         </div>
       );
@@ -523,8 +346,6 @@ function SceneRenderer({
 // ---------------------------------------------------------------------------
 
 export default function VideoComposerPage() {
-  // -- State ----------------------------------------------------------------
-
   const [composition, setComposition] = useState<Composition>({
     name: 'Untitled Composition',
     scenes: [
@@ -550,11 +371,8 @@ export default function VideoComposerPage() {
 
   const genMutation = useGenerateVideo();
 
-  // Keep refs in sync
   useEffect(() => { playheadRef.current = playheadTime; }, [playheadTime]);
   useEffect(() => { scenesRef.current = composition.scenes; }, [composition.scenes]);
-
-  // -- Derived values -------------------------------------------------------
 
   const totalDuration = useMemo(
     () => composition.scenes.reduce((sum, s) => sum + s.duration, 0),
@@ -581,8 +399,6 @@ export default function VideoComposerPage() {
   const currentScene = composition.scenes[currentSceneIndex];
   const selectedScene = composition.scenes.find((s) => s.id === selectedSceneId) ?? currentScene;
 
-  // -- Inject keyframes once ------------------------------------------------
-
   useEffect(() => {
     const id = '__video-composer-keyframes';
     if (!document.getElementById(id)) {
@@ -596,8 +412,6 @@ export default function VideoComposerPage() {
       if (el) el.remove();
     };
   }, []);
-
-  // -- Playback logic -------------------------------------------------------
 
   const prevSceneIdxRef = useRef(currentSceneIndex);
 
@@ -661,10 +475,7 @@ export default function VideoComposerPage() {
     [composition.scenes, sceneOffsets],
   );
 
-  // Cleanup on unmount
   useEffect(() => () => { if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current); }, []);
-
-  // -- Scene CRUD -----------------------------------------------------------
 
   const updateScene = (id: string, patch: Partial<Scene>) => {
     setComposition((prev) => ({
@@ -715,8 +526,6 @@ export default function VideoComposerPage() {
     setSnackMsg(`Template "${template.label}" applied`);
   };
 
-  // -- Export ---------------------------------------------------------------
-
   const handleExport = async () => {
     setExportLoading(true);
     try {
@@ -734,13 +543,8 @@ export default function VideoComposerPage() {
             name: composition.name,
             total_duration: totalDuration,
             scenes: composition.scenes.map((s) => ({
-              type: s.type,
-              content: s.content,
-              duration: s.duration,
-              bg_color: s.bgColor,
-              text_color: s.textColor,
-              font_size: s.fontSize,
-              transition: s.transition,
+              type: s.type, content: s.content, duration: s.duration,
+              bg_color: s.bgColor, text_color: s.textColor, font_size: s.fontSize, transition: s.transition,
             })),
           },
         },
@@ -753,1037 +557,476 @@ export default function VideoComposerPage() {
     }
   };
 
-  // -- Render ---------------------------------------------------------------
-
   const PX_PER_SEC = 60 * timelineZoom;
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', color: '#e0e0e0', fontFamily: '"Inter", "Roboto", sans-serif' }}>
-      {/* ================================================================ */}
-      {/*  TOP TOOLBAR                                                     */}
-      {/* ================================================================ */}
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 1.5,
-          px: 2,
-          py: 1,
-          background: 'linear-gradient(180deg, #141420 0%, #0e0e18 100%)',
-          borderBottom: '1px solid #1e1e30',
-          flexShrink: 0,
-          minHeight: 52,
-        }}
-      >
-        <Tooltip title="Back to Video Studio">
-          <IconButton component={Link} href="/video-studio" size="small" sx={{ color: '#888' }}>
-            <ArrowBackIcon fontSize="small" />
-          </IconButton>
-        </Tooltip>
+    <TooltipProvider>
+      <div className="flex flex-col h-full text-[#e0e0e0] font-[Inter,Roboto,sans-serif]">
+        {/* TOP TOOLBAR */}
+        <div className="flex items-center gap-3 px-4 py-2 shrink-0 min-h-[52px]" style={{ background: 'linear-gradient(180deg, #141420 0%, #0e0e18 100%)', borderBottom: '1px solid #1e1e30' }}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Link href="/video-studio" className="p-1.5 text-[#888] hover:text-[#ccc] transition-colors">
+                <ArrowLeft className="h-4 w-4" />
+              </Link>
+            </TooltipTrigger>
+            <TooltipContent>Back to Video Studio</TooltipContent>
+          </Tooltip>
 
-        <MovieFilterIcon sx={{ color: '#7c4dff', fontSize: 22 }} />
+          <Clapperboard className="h-5 w-5 text-[#7c4dff]" />
 
-        <TextField
-          variant="standard"
-          value={composition.name}
-          onChange={(e) => setComposition((p) => ({ ...p, name: e.target.value }))}
-          InputProps={{
-            disableUnderline: true,
-            sx: { color: '#fff', fontWeight: 600, fontSize: 16 },
-          }}
-          sx={{ width: 260 }}
-        />
-
-        <Divider orientation="vertical" flexItem sx={{ borderColor: '#2a2a40', mx: 0.5 }} />
-
-        <Chip
-          icon={<ViewTimelineIcon />}
-          label={`${composition.scenes.length} scenes`}
-          size="small"
-          sx={{ bgcolor: '#1e1e30', color: '#aaa', '& .MuiChip-icon': { color: '#7c4dff' } }}
-        />
-
-        <Chip
-          label={formatTime(totalDuration)}
-          size="small"
-          sx={{ bgcolor: '#1e1e30', color: '#aaa', fontFamily: 'monospace' }}
-        />
-
-        <Box sx={{ flex: 1 }} />
-
-        {/* Template presets */}
-        {TEMPLATES.map((t) => (
-          <Button
-            key={t.name}
-            size="small"
-            onClick={() => applyTemplate(t)}
-            sx={{
-              color: t.color,
-              borderColor: `${t.color}40`,
-              fontSize: 11,
-              textTransform: 'none',
-              px: 1.5,
-              minWidth: 0,
-              border: '1px solid',
-              borderRadius: 1,
-              '&:hover': { bgcolor: `${t.color}15`, borderColor: t.color },
-            }}
-          >
-            {t.label}
-          </Button>
-        ))}
-
-        <Divider orientation="vertical" flexItem sx={{ borderColor: '#2a2a40', mx: 0.5 }} />
-
-        <Button
-          variant="contained"
-          size="small"
-          startIcon={exportLoading ? <CircularProgress size={14} color="inherit" /> : <FileDownloadIcon />}
-          disabled={exportLoading || composition.scenes.length === 0}
-          onClick={handleExport}
-          sx={{
-            bgcolor: '#7c4dff',
-            textTransform: 'none',
-            fontWeight: 600,
-            px: 2,
-            '&:hover': { bgcolor: '#651fff' },
-          }}
-        >
-          Export
-        </Button>
-      </Box>
-
-      {/* ================================================================ */}
-      {/*  MAIN BODY: left panel + preview + right panel                   */}
-      {/* ================================================================ */}
-      <Box sx={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
-        {/* -------------------------------------------------------------- */}
-        {/*  LEFT PANEL - Assets / Templates                               */}
-        {/* -------------------------------------------------------------- */}
-        <Box
-          sx={{
-            width: 220,
-            flexShrink: 0,
-            background: '#111119',
-            borderRight: '1px solid #1e1e30',
-            overflowY: 'auto',
-            display: 'flex',
-            flexDirection: 'column',
-          }}
-        >
-          <Typography
-            variant="caption"
-            sx={{
-              px: 2,
-              pt: 2,
-              pb: 1,
-              color: '#666',
-              fontWeight: 700,
-              fontSize: 10,
-              letterSpacing: 1.5,
-              textTransform: 'uppercase',
-            }}
-          >
-            Templates
-          </Typography>
-
-          {TEMPLATES.map((t) => (
-            <Box
-              key={t.name}
-              onClick={() => applyTemplate(t)}
-              sx={{
-                mx: 1,
-                mb: 1,
-                p: 1.5,
-                borderRadius: 1.5,
-                cursor: 'pointer',
-                border: '1px solid #1e1e30',
-                transition: 'all 0.2s',
-                '&:hover': {
-                  bgcolor: `${t.color}10`,
-                  borderColor: `${t.color}50`,
-                  transform: 'translateY(-1px)',
-                },
-              }}
-            >
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                <Box
-                  sx={{
-                    width: 8,
-                    height: 8,
-                    borderRadius: '50%',
-                    bgcolor: t.color,
-                    boxShadow: `0 0 6px ${t.color}60`,
-                  }}
-                />
-                <Typography sx={{ fontSize: 12, fontWeight: 600, color: '#ddd' }}>
-                  {t.label}
-                </Typography>
-              </Box>
-              <Typography sx={{ fontSize: 10, color: '#777', lineHeight: 1.3 }}>
-                {t.description}
-              </Typography>
-              <Box sx={{ display: 'flex', gap: 0.5, mt: 0.5 }}>
-                <Chip
-                  label={`${t.scenes.length} scenes`}
-                  size="small"
-                  sx={{ height: 18, fontSize: 9, bgcolor: '#1a1a2e', color: '#888' }}
-                />
-                <Chip
-                  label={formatTime(t.scenes.reduce((a, s) => a + s.duration, 0))}
-                  size="small"
-                  sx={{ height: 18, fontSize: 9, bgcolor: '#1a1a2e', color: '#888', fontFamily: 'monospace' }}
-                />
-              </Box>
-            </Box>
-          ))}
-
-          <Divider sx={{ borderColor: '#1e1e30', my: 1 }} />
-
-          <Typography
-            variant="caption"
-            sx={{
-              px: 2,
-              pb: 1,
-              color: '#666',
-              fontWeight: 700,
-              fontSize: 10,
-              letterSpacing: 1.5,
-              textTransform: 'uppercase',
-            }}
-          >
-            Add Scene
-          </Typography>
-
-          {(Object.entries(SCENE_TYPE_META) as [SceneType, typeof SCENE_TYPE_META[SceneType]][]).map(
-            ([type, meta]) => (
-              <Box
-                key={type}
-                onClick={() => addScene(type)}
-                sx={{
-                  mx: 1,
-                  mb: 0.5,
-                  px: 1.5,
-                  py: 1,
-                  borderRadius: 1,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 1,
-                  cursor: 'pointer',
-                  transition: 'all 0.15s',
-                  '&:hover': { bgcolor: `${meta.color}18` },
-                }}
-              >
-                <Box sx={{ color: meta.color, display: 'flex' }}>{meta.icon}</Box>
-                <Typography sx={{ fontSize: 12, color: '#bbb' }}>{meta.label}</Typography>
-                <Box sx={{ flex: 1 }} />
-                <AddIcon sx={{ fontSize: 14, color: '#555' }} />
-              </Box>
-            ),
-          )}
-
-          <Box sx={{ flex: 1 }} />
-        </Box>
-
-        {/* -------------------------------------------------------------- */}
-        {/*  CENTER - Preview Canvas                                       */}
-        {/* -------------------------------------------------------------- */}
-        <Box
-          sx={{
-            flex: 1,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: 'radial-gradient(ellipse at center, #12121d 0%, #08080f 100%)',
-            position: 'relative',
-            overflow: 'hidden',
-            p: 3,
-          }}
-        >
-          {/* Subtle grid */}
-          <Box
-            sx={{
-              position: 'absolute',
-              inset: 0,
-              backgroundImage:
-                'linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px)',
-              backgroundSize: '40px 40px',
-              pointerEvents: 'none',
-            }}
+          <input
+            type="text"
+            value={composition.name}
+            onChange={(e) => setComposition((p) => ({ ...p, name: e.target.value }))}
+            className="bg-transparent border-none outline-none text-white font-semibold text-base w-[260px]"
+            aria-label="Composition name"
+            title="Composition name"
           />
 
-          {/* 16:9 preview container */}
-          <Box
-            sx={{
-              position: 'relative',
-              width: '100%',
-              maxWidth: 720,
-              aspectRatio: '16/9',
-              borderRadius: 2,
-              overflow: 'hidden',
-              boxShadow: '0 8px 40px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.05)',
-            }}
+          <Separator orientation="vertical" className="h-6 bg-[#2a2a40]" />
+
+          <Badge variant="outline" className="bg-[#1e1e30] text-[#aaa] border-none">
+            <Rows3 className="h-3.5 w-3.5 text-[#7c4dff] mr-1" /> {composition.scenes.length} scenes
+          </Badge>
+
+          <Badge variant="outline" className="bg-[#1e1e30] text-[#aaa] border-none font-mono">
+            {formatTime(totalDuration)}
+          </Badge>
+
+          <div className="flex-1" />
+
+          {TEMPLATES.map((t) => (
+            <button
+              key={t.name}
+              type="button"
+              onClick={() => applyTemplate(t)}
+              className="text-[11px] px-3 py-1 border rounded min-w-0 transition-all"
+              style={{ color: t.color, borderColor: `${t.color}40` }}
+              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = `${t.color}15`; e.currentTarget.style.borderColor = t.color; }}
+              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.borderColor = `${t.color}40`; }}
+            >
+              {t.label}
+            </button>
+          ))}
+
+          <Separator orientation="vertical" className="h-6 bg-[#2a2a40]" />
+
+          <Button
+            size="sm"
+            disabled={exportLoading || composition.scenes.length === 0}
+            onClick={handleExport}
+            className="bg-[#7c4dff] hover:bg-[#651fff] font-semibold px-4"
           >
-            {currentScene && (
-              <SceneRenderer scene={currentScene} animationState={animState} />
+            {exportLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> : <Download className="h-3.5 w-3.5 mr-1.5" />}
+            Export
+          </Button>
+        </div>
+
+        {/* MAIN BODY */}
+        <div className="flex flex-1 overflow-hidden">
+          {/* LEFT PANEL */}
+          <div className="w-[220px] shrink-0 overflow-y-auto flex flex-col" style={{ background: '#111119', borderRight: '1px solid #1e1e30' }}>
+            <span className="px-4 pt-4 pb-2 text-[#666] font-bold text-[10px] tracking-[1.5px] uppercase">Templates</span>
+
+            {TEMPLATES.map((t) => (
+              <div
+                key={t.name}
+                onClick={() => applyTemplate(t)}
+                className="mx-2 mb-2 p-3 rounded-md cursor-pointer border border-[#1e1e30] transition-all hover:-translate-y-px"
+                style={{ ['--tpl-color' as string]: t.color }}
+                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = `${t.color}10`; e.currentTarget.style.borderColor = `${t.color}50`; }}
+                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.borderColor = '#1e1e30'; }}
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: t.color, boxShadow: `0 0 6px ${t.color}60` }} />
+                  <span className="text-xs font-semibold text-[#ddd]">{t.label}</span>
+                </div>
+                <span className="text-[10px] text-[#777] leading-tight block">{t.description}</span>
+                <div className="flex gap-1 mt-1">
+                  <Badge variant="outline" className="h-[18px] text-[9px] bg-[#1a1a2e] text-[#888] border-none">{t.scenes.length} scenes</Badge>
+                  <Badge variant="outline" className="h-[18px] text-[9px] bg-[#1a1a2e] text-[#888] border-none font-mono">{formatTime(t.scenes.reduce((a, s) => a + s.duration, 0))}</Badge>
+                </div>
+              </div>
+            ))}
+
+            <Separator className="bg-[#1e1e30] my-2" />
+
+            <span className="px-4 pb-2 text-[#666] font-bold text-[10px] tracking-[1.5px] uppercase">Add Scene</span>
+
+            {(Object.entries(SCENE_TYPE_META) as [SceneType, typeof SCENE_TYPE_META[SceneType]][]).map(
+              ([type, meta]) => (
+                <div
+                  key={type}
+                  onClick={() => addScene(type)}
+                  className="mx-2 mb-1 px-3 py-2 rounded flex items-center gap-2 cursor-pointer transition-all"
+                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = `${meta.color}18`; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
+                >
+                  <span style={{ color: meta.color }} className="flex">{meta.icon}</span>
+                  <span className="text-xs text-[#bbb]">{meta.label}</span>
+                  <span className="flex-1" />
+                  <Plus className="h-3.5 w-3.5 text-[#555]" />
+                </div>
+              ),
             )}
 
-            {/* Scene indicator badge */}
-            <Box
-              sx={{
-                position: 'absolute',
-                top: 12,
-                left: 12,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 0.5,
-                bgcolor: 'rgba(0,0,0,0.6)',
-                backdropFilter: 'blur(8px)',
-                borderRadius: 1,
-                px: 1,
-                py: 0.3,
-              }}
-            >
-              <Box
-                sx={{
-                  width: 6,
-                  height: 6,
-                  borderRadius: '50%',
-                  bgcolor: isPlaying ? '#ff5252' : '#666',
-                  animation: isPlaying ? 'subtlePulse 1s ease infinite' : 'none',
-                }}
-              />
-              <Typography sx={{ fontSize: 10, color: '#ccc', fontFamily: 'monospace' }}>
-                {currentSceneIndex + 1}/{composition.scenes.length}
-              </Typography>
-            </Box>
+            <div className="flex-1" />
+          </div>
 
-            {/* Time indicator badge */}
-            <Box
-              sx={{
-                position: 'absolute',
-                top: 12,
-                right: 12,
-                bgcolor: 'rgba(0,0,0,0.6)',
-                backdropFilter: 'blur(8px)',
-                borderRadius: 1,
-                px: 1,
-                py: 0.3,
-              }}
-            >
-              <Typography sx={{ fontSize: 10, color: '#ccc', fontFamily: 'monospace' }}>
-                {formatTime(playheadTime)} / {formatTime(totalDuration)}
-              </Typography>
-            </Box>
-          </Box>
+          {/* CENTER - Preview Canvas */}
+          <div className="flex-1 flex flex-col items-center justify-center relative overflow-hidden p-6" style={{ background: 'radial-gradient(ellipse at center, #12121d 0%, #08080f 100%)' }}>
+            <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
 
-          {/* Playback controls */}
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1,
-              mt: 2,
-            }}
-          >
-            <IconButton
-              size="small"
-              onClick={() => jumpToScene(currentSceneIndex - 1)}
-              disabled={currentSceneIndex === 0}
-              sx={{ color: '#aaa', '&:disabled': { color: '#444' } }}
-            >
-              <SkipPreviousIcon />
-            </IconButton>
+            {/* 16:9 preview container */}
+            <div className="relative w-full max-w-[720px] aspect-video rounded-lg overflow-hidden" style={{ boxShadow: '0 8px 40px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.05)' }}>
+              {currentScene && <SceneRenderer scene={currentScene} animationState={animState} />}
 
-            <IconButton
-              onClick={togglePlay}
-              sx={{
-                width: 44,
-                height: 44,
-                bgcolor: '#7c4dff',
-                color: '#fff',
-                '&:hover': { bgcolor: '#651fff' },
-                boxShadow: '0 4px 20px rgba(124,77,255,0.4)',
-              }}
-            >
-              {isPlaying ? <PauseIcon /> : <PlayArrowIcon />}
-            </IconButton>
+              <div className="absolute top-3 left-3 flex items-center gap-1 bg-black/60 backdrop-blur-md rounded px-2 py-0.5">
+                <div className={`w-1.5 h-1.5 rounded-full ${isPlaying ? 'bg-[#ff5252]' : 'bg-[#666]'}`} style={isPlaying ? { animation: 'subtlePulse 1s ease infinite' } : {}} />
+                <span className="text-[10px] text-[#ccc] font-mono">{currentSceneIndex + 1}/{composition.scenes.length}</span>
+              </div>
 
-            <IconButton
-              size="small"
-              onClick={handleStop}
-              sx={{ color: '#aaa' }}
-            >
-              <StopIcon />
-            </IconButton>
+              <div className="absolute top-3 right-3 bg-black/60 backdrop-blur-md rounded px-2 py-0.5">
+                <span className="text-[10px] text-[#ccc] font-mono">{formatTime(playheadTime)} / {formatTime(totalDuration)}</span>
+              </div>
+            </div>
 
-            <IconButton
-              size="small"
-              onClick={() => jumpToScene(currentSceneIndex + 1)}
-              disabled={currentSceneIndex === composition.scenes.length - 1}
-              sx={{ color: '#aaa', '&:disabled': { color: '#444' } }}
-            >
-              <SkipNextIcon />
-            </IconButton>
+            {/* Playback controls */}
+            <div className="flex items-center gap-2 mt-4">
+              <button type="button" onClick={() => jumpToScene(currentSceneIndex - 1)} disabled={currentSceneIndex === 0} className="p-1.5 text-[#aaa] disabled:text-[#444] transition-colors" aria-label="Previous scene">
+                <SkipBack className="h-5 w-5" />
+              </button>
 
-            {/* Progress bar */}
-            <Box sx={{ width: 200, mx: 1 }}>
-              <Slider
-                value={playheadTime}
-                min={0}
-                max={totalDuration || 1}
-                step={0.1}
-                onChange={(_, v) => {
-                  setPlayheadTime(v as number);
-                  setAnimState('enter');
-                  setTimeout(() => setAnimState('idle'), 700);
-                }}
-                sx={{
-                  color: '#7c4dff',
-                  height: 4,
-                  '& .MuiSlider-thumb': { width: 12, height: 12 },
-                  '& .MuiSlider-rail': { bgcolor: '#2a2a40' },
-                }}
-              />
-            </Box>
+              <button type="button" onClick={togglePlay} className="w-11 h-11 rounded-full bg-[#7c4dff] text-white flex items-center justify-center hover:bg-[#651fff] transition-colors" style={{ boxShadow: '0 4px 20px rgba(124,77,255,0.4)' }} aria-label={isPlaying ? 'Pause' : 'Play'}>
+                {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5 ml-0.5" />}
+              </button>
 
-            <Typography sx={{ fontSize: 12, color: '#888', fontFamily: 'monospace', minWidth: 85, textAlign: 'center' }}>
-              {formatTime(playheadTime)} / {formatTime(totalDuration)}
-            </Typography>
-          </Box>
-        </Box>
+              <button type="button" onClick={handleStop} className="p-1.5 text-[#aaa] transition-colors" aria-label="Stop">
+                <Square className="h-5 w-5" />
+              </button>
 
-        {/* -------------------------------------------------------------- */}
-        {/*  RIGHT PANEL - Scene Properties                                */}
-        {/* -------------------------------------------------------------- */}
-        <Box
-          sx={{
-            width: 280,
-            flexShrink: 0,
-            background: '#111119',
-            borderLeft: '1px solid #1e1e30',
-            overflowY: 'auto',
-            display: 'flex',
-            flexDirection: 'column',
-          }}
-        >
-          <Typography
-            variant="caption"
-            sx={{
-              px: 2,
-              pt: 2,
-              pb: 1,
-              color: '#666',
-              fontWeight: 700,
-              fontSize: 10,
-              letterSpacing: 1.5,
-              textTransform: 'uppercase',
-            }}
-          >
-            Scene Properties
-          </Typography>
+              <button type="button" onClick={() => jumpToScene(currentSceneIndex + 1)} disabled={currentSceneIndex === composition.scenes.length - 1} className="p-1.5 text-[#aaa] disabled:text-[#444] transition-colors" aria-label="Next scene">
+                <SkipForward className="h-5 w-5" />
+              </button>
 
-          {selectedScene ? (
-            <Box sx={{ px: 2, pb: 2 }}>
-              {/* Scene type selector */}
-              <FormControl fullWidth size="small" sx={{ mb: 2 }}>
-                <InputLabel sx={{ color: '#888' }}>Type</InputLabel>
-                <Select
-                  value={selectedScene.type}
-                  label="Type"
-                  onChange={(e) => updateScene(selectedScene.id, { type: e.target.value as SceneType })}
-                  sx={{
-                    color: '#ddd',
-                    '.MuiOutlinedInput-notchedOutline': { borderColor: '#2a2a40' },
-                    '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#7c4dff40' },
-                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#7c4dff' },
-                    '.MuiSvgIcon-root': { color: '#888' },
-                  }}
-                >
-                  {(Object.entries(SCENE_TYPE_META) as [SceneType, typeof SCENE_TYPE_META[SceneType]][]).map(
-                    ([type, meta]) => (
-                      <MenuItem key={type} value={type}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <Box sx={{ color: meta.color, display: 'flex' }}>{meta.icon}</Box>
-                          {meta.label}
-                        </Box>
-                      </MenuItem>
-                    ),
-                  )}
-                </Select>
-              </FormControl>
-
-              {/* Content editor */}
-              <Typography sx={{ fontSize: 11, color: '#888', mb: 0.5, fontWeight: 600 }}>
-                Content
-              </Typography>
-              <TextField
-                fullWidth
-                multiline
-                rows={4}
-                size="small"
-                value={selectedScene.content}
-                onChange={(e) => updateScene(selectedScene.id, { content: e.target.value })}
-                placeholder="Enter scene content..."
-                sx={{
-                  mb: 2,
-                  '& .MuiOutlinedInput-root': {
-                    color: '#ddd',
-                    fontSize: 13,
-                    '& fieldset': { borderColor: '#2a2a40' },
-                    '&:hover fieldset': { borderColor: '#7c4dff40' },
-                    '&.Mui-focused fieldset': { borderColor: '#7c4dff' },
-                  },
-                }}
-              />
-
-              {/* Duration */}
-              <Typography sx={{ fontSize: 11, color: '#888', mb: 0.5, fontWeight: 600 }}>
-                Duration: {selectedScene.duration}s
-              </Typography>
-              <Slider
-                value={selectedScene.duration}
-                min={1}
-                max={30}
-                step={1}
-                onChange={(_, v) => updateScene(selectedScene.id, { duration: v as number })}
-                valueLabelDisplay="auto"
-                sx={{
-                  color: '#7c4dff',
-                  mb: 2,
-                  '& .MuiSlider-rail': { bgcolor: '#2a2a40' },
-                }}
-              />
-
-              {/* Background color */}
-              <Typography sx={{ fontSize: 11, color: '#888', mb: 0.5, fontWeight: 600 }}>
-                Background Color
-              </Typography>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                <input
-                  type="color"
-                  value={selectedScene.bgColor}
-                  onChange={(e) => updateScene(selectedScene.id, { bgColor: e.target.value })}
-                  style={{
-                    width: 36,
-                    height: 36,
-                    border: '2px solid #2a2a40',
-                    borderRadius: 6,
-                    cursor: 'pointer',
-                    background: 'none',
-                    padding: 2,
-                  }}
-                />
-                <TextField
-                  size="small"
-                  value={selectedScene.bgColor}
-                  onChange={(e) => updateScene(selectedScene.id, { bgColor: e.target.value })}
-                  sx={{
-                    flex: 1,
-                    '& .MuiOutlinedInput-root': {
-                      color: '#ddd',
-                      fontSize: 12,
-                      fontFamily: 'monospace',
-                      '& fieldset': { borderColor: '#2a2a40' },
-                      '&:hover fieldset': { borderColor: '#7c4dff40' },
-                    },
-                  }}
-                />
-              </Box>
-
-              {/* Text color */}
-              <Typography sx={{ fontSize: 11, color: '#888', mb: 0.5, fontWeight: 600 }}>
-                Text Color
-              </Typography>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                <input
-                  type="color"
-                  value={selectedScene.textColor}
-                  onChange={(e) => updateScene(selectedScene.id, { textColor: e.target.value })}
-                  style={{
-                    width: 36,
-                    height: 36,
-                    border: '2px solid #2a2a40',
-                    borderRadius: 6,
-                    cursor: 'pointer',
-                    background: 'none',
-                    padding: 2,
-                  }}
-                />
-                <TextField
-                  size="small"
-                  value={selectedScene.textColor}
-                  onChange={(e) => updateScene(selectedScene.id, { textColor: e.target.value })}
-                  sx={{
-                    flex: 1,
-                    '& .MuiOutlinedInput-root': {
-                      color: '#ddd',
-                      fontSize: 12,
-                      fontFamily: 'monospace',
-                      '& fieldset': { borderColor: '#2a2a40' },
-                      '&:hover fieldset': { borderColor: '#7c4dff40' },
-                    },
-                  }}
-                />
-              </Box>
-
-              {/* Font size */}
-              <Typography sx={{ fontSize: 11, color: '#888', mb: 0.5, fontWeight: 600 }}>
-                Font Size: {selectedScene.fontSize}px
-              </Typography>
-              <Slider
-                value={selectedScene.fontSize}
-                min={12}
-                max={80}
-                step={2}
-                onChange={(_, v) => updateScene(selectedScene.id, { fontSize: v as number })}
-                valueLabelDisplay="auto"
-                sx={{
-                  color: '#7c4dff',
-                  mb: 2,
-                  '& .MuiSlider-rail': { bgcolor: '#2a2a40' },
-                }}
-              />
-
-              {/* Transition */}
-              <FormControl fullWidth size="small" sx={{ mb: 2 }}>
-                <InputLabel sx={{ color: '#888' }}>Transition</InputLabel>
-                <Select
-                  value={selectedScene.transition}
-                  label="Transition"
-                  onChange={(e) => updateScene(selectedScene.id, { transition: e.target.value as TransitionType })}
-                  sx={{
-                    color: '#ddd',
-                    '.MuiOutlinedInput-notchedOutline': { borderColor: '#2a2a40' },
-                    '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#7c4dff40' },
-                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#7c4dff' },
-                    '.MuiSvgIcon-root': { color: '#888' },
-                  }}
-                >
-                  {TRANSITION_OPTIONS.map((t) => (
-                    <MenuItem key={t.value} value={t.value}>
-                      {t.label}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-
-              <Divider sx={{ borderColor: '#1e1e30', my: 1.5 }} />
-
-              {/* Scene actions */}
-              <Box sx={{ display: 'flex', gap: 1 }}>
-                <Tooltip title="Duplicate scene">
-                  <IconButton
-                    size="small"
-                    onClick={() => duplicateScene(selectedScene.id)}
-                    sx={{ color: '#888', '&:hover': { color: '#7c4dff' } }}
-                  >
-                    <ContentCopyIcon fontSize="small" />
-                  </IconButton>
-                </Tooltip>
-                <Tooltip title="Delete scene">
-                  <span>
-                    <IconButton
-                      size="small"
-                      onClick={() => deleteScene(selectedScene.id)}
-                      disabled={composition.scenes.length <= 1}
-                      sx={{ color: '#888', '&:hover': { color: '#f44336' }, '&:disabled': { color: '#333' } }}
-                    >
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
-                  </span>
-                </Tooltip>
-              </Box>
-            </Box>
-          ) : (
-            <Box sx={{ p: 2, textAlign: 'center', color: '#555' }}>
-              <Typography sx={{ fontSize: 13 }}>Select a scene to edit</Typography>
-            </Box>
-          )}
-        </Box>
-      </Box>
-
-      {/* ================================================================ */}
-      {/*  BOTTOM - TIMELINE                                               */}
-      {/* ================================================================ */}
-      <Box
-        sx={{
-          flexShrink: 0,
-          background: 'linear-gradient(0deg, #0a0a14 0%, #111119 100%)',
-          borderTop: '1px solid #1e1e30',
-        }}
-      >
-        {/* Timeline toolbar */}
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 1,
-            px: 2,
-            py: 0.5,
-            borderBottom: '1px solid #1a1a28',
-          }}
-        >
-          <ViewTimelineIcon sx={{ fontSize: 16, color: '#555' }} />
-          <Typography sx={{ fontSize: 11, color: '#666', fontWeight: 600, letterSpacing: 1 }}>
-            TIMELINE
-          </Typography>
-          <Box sx={{ flex: 1 }} />
-          <Tooltip title="Zoom out">
-            <IconButton
-              size="small"
-              onClick={() => setTimelineZoom((z) => Math.max(0.5, z - 0.25))}
-              sx={{ color: '#666', p: 0.3 }}
-            >
-              <ZoomOutIcon sx={{ fontSize: 16 }} />
-            </IconButton>
-          </Tooltip>
-          <Typography sx={{ fontSize: 10, color: '#555', fontFamily: 'monospace', minWidth: 35, textAlign: 'center' }}>
-            {Math.round(timelineZoom * 100)}%
-          </Typography>
-          <Tooltip title="Zoom in">
-            <IconButton
-              size="small"
-              onClick={() => setTimelineZoom((z) => Math.min(3, z + 0.25))}
-              sx={{ color: '#666', p: 0.3 }}
-            >
-              <ZoomInIcon sx={{ fontSize: 16 }} />
-            </IconButton>
-          </Tooltip>
-          <Divider orientation="vertical" flexItem sx={{ borderColor: '#1e1e30', mx: 0.5 }} />
-          <Tooltip title="Add scene">
-            <IconButton
-              size="small"
-              onClick={() => addScene('text_overlay')}
-              sx={{ color: '#7c4dff', p: 0.3 }}
-            >
-              <AddIcon sx={{ fontSize: 18 }} />
-            </IconButton>
-          </Tooltip>
-        </Box>
-
-        {/* Scrollable timeline area */}
-        <Box
-          sx={{
-            overflowX: 'auto',
-            overflowY: 'hidden',
-            position: 'relative',
-            height: 130,
-            '&::-webkit-scrollbar': { height: 6 },
-            '&::-webkit-scrollbar-track': { bgcolor: '#0a0a14' },
-            '&::-webkit-scrollbar-thumb': { bgcolor: '#2a2a40', borderRadius: 3 },
-          }}
-        >
-          <Box
-            sx={{
-              position: 'relative',
-              width: Math.max(totalDuration * PX_PER_SEC + 100, 600),
-              height: '100%',
-            }}
-          >
-            {/* Time markers */}
-            <Box sx={{ position: 'absolute', top: 0, left: 0, right: 0, height: 24 }}>
-              {Array.from({ length: Math.ceil(totalDuration / 5) + 1 }, (_, i) => i * 5).map((t) => (
-                <Box
-                  key={t}
-                  sx={{
-                    position: 'absolute',
-                    left: t * PX_PER_SEC,
-                    top: 0,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                  }}
-                >
-                  <Typography
-                    sx={{
-                      fontSize: 9,
-                      color: '#555',
-                      fontFamily: 'monospace',
-                      userSelect: 'none',
-                      mb: 0.2,
-                      pl: 0.5,
-                    }}
-                  >
-                    {formatTime(t)}
-                  </Typography>
-                  <Box sx={{ width: 1, height: 6, bgcolor: '#2a2a40' }} />
-                </Box>
-              ))}
-              {/* Minor ticks */}
-              {Array.from({ length: Math.ceil(totalDuration) + 1 }, (_, i) => i).map((t) =>
-                t % 5 !== 0 ? (
-                  <Box
-                    key={`m-${t}`}
-                    sx={{
-                      position: 'absolute',
-                      left: t * PX_PER_SEC,
-                      top: 18,
-                      width: 1,
-                      height: 4,
-                      bgcolor: '#1e1e30',
-                    }}
-                  />
-                ) : null,
-              )}
-            </Box>
-
-            {/* Scene segments */}
-            <Box sx={{ position: 'absolute', top: 28, left: 0, right: 0, height: 56 }}>
-              {composition.scenes.map((scene, idx) => {
-                const meta = SCENE_TYPE_META[scene.type];
-                const isSelected = scene.id === selectedSceneId;
-                const isCurrent = idx === currentSceneIndex;
-                const offset = sceneOffsets[idx] ?? 0;
-                const width = scene.duration * PX_PER_SEC;
-
-                return (
-                  <Box
-                    key={scene.id}
-                    onClick={() => {
-                      setSelectedSceneId(scene.id);
-                      setPlayheadTime(offset);
-                      setAnimState('enter');
-                      setTimeout(() => setAnimState('idle'), 700);
-                    }}
-                    sx={{
-                      position: 'absolute',
-                      left: offset * PX_PER_SEC,
-                      width,
-                      height: 56,
-                      borderRadius: 1.5,
-                      cursor: 'pointer',
-                      overflow: 'hidden',
-                      transition: 'box-shadow 0.2s, transform 0.15s',
-                      border: isSelected
-                        ? `2px solid ${meta.color}`
-                        : isCurrent
-                        ? '2px solid rgba(255,255,255,0.2)'
-                        : '1px solid #1e1e30',
-                      animation: isSelected ? 'sceneGlow 2s ease infinite' : 'none',
-                      transform: isSelected ? 'translateY(-2px)' : 'none',
-                      boxShadow: isSelected
-                        ? `0 4px 16px ${meta.color}30`
-                        : isCurrent
-                        ? '0 2px 8px rgba(0,0,0,0.3)'
-                        : 'none',
-                      '&:hover': {
-                        borderColor: `${meta.color}80`,
-                        transform: 'translateY(-1px)',
-                      },
-                    }}
-                  >
-                    {/* Scene background gradient */}
-                    <Box
-                      sx={{
-                        position: 'absolute',
-                        inset: 0,
-                        background: `linear-gradient(135deg, ${meta.color}25 0%, ${scene.bgColor}60 100%)`,
-                      }}
-                    />
-
-                    {/* Scene content */}
-                    <Box
-                      sx={{
-                        position: 'relative',
-                        zIndex: 1,
-                        px: 1,
-                        py: 0.5,
-                        height: '100%',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        justifyContent: 'space-between',
-                      }}
-                    >
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                        <Box sx={{ color: meta.color, display: 'flex', flexShrink: 0 }}>{meta.icon}</Box>
-                        <Typography
-                          sx={{
-                            fontSize: 10,
-                            color: '#ccc',
-                            fontWeight: 600,
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap',
-                          }}
-                        >
-                          {meta.label}
-                        </Typography>
-                      </Box>
-
-                      <Typography
-                        sx={{
-                          fontSize: 9,
-                          color: '#999',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                          lineHeight: 1.2,
-                        }}
-                      >
-                        {scene.content.replace(/\n/g, ' | ')}
-                      </Typography>
-
-                      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <Typography sx={{ fontSize: 9, color: '#666', fontFamily: 'monospace' }}>
-                          {scene.duration}s
-                        </Typography>
-                        {scene.transition !== 'none' && (
-                          <Chip
-                            label={scene.transition.replace('_', ' ')}
-                            size="small"
-                            sx={{
-                              height: 14,
-                              fontSize: 8,
-                              bgcolor: `${meta.color}30`,
-                              color: meta.color,
-                              '& .MuiChip-label': { px: 0.5 },
-                            }}
-                          />
-                        )}
-                      </Box>
-                    </Box>
-                  </Box>
-                );
-              })}
-            </Box>
-
-            {/* Transition indicators between scenes */}
-            <Box sx={{ position: 'absolute', top: 88, left: 0, right: 0, height: 16 }}>
-              {composition.scenes.map((scene, idx) => {
-                if (idx === 0) return null;
-                const offset = sceneOffsets[idx] ?? 0;
-                if (scene.transition === 'none') return null;
-                return (
-                  <Box
-                    key={`tr-${scene.id}`}
-                    sx={{
-                      position: 'absolute',
-                      left: offset * PX_PER_SEC - 8,
-                      width: 16,
-                      height: 16,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        width: 12,
-                        height: 12,
-                        borderRadius: '50%',
-                        bgcolor: '#1e1e30',
-                        border: '1px solid #2a2a40',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      <Box sx={{ width: 4, height: 4, borderRadius: '50%', bgcolor: '#7c4dff' }} />
-                    </Box>
-                  </Box>
-                );
-              })}
-            </Box>
-
-            {/* Playhead */}
-            <Box
-              sx={{
-                position: 'absolute',
-                left: playheadTime * PX_PER_SEC - 1,
-                top: 0,
-                bottom: 0,
-                width: 2,
-                bgcolor: '#ff5252',
-                zIndex: 10,
-                transition: isPlaying ? 'none' : 'left 0.1s ease-out',
-                pointerEvents: 'none',
-              }}
-            >
-              {/* Playhead diamond */}
-              <Box
-                sx={{
-                  position: 'absolute',
-                  top: -2,
-                  left: -5,
-                  width: 0,
-                  height: 0,
-                  borderLeft: '6px solid transparent',
-                  borderRight: '6px solid transparent',
-                  borderTop: '8px solid #ff5252',
-                  animation: isPlaying ? 'playheadPulse 1.5s ease infinite' : 'none',
-                }}
-              />
-            </Box>
-
-            {/* Click to seek on timeline */}
-            <Box
-              onClick={(e) => {
-                const rect = e.currentTarget.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const t = Math.max(0, Math.min(totalDuration, x / PX_PER_SEC));
-                setPlayheadTime(t);
-                setAnimState('enter');
-                setTimeout(() => setAnimState('idle'), 700);
-              }}
-              sx={{
-                position: 'absolute',
-                inset: 0,
-                cursor: 'crosshair',
-                zIndex: 5,
-              }}
-            />
-
-            {/* Scene click zones on top of seek (higher z-index for scene interaction) */}
-            {composition.scenes.map((scene, idx) => {
-              const offset = sceneOffsets[idx] ?? 0;
-              const width = scene.duration * PX_PER_SEC;
-              return (
-                <Box
-                  key={`click-${scene.id}`}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setSelectedSceneId(scene.id);
-                    const rect = e.currentTarget.parentElement!.getBoundingClientRect();
-                    const x = e.clientX - rect.left;
-                    const t = Math.max(0, Math.min(totalDuration, x / PX_PER_SEC));
-                    setPlayheadTime(t);
+              <div className="w-[200px] mx-2">
+                <Slider
+                  value={[playheadTime]}
+                  min={0}
+                  max={totalDuration || 1}
+                  step={0.1}
+                  onValueChange={(v) => {
+                    setPlayheadTime(v[0] ?? 0);
                     setAnimState('enter');
                     setTimeout(() => setAnimState('idle'), 700);
                   }}
-                  sx={{
-                    position: 'absolute',
-                    left: offset * PX_PER_SEC,
-                    top: 28,
-                    width,
-                    height: 56,
-                    cursor: 'pointer',
-                    zIndex: 6,
-                  }}
+                  className="[&_[role=slider]]:w-3 [&_[role=slider]]:h-3"
                 />
-              );
-            })}
-          </Box>
-        </Box>
-      </Box>
+              </div>
 
-      {/* Snackbar */}
-      <Snackbar
-        open={!!snackMsg}
-        autoHideDuration={2500}
-        onClose={() => setSnackMsg('')}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-      >
-        <Alert
-          severity="success"
-          variant="filled"
-          onClose={() => setSnackMsg('')}
-          sx={{ bgcolor: '#7c4dff' }}
-        >
-          {snackMsg}
-        </Alert>
-      </Snackbar>
-    </Box>
+              <span className="text-xs text-[#888] font-mono min-w-[85px] text-center">
+                {formatTime(playheadTime)} / {formatTime(totalDuration)}
+              </span>
+            </div>
+          </div>
+
+          {/* RIGHT PANEL - Scene Properties */}
+          <div className="w-[280px] shrink-0 overflow-y-auto flex flex-col" style={{ background: '#111119', borderLeft: '1px solid #1e1e30' }}>
+            <span className="px-4 pt-4 pb-2 text-[#666] font-bold text-[10px] tracking-[1.5px] uppercase">Scene Properties</span>
+
+            {selectedScene ? (
+              <div className="px-4 pb-4">
+                <div className="mb-4">
+                  <label className="block text-[11px] text-[#888] mb-1 font-semibold">Type</label>
+                  <Select value={selectedScene.type} onValueChange={(v) => updateScene(selectedScene.id, { type: v as SceneType })}>
+                    <SelectTrigger className="bg-transparent border-[#2a2a40] text-[#ddd] hover:border-[#7c4dff40] focus:border-[#7c4dff]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(Object.entries(SCENE_TYPE_META) as [SceneType, typeof SCENE_TYPE_META[SceneType]][]).map(
+                        ([type, meta]) => (
+                          <SelectItem key={type} value={type}>
+                            <span className="flex items-center gap-2">
+                              <span style={{ color: meta.color }}>{meta.icon}</span> {meta.label}
+                            </span>
+                          </SelectItem>
+                        ),
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="mb-4">
+                  <label className="block text-[11px] text-[#888] mb-1 font-semibold">Content</label>
+                  <Textarea
+                    rows={4}
+                    value={selectedScene.content}
+                    onChange={(e) => updateScene(selectedScene.id, { content: e.target.value })}
+                    placeholder="Enter scene content..."
+                    className="bg-transparent border-[#2a2a40] text-[#ddd] text-[13px] hover:border-[#7c4dff40] focus:border-[#7c4dff]"
+                  />
+                </div>
+
+                <div className="mb-4">
+                  <label className="block text-[11px] text-[#888] mb-1 font-semibold">Duration: {selectedScene.duration}s</label>
+                  <Slider
+                    value={[selectedScene.duration]}
+                    min={1}
+                    max={30}
+                    step={1}
+                    onValueChange={(v) => updateScene(selectedScene.id, { duration: v[0] ?? 1 })}
+                  />
+                </div>
+
+                <div className="mb-4">
+                  <label className="block text-[11px] text-[#888] mb-1 font-semibold">Background Color</label>
+                  <div className="flex items-center gap-2">
+                    <input type="color" value={selectedScene.bgColor} onChange={(e) => updateScene(selectedScene.id, { bgColor: e.target.value })} className="w-9 h-9 rounded-md border-2 border-[#2a2a40] cursor-pointer bg-transparent p-0.5" aria-label="Background color" title="Background color" />
+                    <Input value={selectedScene.bgColor} onChange={(e) => updateScene(selectedScene.id, { bgColor: e.target.value })} className="flex-1 bg-transparent border-[#2a2a40] text-[#ddd] text-xs font-mono hover:border-[#7c4dff40]" />
+                  </div>
+                </div>
+
+                <div className="mb-4">
+                  <label className="block text-[11px] text-[#888] mb-1 font-semibold">Text Color</label>
+                  <div className="flex items-center gap-2">
+                    <input type="color" value={selectedScene.textColor} onChange={(e) => updateScene(selectedScene.id, { textColor: e.target.value })} className="w-9 h-9 rounded-md border-2 border-[#2a2a40] cursor-pointer bg-transparent p-0.5" aria-label="Text color" title="Text color" />
+                    <Input value={selectedScene.textColor} onChange={(e) => updateScene(selectedScene.id, { textColor: e.target.value })} className="flex-1 bg-transparent border-[#2a2a40] text-[#ddd] text-xs font-mono hover:border-[#7c4dff40]" />
+                  </div>
+                </div>
+
+                <div className="mb-4">
+                  <label className="block text-[11px] text-[#888] mb-1 font-semibold">Font Size: {selectedScene.fontSize}px</label>
+                  <Slider
+                    value={[selectedScene.fontSize]}
+                    min={12}
+                    max={80}
+                    step={2}
+                    onValueChange={(v) => updateScene(selectedScene.id, { fontSize: v[0] ?? 12 })}
+                  />
+                </div>
+
+                <div className="mb-4">
+                  <label className="block text-[11px] text-[#888] mb-1 font-semibold">Transition</label>
+                  <Select value={selectedScene.transition} onValueChange={(v) => updateScene(selectedScene.id, { transition: v as TransitionType })}>
+                    <SelectTrigger className="bg-transparent border-[#2a2a40] text-[#ddd] hover:border-[#7c4dff40] focus:border-[#7c4dff]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {TRANSITION_OPTIONS.map((t) => (
+                        <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <Separator className="bg-[#1e1e30] my-3" />
+
+                <div className="flex gap-2">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button type="button" onClick={() => duplicateScene(selectedScene.id)} className="p-1.5 text-[#888] hover:text-[#7c4dff] transition-colors" aria-label="Duplicate scene">
+                        <Copy className="h-4 w-4" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent>Duplicate scene</TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button type="button" onClick={() => deleteScene(selectedScene.id)} disabled={composition.scenes.length <= 1} className="p-1.5 text-[#888] hover:text-[#f44336] disabled:text-[#333] transition-colors" aria-label="Delete scene">
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent>Delete scene</TooltipContent>
+                  </Tooltip>
+                </div>
+              </div>
+            ) : (
+              <div className="p-4 text-center text-[#555]">
+                <span className="text-[13px]">Select a scene to edit</span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* BOTTOM - TIMELINE */}
+        <div className="shrink-0" style={{ background: 'linear-gradient(0deg, #0a0a14 0%, #111119 100%)', borderTop: '1px solid #1e1e30' }}>
+          <div className="flex items-center gap-2 px-4 py-1" style={{ borderBottom: '1px solid #1a1a28' }}>
+            <Rows3 className="h-4 w-4 text-[#555]" />
+            <span className="text-[11px] text-[#666] font-semibold tracking-wider">TIMELINE</span>
+            <div className="flex-1" />
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button type="button" onClick={() => setTimelineZoom((z) => Math.max(0.5, z - 0.25))} className="p-0.5 text-[#666]" aria-label="Zoom out">
+                  <ZoomOut className="h-4 w-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>Zoom out</TooltipContent>
+            </Tooltip>
+            <span className="text-[10px] text-[#555] font-mono min-w-[35px] text-center">{Math.round(timelineZoom * 100)}%</span>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button type="button" onClick={() => setTimelineZoom((z) => Math.min(3, z + 0.25))} className="p-0.5 text-[#666]" aria-label="Zoom in">
+                  <ZoomIn className="h-4 w-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>Zoom in</TooltipContent>
+            </Tooltip>
+            <Separator orientation="vertical" className="h-4 bg-[#1e1e30] mx-1" />
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button type="button" onClick={() => addScene('text_overlay')} className="p-0.5 text-[#7c4dff]" aria-label="Add scene">
+                  <Plus className="h-[18px] w-[18px]" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>Add scene</TooltipContent>
+            </Tooltip>
+          </div>
+
+          {/* Scrollable timeline */}
+          <div className="overflow-x-auto overflow-y-hidden relative h-[130px] [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-track]:bg-[#0a0a14] [&::-webkit-scrollbar-thumb]:bg-[#2a2a40] [&::-webkit-scrollbar-thumb]:rounded">
+            <div className="relative h-full" style={{ width: Math.max(totalDuration * PX_PER_SEC + 100, 600) }}>
+              {/* Time markers */}
+              <div className="absolute top-0 left-0 right-0 h-6">
+                {Array.from({ length: Math.ceil(totalDuration / 5) + 1 }, (_, i) => i * 5).map((t) => (
+                  <div key={t} className="absolute top-0 flex flex-col items-center" style={{ left: t * PX_PER_SEC }}>
+                    <span className="text-[9px] text-[#555] font-mono select-none mb-0.5 pl-1">{formatTime(t)}</span>
+                    <div className="w-px h-1.5 bg-[#2a2a40]" />
+                  </div>
+                ))}
+                {Array.from({ length: Math.ceil(totalDuration) + 1 }, (_, i) => i).map((t) =>
+                  t % 5 !== 0 ? (
+                    <div key={`m-${t}`} className="absolute w-px h-1 bg-[#1e1e30]" style={{ left: t * PX_PER_SEC, top: 18 }} />
+                  ) : null,
+                )}
+              </div>
+
+              {/* Scene segments */}
+              <div className="absolute top-7 left-0 right-0 h-14">
+                {composition.scenes.map((scene, idx) => {
+                  const meta = SCENE_TYPE_META[scene.type];
+                  const isSelected = scene.id === selectedSceneId;
+                  const isCurrent = idx === currentSceneIndex;
+                  const offset = sceneOffsets[idx] ?? 0;
+                  const width = scene.duration * PX_PER_SEC;
+
+                  return (
+                    <div
+                      key={scene.id}
+                      onClick={() => {
+                        setSelectedSceneId(scene.id);
+                        setPlayheadTime(offset);
+                        setAnimState('enter');
+                        setTimeout(() => setAnimState('idle'), 700);
+                      }}
+                      className="absolute h-14 rounded-md cursor-pointer overflow-hidden transition-all"
+                      style={{
+                        left: offset * PX_PER_SEC,
+                        width,
+                        border: isSelected ? `2px solid ${meta.color}` : isCurrent ? '2px solid rgba(255,255,255,0.2)' : '1px solid #1e1e30',
+                        animation: isSelected ? 'sceneGlow 2s ease infinite' : 'none',
+                        transform: isSelected ? 'translateY(-2px)' : 'none',
+                        boxShadow: isSelected ? `0 4px 16px ${meta.color}30` : isCurrent ? '0 2px 8px rgba(0,0,0,0.3)' : 'none',
+                      }}
+                    >
+                      <div className="absolute inset-0" style={{ background: `linear-gradient(135deg, ${meta.color}25 0%, ${scene.bgColor}60 100%)` }} />
+                      <div className="relative z-[1] px-2 py-1 h-full flex flex-col justify-between">
+                        <div className="flex items-center gap-1">
+                          <span style={{ color: meta.color }} className="flex shrink-0">{meta.icon}</span>
+                          <span className="text-[10px] text-[#ccc] font-semibold overflow-hidden text-ellipsis whitespace-nowrap">{meta.label}</span>
+                        </div>
+                        <span className="text-[9px] text-[#999] overflow-hidden text-ellipsis whitespace-nowrap leading-tight">{scene.content.replace(/\n/g, ' | ')}</span>
+                        <div className="flex items-center justify-between">
+                          <span className="text-[9px] text-[#666] font-mono">{scene.duration}s</span>
+                          {scene.transition !== 'none' && (
+                            <Badge variant="outline" className="h-3.5 text-[8px] border-none px-1" style={{ backgroundColor: `${meta.color}30`, color: meta.color }}>
+                              {scene.transition.replace('_', ' ')}
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Transition indicators */}
+              <div className="absolute top-[88px] left-0 right-0 h-4">
+                {composition.scenes.map((scene, idx) => {
+                  if (idx === 0) return null;
+                  const offset = sceneOffsets[idx] ?? 0;
+                  if (scene.transition === 'none') return null;
+                  return (
+                    <div key={`tr-${scene.id}`} className="absolute w-4 h-4 flex items-center justify-center" style={{ left: offset * PX_PER_SEC - 8 }}>
+                      <div className="w-3 h-3 rounded-full bg-[#1e1e30] border border-[#2a2a40] flex items-center justify-center">
+                        <div className="w-1 h-1 rounded-full bg-[#7c4dff]" />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Playhead */}
+              <div
+                className="absolute top-0 bottom-0 w-0.5 bg-[#ff5252] z-10 pointer-events-none"
+                style={{ left: playheadTime * PX_PER_SEC - 1, transition: isPlaying ? 'none' : 'left 0.1s ease-out' }}
+              >
+                <div className="absolute -top-0.5 -left-[5px]" style={{ width: 0, height: 0, borderLeft: '6px solid transparent', borderRight: '6px solid transparent', borderTop: '8px solid #ff5252', animation: isPlaying ? 'playheadPulse 1.5s ease infinite' : 'none' }} />
+              </div>
+
+              {/* Click to seek */}
+              <div
+                className="absolute inset-0 cursor-crosshair z-[5]"
+                onClick={(e) => {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const x = e.clientX - rect.left;
+                  const t = Math.max(0, Math.min(totalDuration, x / PX_PER_SEC));
+                  setPlayheadTime(t);
+                  setAnimState('enter');
+                  setTimeout(() => setAnimState('idle'), 700);
+                }}
+              />
+
+              {/* Scene click zones */}
+              {composition.scenes.map((scene, idx) => {
+                const offset = sceneOffsets[idx] ?? 0;
+                const width = scene.duration * PX_PER_SEC;
+                return (
+                  <div
+                    key={`click-${scene.id}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedSceneId(scene.id);
+                      const rect = e.currentTarget.parentElement!.getBoundingClientRect();
+                      const x = e.clientX - rect.left;
+                      const t = Math.max(0, Math.min(totalDuration, x / PX_PER_SEC));
+                      setPlayheadTime(t);
+                      setAnimState('enter');
+                      setTimeout(() => setAnimState('idle'), 700);
+                    }}
+                    className="absolute cursor-pointer z-[6]"
+                    style={{ left: offset * PX_PER_SEC, top: 28, width, height: 56 }}
+                  />
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* Snackbar notification */}
+        {snackMsg && (
+          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 animate-in fade-in slide-in-from-bottom-4">
+            <Alert variant="success" className="bg-[#7c4dff] border-[#7c4dff] text-white shadow-xl">
+              <AlertDescription className="flex items-center gap-2">
+                {snackMsg}
+                <button type="button" onClick={() => setSnackMsg('')} className="ml-2 text-white/80 hover:text-white" aria-label="Dismiss">
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </AlertDescription>
+            </Alert>
+          </div>
+        )}
+      </div>
+    </TooltipProvider>
   );
 }
