@@ -27,8 +27,7 @@ async def test_login_success(client, test_user):
     test_user.email = "login@example.com"
 
     with patch("app.auth.authenticate_user", new_callable=AsyncMock, return_value=test_user), \
-         patch("app.auth._check_login_lockout", new_callable=AsyncMock, return_value=None), \
-         patch("app.auth._record_login_attempt", new_callable=AsyncMock):
+         patch("app.auth._check_login_lockout", new_callable=AsyncMock, return_value=None):
         resp = await client.post(
             "/api/auth/login",
             data={
@@ -48,7 +47,9 @@ async def test_login_success(client, test_user):
 
 async def test_login_invalid_credentials(client):
     """POST /api/auth/login with bad credentials returns 401."""
-    with patch("app.auth.authenticate_user", new_callable=AsyncMock, return_value=None):
+    with patch("app.auth.authenticate_user", new_callable=AsyncMock, return_value=None), \
+         patch("app.auth._check_login_lockout", new_callable=AsyncMock, return_value=None), \
+         patch("app.auth._record_failed_login", new_callable=AsyncMock):
         resp = await client.post(
             "/api/auth/login",
             data={
