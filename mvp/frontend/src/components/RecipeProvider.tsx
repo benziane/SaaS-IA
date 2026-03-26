@@ -36,9 +36,13 @@ export function RecipeProvider({ children }: { children: ReactNode }) {
   const [mode, setMode] = useState<'dark' | 'light'>('dark')
 
   useEffect(() => {
-    // Set data attributes on html element
     const html = document.documentElement
-    html.setAttribute('data-recipe', activeRecipe)
+    // Only set data-recipe for alternate recipes (saas-ia tokens are in :root)
+    if (activeRecipe !== 'saas-ia') {
+      html.setAttribute('data-recipe', activeRecipe)
+    } else {
+      html.removeAttribute('data-recipe')
+    }
     html.setAttribute('data-mode', mode)
   }, [activeRecipe, mode])
 

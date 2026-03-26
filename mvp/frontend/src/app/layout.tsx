@@ -5,6 +5,19 @@
 
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
+import { Inter, JetBrains_Mono } from 'next/font/google';
+
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-inter',
+  display: 'swap',
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ['latin'],
+  variable: '--font-jetbrains',
+  display: 'swap',
+});
 
 // Component Imports
 import Providers from '@/components/Providers';
@@ -73,7 +86,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: '#2563eb',
+  themeColor: '#09090d',
 };
 
 /* ========================================================================
@@ -96,7 +109,7 @@ export default async function RootLayout({ children }: RootLayoutProps): Promise
   const systemMode = await getSystemMode();
 
   return (
-    <html lang="en" dir={direction} suppressHydrationWarning>
+    <html lang="en" dir={direction} className={`${inter.variable} ${jetbrainsMono.variable}`} suppressHydrationWarning>
       <head>
         {/* Boxicons for theme switcher and icons */}
         <link rel="stylesheet" href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" />
@@ -128,6 +141,7 @@ export default async function RootLayout({ children }: RootLayoutProps): Promise
                   }
                   
                   document.documentElement.setAttribute('data-mui-color-scheme', mode);
+                  document.documentElement.setAttribute('data-mode', mode);
                   document.documentElement.style.colorScheme = mode;
                 } catch (e) {
                   console.error('Theme init error:', e);

@@ -39,8 +39,8 @@ const buttonVariants = cva(
       },
       size: {
         sm:   'h-8  px-3 text-xs rounded-[var(--radius-sm,4px)]',
-        md:   'h-9  px-4 text-sm rounded-[var(--radius-md,6px)]',
-        lg:   'h-11 px-6 text-base rounded-[var(--radius-lg,8px)]',
+        md:   'h-10 px-4 text-sm rounded-[var(--radius-md,6px)]',
+        lg:   'h-12 px-6 text-base rounded-[var(--radius-lg,8px)]',
         icon: 'h-9  w-9      rounded-[var(--radius-md,6px)]',
       },
     },
