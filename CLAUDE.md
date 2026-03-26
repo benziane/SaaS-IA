@@ -2,7 +2,7 @@
 
 ## Projet
 
-Plateforme SaaS modulaire d'intelligence artificielle - 40 modules backend auto-decouverts, 48 pages frontend, ~380 endpoints API. Architecture enterprise S+++ (v4.3.0).
+Plateforme SaaS modulaire d'intelligence artificielle - 40 modules backend auto-decouverts, 48 pages frontend, ~380 endpoints API. Architecture enterprise S+++ (v4.4.0).
 
 ## Stack technique
 

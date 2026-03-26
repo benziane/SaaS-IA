@@ -1,7 +1,7 @@
 # ROADMAP - SaaS-IA Platform
 
 **Date de mise a jour** : 2026-03-26
-**Version actuelle** : MVP 4.3.0
+**Version actuelle** : MVP 4.4.0
 **Objectif** : Plateforme SaaS d'orchestration IA multi-modules, production-ready
 
 ---
@@ -1259,6 +1259,59 @@ CREATE INDEX ix_document_chunks_embedding_hnsw
 ---
 
 ## CHANGELOG
+
+### v4.4.0 (2026-03-26) - Deep Audit + Resilience + Database Hardening
+
+#### Security Fixes (10)
+- fine_tuning: cross-user data leak in document extraction (user_id filter)
+- unified_search: admin-only guard on reindex endpoint
+- data_analyst: inverted auth check + malformed f-string
+- billing: atomic SQL UPDATE for quota consumption (race condition fix)
+- workspaces: membership verification on add_comment/list_comments
+- image_gen: SSRF protection with URL validation + private IP blocking
+- pdf_processor: path traversal prevention (os.path.basename double layer)
+- auth: lockout fail-closed on Redis outage (429 + 30s retry)
+- audit_middleware: X-Forwarded-For trusted proxy validation
+- realtime_ai: auth required on /config endpoint
+
+#### AI Resilience (4)
+- retry.py: shared exponential backoff (1s/2s/4s, max 3, transient-only)
+- Timeout 60s on all 4 providers (Gemini, Claude, Groq, LiteLLM)
+- Per-user semaphore: max 5 concurrent AI calls, 10 global, LRU 1024
+- Cost tracking: user_id propagated in sentiment + AI stream endpoints
+
+#### Performance (8)
+- marketplace: batch _get_user_names() (1 query vs N+1)
+- content_studio: asyncio.gather() parallel format generation
+- ai_workflows: batched commits every 5 nodes + webhook header whitelist
+- pipelines: unified transaction (flush/commit/rollback)
+- ai_monitoring: 7 dashboard queries consolidated to 3
+- ai_memory: bulk SQL UPDATE for use_count
+- video_gen: 6 ffmpeg calls wrapped with asyncio.to_thread()
+- unified_search: admin-only reindex
+
+#### Database Hardening (4 migrations)
+- 0017: CASCADE DELETE on 78 FK across 59 tables
+- 0012: 10 composite indexes (user+time, status+time, conversation+time)
+- 0016: 3 unique constraints (workspace_members, marketplace_installs, shared_items)
+- Pool: 50+25 connections, 60s timeout, pool_pre_ping=True
+- datetime.now(UTC) standardized on 38 model files (zero utcnow remaining)
+
+#### Functional Fixes (7)
+- integration_hub: trigger execution dispatch to 4 modules
+- social_publisher: Fernet token encryption + Celery scheduled publish task
+- security_guardian: max() empty list crash fix + dashboard query consolidation
+- ai_chatbot_builder: MAX_MESSAGES=200 trim + count moved to get_chatbot()
+- multi_agent_crew: parallel mode (asyncio.gather) + progress tracking with lock
+- web_crawler: auto-create session for KB indexing when None
+- agents: PARTIAL_FAILURE status when some steps fail
+
+#### Observability (3)
+- Health check: /health verifies DB + Redis (healthy/degraded/unhealthy + latency)
+- 6 silent except:pass replaced with logger.warning() structured logging
+- Transcription: PENDING jobs auto-FAILED after 30 minutes
+
+Total: **37 corrections**, **3 migrations**, **1 new file (retry.py)**, **710 tests passing, 0 regressions**
 
 ### v4.3.0 (2026-03-26) - Enterprise Systems + Documentation Sync
 
