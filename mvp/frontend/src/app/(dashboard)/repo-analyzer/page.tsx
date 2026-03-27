@@ -3,10 +3,9 @@
 import { useState } from 'react';
 import {
   BarChart3, Code, Folder, GitFork, Award, Layers,
-  Shield, AlertTriangle, Search, RefreshCw, Trash2, Loader2,
+  Shield, AlertTriangle, RefreshCw, Trash2, Loader2, FolderGit2,
 } from 'lucide-react';
 
-import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/lib/design-hub/components/Alert';
 import { Progress } from '@/components/ui/progress';
@@ -375,16 +374,17 @@ export default function RepoAnalyzerPage() {
   };
 
   return (
-    <div className="p-6">
+    <div className="p-5 space-y-5 animate-enter">
       {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2 text-[var(--text-high)]">
-            <Search className="h-6 w-6 text-[var(--accent)]" /> Repo Analyzer
-          </h1>
-          <p className="text-sm text-[var(--text-mid)]">
-            Analyze GitHub repositories: tech stack, quality scoring, dependencies, security
-          </p>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-[var(--accent)] to-[#a855f7] shrink-0">
+            <FolderGit2 className="h-5 w-5 text-white" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold text-[var(--text-high)]">Repo Analyzer</h1>
+            <p className="text-xs text-[var(--text-mid)]">Git repository analysis and metrics</p>
+          </div>
         </div>
         <TooltipProvider>
           <Tooltip>
@@ -400,213 +400,207 @@ export default function RepoAnalyzerPage() {
 
       {/* Git status alert */}
       {!statusLoading && statusData && !statusData.installed && (
-        <Alert variant="warning" className="mb-6">
+        <Alert variant="warning">
           <AlertDescription>
             <strong>git not installed.</strong> Running in mock mode with sample data.
           </AlertDescription>
         </Alert>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
         {/* Left panel: Analysis form */}
         <div className="md:col-span-5">
-          <Card>
-            <CardContent className="p-6">
-              <h2 className="text-lg font-semibold text-[var(--text-high)] mb-4 flex items-center gap-2">
-                <GitFork className="h-5 w-5" /> Analyze Repository
-              </h2>
+          <div className="surface-card p-5">
+            <h2 className="text-lg font-semibold text-[var(--text-high)] mb-4 flex items-center gap-2">
+              <GitFork className="h-5 w-5" /> Analyze Repository
+            </h2>
 
-              {/* Repo URL input */}
-              <div className="mb-4">
-                <label className="text-sm font-medium text-[var(--text-high)] mb-1.5 block">Repository URL</label>
-                <Input
-                  placeholder="https://github.com/owner/repo or owner/repo"
-                  value={repoUrl}
-                  onChange={(e) => setRepoUrl(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                />
+            {/* Repo URL input */}
+            <div className="mb-4">
+              <label className="text-sm font-medium text-[var(--text-high)] mb-1.5 block">Repository URL</label>
+              <Input
+                placeholder="https://github.com/owner/repo or owner/repo"
+                value={repoUrl}
+                onChange={(e) => setRepoUrl(e.target.value)}
+                onKeyDown={handleKeyDown}
+              />
+            </div>
+
+            {/* Analysis types */}
+            <div className="mb-4">
+              <label className="text-sm font-medium text-[var(--text-high)] mb-1.5 block">Analysis Types</label>
+              <div className="flex flex-wrap gap-1">
+                {ANALYSIS_TYPE_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => toggleAnalysisType(opt.id)}
+                    className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
+                      analysisTypes.includes(opt.id)
+                        ? 'bg-[var(--accent)] text-[var(--bg-app)]'
+                        : 'border border-[var(--border)] text-[var(--text-mid)] hover:bg-[var(--bg-elevated)]'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
               </div>
+            </div>
 
-              {/* Analysis types */}
-              <div className="mb-4">
-                <label className="text-sm font-medium text-[var(--text-high)] mb-1.5 block">Analysis Types</label>
-                <div className="flex flex-wrap gap-1">
-                  {ANALYSIS_TYPE_OPTIONS.map((opt) => (
-                    <button
-                      key={opt.id}
-                      type="button"
-                      onClick={() => toggleAnalysisType(opt.id)}
-                      className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
-                        analysisTypes.includes(opt.id)
-                          ? 'bg-[var(--accent)] text-[var(--bg-app)]'
-                          : 'border border-[var(--border)] text-[var(--text-mid)] hover:bg-[var(--bg-elevated)]'
-                      }`}
-                    >
-                      {opt.label}
-                    </button>
+            {/* Depth selector */}
+            <div className="mb-4">
+              <label className="text-sm font-medium text-[var(--text-high)] mb-1.5 block">Analysis Depth</label>
+              <Select value={depth} onValueChange={(v) => setDepth(v as AnalysisDepth)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {DEPTH_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.id} value={opt.id}>
+                      {opt.label} - {opt.desc}
+                    </SelectItem>
                   ))}
-                </div>
-              </div>
+                </SelectContent>
+              </Select>
+            </div>
 
-              {/* Depth selector */}
-              <div className="mb-4">
-                <label className="text-sm font-medium text-[var(--text-high)] mb-1.5 block">Analysis Depth</label>
-                <Select value={depth} onValueChange={(v) => setDepth(v as AnalysisDepth)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {DEPTH_OPTIONS.map((opt) => (
-                      <SelectItem key={opt.id} value={opt.id}>
-                        {opt.label} - {opt.desc}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+            {/* Analyze button */}
+            <Button
+              className="w-full"
+              size="lg"
+              onClick={handleAnalyze}
+              disabled={!repoUrl.trim() || createMutation.isPending}
+            >
+              {createMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <BarChart3 className="h-4 w-4 mr-2" />}
+              {createMutation.isPending ? 'Analyzing...' : 'Analyze Repository'}
+            </Button>
 
-              {/* Analyze button */}
-              <Button
-                className="w-full"
-                size="lg"
-                onClick={handleAnalyze}
-                disabled={!repoUrl.trim() || createMutation.isPending}
-              >
-                {createMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <BarChart3 className="h-4 w-4 mr-2" />}
-                {createMutation.isPending ? 'Analyzing...' : 'Analyze Repository'}
-              </Button>
-
-              {createMutation.isError && (
-                <Alert variant="destructive" className="mt-4">
-                  <AlertDescription>
-                    {createMutation.error?.message || 'Failed to start analysis'}
-                  </AlertDescription>
-                </Alert>
-              )}
-            </CardContent>
-          </Card>
+            {createMutation.isError && (
+              <Alert variant="destructive" className="mt-4">
+                <AlertDescription>
+                  {createMutation.error?.message || 'Failed to start analysis'}
+                </AlertDescription>
+              </Alert>
+            )}
+          </div>
         </div>
 
         {/* Right panel: Analysis history */}
         <div className="md:col-span-7">
-          <Card>
-            <CardContent className="p-6">
-              <h2 className="text-lg font-semibold text-[var(--text-high)] mb-4">
-                Analysis History
-              </h2>
+          <div className="surface-card p-5">
+            <h2 className="text-lg font-semibold text-[var(--text-high)] mb-4">
+              Analysis History
+            </h2>
 
-              {analysesLoading ? (
-                <div className="space-y-2">
-                  {[1, 2, 3].map((i) => (
-                    <Skeleton key={i} className="h-20 rounded" />
-                  ))}
-                </div>
-              ) : !analysesData?.items.length ? (
-                <p className="text-[var(--text-mid)] py-8 text-center">
-                  No analyses yet. Enter a repo URL and start your first analysis.
-                </p>
-              ) : (
-                analysesData.items.map((analysis: RepoAnalysis) => (
-                  <Card key={analysis.id} className="mb-3 border border-[var(--border)]">
-                    <CardContent className="py-3 px-4">
-                      {/* Header */}
-                      <div className="flex justify-between items-center mb-1">
-                        <div className="flex items-center gap-2 flex-1 min-w-0">
-                          <Badge variant={STATUS_COLORS[analysis.status] || 'secondary'}>
-                            {analysis.status}
-                          </Badge>
-                          <span className="text-sm font-semibold text-[var(--text-high)] truncate">
-                            {analysis.repo_name}
-                          </span>
-                          <Badge variant="outline" className="text-xs">{analysis.depth}</Badge>
-                        </div>
-                        <div className="flex gap-1">
-                          {analysis.status === AnalysisStatus.COMPLETED && (
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <button
-                                    type="button"
-                                    title={expandedId === analysis.id ? 'Collapse' : 'View Results'}
-                                    onClick={() => setExpandedId(expandedId === analysis.id ? null : analysis.id)}
-                                    className="p-1 rounded hover:bg-[var(--bg-elevated)] text-[var(--text-mid)]"
-                                  >
-                                    <BarChart3 className="h-4 w-4" />
-                                  </button>
-                                </TooltipTrigger>
-                                <TooltipContent>{expandedId === analysis.id ? 'Collapse' : 'View Results'}</TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          )}
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <button
-                                  type="button"
-                                  title="Delete analysis"
-                                  onClick={() => deleteMutation.mutate(analysis.id)}
-                                  disabled={deleteMutation.isPending}
-                                  className="p-1 rounded hover:bg-[var(--bg-elevated)] text-[var(--text-mid)] disabled:opacity-50"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </button>
-                              </TooltipTrigger>
-                              <TooltipContent>Delete</TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        </div>
+            {analysesLoading ? (
+              <div className="space-y-2">
+                {[1, 2, 3].map((i) => (
+                  <Skeleton key={i} className="h-20 rounded" />
+                ))}
+              </div>
+            ) : !analysesData?.items.length ? (
+              <p className="text-[var(--text-mid)] py-8 text-center">
+                No analyses yet. Enter a repo URL and start your first analysis.
+              </p>
+            ) : (
+              analysesData.items.map((analysis: RepoAnalysis) => (
+                <div key={analysis.id} className="surface-card p-4 mb-3 border border-[var(--border)]">
+                  {/* Header */}
+                  <div className="flex justify-between items-center mb-1">
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <Badge variant={STATUS_COLORS[analysis.status] || 'secondary'}>
+                        {analysis.status}
+                      </Badge>
+                      <span className="text-sm font-semibold text-[var(--text-high)] truncate">
+                        {analysis.repo_name}
+                      </span>
+                      <Badge variant="outline" className="text-xs">{analysis.depth}</Badge>
+                    </div>
+                    <div className="flex gap-1">
+                      {analysis.status === AnalysisStatus.COMPLETED && (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <button
+                                type="button"
+                                title={expandedId === analysis.id ? 'Collapse' : 'View Results'}
+                                onClick={() => setExpandedId(expandedId === analysis.id ? null : analysis.id)}
+                                className="p-1 rounded hover:bg-[var(--bg-elevated)] text-[var(--text-mid)]"
+                              >
+                                <BarChart3 className="h-4 w-4" />
+                              </button>
+                            </TooltipTrigger>
+                            <TooltipContent>{expandedId === analysis.id ? 'Collapse' : 'View Results'}</TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button
+                              type="button"
+                              title="Delete analysis"
+                              onClick={() => deleteMutation.mutate(analysis.id)}
+                              disabled={deleteMutation.isPending}
+                              className="p-1 rounded hover:bg-[var(--bg-elevated)] text-[var(--text-mid)] disabled:opacity-50"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent>Delete</TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                  </div>
+
+                  {/* Repo URL */}
+                  <p className="text-xs text-[var(--text-low)] truncate">
+                    {analysis.repo_url} - {new Date(analysis.created_at).toLocaleString()}
+                  </p>
+
+                  {/* Quality badge for completed analyses */}
+                  {analysis.status === AnalysisStatus.COMPLETED && analysis.results?.quality && (
+                    <div className="mt-1 flex gap-2">
+                      <Badge
+                        className="text-xs font-semibold text-white"
+                        style={{
+                          backgroundColor: GRADE_COLORS[analysis.results.quality.grade] || '#9e9e9e',
+                        }}
+                      >
+                        {analysis.results.quality.grade} ({analysis.results.quality.score}/100)
+                      </Badge>
+                      {analysis.results.tech_stack?.frameworks.slice(0, 3).map((f) => (
+                        <Badge key={f} variant="outline" className="text-xs">{f}</Badge>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Progress bar for running */}
+                  {(analysis.status === AnalysisStatus.RUNNING || analysis.status === AnalysisStatus.PENDING) && (
+                    <div className="mt-2">
+                      <div className="h-1.5 w-full bg-[var(--bg-elevated)] rounded-full overflow-hidden">
+                        <div className="h-full bg-[var(--accent)] rounded-full animate-pulse" style={{ width: '60%' }} />
                       </div>
+                    </div>
+                  )}
 
-                      {/* Repo URL */}
-                      <p className="text-xs text-[var(--text-low)] truncate">
-                        {analysis.repo_url} - {new Date(analysis.created_at).toLocaleString()}
-                      </p>
+                  {/* Error */}
+                  {analysis.status === AnalysisStatus.FAILED && analysis.error && (
+                    <Alert variant="destructive" className="mt-2 py-1">
+                      <AlertDescription className="text-xs">{analysis.error}</AlertDescription>
+                    </Alert>
+                  )}
 
-                      {/* Quality badge for completed analyses */}
-                      {analysis.status === AnalysisStatus.COMPLETED && analysis.results?.quality && (
-                        <div className="mt-1 flex gap-2">
-                          <Badge
-                            className="text-xs font-semibold text-white"
-                            style={{
-                              backgroundColor: GRADE_COLORS[analysis.results.quality.grade] || '#9e9e9e',
-                            }}
-                          >
-                            {analysis.results.quality.grade} ({analysis.results.quality.score}/100)
-                          </Badge>
-                          {analysis.results.tech_stack?.frameworks.slice(0, 3).map((f) => (
-                            <Badge key={f} variant="outline" className="text-xs">{f}</Badge>
-                          ))}
-                        </div>
-                      )}
-
-                      {/* Progress bar for running */}
-                      {(analysis.status === AnalysisStatus.RUNNING || analysis.status === AnalysisStatus.PENDING) && (
-                        <div className="mt-2">
-                          <div className="h-1.5 w-full bg-[var(--bg-elevated)] rounded-full overflow-hidden">
-                            <div className="h-full bg-[var(--accent)] rounded-full animate-pulse" style={{ width: '60%' }} />
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Error */}
-                      {analysis.status === AnalysisStatus.FAILED && analysis.error && (
-                        <Alert variant="destructive" className="mt-2 py-1">
-                          <AlertDescription className="text-xs">{analysis.error}</AlertDescription>
-                        </Alert>
-                      )}
-
-                      {/* Expanded results */}
-                      {expandedId === analysis.id && analysis.results && (
-                        <div className="mt-4 pt-4 border-t border-[var(--border)]">
-                          <ResultTabs results={analysis.results} />
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                ))
-              )}
-            </CardContent>
-          </Card>
+                  {/* Expanded results */}
+                  {expandedId === analysis.id && analysis.results && (
+                    <div className="mt-4 pt-4 border-t border-[var(--border)]">
+                      <ResultTabs results={analysis.results} />
+                    </div>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
         </div>
       </div>
     </div>

@@ -3,10 +3,9 @@
 import { useCallback, useRef, useState } from 'react';
 import {
   Music, Upload, Scissors, Trash2, FileText, Download, AudioWaveform,
-  List, Mic, Podcast, Gauge, Volume2, Loader2,
+  List, Mic, Podcast, Gauge, Volume2, Loader2, Music2,
 } from 'lucide-react';
 
-import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
@@ -128,19 +127,20 @@ export default function AudioStudioPage() {
   };
 
   return (
-    <div className="p-6">
+    <div className="p-5 space-y-5 animate-enter">
       {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-[var(--text-high)] flex items-center gap-2">
-          <Music className="h-8 w-8 text-[var(--accent)]" /> Audio Studio
-        </h1>
-        <p className="text-sm text-[var(--text-mid)]">
-          Podcast and audio editing studio with AI-powered chapters, transcription, and RSS feed
-        </p>
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-[var(--accent)] to-[#a855f7] shrink-0">
+          <Music2 className="h-5 w-5 text-white" />
+        </div>
+        <div>
+          <h1 className="text-xl font-bold text-[var(--text-high)]">Audio Studio</h1>
+          <p className="text-xs text-[var(--text-mid)]">Audio editing and noise reduction</p>
+        </div>
       </div>
 
       {/* Tabs */}
-      <Tabs value={tab} onValueChange={setTab} className="mb-6">
+      <Tabs value={tab} onValueChange={setTab}>
         <TabsList>
           <TabsTrigger value="files" className="flex items-center gap-1.5">
             <AudioWaveform className="h-4 w-4" /> Audio Files
@@ -154,163 +154,157 @@ export default function AudioStudioPage() {
             TAB 0: Audio Files
             ============================================================ */}
         <TabsContent value="files">
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-5 mt-5">
             {/* Upload + Actions Panel */}
-            <div className="md:col-span-4">
-              <Card>
-                <CardContent className="p-6">
-                  <h3 className="text-lg font-semibold text-[var(--text-high)] mb-4">Upload Audio</h3>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept=".mp3,.wav,.ogg,.flac,.m4a,.aac,.webm,.mp4,.wma"
-                    hidden
-                    onChange={handleUpload}
-                  />
-                  <Button
-                    className="w-full mb-4"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={uploadMutation.isPending}
-                  >
-                    <Upload className="h-4 w-4 mr-2" />
-                    {uploadMutation.isPending ? 'Uploading...' : 'Choose Audio File'}
-                  </Button>
-                  {uploadProgress !== null && (
-                    <Progress value={uploadProgress} className="mb-4" />
-                  )}
+            <div className="md:col-span-4 space-y-5">
+              <div className="surface-card p-5">
+                <h3 className="text-lg font-semibold text-[var(--text-high)] mb-4">Upload Audio</h3>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".mp3,.wav,.ogg,.flac,.m4a,.aac,.webm,.mp4,.wma"
+                  hidden
+                  onChange={handleUpload}
+                />
+                <Button
+                  className="w-full mb-4"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploadMutation.isPending}
+                >
+                  <Upload className="h-4 w-4 mr-2" />
+                  {uploadMutation.isPending ? 'Uploading...' : 'Choose Audio File'}
+                </Button>
+                {uploadProgress !== null && (
+                  <Progress value={uploadProgress} className="mb-4" />
+                )}
 
-                  {uploadMutation.isError && (
-                    <Alert variant="destructive" className="mb-4">
-                      <AlertDescription>Upload failed: {uploadMutation.error.message}</AlertDescription>
-                    </Alert>
-                  )}
+                {uploadMutation.isError && (
+                  <Alert variant="destructive" className="mb-4">
+                    <AlertDescription>Upload failed: {uploadMutation.error.message}</AlertDescription>
+                  </Alert>
+                )}
 
-                  <Separator className="my-4" />
+                <Separator className="my-4" />
 
-                  {/* Quick actions on selected file */}
-                  {selected && (
-                    <>
-                      <p className="text-sm font-medium text-[var(--text-high)] mb-2">
-                        Selected: {selected.filename}
-                      </p>
+                {/* Quick actions on selected file */}
+                {selected && (
+                  <>
+                    <p className="text-sm font-medium text-[var(--text-high)] mb-2">
+                      Selected: {selected.filename}
+                    </p>
 
-                      <div className="flex flex-wrap gap-2 mb-4">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => transcribeMutation.mutate(selected.id)}
-                          disabled={transcribeMutation.isPending}
-                        >
-                          <Mic className="h-3.5 w-3.5 mr-1" /> Transcribe
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => chaptersMutation.mutate(selected.id)}
-                          disabled={chaptersMutation.isPending}
-                        >
-                          <List className="h-3.5 w-3.5 mr-1" /> Chapters
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => showNotesMutation.mutate(selected.id)}
-                          disabled={showNotesMutation.isPending}
-                        >
-                          <FileText className="h-3.5 w-3.5 mr-1" /> Show Notes
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => splitMutation.mutate({ id: selected.id })}
-                          disabled={splitMutation.isPending}
-                        >
-                          <Scissors className="h-3.5 w-3.5 mr-1" /> Split
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => setEditDialogOpen(true)}
-                        >
-                          <Gauge className="h-3.5 w-3.5 mr-1" /> Edit
-                        </Button>
-                      </div>
-
-                      {/* Export */}
-                      <div className="flex gap-2 items-center">
-                        <Select value={exportFormat} onValueChange={setExportFormat}>
-                          <SelectTrigger className="w-24">
-                            <SelectValue placeholder="Format" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="mp3">MP3</SelectItem>
-                            <SelectItem value="wav">WAV</SelectItem>
-                            <SelectItem value="ogg">OGG</SelectItem>
-                            <SelectItem value="flac">FLAC</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <a href={getExportUrl(selected.id, exportFormat)} target="_blank" rel="noopener noreferrer">
-                          <Button size="sm">
-                            <Download className="h-3.5 w-3.5 mr-1" /> Export
-                          </Button>
-                        </a>
-                      </div>
-
-                      <Separator className="my-4" />
-
-                      {/* Create Episode */}
+                    <div className="flex flex-wrap gap-2 mb-4">
                       <Button
-                        className="w-full"
-                        variant="secondary"
-                        onClick={() => {
-                          setEpisodeTitle('');
-                          setEpisodeDescription('');
-                          setEpisodeDialogOpen(true);
-                        }}
+                        size="sm"
+                        variant="outline"
+                        onClick={() => transcribeMutation.mutate(selected.id)}
+                        disabled={transcribeMutation.isPending}
                       >
-                        <Podcast className="h-4 w-4 mr-2" /> Create Episode
+                        <Mic className="h-3.5 w-3.5 mr-1" /> Transcribe
                       </Button>
-                    </>
-                  )}
-                </CardContent>
-              </Card>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => chaptersMutation.mutate(selected.id)}
+                        disabled={chaptersMutation.isPending}
+                      >
+                        <List className="h-3.5 w-3.5 mr-1" /> Chapters
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => showNotesMutation.mutate(selected.id)}
+                        disabled={showNotesMutation.isPending}
+                      >
+                        <FileText className="h-3.5 w-3.5 mr-1" /> Show Notes
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => splitMutation.mutate({ id: selected.id })}
+                        disabled={splitMutation.isPending}
+                      >
+                        <Scissors className="h-3.5 w-3.5 mr-1" /> Split
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setEditDialogOpen(true)}
+                      >
+                        <Gauge className="h-3.5 w-3.5 mr-1" /> Edit
+                      </Button>
+                    </div>
+
+                    {/* Export */}
+                    <div className="flex gap-2 items-center">
+                      <Select value={exportFormat} onValueChange={setExportFormat}>
+                        <SelectTrigger className="w-24">
+                          <SelectValue placeholder="Format" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="mp3">MP3</SelectItem>
+                          <SelectItem value="wav">WAV</SelectItem>
+                          <SelectItem value="ogg">OGG</SelectItem>
+                          <SelectItem value="flac">FLAC</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <a href={getExportUrl(selected.id, exportFormat)} target="_blank" rel="noopener noreferrer">
+                        <Button size="sm">
+                          <Download className="h-3.5 w-3.5 mr-1" /> Export
+                        </Button>
+                      </a>
+                    </div>
+
+                    <Separator className="my-4" />
+
+                    {/* Create Episode */}
+                    <Button
+                      className="w-full"
+                      variant="secondary"
+                      onClick={() => {
+                        setEpisodeTitle('');
+                        setEpisodeDescription('');
+                        setEpisodeDialogOpen(true);
+                      }}
+                    >
+                      <Podcast className="h-4 w-4 mr-2" /> Create Episode
+                    </Button>
+                  </>
+                )}
+              </div>
 
               {/* Show notes result */}
               {showNotesMutation.data && (
-                <Card className="mt-4">
-                  <CardContent className="p-6">
-                    <h3 className="text-lg font-semibold text-[var(--text-high)] mb-2">Show Notes</h3>
-                    <p className="text-sm text-[var(--text-mid)] mb-2">
-                      {showNotesMutation.data.show_notes.summary}
-                    </p>
-                    {showNotesMutation.data.show_notes.key_points.length > 0 && (
-                      <>
-                        <p className="text-sm font-medium text-[var(--text-high)]">Key Points:</p>
-                        <ul className="list-disc list-inside">
-                          {showNotesMutation.data.show_notes.key_points.map((p, i) => (
-                            <li key={i} className="text-sm text-[var(--text-mid)]">{p}</li>
-                          ))}
-                        </ul>
-                      </>
-                    )}
-                  </CardContent>
-                </Card>
+                <div className="surface-card p-5">
+                  <h3 className="text-lg font-semibold text-[var(--text-high)] mb-2">Show Notes</h3>
+                  <p className="text-sm text-[var(--text-mid)] mb-2">
+                    {showNotesMutation.data.show_notes.summary}
+                  </p>
+                  {showNotesMutation.data.show_notes.key_points.length > 0 && (
+                    <>
+                      <p className="text-sm font-medium text-[var(--text-high)]">Key Points:</p>
+                      <ul className="list-disc list-inside">
+                        {showNotesMutation.data.show_notes.key_points.map((p, i) => (
+                          <li key={i} className="text-sm text-[var(--text-mid)]">{p}</li>
+                        ))}
+                      </ul>
+                    </>
+                  )}
+                </div>
               )}
 
               {/* Split result */}
               {splitMutation.data && (
-                <Card className="mt-4">
-                  <CardContent className="p-6">
-                    <h3 className="text-lg font-semibold text-[var(--text-high)] mb-2">
-                      Split Result ({splitMutation.data.count} segments)
-                    </h3>
-                    {splitMutation.data.segments.map((seg) => (
-                      <p key={seg.index} className="text-sm text-[var(--text-mid)]">
-                        Segment {seg.index + 1}: {formatDuration(seg.start_seconds)} - {formatDuration(seg.end_seconds)} ({formatDuration(seg.duration_seconds)})
-                      </p>
-                    ))}
-                  </CardContent>
-                </Card>
+                <div className="surface-card p-5">
+                  <h3 className="text-lg font-semibold text-[var(--text-high)] mb-2">
+                    Split Result ({splitMutation.data.count} segments)
+                  </h3>
+                  {splitMutation.data.segments.map((seg) => (
+                    <p key={seg.index} className="text-sm text-[var(--text-mid)]">
+                      Segment {seg.index + 1}: {formatDuration(seg.start_seconds)} - {formatDuration(seg.end_seconds)} ({formatDuration(seg.duration_seconds)})
+                    </p>
+                  ))}
+                </div>
               )}
             </div>
 
@@ -321,84 +315,80 @@ export default function AudioStudioPage() {
                   <Loader2 className="h-8 w-8 animate-spin text-[var(--accent)]" />
                 </div>
               ) : !audioFiles?.length ? (
-                <Card>
-                  <CardContent className="text-center py-12 px-6">
-                    <Music className="h-16 w-16 text-[var(--text-low)] mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold text-[var(--text-mid)]">No audio files yet</h3>
-                    <p className="text-sm text-[var(--text-mid)]">
-                      Upload your first audio file to get started
-                    </p>
-                  </CardContent>
-                </Card>
+                <div className="surface-card p-5 text-center py-12">
+                  <Music className="h-16 w-16 text-[var(--text-low)] mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-[var(--text-mid)]">No audio files yet</h3>
+                  <p className="text-sm text-[var(--text-mid)]">
+                    Upload your first audio file to get started
+                  </p>
+                </div>
               ) : (
                 audioFiles.map((audio) => (
-                  <Card
+                  <div
                     key={audio.id}
-                    className={`mb-3 cursor-pointer transition-colors hover:border-[var(--accent)] ${
+                    className={`surface-card p-4 mb-3 cursor-pointer transition-colors hover:border-[var(--accent)] ${
                       selected?.id === audio.id ? 'border-2 border-[var(--accent)]' : ''
                     }`}
                     onClick={() => setSelected(audio)}
                   >
-                    <CardContent className="p-4">
-                      <div className="flex justify-between items-start">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <Music className="h-4 w-4 text-[var(--accent)] shrink-0" />
-                            <span className="font-semibold text-[var(--text-high)] truncate">
-                              {audio.filename}
-                            </span>
-                            <Badge variant={STATUS_VARIANTS[audio.status] || 'default'}>
-                              {audio.status}
-                            </Badge>
-                          </div>
-
-                          <p className="text-sm text-[var(--text-mid)]">
-                            {formatDuration(audio.duration_seconds)} | {audio.sample_rate} Hz | {audio.channels}ch | {audio.format.toUpperCase()} | {formatSize(audio.file_size_kb)}
-                          </p>
-
-                          <MiniWaveform data={audio.waveform_data} />
-
-                          {/* Chapters */}
-                          {audio.chapters.length > 0 && (
-                            <div className="mt-2 flex gap-1 flex-wrap">
-                              {audio.chapters.map((ch: Chapter, i: number) => (
-                                <Badge key={i} variant="outline">
-                                  {ch.title} ({formatDuration(ch.start_time)})
-                                </Badge>
-                              ))}
-                            </div>
-                          )}
-
-                          {/* Transcript snippet */}
-                          {audio.transcript && (
-                            <p className="text-sm text-[var(--text-mid)] mt-2 truncate">
-                              {audio.transcript.slice(0, 150)}...
-                            </p>
-                          )}
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Music className="h-4 w-4 text-[var(--accent)] shrink-0" />
+                          <span className="font-semibold text-[var(--text-high)] truncate">
+                            {audio.filename}
+                          </span>
+                          <Badge variant={STATUS_VARIANTS[audio.status] || 'default'}>
+                            {audio.status}
+                          </Badge>
                         </div>
 
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <button
-                                type="button"
-                                title="Delete"
-                                className="p-1 rounded hover:bg-red-100 text-red-500"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  deleteMutation.mutate(audio.id);
-                                  if (selected?.id === audio.id) setSelected(null);
-                                }}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </button>
-                            </TooltipTrigger>
-                            <TooltipContent>Delete</TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
+                        <p className="text-sm text-[var(--text-mid)]">
+                          {formatDuration(audio.duration_seconds)} | {audio.sample_rate} Hz | {audio.channels}ch | {audio.format.toUpperCase()} | {formatSize(audio.file_size_kb)}
+                        </p>
+
+                        <MiniWaveform data={audio.waveform_data} />
+
+                        {/* Chapters */}
+                        {audio.chapters.length > 0 && (
+                          <div className="mt-2 flex gap-1 flex-wrap">
+                            {audio.chapters.map((ch: Chapter, i: number) => (
+                              <Badge key={i} variant="outline">
+                                {ch.title} ({formatDuration(ch.start_time)})
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Transcript snippet */}
+                        {audio.transcript && (
+                          <p className="text-sm text-[var(--text-mid)] mt-2 truncate">
+                            {audio.transcript.slice(0, 150)}...
+                          </p>
+                        )}
                       </div>
-                    </CardContent>
-                  </Card>
+
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button
+                              type="button"
+                              title="Delete"
+                              className="p-1 rounded hover:bg-red-100 text-red-500"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                deleteMutation.mutate(audio.id);
+                                if (selected?.id === audio.id) setSelected(null);
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent>Delete</TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                  </div>
                 ))
               )}
             </div>
@@ -409,20 +399,18 @@ export default function AudioStudioPage() {
             TAB 1: Podcast Episodes
             ============================================================ */}
         <TabsContent value="episodes">
-          {!episodes?.length ? (
-            <Card>
-              <CardContent className="text-center py-12 px-6">
+          <div className="mt-5">
+            {!episodes?.length ? (
+              <div className="surface-card p-5 text-center py-12">
                 <Podcast className="h-16 w-16 text-[var(--text-low)] mx-auto mb-4" />
                 <h3 className="text-lg font-semibold text-[var(--text-mid)]">No episodes yet</h3>
                 <p className="text-sm text-[var(--text-mid)]">
                   Select an audio file and create your first podcast episode
                 </p>
-              </CardContent>
-            </Card>
-          ) : (
-            episodes.map((ep) => (
-              <Card key={ep.id} className="mb-3">
-                <CardContent className="p-4">
+              </div>
+            ) : (
+              episodes.map((ep) => (
+                <div key={ep.id} className="surface-card p-4 mb-3">
                   <div className="flex items-center gap-2 mb-2">
                     <Podcast className="h-5 w-5 text-purple-500" />
                     <h3 className="text-lg font-semibold text-[var(--text-high)]">{ep.title}</h3>
@@ -438,10 +426,10 @@ export default function AudioStudioPage() {
                       Published: {new Date(ep.publish_date).toLocaleDateString()}
                     </span>
                   )}
-                </CardContent>
-              </Card>
-            ))
-          )}
+                </div>
+              ))
+            )}
+          </div>
         </TabsContent>
       </Tabs>
 
@@ -589,14 +577,14 @@ export default function AudioStudioPage() {
       {/* Loading overlays for mutations */}
       {(transcribeMutation.isPending || chaptersMutation.isPending || editMutation.isPending) && (
         <div className="fixed bottom-6 right-6 z-[9999]">
-          <Card className="p-4 flex items-center gap-3">
+          <div className="surface-card p-4 flex items-center gap-3">
             <Loader2 className="h-5 w-5 animate-spin text-[var(--accent)]" />
             <span className="text-sm text-[var(--text-high)]">
               {transcribeMutation.isPending && 'Transcribing...'}
               {chaptersMutation.isPending && 'Generating chapters...'}
               {editMutation.isPending && 'Applying edits...'}
             </span>
-          </Card>
+          </div>
         </div>
       )}
     </div>

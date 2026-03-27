@@ -1,9 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { GitBranch, Plus, Save, Trash2 } from 'lucide-react';
+import { Plus, Save, Trash2, Workflow } from 'lucide-react';
 
-import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/lib/design-hub/components/Alert';
 import { Button } from '@/lib/design-hub/components/Button';
@@ -116,15 +115,16 @@ export default function PipelineBuilderPage() {
   };
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-4">
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2 text-[var(--text-high)]">
-            <GitBranch className="h-6 w-6 text-[var(--accent)]" /> Visual Pipeline Builder
-          </h1>
-          <p className="text-sm text-[var(--text-mid)]">
-            Build AI pipelines visually - drag nodes, connect edges, validate and execute
-          </p>
+    <div className="p-5 space-y-5 animate-enter">
+      <div className="flex justify-between items-center">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-[var(--accent)] to-[#a855f7] shrink-0">
+            <Workflow className="h-5 w-5 text-white" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold text-[var(--text-high)]">Visual Pipeline Builder</h1>
+            <p className="text-xs text-[var(--text-mid)]">Visual pipeline builder</p>
+          </div>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={handleValidate} disabled={nodes.length === 0}>
@@ -138,7 +138,7 @@ export default function PipelineBuilderPage() {
       </div>
 
       {saved && (
-        <Alert variant="success" className="mb-4">
+        <Alert variant="success">
           <AlertDescription>Pipeline saved as workflow!</AlertDescription>
         </Alert>
       )}
@@ -146,7 +146,6 @@ export default function PipelineBuilderPage() {
       {validationResult && (
         <Alert
           variant={(validationResult as { valid: boolean }).valid ? 'success' : 'destructive'}
-          className="mb-4"
         >
           <AlertDescription>
             {(validationResult as { valid: boolean }).valid
@@ -159,34 +158,32 @@ export default function PipelineBuilderPage() {
       <div className="grid grid-cols-12 gap-4">
         {/* Node Palette */}
         <div className="col-span-12 md:col-span-2">
-          <Card>
-            <CardContent className="p-4">
-              <h3 className="text-sm font-semibold text-[var(--text-high)] mb-2">Add Nodes</h3>
-              <div className="flex flex-col gap-1">
-                {NODE_TYPES.map((nt) => (
-                  <button
-                    key={nt.type}
-                    onClick={() => addNode(nt)}
-                    className="flex items-center gap-1.5 px-2 py-1.5 rounded text-sm text-left cursor-pointer hover:opacity-80 transition-opacity"
-                    style={{ backgroundColor: nt.color }}
-                  >
-                    <Plus className="h-3 w-3 shrink-0" />
-                    {nt.icon} {nt.label}
-                  </button>
-                ))}
-              </div>
-              <Separator className="my-4" />
-              <p className="text-xs text-[var(--text-low)]">
-                Click a node then click &quot;Connect&quot; and click another node to create an edge.
-              </p>
-            </CardContent>
-          </Card>
+          <div className="surface-card p-4">
+            <h3 className="text-sm font-semibold text-[var(--text-high)] mb-2">Add Nodes</h3>
+            <div className="flex flex-col gap-1">
+              {NODE_TYPES.map((nt) => (
+                <button
+                  key={nt.type}
+                  onClick={() => addNode(nt)}
+                  className="flex items-center gap-1.5 px-2 py-1.5 rounded text-sm text-left cursor-pointer hover:opacity-80 transition-opacity"
+                  style={{ backgroundColor: nt.color }}
+                >
+                  <Plus className="h-3 w-3 shrink-0" />
+                  {nt.icon} {nt.label}
+                </button>
+              ))}
+            </div>
+            <Separator className="my-4" />
+            <p className="text-xs text-[var(--text-low)]">
+              Click a node then click &quot;Connect&quot; and click another node to create an edge.
+            </p>
+          </div>
         </div>
 
         {/* Canvas */}
-        <div className="col-span-12 md:col-span-10">
-          <Card className="min-h-[500px] relative overflow-hidden">
-            <div className="p-0 h-[500px] relative">
+        <div className="col-span-12 md:col-span-10 space-y-4">
+          <div className="surface-card p-0 min-h-[500px] relative overflow-hidden">
+            <div className="h-[500px] relative">
               {nodes.length === 0 ? (
                 <div className="flex items-center justify-center h-full">
                   <p className="text-[var(--text-mid)]">Add nodes from the palette to start building your pipeline</p>
@@ -246,28 +243,26 @@ export default function PipelineBuilderPage() {
                 </div>
               ))}
             </div>
-          </Card>
+          </div>
 
           {/* Pipeline Summary */}
           {nodes.length > 0 && (
-            <Card className="mt-4">
-              <CardContent className="py-3">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-sm font-semibold text-[var(--text-high)]">Flow:</span>
-                  {nodes.map((n, i) => (
-                    <div key={n.id} className="flex items-center gap-1">
-                      <Badge variant="secondary" className="text-xs" style={{ backgroundColor: n.color, color: '#000' }}>
-                        {n.icon} {n.label}
-                      </Badge>
-                      {i < nodes.length - 1 && <span className="text-[var(--text-low)]">→</span>}
-                    </div>
-                  ))}
-                  <Badge variant="outline" className="ml-auto text-xs">
-                    {nodes.length} nodes, {edges.length} edges
-                  </Badge>
-                </div>
-              </CardContent>
-            </Card>
+            <div className="surface-card p-5">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-sm font-semibold text-[var(--text-high)]">Flow:</span>
+                {nodes.map((n, i) => (
+                  <div key={n.id} className="flex items-center gap-1">
+                    <Badge variant="secondary" className="text-xs" style={{ backgroundColor: n.color, color: '#000' }}>
+                      {n.icon} {n.label}
+                    </Badge>
+                    {i < nodes.length - 1 && <span className="text-[var(--text-low)]">→</span>}
+                  </div>
+                ))}
+                <Badge variant="outline" className="ml-auto text-xs">
+                  {nodes.length} nodes, {edges.length} edges
+                </Badge>
+              </div>
+            </div>
           )}
         </div>
       </div>

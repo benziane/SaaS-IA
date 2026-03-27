@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { Brain, Plus, Trash2, Sparkles, Loader2 } from 'lucide-react';
 
-import { Card, CardContent } from '@/lib/design-hub/components/Card';
 import { Badge } from '@/lib/design-hub/components/Badge';
 import { Button } from '@/lib/design-hub/components/Button';
 import { Textarea } from '@/lib/design-hub/components/Textarea';
@@ -80,15 +79,16 @@ export default function MemoryPage() {
   };
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Brain className="h-6 w-6 text-[var(--accent)]" /> AI Memory
-          </h1>
-          <p className="text-sm text-[var(--text-mid)]">
-            Your AI remembers preferences, facts, and context to personalize all responses
-          </p>
+    <div className="p-5 space-y-5 animate-enter">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-[var(--accent)] to-[#a855f7] shrink-0">
+            <Brain className="h-5 w-5 text-white" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold text-[var(--text-high)]">AI Memory</h1>
+            <p className="text-xs text-[var(--text-mid)]">Your AI remembers preferences, facts, and context to personalize all responses</p>
+          </div>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => setExtractOpen(true)}>
@@ -104,14 +104,12 @@ export default function MemoryPage() {
 
       {/* Context Preview */}
       {context && (
-        <Card className="mb-6 bg-[var(--bg-elevated)]">
-          <CardContent className="p-6">
-            <h4 className="text-sm font-semibold mb-2">Context Injected into AI Prompts</h4>
-            <p className="text-sm whitespace-pre-wrap font-mono text-[0.85rem]">
-              {context}
-            </p>
-          </CardContent>
-        </Card>
+        <div className="surface-card p-5 bg-[var(--bg-elevated)]">
+          <h4 className="text-sm font-semibold mb-2">Context Injected into AI Prompts</h4>
+          <p className="text-sm whitespace-pre-wrap font-mono text-[0.85rem]">
+            {context}
+          </p>
+        </div>
       )}
 
       {/* Memories */}
@@ -122,39 +120,37 @@ export default function MemoryPage() {
           </div>
         ) : memories.length === 0 ? (
           <div className="col-span-full">
-            <Card>
-              <CardContent className="text-center py-12 p-6">
-                <Brain className="h-16 w-16 text-[var(--text-low)] mx-auto mb-4" />
-                <p className="text-[var(--text-mid)]">No memories yet. Add one or auto-extract from text.</p>
-              </CardContent>
-            </Card>
+            <div className="surface-card p-5 text-center py-12">
+              <div className="w-16 h-16 rounded-2xl flex items-center justify-center bg-gradient-to-br from-[var(--accent)] to-[#a855f7] mx-auto mb-4">
+                <Brain className="h-8 w-8 text-white" />
+              </div>
+              <p className="text-[var(--text-mid)]">No memories yet. Add one or auto-extract from text.</p>
+            </div>
           </div>
         ) : (
           memories.map((mem) => (
-            <Card key={mem.id}>
-              <CardContent className="p-4">
-                <div className="flex justify-between mb-2">
-                  <Badge variant={TYPE_VARIANT[mem.memory_type] || 'secondary'}>
-                    {TYPE_ICONS[mem.memory_type] || '\uD83D\uDCCC'} {mem.memory_type}
-                  </Badge>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="text-red-500 hover:text-red-600"
-                    onClick={() => handleDelete(mem.id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-                <p className="text-sm mb-2">{mem.content}</p>
-                <div className="flex gap-1 flex-wrap">
-                  {mem.category && <Badge variant="outline">{mem.category}</Badge>}
-                  <Badge variant="outline">{(mem.confidence * 100).toFixed(0)}%</Badge>
-                  <Badge variant="outline">used {mem.use_count}x</Badge>
-                  <Badge variant="outline">{mem.source}</Badge>
-                </div>
-              </CardContent>
-            </Card>
+            <div key={mem.id} className="surface-card p-4">
+              <div className="flex justify-between mb-2">
+                <Badge variant={TYPE_VARIANT[mem.memory_type] || 'secondary'}>
+                  {TYPE_ICONS[mem.memory_type] || '\uD83D\uDCCC'} {mem.memory_type}
+                </Badge>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-red-500 hover:text-red-600"
+                  onClick={() => handleDelete(mem.id)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+              <p className="text-sm mb-2">{mem.content}</p>
+              <div className="flex gap-1 flex-wrap">
+                {mem.category && <Badge variant="outline">{mem.category}</Badge>}
+                <Badge variant="outline">{(mem.confidence * 100).toFixed(0)}%</Badge>
+                <Badge variant="outline">used {mem.use_count}x</Badge>
+                <Badge variant="outline">{mem.source}</Badge>
+              </div>
+            </div>
           ))
         )}
       </div>

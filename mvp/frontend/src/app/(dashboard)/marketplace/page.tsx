@@ -7,7 +7,6 @@ import {
   RefreshCw, Tags, User, Package, Loader2,
 } from 'lucide-react';
 
-import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/lib/design-hub/components/Button';
@@ -157,8 +156,8 @@ export default function MarketplacePage() {
 
   const renderListingCard = (listing: MarketplaceListing) => (
     <div key={listing.id} className="col-span-1">
-      <Card className="h-full flex flex-col transition-shadow hover:shadow-lg">
-        <CardContent className="flex-1 p-4">
+      <div className="surface-card p-5 h-full flex flex-col transition-shadow hover:shadow-lg">
+        <div className="flex-1">
           <div className="flex justify-between items-start mb-2">
             <Badge variant={TYPE_VARIANTS[listing.type] || 'default'}>{listing.type}</Badge>
             <span className={`text-sm font-bold ${listing.price === 0 ? 'text-green-600' : 'text-[var(--text-high)]'}`}>
@@ -185,9 +184,9 @@ export default function MarketplacePage() {
               ))}
             </div>
           )}
-        </CardContent>
-        <Separator />
-        <CardFooter className="justify-between px-4 py-2">
+        </div>
+        <Separator className="my-3" />
+        <div className="flex justify-between items-center">
           <div className="flex items-center gap-1">
             <User className="h-3.5 w-3.5 text-[var(--text-mid)]" />
             <span className="text-xs text-[var(--text-mid)]">{listing.author_name}</span>
@@ -227,15 +226,15 @@ export default function MarketplacePage() {
               </Tooltip>
             </TooltipProvider>
           </div>
-        </CardFooter>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 
   const renderMyListingCard = (listing: MarketplaceListing) => (
     <div key={listing.id} className="col-span-1">
-      <Card className="h-full flex flex-col">
-        <CardContent className="flex-1 p-4">
+      <div className="surface-card p-5 h-full flex flex-col">
+        <div className="flex-1">
           <div className="flex justify-between mb-2">
             <Badge variant={TYPE_VARIANTS[listing.type] || 'default'}>{listing.type}</Badge>
             <Badge variant={listing.is_published ? 'success' : 'default'}>
@@ -248,9 +247,9 @@ export default function MarketplacePage() {
             <StarRating value={listing.rating} />
             <span className="text-xs text-[var(--text-mid)]">{listing.installs_count} installs</span>
           </div>
-        </CardContent>
-        <Separator />
-        <CardFooter className="justify-end gap-1 px-4 py-2">
+        </div>
+        <Separator className="my-3" />
+        <div className="flex justify-end gap-1">
           <TooltipProvider>
             {listing.is_published ? (
               <Tooltip>
@@ -280,22 +279,23 @@ export default function MarketplacePage() {
               <TooltipContent>Delete</TooltipContent>
             </Tooltip>
           </TooltipProvider>
-        </CardFooter>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 
   return (
-    <div className="p-6">
+    <div className="p-5 space-y-5 animate-enter">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-3xl font-bold text-[var(--text-high)] flex items-center gap-2">
-            <Store className="h-8 w-8 text-[var(--accent)]" /> Marketplace
-          </h1>
-          <p className="text-sm text-[var(--text-mid)]">
-            Discover and share modules, templates, prompts, workflows, and datasets
-          </p>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-[var(--accent)] to-[#a855f7] shrink-0">
+            <Store className="h-5 w-5 text-white" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold text-[var(--text-high)]">Marketplace</h1>
+            <p className="text-xs text-[var(--text-mid)]">Browse and install AI modules</p>
+          </div>
         </div>
         <div className="flex gap-2">
           <Button

@@ -1,8 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Copy, FileText, Loader2, Plus, RefreshCw, Sparkles, Trash2 } from 'lucide-react';
-import { Card, CardContent, CardFooter } from '@/components/ui/card';
+import { Copy, FileText, Loader2, PenTool, Plus, RefreshCw, Sparkles, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/lib/design-hub/components/Button';
@@ -100,60 +99,62 @@ export default function ContentStudioPage() {
 
   return (
     <TooltipProvider>
-      <div className="p-6">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-[var(--text-high)] flex items-center gap-2">
-              <Sparkles className="h-7 w-7 text-[var(--accent)]" /> Content Studio
-            </h1>
-            <p className="text-sm text-[var(--text-mid)]">
-              Transform any content into blog articles, social media posts, newsletters, and more
-            </p>
+      <div className="p-5 space-y-5 animate-enter">
+        {/* Page Header */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-[var(--accent)] to-[#a855f7] shrink-0">
+              <PenTool className="h-5 w-5 text-white" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-[var(--text-high)]">Content Studio</h1>
+              <p className="text-xs text-[var(--text-mid)]">Transform any content into blog articles, social posts, newsletters and more</p>
+            </div>
           </div>
           <Button onClick={() => setCreateOpen(true)}>
             <Plus className="h-4 w-4 mr-1" /> New Project
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
           {/* Projects List */}
           <div className="md:col-span-4">
-            <Card>
-              <CardContent className="p-6">
-                <h3 className="text-lg font-semibold text-[var(--text-high)] mb-4">Projects</h3>
-                {isLoading ? (
-                  <Skeleton className="h-[200px] w-full" />
-                ) : !projects?.length ? (
-                  <div className="text-center py-8">
-                    <FileText className="h-12 w-12 text-[var(--text-low)] mx-auto mb-2" />
-                    <p className="text-sm text-[var(--text-mid)]">No projects yet</p>
-                    <Button variant="ghost" size="sm" onClick={() => setCreateOpen(true)} className="mt-2">
-                      Create your first project
-                    </Button>
-                  </div>
-                ) : (
-                  projects.map((project) => (
-                    <Card
+            <div className="surface-card rounded-xl p-5 space-y-3">
+              <h3 className="text-sm font-semibold text-[var(--text-high)]">Projects</h3>
+              {isLoading ? (
+                <Skeleton className="h-[200px] w-full" />
+              ) : !projects?.length ? (
+                <div className="text-center py-8">
+                  <FileText className="h-10 w-10 text-[var(--text-low)] mx-auto mb-2" />
+                  <p className="text-sm text-[var(--text-mid)]">No projects yet</p>
+                  <Button variant="ghost" size="sm" onClick={() => setCreateOpen(true)} className="mt-2">
+                    Create your first project
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {projects.map((project) => (
+                    <div
                       key={project.id}
-                      className={`mb-2 border cursor-pointer transition-colors ${
+                      className={`surface-card border-glow-accent rounded-lg px-4 py-3 cursor-pointer transition-colors ${
                         activeProject === project.id
                           ? 'border-[var(--accent)] bg-[var(--bg-elevated)]'
-                          : 'border-[var(--border)] hover:bg-[var(--bg-elevated)]'
+                          : 'border-transparent hover:bg-[var(--bg-elevated)]'
                       }`}
                       onClick={() => setActiveProject(project.id)}
                     >
-                      <CardContent className="py-3 px-4">
-                        <h4 className="text-sm font-medium text-[var(--text-high)]">{project.title}</h4>
-                        <div className="flex gap-1 mt-1">
-                          <Badge variant="outline">{project.source_type}</Badge>
-                          <Badge variant="outline">{project.tone}</Badge>
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                          <h4 className="text-sm font-medium text-[var(--text-high)] truncate">{project.title}</h4>
+                          <div className="flex gap-1 mt-1.5">
+                            <Badge variant="outline">{project.source_type}</Badge>
+                            <Badge variant="outline">{project.tone}</Badge>
+                          </div>
                         </div>
-                      </CardContent>
-                      <CardFooter className="pt-0 justify-end px-4 pb-2">
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-7 w-7 text-red-400 hover:text-red-300"
+                          className="h-7 w-7 text-red-400 hover:text-red-300 shrink-0"
                           onClick={(e) => {
                             e.stopPropagation();
                             deleteMutation.mutate(project.id);
@@ -162,124 +163,120 @@ export default function ContentStudioPage() {
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
-                      </CardFooter>
-                    </Card>
-                  ))
-                )}
-              </CardContent>
-            </Card>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Generated Contents */}
           <div className="md:col-span-8">
             {activeProject ? (
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-[var(--text-high)]">Generated Content</h3>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => generateMutation.mutate({ formats: selectedFormats })}
-                      disabled={generateMutation.isPending}
-                    >
-                      {generateMutation.isPending
-                        ? <><Loader2 className="h-4 w-4 animate-spin mr-1" /> Generating...</>
-                        : <><Sparkles className="h-4 w-4 mr-1" /> Generate More</>
-                      }
-                    </Button>
-                  </div>
+              <div className="surface-card rounded-xl p-5 space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-semibold text-[var(--text-high)]">Generated Content</h3>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => generateMutation.mutate({ formats: selectedFormats })}
+                    disabled={generateMutation.isPending}
+                  >
+                    {generateMutation.isPending
+                      ? <><Loader2 className="h-4 w-4 animate-spin mr-1" /> Generating...</>
+                      : <><Sparkles className="h-4 w-4 mr-1" /> Generate More</>
+                    }
+                  </Button>
+                </div>
 
-                  {/* Format selector for generation */}
-                  <div className="flex flex-wrap gap-1.5 mb-4">
-                    {FORMAT_OPTIONS.map((fmt) => (
-                      <Badge
-                        key={fmt.id}
-                        variant={selectedFormats.includes(fmt.id) ? 'default' : 'outline'}
-                        className="cursor-pointer"
-                        onClick={() => {
-                          setSelectedFormats((prev) =>
-                            prev.includes(fmt.id) ? prev.filter((f) => f !== fmt.id) : [...prev, fmt.id]
-                          );
-                        }}
-                      >
-                        {fmt.icon} {fmt.label}
-                      </Badge>
-                    ))}
-                  </div>
-
-                  <Separator className="mb-4" />
-
-                  {contentsLoading ? (
-                    <Skeleton className="h-[300px] w-full" />
-                  ) : !contents?.length ? (
-                    <div className="text-center py-8">
-                      <p className="text-sm text-[var(--text-mid)]">
-                        {generateMutation.isPending
-                          ? 'Generating content with AI...'
-                          : 'Select formats above and click "Generate More"'}
-                      </p>
-                      {generateMutation.isPending && <Loader2 className="h-6 w-6 animate-spin text-[var(--accent)] mx-auto mt-4" />}
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      {contents.map((content) => {
-                        const fmtInfo = FORMAT_OPTIONS.find((f) => f.id === content.format);
-                        return (
-                          <Card
-                            key={content.id}
-                            className="border border-[var(--border)] cursor-pointer hover:border-[var(--accent)] transition-colors"
-                            onClick={() => setViewContent(content)}
-                          >
-                            <CardContent className="p-4">
-                              <div className="flex items-center justify-between mb-2">
-                                <h4 className="text-sm font-medium text-[var(--text-high)]">
-                                  {fmtInfo?.icon} {fmtInfo?.label || content.format}
-                                </h4>
-                                <Badge variant={STATUS_VARIANTS[content.status] || 'secondary'}>
-                                  {content.status}
-                                </Badge>
-                              </div>
-                              {content.title && (
-                                <p className="text-sm font-bold text-[var(--text-high)] mb-1">{content.title}</p>
-                              )}
-                              <p className="text-sm text-[var(--text-mid)] overflow-hidden line-clamp-3">
-                                {content.content.substring(0, 200)}...
-                              </p>
-                              <div className="flex items-center justify-between mt-2">
-                                <span className="text-xs text-[var(--text-mid)]">
-                                  {content.word_count} words | v{content.version}
-                                </span>
-                                <span className="text-xs text-[var(--text-mid)]">
-                                  {content.provider}
-                                </span>
-                              </div>
-                            </CardContent>
-                          </Card>
+                {/* Format selector for generation */}
+                <div className="flex flex-wrap gap-1.5">
+                  {FORMAT_OPTIONS.map((fmt) => (
+                    <Badge
+                      key={fmt.id}
+                      variant={selectedFormats.includes(fmt.id) ? 'default' : 'outline'}
+                      className="cursor-pointer"
+                      onClick={() => {
+                        setSelectedFormats((prev) =>
+                          prev.includes(fmt.id) ? prev.filter((f) => f !== fmt.id) : [...prev, fmt.id]
                         );
-                      })}
-                    </div>
-                  )}
+                      }}
+                    >
+                      {fmt.icon} {fmt.label}
+                    </Badge>
+                  ))}
+                </div>
 
-                  {generateMutation.isError && (
-                    <Alert variant="destructive" className="mt-4">
-                      <AlertDescription>{generateMutation.error?.message}</AlertDescription>
-                    </Alert>
-                  )}
-                </CardContent>
-              </Card>
+                <Separator />
+
+                {contentsLoading ? (
+                  <Skeleton className="h-[300px] w-full" />
+                ) : !contents?.length ? (
+                  <div className="text-center py-8">
+                    <p className="text-sm text-[var(--text-mid)]">
+                      {generateMutation.isPending
+                        ? 'Generating content with AI...'
+                        : 'Select formats above and click "Generate More"'}
+                    </p>
+                    {generateMutation.isPending && <Loader2 className="h-6 w-6 animate-spin text-[var(--accent)] mx-auto mt-4" />}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {contents.map((content) => {
+                      const fmtInfo = FORMAT_OPTIONS.find((f) => f.id === content.format);
+                      return (
+                        <div
+                          key={content.id}
+                          className="surface-card border-glow-accent rounded-lg p-4 cursor-pointer hover:border-[var(--accent)] transition-colors"
+                          onClick={() => setViewContent(content)}
+                        >
+                          <div className="flex items-center justify-between mb-2">
+                            <h4 className="text-sm font-medium text-[var(--text-high)]">
+                              {fmtInfo?.icon} {fmtInfo?.label || content.format}
+                            </h4>
+                            <Badge variant={STATUS_VARIANTS[content.status] || 'secondary'}>
+                              {content.status}
+                            </Badge>
+                          </div>
+                          {content.title && (
+                            <p className="text-sm font-bold text-[var(--text-high)] mb-1">{content.title}</p>
+                          )}
+                          <p className="text-sm text-[var(--text-mid)] overflow-hidden line-clamp-3">
+                            {content.content.substring(0, 200)}...
+                          </p>
+                          <div className="flex items-center justify-between mt-2">
+                            <span className="text-xs text-[var(--text-mid)]">
+                              {content.word_count} words | v{content.version}
+                            </span>
+                            <span className="text-xs text-[var(--text-mid)]">
+                              {content.provider}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {generateMutation.isError && (
+                  <Alert variant="destructive">
+                    <AlertDescription>{generateMutation.error?.message}</AlertDescription>
+                  </Alert>
+                )}
+              </div>
             ) : (
-              <Card>
-                <CardContent className="text-center py-16 px-6">
-                  <Sparkles className="h-16 w-16 text-[var(--text-low)] mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-[var(--text-mid)]">
-                    Select a project or create a new one
-                  </h3>
-                  <p className="text-sm text-[var(--text-mid)] mt-2">
-                    Paste any text, select a transcription, or enter a URL to generate multi-format content
-                  </p>
-                </CardContent>
-              </Card>
+              <div className="surface-card rounded-xl text-center py-16 px-6">
+                <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-gradient-to-br from-[var(--accent)] to-[#a855f7] mx-auto mb-4">
+                  <Sparkles className="h-7 w-7 text-white" />
+                </div>
+                <h3 className="text-base font-semibold text-[var(--text-high)]">
+                  Select a project or create a new one
+                </h3>
+                <p className="text-sm text-[var(--text-mid)] mt-2">
+                  Paste any text, select a transcription, or enter a URL to generate multi-format content
+                </p>
+              </div>
             )}
           </div>
         </div>

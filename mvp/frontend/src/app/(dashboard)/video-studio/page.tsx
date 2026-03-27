@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { Loader2, Video, Sparkles, Trash2, Clapperboard, User } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/lib/design-hub/components/Button';
@@ -47,157 +46,152 @@ export default function VideoStudioPage() {
   };
 
   return (
-    <div className="p-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-[var(--text-high)] flex items-center gap-2">
-          <Video className="h-7 w-7 text-[var(--accent)]" /> Video Studio
-        </h1>
-        <p className="text-sm text-[var(--text-mid)]">
-          Generate AI videos, highlight clips, talking avatars, and explainer videos
-        </p>
+    <div className="p-5 space-y-5 animate-enter">
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-[var(--accent)] to-[#a855f7] shrink-0">
+          <Video className="h-5 w-5 text-white" />
+        </div>
+        <div>
+          <h1 className="text-xl font-bold text-[var(--text-high)]">Video Studio</h1>
+          <p className="text-xs text-[var(--text-mid)]">AI video generation and editing</p>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
         {/* Generation */}
-        <div className="md:col-span-5">
-          <Card className="mb-4">
-            <CardContent className="p-6">
-              <h3 className="text-lg font-semibold text-[var(--text-high)] mb-4 flex items-center gap-2">
-                <Clapperboard className="h-5 w-5" /> Generate Video
-              </h3>
-              <Input
-                placeholder="Title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                className="mb-4"
-              />
-              <Textarea
-                rows={3}
-                placeholder="Describe the video you want to create..."
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                className="mb-4"
-              />
+        <div className="md:col-span-5 space-y-4">
+          <div className="surface-card p-5">
+            <h3 className="text-lg font-semibold text-[var(--text-high)] mb-4 flex items-center gap-2">
+              <Clapperboard className="h-5 w-5" /> Generate Video
+            </h3>
+            <Input
+              placeholder="Title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="mb-4"
+            />
+            <Textarea
+              rows={3}
+              placeholder="Describe the video you want to create..."
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              className="mb-4"
+            />
 
-              <div className="flex flex-wrap gap-1.5 mb-4">
-                {VIDEO_TYPES.filter((t) => t.id !== 'avatar_talking').map((t) => (
-                  <Badge
-                    key={t.id}
-                    variant={videoType === t.id ? 'default' : 'outline'}
-                    className="cursor-pointer"
-                    onClick={() => setVideoType(t.id)}
-                  >
-                    {t.icon} {t.label}
-                  </Badge>
-                ))}
-              </div>
+            <div className="flex flex-wrap gap-1.5 mb-4">
+              {VIDEO_TYPES.filter((t) => t.id !== 'avatar_talking').map((t) => (
+                <Badge
+                  key={t.id}
+                  variant={videoType === t.id ? 'default' : 'outline'}
+                  className="cursor-pointer"
+                  onClick={() => setVideoType(t.id)}
+                >
+                  {t.icon} {t.label}
+                </Badge>
+              ))}
+            </div>
 
-              <p className="text-xs text-[var(--text-low)] mb-1">Duration: {duration}s</p>
-              <Slider
-                value={[duration]}
-                onValueChange={(v) => setDuration(v[0] ?? 5)}
-                min={5}
-                max={120}
-                step={5}
-                className="mb-4"
-              />
+            <p className="text-xs text-[var(--text-low)] mb-1">Duration: {duration}s</p>
+            <Slider
+              value={[duration]}
+              onValueChange={(v) => setDuration(v[0] ?? 5)}
+              min={5}
+              max={120}
+              step={5}
+              className="mb-4"
+            />
 
-              <Button
-                className="w-full"
-                onClick={handleGenerate}
-                disabled={!title.trim() || !prompt.trim() || genMutation.isPending}
-              >
-                {genMutation.isPending ? (
-                  <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Generating...</>
-                ) : (
-                  <><Sparkles className="h-4 w-4 mr-2" /> Generate Video</>
-                )}
-              </Button>
-              {genMutation.isError && (
-                <Alert variant="destructive" className="mt-2">
-                  <AlertDescription>{genMutation.error.message}</AlertDescription>
-                </Alert>
+            <Button
+              className="w-full"
+              onClick={handleGenerate}
+              disabled={!title.trim() || !prompt.trim() || genMutation.isPending}
+            >
+              {genMutation.isPending ? (
+                <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Generating...</>
+              ) : (
+                <><Sparkles className="h-4 w-4 mr-2" /> Generate Video</>
               )}
-            </CardContent>
-          </Card>
+            </Button>
+            {genMutation.isError && (
+              <Alert variant="destructive" className="mt-2">
+                <AlertDescription>{genMutation.error.message}</AlertDescription>
+              </Alert>
+            )}
+          </div>
 
           {/* Avatar */}
-          <Card>
-            <CardContent className="p-6">
-              <h3 className="text-lg font-semibold text-[var(--text-high)] mb-4 flex items-center gap-2">
-                <User className="h-5 w-5" /> Talking Avatar
-              </h3>
-              <Textarea
-                rows={3}
-                placeholder="What should the avatar say?"
-                value={avatarText}
-                onChange={(e) => setAvatarText(e.target.value)}
-                className="mb-4"
-              />
-              <Button
-                variant="outline"
-                className="w-full"
-                onClick={handleAvatar}
-                disabled={!avatarText.trim() || avatarMutation.isPending}
-              >
-                {avatarMutation.isPending ? (
-                  <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Generating...</>
-                ) : (
-                  <><User className="h-4 w-4 mr-2" /> Generate Avatar Video</>
-                )}
-              </Button>
-            </CardContent>
-          </Card>
+          <div className="surface-card p-5">
+            <h3 className="text-lg font-semibold text-[var(--text-high)] mb-4 flex items-center gap-2">
+              <User className="h-5 w-5" /> Talking Avatar
+            </h3>
+            <Textarea
+              rows={3}
+              placeholder="What should the avatar say?"
+              value={avatarText}
+              onChange={(e) => setAvatarText(e.target.value)}
+              className="mb-4"
+            />
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={handleAvatar}
+              disabled={!avatarText.trim() || avatarMutation.isPending}
+            >
+              {avatarMutation.isPending ? (
+                <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Generating...</>
+              ) : (
+                <><User className="h-4 w-4 mr-2" /> Generate Avatar Video</>
+              )}
+            </Button>
+          </div>
         </div>
 
         {/* Gallery */}
         <div className="md:col-span-7">
-          <Card>
-            <CardContent className="p-6">
-              <h3 className="text-lg font-semibold text-[var(--text-high)] mb-4">Videos</h3>
-              {isLoading ? <Skeleton className="h-[400px] w-full" /> : !videos?.length ? (
-                <div className="text-center py-12">
-                  <Video className="h-16 w-16 text-[var(--text-low)] mx-auto mb-2" />
-                  <p className="text-[var(--text-mid)]">No videos yet</p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {videos.map((v) => (
-                    <Card key={v.id} className="border border-[var(--border)]">
-                      <div className="h-[120px] bg-[var(--bg-elevated)] flex items-center justify-center">
-                        {v.status === 'completed' ? (
-                          <span className="text-xs p-2 text-[var(--text-mid)]">{v.title}</span>
-                        ) : v.status === 'failed' ? (
-                          <span className="text-xs text-red-400">Failed</span>
-                        ) : (
-                          <Loader2 className="h-6 w-6 animate-spin text-[var(--accent)]" />
-                        )}
-                      </div>
-                      <CardContent className="py-2 px-3">
-                        <p className="text-sm font-medium text-[var(--text-high)] truncate">{v.title}</p>
-                        <div className="flex justify-between items-center mt-1">
-                          <div className="flex gap-1">
-                            <Badge variant="outline" className="text-[10px]">{v.video_type.replace('_', ' ')}</Badge>
-                            <Badge variant={STATUS_VARIANTS[v.status] || 'secondary'} className="text-[10px]">{v.status}</Badge>
-                            {v.duration_s && <Badge variant="outline" className="text-[10px]">{v.duration_s}s</Badge>}
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => deleteMutation.mutate(v.id)}
-                            className="p-1 text-red-400 hover:text-red-300 transition-colors"
-                            aria-label="Delete video"
-                            title="Delete video"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
+          <div className="surface-card p-5">
+            <h3 className="text-lg font-semibold text-[var(--text-high)] mb-4">Videos</h3>
+            {isLoading ? <Skeleton className="h-[400px] w-full" /> : !videos?.length ? (
+              <div className="text-center py-12">
+                <Video className="h-16 w-16 text-[var(--text-low)] mx-auto mb-2" />
+                <p className="text-[var(--text-mid)]">No videos yet</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {videos.map((v) => (
+                  <div key={v.id} className="surface-card p-0 overflow-hidden">
+                    <div className="h-[120px] bg-[var(--bg-elevated)] flex items-center justify-center">
+                      {v.status === 'completed' ? (
+                        <span className="text-xs p-2 text-[var(--text-mid)]">{v.title}</span>
+                      ) : v.status === 'failed' ? (
+                        <span className="text-xs text-red-400">Failed</span>
+                      ) : (
+                        <Loader2 className="h-6 w-6 animate-spin text-[var(--accent)]" />
+                      )}
+                    </div>
+                    <div className="py-2 px-3">
+                      <p className="text-sm font-medium text-[var(--text-high)] truncate">{v.title}</p>
+                      <div className="flex justify-between items-center mt-1">
+                        <div className="flex gap-1">
+                          <Badge variant="outline" className="text-[10px]">{v.video_type.replace('_', ' ')}</Badge>
+                          <Badge variant={STATUS_VARIANTS[v.status] || 'secondary'} className="text-[10px]">{v.status}</Badge>
+                          {v.duration_s && <Badge variant="outline" className="text-[10px]">{v.duration_s}s</Badge>}
                         </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                        <button
+                          type="button"
+                          onClick={() => deleteMutation.mutate(v.id)}
+                          className="p-1 text-red-400 hover:text-red-300 transition-colors"
+                          aria-label="Delete video"
+                          title="Delete video"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

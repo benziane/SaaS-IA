@@ -3,10 +3,9 @@
 import { useState } from 'react';
 import {
   Plus, Trash2, Link2, Play, Webhook, Copy, CheckCircle, XCircle,
-  Network, Settings2, Loader2,
+  Network, Settings2, Loader2, Plug,
 } from 'lucide-react';
 
-import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/lib/design-hub/components/Button';
@@ -139,15 +138,16 @@ export default function IntegrationsPage() {
   const activeConnectors = connectors?.filter((c: IntegrationConnector) => c.is_active) || [];
 
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-3xl font-bold text-[var(--text-high)] flex items-center gap-2">
-            <Network className="h-8 w-8 text-[var(--accent)]" /> Integration Hub
-          </h1>
-          <p className="text-sm text-[var(--text-mid)]">
-            Connect external services via webhooks, OAuth2, and API keys
-          </p>
+    <div className="p-5 space-y-5 animate-enter">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-[var(--accent)] to-[#a855f7] shrink-0">
+            <Plug className="h-5 w-5 text-white" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold text-[var(--text-high)]">Integration Hub</h1>
+            <p className="text-xs text-[var(--text-mid)]">Connect external services and webhooks</p>
+          </div>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => setTriggerOpen(true)} disabled={!connectors?.length}>
@@ -182,12 +182,12 @@ export default function IntegrationsPage() {
                   (c: IntegrationConnector) => c.provider === provider.slug && c.is_active
                 );
                 return (
-                  <Card
+                  <div
                     key={provider.slug}
-                    className="flex flex-col h-full border-l-4"
+                    className="surface-card p-5 flex flex-col h-full border-l-4"
                     style={{ borderLeftColor: PROVIDER_ICONS[provider.slug] || '#757575' }}
                   >
-                    <CardContent className="flex-1 p-4">
+                    <div className="flex-1">
                       <div className="flex items-center justify-between mb-2">
                         <span className="font-bold text-[var(--text-high)]">{provider.name}</span>
                         {connected && <Badge variant="outline" className="text-green-600 border-green-600">Connected</Badge>}
@@ -198,8 +198,8 @@ export default function IntegrationsPage() {
                           <Badge key={t} variant="outline">{t}</Badge>
                         ))}
                       </div>
-                    </CardContent>
-                    <CardFooter className="px-4 pb-4">
+                    </div>
+                    <div className="mt-4">
                       <Button
                         size="sm"
                         variant={connected ? 'outline' : 'default'}
@@ -219,8 +219,8 @@ export default function IntegrationsPage() {
                           <><Link2 className="h-3.5 w-3.5 mr-1" /> Connect</>
                         )}
                       </Button>
-                    </CardFooter>
-                  </Card>
+                    </div>
+                  </div>
                 );
               })}
             </div>
@@ -236,21 +236,21 @@ export default function IntegrationsPage() {
               ))}
             </div>
           ) : !activeConnectors.length ? (
-            <Card>
-              <CardContent className="text-center py-16 px-6">
+            <div className="surface-card p-5">
+              <div className="text-center py-16 px-6">
                 <Network className="h-16 w-16 text-[var(--text-low)] mx-auto mb-4" />
                 <h3 className="text-lg font-semibold text-[var(--text-mid)]">No integrations connected</h3>
                 <p className="text-sm text-[var(--text-mid)] mt-2 mb-4">
                   Connect an external service to start receiving events
                 </p>
                 <Button onClick={() => setTab('providers')}>Browse Providers</Button>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
               {activeConnectors.map((connector: IntegrationConnector) => (
-                <Card key={connector.id} className="flex flex-col h-full border border-[var(--border)]">
-                  <CardContent className="flex-1 p-4">
+                <div key={connector.id} className="surface-card p-5 flex flex-col h-full border border-[var(--border)]">
+                  <div className="flex-1">
                     <div className="flex items-center justify-between mb-2">
                       <span className="font-bold text-[var(--text-high)] truncate">{connector.name}</span>
                       <Badge variant={STATUS_VARIANTS[connector.status] || 'default'}>{connector.status}</Badge>
@@ -285,8 +285,8 @@ export default function IntegrationsPage() {
                         </div>
                       </div>
                     )}
-                  </CardContent>
-                  <CardFooter className="justify-between px-4 pb-4 pt-0">
+                  </div>
+                  <div className="flex items-center justify-between mt-4 pt-4 border-t border-[var(--border)]">
                     <div className="flex gap-1">
                       <button type="button" title="Delete" className="p-1.5 rounded hover:bg-red-100 text-red-500" onClick={() => deleteConnectorMutation.mutate(connector.id)}>
                         <Trash2 className="h-4 w-4" />
@@ -313,46 +313,42 @@ export default function IntegrationsPage() {
                       )}
                       Test
                     </Button>
-                  </CardFooter>
-                </Card>
+                  </div>
+                </div>
               ))}
             </div>
           )}
 
           {/* Events panel for selected connector */}
           {selectedConnector && events && (
-            <Card className="mt-6">
-              <CardContent className="p-6">
-                <h3 className="text-lg font-semibold text-[var(--text-high)] mb-4">Recent Events</h3>
-                {events.length === 0 ? (
-                  <p className="text-sm text-[var(--text-mid)]">No events received yet</p>
-                ) : (
-                  events.slice(0, 10).map((event) => (
-                    <Card key={event.id} className="mb-2 border border-[var(--border)]">
-                      <CardContent className="py-2 px-4">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <Badge variant={EVENT_STATUS_VARIANTS[event.status] || 'default'}>{event.status}</Badge>
-                            <Badge variant="outline">{event.event_type}</Badge>
-                          </div>
-                          <span className="text-xs text-[var(--text-mid)]">
-                            {new Date(event.created_at).toLocaleString()}
-                          </span>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))
-                )}
-              </CardContent>
-            </Card>
+            <div className="surface-card p-5 mt-5">
+              <h3 className="text-lg font-semibold text-[var(--text-high)] mb-4">Recent Events</h3>
+              {events.length === 0 ? (
+                <p className="text-sm text-[var(--text-mid)]">No events received yet</p>
+              ) : (
+                events.slice(0, 10).map((event) => (
+                  <div key={event.id} className="mb-2 border border-[var(--border)] rounded-lg py-2 px-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Badge variant={EVENT_STATUS_VARIANTS[event.status] || 'default'}>{event.status}</Badge>
+                        <Badge variant="outline">{event.event_type}</Badge>
+                      </div>
+                      <span className="text-xs text-[var(--text-mid)]">
+                        {new Date(event.created_at).toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
           )}
         </TabsContent>
 
         {/* Tab 2: Events Log */}
         <TabsContent value="events">
           {!selectedConnector ? (
-            <Card>
-              <CardContent className="text-center py-12 px-6">
+            <div className="surface-card p-5">
+              <div className="text-center py-12 px-6">
                 <Webhook className="h-12 w-12 text-[var(--text-low)] mx-auto mb-2" />
                 <p className="text-[var(--text-mid)]">
                   Select a connector from the Connected tab to view its events
@@ -371,8 +367,8 @@ export default function IntegrationsPage() {
                     ))}
                   </div>
                 )}
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           ) : (
             <div>
               <div className="flex items-center gap-2 mb-4">
@@ -384,29 +380,27 @@ export default function IntegrationsPage() {
                 </Badge>
               </div>
               {!events?.length ? (
-                <Card>
-                  <CardContent className="text-center py-8 px-6">
+                <div className="surface-card p-5">
+                  <div className="text-center py-8 px-6">
                     <p className="text-[var(--text-mid)]">No events received yet</p>
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
               ) : (
                 events.map((event) => (
-                  <Card key={event.id} className="mb-2 border border-[var(--border)]">
-                    <CardContent className="py-3 px-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Badge variant={EVENT_STATUS_VARIANTS[event.status] || 'default'}>{event.status}</Badge>
-                          <Badge variant="outline">{event.event_type}</Badge>
-                        </div>
-                        <span className="text-xs text-[var(--text-mid)]">
-                          {new Date(event.created_at).toLocaleString()}
-                        </span>
+                  <div key={event.id} className="surface-card p-5 mb-2 border border-[var(--border)]">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Badge variant={EVENT_STATUS_VARIANTS[event.status] || 'default'}>{event.status}</Badge>
+                        <Badge variant="outline">{event.event_type}</Badge>
                       </div>
-                      <div className="mt-2 p-2 bg-[var(--bg-surface)] rounded text-xs font-mono max-h-24 overflow-auto">
-                        {JSON.stringify(event.payload, null, 2).substring(0, 500)}
-                      </div>
-                    </CardContent>
-                  </Card>
+                      <span className="text-xs text-[var(--text-mid)]">
+                        {new Date(event.created_at).toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="mt-2 p-2 bg-[var(--bg-surface)] rounded text-xs font-mono max-h-24 overflow-auto">
+                      {JSON.stringify(event.payload, null, 2).substring(0, 500)}
+                    </div>
+                  </div>
                 ))
               )}
             </div>
@@ -416,8 +410,8 @@ export default function IntegrationsPage() {
         {/* Tab 3: Triggers */}
         <TabsContent value="triggers">
           {!triggers?.length ? (
-            <Card>
-              <CardContent className="text-center py-12 px-6">
+            <div className="surface-card p-5">
+              <div className="text-center py-12 px-6">
                 <Settings2 className="h-12 w-12 text-[var(--text-low)] mx-auto mb-2" />
                 <h3 className="text-lg font-semibold text-[var(--text-mid)]">No triggers configured</h3>
                 <p className="text-sm text-[var(--text-mid)] mt-2 mb-4">
@@ -426,42 +420,40 @@ export default function IntegrationsPage() {
                 <Button onClick={() => setTriggerOpen(true)} disabled={!connectors?.length}>
                   <Plus className="h-4 w-4 mr-2" /> New Trigger
                 </Button>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           ) : (
             triggers.map((trigger) => {
               const connector = connectors?.find(
                 (c: IntegrationConnector) => c.id === trigger.connector_id
               );
               return (
-                <Card key={trigger.id} className="mb-2 border border-[var(--border)]">
-                  <CardContent className="py-3 px-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-[var(--text-high)]">
-                          {connector?.name || 'Unknown'}
-                        </span>
-                        <span className="text-sm text-[var(--text-mid)]">
-                          on <strong>{trigger.event_type}</strong> {'->'} <strong>{trigger.action_module}</strong>
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline">{trigger.executions} runs</Badge>
-                        <Badge variant={trigger.is_active ? 'success' : 'default'}>
-                          {trigger.is_active ? 'Active' : 'Inactive'}
-                        </Badge>
-                        <button
-                          type="button"
-                          title="Delete"
-                          className="p-1 rounded hover:bg-red-100 text-red-500"
-                          onClick={() => deleteTriggerMutation.mutate(trigger.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
+                <div key={trigger.id} className="surface-card p-5 mb-2 border border-[var(--border)]">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-[var(--text-high)]">
+                        {connector?.name || 'Unknown'}
+                      </span>
+                      <span className="text-sm text-[var(--text-mid)]">
+                        on <strong>{trigger.event_type}</strong> {'->'} <strong>{trigger.action_module}</strong>
+                      </span>
                     </div>
-                  </CardContent>
-                </Card>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline">{trigger.executions} runs</Badge>
+                      <Badge variant={trigger.is_active ? 'success' : 'default'}>
+                        {trigger.is_active ? 'Active' : 'Inactive'}
+                      </Badge>
+                      <button
+                        type="button"
+                        title="Delete"
+                        className="p-1 rounded hover:bg-red-100 text-red-500"
+                        onClick={() => deleteTriggerMutation.mutate(trigger.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
               );
             })
           )}

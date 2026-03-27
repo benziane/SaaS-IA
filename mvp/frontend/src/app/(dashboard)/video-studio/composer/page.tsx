@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Play, Pause, Square, SkipForward, SkipBack, Plus, Trash2, Copy,
-  Download, Clapperboard, Rows3, Type, Image, List, Hand,
+  Download, Film, Rows3, Type, Image, List, Hand,
   ArrowLeft, ZoomIn, ZoomOut, Loader2, X,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -561,36 +561,47 @@ export default function VideoComposerPage() {
 
   return (
     <TooltipProvider>
-      <div className="flex flex-col h-full text-[#e0e0e0] font-[Inter,Roboto,sans-serif]">
+      <div className="flex flex-col h-full text-[var(--text-high)] font-[Inter,Roboto,sans-serif]">
         {/* TOP TOOLBAR */}
-        <div className="flex items-center gap-3 px-4 py-2 shrink-0 min-h-[52px]" style={{ background: 'linear-gradient(180deg, #141420 0%, #0e0e18 100%)', borderBottom: '1px solid #1e1e30' }}>
+        <div className="flex items-center gap-3 px-4 py-2 shrink-0 min-h-[56px] bg-[var(--surface-1)] border-b border-[var(--border)]">
           <Tooltip>
             <TooltipTrigger asChild>
-              <Link href="/video-studio" className="p-1.5 text-[#888] hover:text-[#ccc] transition-colors">
+              <Link href="/video-studio" className="p-1.5 text-[var(--text-low)] hover:text-[var(--text-mid)] transition-colors">
                 <ArrowLeft className="h-4 w-4" />
               </Link>
             </TooltipTrigger>
             <TooltipContent>Back to Video Studio</TooltipContent>
           </Tooltip>
 
-          <Clapperboard className="h-5 w-5 text-[#7c4dff]" />
+          {/* S+++ gradient icon + title */}
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-gradient-to-br from-[var(--accent)] to-[#a855f7] shrink-0">
+              <Film className="h-4 w-4 text-white" />
+            </div>
+            <div className="hidden sm:block">
+              <p className="text-sm font-bold text-[var(--text-high)] leading-none">Video Composer</p>
+              <p className="text-[10px] text-[var(--text-low)] leading-none mt-0.5">AI video composition and editing</p>
+            </div>
+          </div>
+
+          <Separator orientation="vertical" className="h-6 bg-[var(--border)] mx-1" />
 
           <input
             type="text"
             value={composition.name}
             onChange={(e) => setComposition((p) => ({ ...p, name: e.target.value }))}
-            className="bg-transparent border-none outline-none text-white font-semibold text-base w-[260px]"
+            className="bg-transparent border-none outline-none text-[var(--text-high)] font-semibold text-sm w-[200px]"
             aria-label="Composition name"
             title="Composition name"
           />
 
-          <Separator orientation="vertical" className="h-6 bg-[#2a2a40]" />
+          <Separator orientation="vertical" className="h-6 bg-[var(--border)]" />
 
-          <Badge variant="outline" className="bg-[#1e1e30] text-[#aaa] border-none">
-            <Rows3 className="h-3.5 w-3.5 text-[#7c4dff] mr-1" /> {composition.scenes.length} scenes
+          <Badge variant="outline" className="bg-[var(--surface-2)] text-[var(--text-mid)] border-[var(--border)]">
+            <Rows3 className="h-3.5 w-3.5 text-[var(--accent)] mr-1" /> {composition.scenes.length} scenes
           </Badge>
 
-          <Badge variant="outline" className="bg-[#1e1e30] text-[#aaa] border-none font-mono">
+          <Badge variant="outline" className="bg-[var(--surface-2)] text-[var(--text-mid)] border-[var(--border)] font-mono">
             {formatTime(totalDuration)}
           </Badge>
 
@@ -610,13 +621,13 @@ export default function VideoComposerPage() {
             </button>
           ))}
 
-          <Separator orientation="vertical" className="h-6 bg-[#2a2a40]" />
+          <Separator orientation="vertical" className="h-6 bg-[var(--border)]" />
 
           <Button
             size="sm"
             disabled={exportLoading || composition.scenes.length === 0}
             onClick={handleExport}
-            className="bg-[#7c4dff] hover:bg-[#651fff] font-semibold px-4"
+            className="bg-[var(--accent)] hover:opacity-90 font-semibold px-4"
           >
             {exportLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> : <Download className="h-3.5 w-3.5 mr-1.5" />}
             Export
@@ -626,33 +637,32 @@ export default function VideoComposerPage() {
         {/* MAIN BODY */}
         <div className="flex flex-1 overflow-hidden">
           {/* LEFT PANEL */}
-          <div className="w-[220px] shrink-0 overflow-y-auto flex flex-col" style={{ background: '#111119', borderRight: '1px solid #1e1e30' }}>
-            <span className="px-4 pt-4 pb-2 text-[#666] font-bold text-[10px] tracking-[1.5px] uppercase">Templates</span>
+          <div className="w-[220px] shrink-0 overflow-y-auto flex flex-col bg-[var(--surface-1)] border-r border-[var(--border)]">
+            <span className="px-4 pt-4 pb-2 text-[var(--text-low)] font-bold text-[10px] tracking-[1.5px] uppercase">Templates</span>
 
             {TEMPLATES.map((t) => (
               <div
                 key={t.name}
                 onClick={() => applyTemplate(t)}
-                className="mx-2 mb-2 p-3 rounded-md cursor-pointer border border-[#1e1e30] transition-all hover:-translate-y-px"
-                style={{ ['--tpl-color' as string]: t.color }}
+                className="mx-2 mb-2 p-3 rounded-md cursor-pointer border border-[var(--border)] transition-all hover:-translate-y-px"
                 onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = `${t.color}10`; e.currentTarget.style.borderColor = `${t.color}50`; }}
-                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.borderColor = '#1e1e30'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.borderColor = 'var(--border)'; }}
               >
                 <div className="flex items-center gap-2 mb-1">
                   <div className="w-2 h-2 rounded-full" style={{ backgroundColor: t.color, boxShadow: `0 0 6px ${t.color}60` }} />
-                  <span className="text-xs font-semibold text-[#ddd]">{t.label}</span>
+                  <span className="text-xs font-semibold text-[var(--text-high)]">{t.label}</span>
                 </div>
-                <span className="text-[10px] text-[#777] leading-tight block">{t.description}</span>
+                <span className="text-[10px] text-[var(--text-low)] leading-tight block">{t.description}</span>
                 <div className="flex gap-1 mt-1">
-                  <Badge variant="outline" className="h-[18px] text-[9px] bg-[#1a1a2e] text-[#888] border-none">{t.scenes.length} scenes</Badge>
-                  <Badge variant="outline" className="h-[18px] text-[9px] bg-[#1a1a2e] text-[#888] border-none font-mono">{formatTime(t.scenes.reduce((a, s) => a + s.duration, 0))}</Badge>
+                  <Badge variant="outline" className="h-[18px] text-[9px] bg-[var(--surface-2)] text-[var(--text-low)] border-[var(--border)]">{t.scenes.length} scenes</Badge>
+                  <Badge variant="outline" className="h-[18px] text-[9px] bg-[var(--surface-2)] text-[var(--text-low)] border-[var(--border)] font-mono">{formatTime(t.scenes.reduce((a, s) => a + s.duration, 0))}</Badge>
                 </div>
               </div>
             ))}
 
-            <Separator className="bg-[#1e1e30] my-2" />
+            <Separator className="bg-[var(--border)] my-2" />
 
-            <span className="px-4 pb-2 text-[#666] font-bold text-[10px] tracking-[1.5px] uppercase">Add Scene</span>
+            <span className="px-4 pb-2 text-[var(--text-low)] font-bold text-[10px] tracking-[1.5px] uppercase">Add Scene</span>
 
             {(Object.entries(SCENE_TYPE_META) as [SceneType, typeof SCENE_TYPE_META[SceneType]][]).map(
               ([type, meta]) => (
@@ -664,9 +674,9 @@ export default function VideoComposerPage() {
                   onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
                 >
                   <span style={{ color: meta.color }} className="flex">{meta.icon}</span>
-                  <span className="text-xs text-[#bbb]">{meta.label}</span>
+                  <span className="text-xs text-[var(--text-mid)]">{meta.label}</span>
                   <span className="flex-1" />
-                  <Plus className="h-3.5 w-3.5 text-[#555]" />
+                  <Plus className="h-3.5 w-3.5 text-[var(--text-low)]" />
                 </div>
               ),
             )}
@@ -675,15 +685,15 @@ export default function VideoComposerPage() {
           </div>
 
           {/* CENTER - Preview Canvas */}
-          <div className="flex-1 flex flex-col items-center justify-center relative overflow-hidden p-6" style={{ background: 'radial-gradient(ellipse at center, #12121d 0%, #08080f 100%)' }}>
-            <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
+          <div className="flex-1 flex flex-col items-center justify-center relative overflow-hidden p-6 bg-[var(--surface-0)]">
+            <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
 
             {/* 16:9 preview container */}
-            <div className="relative w-full max-w-[720px] aspect-video rounded-lg overflow-hidden" style={{ boxShadow: '0 8px 40px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.05)' }}>
+            <div className="relative w-full max-w-[720px] aspect-video rounded-xl overflow-hidden" style={{ boxShadow: '0 8px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05)' }}>
               {currentScene && <SceneRenderer scene={currentScene} animationState={animState} />}
 
               <div className="absolute top-3 left-3 flex items-center gap-1 bg-black/60 backdrop-blur-md rounded px-2 py-0.5">
-                <div className={`w-1.5 h-1.5 rounded-full ${isPlaying ? 'bg-[#ff5252]' : 'bg-[#666]'}`} style={isPlaying ? { animation: 'subtlePulse 1s ease infinite' } : {}} />
+                <div className={`w-1.5 h-1.5 rounded-full ${isPlaying ? 'bg-[#ff5252]' : 'bg-[var(--text-low)]'}`} style={isPlaying ? { animation: 'subtlePulse 1s ease infinite' } : {}} />
                 <span className="text-[10px] text-[#ccc] font-mono">{currentSceneIndex + 1}/{composition.scenes.length}</span>
               </div>
 
@@ -694,19 +704,19 @@ export default function VideoComposerPage() {
 
             {/* Playback controls */}
             <div className="flex items-center gap-2 mt-4">
-              <button type="button" onClick={() => jumpToScene(currentSceneIndex - 1)} disabled={currentSceneIndex === 0} className="p-1.5 text-[#aaa] disabled:text-[#444] transition-colors" aria-label="Previous scene">
+              <button type="button" onClick={() => jumpToScene(currentSceneIndex - 1)} disabled={currentSceneIndex === 0} className="p-1.5 text-[var(--text-mid)] disabled:text-[var(--text-low)] transition-colors" aria-label="Previous scene">
                 <SkipBack className="h-5 w-5" />
               </button>
 
-              <button type="button" onClick={togglePlay} className="w-11 h-11 rounded-full bg-[#7c4dff] text-white flex items-center justify-center hover:bg-[#651fff] transition-colors" style={{ boxShadow: '0 4px 20px rgba(124,77,255,0.4)' }} aria-label={isPlaying ? 'Pause' : 'Play'}>
+              <button type="button" onClick={togglePlay} className="w-11 h-11 rounded-full bg-[var(--accent)] text-white flex items-center justify-center hover:opacity-90 transition-opacity" style={{ boxShadow: '0 4px 20px color-mix(in srgb, var(--accent) 40%, transparent)' }} aria-label={isPlaying ? 'Pause' : 'Play'}>
                 {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5 ml-0.5" />}
               </button>
 
-              <button type="button" onClick={handleStop} className="p-1.5 text-[#aaa] transition-colors" aria-label="Stop">
+              <button type="button" onClick={handleStop} className="p-1.5 text-[var(--text-mid)] transition-colors" aria-label="Stop">
                 <Square className="h-5 w-5" />
               </button>
 
-              <button type="button" onClick={() => jumpToScene(currentSceneIndex + 1)} disabled={currentSceneIndex === composition.scenes.length - 1} className="p-1.5 text-[#aaa] disabled:text-[#444] transition-colors" aria-label="Next scene">
+              <button type="button" onClick={() => jumpToScene(currentSceneIndex + 1)} disabled={currentSceneIndex === composition.scenes.length - 1} className="p-1.5 text-[var(--text-mid)] disabled:text-[var(--text-low)] transition-colors" aria-label="Next scene">
                 <SkipForward className="h-5 w-5" />
               </button>
 
@@ -725,22 +735,22 @@ export default function VideoComposerPage() {
                 />
               </div>
 
-              <span className="text-xs text-[#888] font-mono min-w-[85px] text-center">
+              <span className="text-xs text-[var(--text-low)] font-mono min-w-[85px] text-center">
                 {formatTime(playheadTime)} / {formatTime(totalDuration)}
               </span>
             </div>
           </div>
 
           {/* RIGHT PANEL - Scene Properties */}
-          <div className="w-[280px] shrink-0 overflow-y-auto flex flex-col" style={{ background: '#111119', borderLeft: '1px solid #1e1e30' }}>
-            <span className="px-4 pt-4 pb-2 text-[#666] font-bold text-[10px] tracking-[1.5px] uppercase">Scene Properties</span>
+          <div className="w-[280px] shrink-0 overflow-y-auto flex flex-col bg-[var(--surface-1)] border-l border-[var(--border)]">
+            <span className="px-4 pt-4 pb-2 text-[var(--text-low)] font-bold text-[10px] tracking-[1.5px] uppercase">Scene Properties</span>
 
             {selectedScene ? (
               <div className="px-4 pb-4">
                 <div className="mb-4">
-                  <label className="block text-[11px] text-[#888] mb-1 font-semibold">Type</label>
+                  <label className="block text-[11px] text-[var(--text-low)] mb-1 font-semibold">Type</label>
                   <Select value={selectedScene.type} onValueChange={(v) => updateScene(selectedScene.id, { type: v as SceneType })}>
-                    <SelectTrigger className="bg-transparent border-[#2a2a40] text-[#ddd] hover:border-[#7c4dff40] focus:border-[#7c4dff]">
+                    <SelectTrigger className="bg-transparent border-[var(--border)] text-[var(--text-high)] hover:border-[var(--accent)] focus:border-[var(--accent)]">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -758,18 +768,18 @@ export default function VideoComposerPage() {
                 </div>
 
                 <div className="mb-4">
-                  <label className="block text-[11px] text-[#888] mb-1 font-semibold">Content</label>
+                  <label className="block text-[11px] text-[var(--text-low)] mb-1 font-semibold">Content</label>
                   <Textarea
                     rows={4}
                     value={selectedScene.content}
                     onChange={(e) => updateScene(selectedScene.id, { content: e.target.value })}
                     placeholder="Enter scene content..."
-                    className="bg-transparent border-[#2a2a40] text-[#ddd] text-[13px] hover:border-[#7c4dff40] focus:border-[#7c4dff]"
+                    className="bg-transparent border-[var(--border)] text-[var(--text-high)] text-[13px] hover:border-[var(--accent)] focus:border-[var(--accent)]"
                   />
                 </div>
 
                 <div className="mb-4">
-                  <label className="block text-[11px] text-[#888] mb-1 font-semibold">Duration: {selectedScene.duration}s</label>
+                  <label className="block text-[11px] text-[var(--text-low)] mb-1 font-semibold">Duration: {selectedScene.duration}s</label>
                   <Slider
                     value={[selectedScene.duration]}
                     min={1}
@@ -780,23 +790,23 @@ export default function VideoComposerPage() {
                 </div>
 
                 <div className="mb-4">
-                  <label className="block text-[11px] text-[#888] mb-1 font-semibold">Background Color</label>
+                  <label className="block text-[11px] text-[var(--text-low)] mb-1 font-semibold">Background Color</label>
                   <div className="flex items-center gap-2">
-                    <input type="color" value={selectedScene.bgColor} onChange={(e) => updateScene(selectedScene.id, { bgColor: e.target.value })} className="w-9 h-9 rounded-md border-2 border-[#2a2a40] cursor-pointer bg-transparent p-0.5" aria-label="Background color" title="Background color" />
-                    <Input value={selectedScene.bgColor} onChange={(e) => updateScene(selectedScene.id, { bgColor: e.target.value })} className="flex-1 bg-transparent border-[#2a2a40] text-[#ddd] text-xs font-mono hover:border-[#7c4dff40]" />
+                    <input type="color" value={selectedScene.bgColor} onChange={(e) => updateScene(selectedScene.id, { bgColor: e.target.value })} className="w-9 h-9 rounded-md border-2 border-[var(--border)] cursor-pointer bg-transparent p-0.5" aria-label="Background color" title="Background color" />
+                    <Input value={selectedScene.bgColor} onChange={(e) => updateScene(selectedScene.id, { bgColor: e.target.value })} className="flex-1 bg-transparent border-[var(--border)] text-[var(--text-high)] text-xs font-mono hover:border-[var(--accent)]" />
                   </div>
                 </div>
 
                 <div className="mb-4">
-                  <label className="block text-[11px] text-[#888] mb-1 font-semibold">Text Color</label>
+                  <label className="block text-[11px] text-[var(--text-low)] mb-1 font-semibold">Text Color</label>
                   <div className="flex items-center gap-2">
-                    <input type="color" value={selectedScene.textColor} onChange={(e) => updateScene(selectedScene.id, { textColor: e.target.value })} className="w-9 h-9 rounded-md border-2 border-[#2a2a40] cursor-pointer bg-transparent p-0.5" aria-label="Text color" title="Text color" />
-                    <Input value={selectedScene.textColor} onChange={(e) => updateScene(selectedScene.id, { textColor: e.target.value })} className="flex-1 bg-transparent border-[#2a2a40] text-[#ddd] text-xs font-mono hover:border-[#7c4dff40]" />
+                    <input type="color" value={selectedScene.textColor} onChange={(e) => updateScene(selectedScene.id, { textColor: e.target.value })} className="w-9 h-9 rounded-md border-2 border-[var(--border)] cursor-pointer bg-transparent p-0.5" aria-label="Text color" title="Text color" />
+                    <Input value={selectedScene.textColor} onChange={(e) => updateScene(selectedScene.id, { textColor: e.target.value })} className="flex-1 bg-transparent border-[var(--border)] text-[var(--text-high)] text-xs font-mono hover:border-[var(--accent)]" />
                   </div>
                 </div>
 
                 <div className="mb-4">
-                  <label className="block text-[11px] text-[#888] mb-1 font-semibold">Font Size: {selectedScene.fontSize}px</label>
+                  <label className="block text-[11px] text-[var(--text-low)] mb-1 font-semibold">Font Size: {selectedScene.fontSize}px</label>
                   <Slider
                     value={[selectedScene.fontSize]}
                     min={12}
@@ -807,9 +817,9 @@ export default function VideoComposerPage() {
                 </div>
 
                 <div className="mb-4">
-                  <label className="block text-[11px] text-[#888] mb-1 font-semibold">Transition</label>
+                  <label className="block text-[11px] text-[var(--text-low)] mb-1 font-semibold">Transition</label>
                   <Select value={selectedScene.transition} onValueChange={(v) => updateScene(selectedScene.id, { transition: v as TransitionType })}>
-                    <SelectTrigger className="bg-transparent border-[#2a2a40] text-[#ddd] hover:border-[#7c4dff40] focus:border-[#7c4dff]">
+                    <SelectTrigger className="bg-transparent border-[var(--border)] text-[var(--text-high)] hover:border-[var(--accent)] focus:border-[var(--accent)]">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -820,12 +830,12 @@ export default function VideoComposerPage() {
                   </Select>
                 </div>
 
-                <Separator className="bg-[#1e1e30] my-3" />
+                <Separator className="bg-[var(--border)] my-3" />
 
                 <div className="flex gap-2">
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <button type="button" onClick={() => duplicateScene(selectedScene.id)} className="p-1.5 text-[#888] hover:text-[#7c4dff] transition-colors" aria-label="Duplicate scene">
+                      <button type="button" onClick={() => duplicateScene(selectedScene.id)} className="p-1.5 text-[var(--text-low)] hover:text-[var(--accent)] transition-colors" aria-label="Duplicate scene">
                         <Copy className="h-4 w-4" />
                       </button>
                     </TooltipTrigger>
@@ -833,7 +843,7 @@ export default function VideoComposerPage() {
                   </Tooltip>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <button type="button" onClick={() => deleteScene(selectedScene.id)} disabled={composition.scenes.length <= 1} className="p-1.5 text-[#888] hover:text-[#f44336] disabled:text-[#333] transition-colors" aria-label="Delete scene">
+                      <button type="button" onClick={() => deleteScene(selectedScene.id)} disabled={composition.scenes.length <= 1} className="p-1.5 text-[var(--text-low)] hover:text-red-500 disabled:text-[var(--border)] transition-colors" aria-label="Delete scene">
                         <Trash2 className="h-4 w-4" />
                       </button>
                     </TooltipTrigger>
@@ -842,7 +852,7 @@ export default function VideoComposerPage() {
                 </div>
               </div>
             ) : (
-              <div className="p-4 text-center text-[#555]">
+              <div className="p-4 text-center text-[var(--text-low)]">
                 <span className="text-[13px]">Select a scene to edit</span>
               </div>
             )}
@@ -850,32 +860,32 @@ export default function VideoComposerPage() {
         </div>
 
         {/* BOTTOM - TIMELINE */}
-        <div className="shrink-0" style={{ background: 'linear-gradient(0deg, #0a0a14 0%, #111119 100%)', borderTop: '1px solid #1e1e30' }}>
-          <div className="flex items-center gap-2 px-4 py-1" style={{ borderBottom: '1px solid #1a1a28' }}>
-            <Rows3 className="h-4 w-4 text-[#555]" />
-            <span className="text-[11px] text-[#666] font-semibold tracking-wider">TIMELINE</span>
+        <div className="shrink-0 bg-[var(--surface-1)] border-t border-[var(--border)]">
+          <div className="flex items-center gap-2 px-4 py-1 border-b border-[var(--border)]">
+            <Rows3 className="h-4 w-4 text-[var(--text-low)]" />
+            <span className="text-[11px] text-[var(--text-low)] font-semibold tracking-wider">TIMELINE</span>
             <div className="flex-1" />
             <Tooltip>
               <TooltipTrigger asChild>
-                <button type="button" onClick={() => setTimelineZoom((z) => Math.max(0.5, z - 0.25))} className="p-0.5 text-[#666]" aria-label="Zoom out">
+                <button type="button" onClick={() => setTimelineZoom((z) => Math.max(0.5, z - 0.25))} className="p-0.5 text-[var(--text-low)]" aria-label="Zoom out">
                   <ZoomOut className="h-4 w-4" />
                 </button>
               </TooltipTrigger>
               <TooltipContent>Zoom out</TooltipContent>
             </Tooltip>
-            <span className="text-[10px] text-[#555] font-mono min-w-[35px] text-center">{Math.round(timelineZoom * 100)}%</span>
+            <span className="text-[10px] text-[var(--text-low)] font-mono min-w-[35px] text-center">{Math.round(timelineZoom * 100)}%</span>
             <Tooltip>
               <TooltipTrigger asChild>
-                <button type="button" onClick={() => setTimelineZoom((z) => Math.min(3, z + 0.25))} className="p-0.5 text-[#666]" aria-label="Zoom in">
+                <button type="button" onClick={() => setTimelineZoom((z) => Math.min(3, z + 0.25))} className="p-0.5 text-[var(--text-low)]" aria-label="Zoom in">
                   <ZoomIn className="h-4 w-4" />
                 </button>
               </TooltipTrigger>
               <TooltipContent>Zoom in</TooltipContent>
             </Tooltip>
-            <Separator orientation="vertical" className="h-4 bg-[#1e1e30] mx-1" />
+            <Separator orientation="vertical" className="h-4 bg-[var(--border)] mx-1" />
             <Tooltip>
               <TooltipTrigger asChild>
-                <button type="button" onClick={() => addScene('text_overlay')} className="p-0.5 text-[#7c4dff]" aria-label="Add scene">
+                <button type="button" onClick={() => addScene('text_overlay')} className="p-0.5 text-[var(--accent)]" aria-label="Add scene">
                   <Plus className="h-[18px] w-[18px]" />
                 </button>
               </TooltipTrigger>
@@ -884,19 +894,19 @@ export default function VideoComposerPage() {
           </div>
 
           {/* Scrollable timeline */}
-          <div className="overflow-x-auto overflow-y-hidden relative h-[130px] [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-track]:bg-[#0a0a14] [&::-webkit-scrollbar-thumb]:bg-[#2a2a40] [&::-webkit-scrollbar-thumb]:rounded">
+          <div className="overflow-x-auto overflow-y-hidden relative h-[130px] [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-track]:bg-[var(--surface-0)] [&::-webkit-scrollbar-thumb]:bg-[var(--border)] [&::-webkit-scrollbar-thumb]:rounded">
             <div className="relative h-full" style={{ width: Math.max(totalDuration * PX_PER_SEC + 100, 600) }}>
               {/* Time markers */}
               <div className="absolute top-0 left-0 right-0 h-6">
                 {Array.from({ length: Math.ceil(totalDuration / 5) + 1 }, (_, i) => i * 5).map((t) => (
                   <div key={t} className="absolute top-0 flex flex-col items-center" style={{ left: t * PX_PER_SEC }}>
-                    <span className="text-[9px] text-[#555] font-mono select-none mb-0.5 pl-1">{formatTime(t)}</span>
-                    <div className="w-px h-1.5 bg-[#2a2a40]" />
+                    <span className="text-[9px] text-[var(--text-low)] font-mono select-none mb-0.5 pl-1">{formatTime(t)}</span>
+                    <div className="w-px h-1.5 bg-[var(--border)]" />
                   </div>
                 ))}
                 {Array.from({ length: Math.ceil(totalDuration) + 1 }, (_, i) => i).map((t) =>
                   t % 5 !== 0 ? (
-                    <div key={`m-${t}`} className="absolute w-px h-1 bg-[#1e1e30]" style={{ left: t * PX_PER_SEC, top: 18 }} />
+                    <div key={`m-${t}`} className="absolute w-px h-1 bg-[var(--border)]" style={{ left: t * PX_PER_SEC, top: 18, opacity: 0.5 }} />
                   ) : null,
                 )}
               </div>
@@ -923,7 +933,7 @@ export default function VideoComposerPage() {
                       style={{
                         left: offset * PX_PER_SEC,
                         width,
-                        border: isSelected ? `2px solid ${meta.color}` : isCurrent ? '2px solid rgba(255,255,255,0.2)' : '1px solid #1e1e30',
+                        border: isSelected ? `2px solid ${meta.color}` : isCurrent ? '2px solid rgba(255,255,255,0.15)' : '1px solid var(--border)',
                         animation: isSelected ? 'sceneGlow 2s ease infinite' : 'none',
                         transform: isSelected ? 'translateY(-2px)' : 'none',
                         boxShadow: isSelected ? `0 4px 16px ${meta.color}30` : isCurrent ? '0 2px 8px rgba(0,0,0,0.3)' : 'none',
@@ -933,11 +943,11 @@ export default function VideoComposerPage() {
                       <div className="relative z-[1] px-2 py-1 h-full flex flex-col justify-between">
                         <div className="flex items-center gap-1">
                           <span style={{ color: meta.color }} className="flex shrink-0">{meta.icon}</span>
-                          <span className="text-[10px] text-[#ccc] font-semibold overflow-hidden text-ellipsis whitespace-nowrap">{meta.label}</span>
+                          <span className="text-[10px] text-[var(--text-high)] font-semibold overflow-hidden text-ellipsis whitespace-nowrap">{meta.label}</span>
                         </div>
-                        <span className="text-[9px] text-[#999] overflow-hidden text-ellipsis whitespace-nowrap leading-tight">{scene.content.replace(/\n/g, ' | ')}</span>
+                        <span className="text-[9px] text-[var(--text-mid)] overflow-hidden text-ellipsis whitespace-nowrap leading-tight">{scene.content.replace(/\n/g, ' | ')}</span>
                         <div className="flex items-center justify-between">
-                          <span className="text-[9px] text-[#666] font-mono">{scene.duration}s</span>
+                          <span className="text-[9px] text-[var(--text-low)] font-mono">{scene.duration}s</span>
                           {scene.transition !== 'none' && (
                             <Badge variant="outline" className="h-3.5 text-[8px] border-none px-1" style={{ backgroundColor: `${meta.color}30`, color: meta.color }}>
                               {scene.transition.replace('_', ' ')}
@@ -958,8 +968,8 @@ export default function VideoComposerPage() {
                   if (scene.transition === 'none') return null;
                   return (
                     <div key={`tr-${scene.id}`} className="absolute w-4 h-4 flex items-center justify-center" style={{ left: offset * PX_PER_SEC - 8 }}>
-                      <div className="w-3 h-3 rounded-full bg-[#1e1e30] border border-[#2a2a40] flex items-center justify-center">
-                        <div className="w-1 h-1 rounded-full bg-[#7c4dff]" />
+                      <div className="w-3 h-3 rounded-full bg-[var(--surface-2)] border border-[var(--border)] flex items-center justify-center">
+                        <div className="w-1 h-1 rounded-full bg-[var(--accent)]" />
                       </div>
                     </div>
                   );
@@ -1016,7 +1026,7 @@ export default function VideoComposerPage() {
         {/* Snackbar notification */}
         {snackMsg && (
           <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 animate-in fade-in slide-in-from-bottom-4">
-            <Alert variant="success" className="bg-[#7c4dff] border-[#7c4dff] text-white shadow-xl">
+            <Alert variant="success" className="bg-[var(--accent)] border-[var(--accent)] text-white shadow-xl">
               <AlertDescription className="flex items-center gap-2">
                 {snackMsg}
                 <button type="button" onClick={() => setSnackMsg('')} className="ml-2 text-white/80 hover:text-white" aria-label="Dismiss">

@@ -1,15 +1,8 @@
-/**
- * ConversationList - Sidebar listing all user conversations
- * Displays title, date, and message count for each conversation.
- * Supports active highlighting, deletion with confirmation, and empty state.
- */
-
 'use client';
 
 import { useState } from 'react';
 import { Plus, Trash2, MessageSquare } from 'lucide-react';
 import { Button } from '@/lib/design-hub/components/Button';
-import { Badge } from '@/components/ui/badge';
 import {
   Dialog,
   DialogContent,
@@ -29,17 +22,11 @@ import type { Conversation } from '@/features/conversation/types';
    ======================================================================== */
 
 export interface ConversationListProps {
-  /** Array of conversations to display */
   conversations: Conversation[];
-  /** Currently selected conversation ID */
   activeId: string | null;
-  /** Called when a conversation is selected */
   onSelect: (id: string) => void;
-  /** Called when the user confirms deletion of a conversation */
   onDelete: (id: string) => void;
-  /** Called to create a new conversation */
   onCreate: () => void;
-  /** Whether the list is loading */
   isLoading: boolean;
 }
 
@@ -86,16 +73,28 @@ export function ConversationList({
   return (
     <div className="flex flex-col h-full bg-[var(--bg-surface)]">
       {/* Header */}
-      <div className="p-4 pb-2">
-        <h2 className="text-lg font-semibold mb-2 text-[var(--text-high)]">Conversations</h2>
-        <Button
-          onClick={onCreate}
-          size="sm"
-          className="w-full gap-2"
-        >
-          <Plus className="h-4 w-4" />
-          New Conversation
-        </Button>
+      <div className="p-4 pb-3 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <div className="h-7 w-7 rounded-lg bg-gradient-to-br from-[var(--accent)]/20 to-[#a855f7]/20 border border-[var(--accent)]/30 flex items-center justify-center shrink-0">
+            <MessageSquare className="h-3.5 w-3.5 text-[var(--accent)]" />
+          </div>
+          <h2 className="text-sm font-semibold text-[var(--text-high)]">Conversations</h2>
+        </div>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                onClick={onCreate}
+                className="h-7 w-7 rounded-lg flex items-center justify-center bg-[var(--accent)]/10 text-[var(--accent)] hover:bg-[var(--accent)]/20 transition-colors shrink-0"
+                aria-label="New conversation"
+              >
+                <Plus className="h-4 w-4" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>New conversation</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
 
       <Separator />
@@ -103,20 +102,22 @@ export function ConversationList({
       {/* Conversation List */}
       <div className="flex-1 overflow-auto">
         {isLoading ? (
-          <div className="p-4 space-y-2">
+          <div className="p-3 space-y-1.5">
             {Array.from({ length: 4 }).map((_, i) => (
-              <Skeleton key={i} className="h-14 w-full" />
+              <Skeleton key={i} className="h-14 w-full rounded-lg" />
             ))}
           </div>
         ) : conversations.length === 0 ? (
-          <div className="p-6 flex flex-col items-center gap-2 text-[var(--text-low)]">
-            <MessageSquare className="h-12 w-12 opacity-30" />
-            <p className="text-sm text-[var(--text-low)] text-center">
-              No conversations yet. Start a new one to chat with AI.
+          <div className="p-8 flex flex-col items-center gap-3 text-[var(--text-low)]">
+            <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-[var(--accent)]/10 to-[#a855f7]/10 border border-[var(--accent)]/20 flex items-center justify-center">
+              <MessageSquare className="h-6 w-6 text-[var(--accent)]/50" />
+            </div>
+            <p className="text-xs text-[var(--text-low)] text-center leading-relaxed">
+              Start a conversation
             </p>
           </div>
         ) : (
-          <ul className="py-1">
+          <ul className="py-1.5 px-1.5 space-y-0.5">
             {conversations.map((conversation) => {
               const isActive = conversation.id === activeId;
 
@@ -127,27 +128,27 @@ export function ConversationList({
                 >
                   <button
                     onClick={() => onSelect(conversation.id)}
-                    className={`w-full text-left py-3 px-4 transition-colors ${
+                    className={`w-full text-left py-2.5 px-3 rounded-lg transition-colors ${
                       isActive
-                        ? 'bg-[var(--bg-elevated)] border-l-[3px] border-l-[var(--accent)]'
-                        : 'border-l-[3px] border-l-transparent hover:bg-[var(--bg-elevated)]/50'
+                        ? 'bg-[var(--accent)]/8 border-l-2 border-l-[var(--accent)] pl-[10px]'
+                        : 'border-l-2 border-l-transparent hover:bg-[var(--bg-elevated)]'
                     }`}
                   >
                     <p
-                      className={`text-sm truncate max-w-[180px] ${
-                        isActive ? 'font-semibold' : 'font-normal'
-                      } text-[var(--text-high)]`}
+                      className={`text-sm truncate max-w-[170px] font-medium text-[var(--text-high)] ${
+                        isActive ? 'text-[var(--accent)]' : ''
+                      }`}
                     >
                       {conversation.title || 'New Conversation'}
                     </p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="text-xs text-[var(--text-low)]">
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <span className="text-[10px] text-[var(--text-low)]">
                         {formatRelativeDate(conversation.updated_at)}
                       </span>
                       {conversation.message_count > 0 && (
-                        <Badge variant="outline" className="h-[18px] text-[0.65rem]">
-                          {conversation.message_count}
-                        </Badge>
+                        <span className="text-[10px] text-[var(--text-low)]">
+                          · {conversation.message_count}
+                        </span>
                       )}
                     </div>
                   </button>
@@ -162,9 +163,9 @@ export function ConversationList({
                             setDeleteTarget(conversation.id);
                           }}
                           aria-label="Delete conversation"
-                          className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-md hover:bg-[var(--bg-elevated)] text-[var(--text-low)] hover:text-red-400"
+                          className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-md hover:bg-[var(--error)]/10 text-[var(--text-low)] hover:text-[var(--error)]"
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 className="h-3.5 w-3.5" />
                         </button>
                       </TooltipTrigger>
                       <TooltipContent>Delete conversation</TooltipContent>

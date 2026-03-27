@@ -1,45 +1,85 @@
 'use client'
 
+import { useState } from 'react'
+
 // Third-party Imports
 import classnames from 'classnames'
 
 // Lucide Imports
-import { Search } from 'lucide-react'
+import { Search, Bell } from 'lucide-react'
 
 // Component Imports
 import NavToggle from './NavToggle'
 import ModeDropdown from '@components/layout/shared/ModeDropdown'
 import UserDropdown from '@components/layout/shared/UserDropdown'
+import NotificationsDrawer from '@/components/notifications/NotificationsDrawer'
 
-// Design Hub Imports
-import { Badge } from '@/components/ui/badge'
+// Hook Imports
+import { useUnreadCount } from '@/hooks/useNotifications'
 
 // Util Imports
 import { verticalLayoutClasses } from '@layouts/utils/layoutClasses'
 
 const NavbarContent = () => {
+  const [notifOpen, setNotifOpen] = useState(false)
+  const { data: unreadCount = 0 } = useUnreadCount()
+
+  const openCommandPalette = () => {
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true, bubbles: true }))
+  }
+
   return (
-    <div className={classnames(verticalLayoutClasses.navbarContent, 'flex items-center justify-between gap-4 is-full')}>
-      <div className='flex items-center gap-4'>
+    <div className={classnames(verticalLayoutClasses.navbarContent, 'flex items-center justify-between gap-3 is-full')}>
+
+      {/* Left — toggle */}
+      <div className='flex items-center gap-2'>
         <NavToggle />
-        <ModeDropdown />
       </div>
+
+      {/* Center — command palette trigger */}
       <div
-        onClick={() => {
-          const event = new KeyboardEvent('keydown', { key: 'k', ctrlKey: true, bubbles: true });
-          window.dispatchEvent(event);
-        }}
-        className='hidden md:flex items-center gap-2 px-4 py-1.5 rounded-lg border border-[var(--border)] cursor-pointer text-[var(--text-mid)] hover:bg-[var(--bg-elevated)] min-w-[200px]'
+        role='button'
+        tabIndex={0}
+        onClick={openCommandPalette}
+        onKeyDown={(e) => e.key === 'Enter' && openCommandPalette()}
+        aria-label='Open command palette'
+        className='hidden md:flex items-center gap-2.5 px-4 py-2 rounded-lg
+                   border border-[var(--border)] cursor-pointer
+                   text-[var(--text-mid)] hover:bg-[var(--bg-elevated)]
+                   hover:border-[color-mix(in_srgb,var(--accent)_30%,transparent)]
+                   backdrop-blur-sm transition-all duration-150
+                   min-w-[280px] max-w-[440px] w-full'
       >
-        <Search className='h-[18px] w-[18px]' />
-        <span className='flex-1 text-sm text-[var(--text-mid)]'>
-          Search...
-        </span>
-        <Badge variant='outline' className='h-5 text-[0.65rem] px-1.5 py-0'>Ctrl+K</Badge>
+        <Search className='h-4 w-4 shrink-0' />
+        <span className='flex-1 text-sm'>Search or run a command…</span>
+        <kbd className='inline-flex items-center gap-0.5 rounded border border-[var(--border)]
+                        px-1.5 py-0.5 text-[0.6rem] font-mono text-[var(--text-low)]'>
+          Ctrl+K
+        </kbd>
       </div>
-      <div className='flex items-center'>
+
+      {/* Right — actions */}
+      <div className='flex items-center gap-1'>
+        <ModeDropdown />
+
+        {/* Notification bell */}
+        <button
+          onClick={() => setNotifOpen(true)}
+          className='relative inline-flex items-center justify-center rounded-full p-2
+                     text-[var(--text-high)] hover:bg-[var(--bg-elevated)] transition-colors'
+          aria-label='Notifications'
+        >
+          <Bell className='h-5 w-5' />
+          {unreadCount > 0 && (
+            <span className='absolute top-1 right-1 w-2 h-2 rounded-full bg-[var(--error)]' />
+          )}
+        </button>
+
         <UserDropdown />
       </div>
+
+      <NotificationsDrawer open={notifOpen} onClose={() => setNotifOpen(false)} />
+
     </div>
   )
 }

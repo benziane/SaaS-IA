@@ -1,9 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { GitBranch, Play, Plus, Trash2, Clock, Sparkles, Copy, Loader2, AlertCircle } from 'lucide-react';
+import { CheckCircle2, Clock, Copy, Loader2, Play, Plus, Sparkles, Trash2, Workflow, XCircle, AlertCircle } from 'lucide-react';
 
-import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
@@ -69,6 +68,14 @@ const ACTION_ICONS: Record<string, string> = {
   condition: '❓',
 };
 
+const RUN_STATUS_ICON: Record<string, React.ReactNode> = {
+  completed: <CheckCircle2 className="h-4 w-4 text-green-400" />,
+  failed: <XCircle className="h-4 w-4 text-red-400" />,
+  running: <Loader2 className="h-4 w-4 animate-spin text-[var(--accent)]" />,
+  pending: <Clock className="h-4 w-4 text-[var(--text-mid)]" />,
+  cancelled: <XCircle className="h-4 w-4 text-yellow-400" />,
+};
+
 export default function WorkflowsPage() {
   const { data: workflows, isLoading } = useWorkflows();
   const { data: templates } = useTemplates();
@@ -126,15 +133,17 @@ export default function WorkflowsPage() {
   };
 
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2 text-[var(--text-high)]">
-            <GitBranch className="h-7 w-7 text-[var(--accent)]" /> AI Workflows
-          </h1>
-          <p className="text-sm text-[var(--text-mid)]">
-            Build no-code AI automation workflows with triggers, actions, and templates
-          </p>
+    <div className="p-5 space-y-5 animate-enter">
+      {/* Page Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-[var(--accent)] to-[#a855f7] shrink-0">
+            <Workflow className="h-5 w-5 text-white" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold text-[var(--text-high)]">AI Workflows</h1>
+            <p className="text-xs text-[var(--text-mid)]">Build no-code AI automation workflows with triggers, actions, and templates</p>
+          </div>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => setTemplatesOpen(true)}>
@@ -148,28 +157,29 @@ export default function WorkflowsPage() {
         </div>
       </div>
 
-      {/* Templates Section */}
+      {/* Quick Start Templates */}
       {templates && templates.length > 0 && !workflows?.length && (
-        <div className="mb-6">
-          <h2 className="text-lg font-semibold text-[var(--text-high)] mb-4">Quick Start with Templates</h2>
+        <div className="space-y-3">
+          <h2 className="text-sm font-semibold text-[var(--text-high)]">Quick Start with Templates</h2>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {templates.slice(0, 3).map((template) => (
-              <Card
+              <div
                 key={template.id}
-                className="cursor-pointer hover:border-[var(--accent)] hover:bg-[var(--bg-elevated)] transition-colors"
+                className="surface-card border-glow-accent rounded-xl p-4 cursor-pointer hover:border-[var(--accent)] transition-colors"
                 onClick={() => handleUseTemplate(template.id)}
               >
-                <CardContent className="p-4">
-                  <h4 className="text-base font-bold text-[var(--text-high)]">{template.name}</h4>
-                  <p className="text-sm text-[var(--text-mid)] mt-1 mb-2">
-                    {template.description}
-                  </p>
-                  <div className="flex gap-1">
-                    <Badge variant="outline">{template.category}</Badge>
-                    <Badge variant="outline">{template.nodes.length} steps</Badge>
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-7 h-7 rounded-lg flex items-center justify-center bg-gradient-to-br from-[var(--accent)] to-[#a855f7] shrink-0">
+                    <Sparkles className="h-3.5 w-3.5 text-white" />
                   </div>
-                </CardContent>
-              </Card>
+                  <h4 className="text-sm font-bold text-[var(--text-high)]">{template.name}</h4>
+                </div>
+                <p className="text-xs text-[var(--text-mid)] mb-3 line-clamp-2">{template.description}</p>
+                <div className="flex gap-1 flex-wrap">
+                  <Badge variant="outline">{template.category}</Badge>
+                  <Badge variant="outline">{template.nodes.length} steps</Badge>
+                </div>
+              </div>
             ))}
           </div>
         </div>
@@ -177,73 +187,86 @@ export default function WorkflowsPage() {
 
       {/* Workflows Grid */}
       {isLoading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
           {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-[220px] w-full rounded" />
+            <Skeleton key={i} className="h-[220px] w-full rounded-xl" />
           ))}
         </div>
       ) : !workflows?.length ? (
-        <Card>
-          <CardContent className="text-center py-16">
-            <GitBranch className="h-16 w-16 text-[var(--text-low)] mb-4 mx-auto" />
-            <h3 className="text-lg font-semibold text-[var(--text-mid)]">No workflows yet</h3>
-            <p className="text-sm text-[var(--text-mid)] mt-2 mb-4">
-              Create a workflow from scratch or use a template to get started
-            </p>
-            <div className="flex gap-2 justify-center">
-              <Button variant="outline" onClick={() => setTemplatesOpen(true)}>Browse Templates</Button>
-              <Button onClick={() => setCreateOpen(true)}>Create Blank</Button>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="surface-card rounded-xl text-center py-16 px-6">
+          <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-gradient-to-br from-[var(--accent)] to-[#a855f7] mx-auto mb-4">
+            <Workflow className="h-7 w-7 text-white" />
+          </div>
+          <h3 className="text-base font-semibold text-[var(--text-high)]">No workflows yet</h3>
+          <p className="text-sm text-[var(--text-mid)] mt-2 mb-5">
+            Create a workflow from scratch or use a template to get started
+          </p>
+          <div className="flex gap-2 justify-center">
+            <Button variant="outline" onClick={() => setTemplatesOpen(true)}>Browse Templates</Button>
+            <Button onClick={() => setCreateOpen(true)}>Create Blank</Button>
+          </div>
+        </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
           {workflows.map((workflow) => (
-            <Card key={workflow.id} className="h-full flex flex-col">
-              <CardContent className="p-4 flex-1">
-                <div className="flex items-center justify-between mb-2">
-                  <h4 className="text-base font-bold text-[var(--text-high)] truncate">
-                    {workflow.name}
-                  </h4>
-                  <Badge variant={STATUS_VARIANTS[workflow.status] || 'secondary'}>
-                    {workflow.status}
-                  </Badge>
+            <div key={workflow.id} className="surface-card border-glow-accent rounded-xl p-4 flex flex-col gap-3">
+              {/* Card Header */}
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex items-center gap-2 min-w-0">
+                  <div className="w-7 h-7 rounded-lg flex items-center justify-center bg-gradient-to-br from-[var(--accent)] to-[#a855f7] shrink-0">
+                    <Workflow className="h-3.5 w-3.5 text-white" />
+                  </div>
+                  <h4 className="text-sm font-bold text-[var(--text-high)] truncate">{workflow.name}</h4>
                 </div>
-                {workflow.description && (
-                  <p className="text-sm text-[var(--text-mid)] mb-3 line-clamp-2">
-                    {workflow.description}
-                  </p>
+                <Badge variant={STATUS_VARIANTS[workflow.status] || 'secondary'} className="shrink-0">
+                  {workflow.status}
+                </Badge>
+              </div>
+
+              {workflow.description && (
+                <p className="text-xs text-[var(--text-mid)] line-clamp-2">{workflow.description}</p>
+              )}
+
+              {/* Node flow preview */}
+              <div className="flex flex-wrap gap-1">
+                {workflow.nodes.map((node, i) => (
+                  <div key={node.id} className="flex items-center gap-1">
+                    <Badge variant="outline" className="text-xs">
+                      {ACTION_ICONS[node.action] || '⚙️'} {node.label || node.action}
+                    </Badge>
+                    {i < workflow.nodes.length - 1 && (
+                      <span className="text-xs text-[var(--text-low)]">&rarr;</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex gap-1 flex-wrap">
+                <Badge variant="outline">{TRIGGER_LABELS[workflow.trigger_type] || workflow.trigger_type}</Badge>
+                <Badge variant="outline">{workflow.run_count} runs</Badge>
+                {workflow.template_category && (
+                  <Badge variant="default">{workflow.template_category}</Badge>
                 )}
+              </div>
 
-                {/* Node flow preview */}
-                <div className="flex flex-wrap gap-1 mb-3">
-                  {workflow.nodes.map((node, i) => (
-                    <div key={node.id} className="flex items-center gap-1">
-                      <Badge variant="outline" className="text-xs">
-                        {ACTION_ICONS[node.action] || '⚙️'} {node.label || node.action}
-                      </Badge>
-                      {i < workflow.nodes.length - 1 && (
-                        <span className="text-xs text-[var(--text-low)]">&rarr;</span>
-                      )}
-                    </div>
-                  ))}
-                </div>
-
-                <div className="flex gap-1 flex-wrap">
-                  <Badge variant="outline">{TRIGGER_LABELS[workflow.trigger_type] || workflow.trigger_type}</Badge>
-                  <Badge variant="outline">{workflow.run_count} runs</Badge>
-                  {workflow.template_category && (
-                    <Badge variant="default">{workflow.template_category}</Badge>
-                  )}
-                </div>
-              </CardContent>
-              <CardFooter className="flex justify-between px-4 pb-4">
+              {/* Card Footer */}
+              <div className="flex items-center justify-between pt-1 border-t border-[var(--border)]">
                 <div className="flex gap-1">
-                  <Button variant="ghost" size="icon" className="text-red-400 hover:text-red-300" onClick={() => deleteMutation.mutate(workflow.id)}>
-                    <Trash2 className="h-4 w-4" />
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 text-red-400 hover:text-red-300"
+                    onClick={() => deleteMutation.mutate(workflow.id)}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
                   </Button>
-                  <Button variant="ghost" size="icon" onClick={() => setSelectedWorkflow(selectedWorkflow === workflow.id ? null : workflow.id)}>
-                    <Clock className="h-4 w-4" />
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7"
+                    onClick={() => setSelectedWorkflow(selectedWorkflow === workflow.id ? null : workflow.id)}
+                  >
+                    <Clock className="h-3.5 w-3.5" />
                   </Button>
                 </div>
                 <Button
@@ -251,26 +274,39 @@ export default function WorkflowsPage() {
                   onClick={() => handleTrigger(workflow.id)}
                   disabled={triggerMutation.isPending || workflow.nodes.length === 0}
                 >
-                  {triggerMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Play className="h-4 w-4 mr-1" />}
+                  {triggerMutation.isPending
+                    ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />
+                    : <Play className="h-3.5 w-3.5 mr-1" />}
                   Run
                 </Button>
-              </CardFooter>
-            </Card>
+              </div>
+            </div>
           ))}
         </div>
       )}
 
-      {/* Run History Panel */}
+      {/* Run History Panel — timeline style */}
       {selectedWorkflow && runs && (
-        <Card className="mt-6">
-          <CardContent className="p-6">
-            <h2 className="text-lg font-semibold text-[var(--text-high)] mb-4">Run History</h2>
-            {runs.length === 0 ? (
-              <p className="text-[var(--text-mid)]">No runs yet</p>
-            ) : (
-              runs.map((run) => (
-                <Card key={run.id} className="mb-2 cursor-pointer hover:border-[var(--accent)] transition-colors" onClick={() => setRunResult(run)}>
-                  <CardContent className="py-3 px-4">
+        <div className="surface-card rounded-xl p-5 space-y-4">
+          <h2 className="text-sm font-semibold text-[var(--text-high)]">Run History</h2>
+          {runs.length === 0 ? (
+            <p className="text-sm text-[var(--text-mid)]">No runs yet</p>
+          ) : (
+            <div className="relative space-y-0">
+              {/* Vertical timeline line */}
+              <div className="absolute left-[15px] top-2 bottom-2 w-px bg-[var(--border)]" />
+              {runs.map((run) => (
+                <div
+                  key={run.id}
+                  className="relative pl-9 pb-4 cursor-pointer group"
+                  onClick={() => setRunResult(run)}
+                >
+                  {/* Timeline dot */}
+                  <div className="absolute left-0 top-1 flex items-center justify-center w-[30px]">
+                    {RUN_STATUS_ICON[run.status] ?? <Clock className="h-4 w-4 text-[var(--text-mid)]" />}
+                  </div>
+
+                  <div className="surface-card rounded-lg px-4 py-3 group-hover:border-[var(--accent)] transition-colors">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <Badge variant={STATUS_VARIANTS[run.status] || 'secondary'}>{run.status}</Badge>
@@ -295,12 +331,12 @@ export default function WorkflowsPage() {
                         <AlertDescription>{run.error}</AlertDescription>
                       </Alert>
                     )}
-                  </CardContent>
-                </Card>
-              ))
-            )}
-          </CardContent>
-        </Card>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       )}
 
       {/* Run Input Dialog */}
@@ -404,31 +440,32 @@ export default function WorkflowsPage() {
           </DialogHeader>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
             {templates?.map((template) => (
-              <Card
+              <div
                 key={template.id}
-                className="cursor-pointer hover:border-[var(--accent)] hover:bg-[var(--bg-elevated)] transition-colors"
+                className="surface-card border-glow-accent rounded-xl p-4 cursor-pointer hover:border-[var(--accent)] transition-colors"
                 onClick={() => handleUseTemplate(template.id)}
               >
-                <CardContent className="p-4">
-                  <h4 className="text-base font-bold text-[var(--text-high)]">{template.name}</h4>
-                  <p className="text-sm text-[var(--text-mid)] mt-1 mb-3">
-                    {template.description}
-                  </p>
-                  <div className="flex flex-wrap gap-1 mb-2">
-                    {template.nodes.map((node, i) => (
-                      <div key={node.id} className="flex items-center gap-1">
-                        <Badge variant="outline" className="text-xs">
-                          {ACTION_ICONS[node.action] || '⚙️'} {node.label}
-                        </Badge>
-                        {i < template.nodes.length - 1 && (
-                          <span className="text-xs text-[var(--text-low)]">&rarr;</span>
-                        )}
-                      </div>
-                    ))}
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-7 h-7 rounded-lg flex items-center justify-center bg-gradient-to-br from-[var(--accent)] to-[#a855f7] shrink-0">
+                    <Sparkles className="h-3.5 w-3.5 text-white" />
                   </div>
-                  <Badge variant="default">{template.category}</Badge>
-                </CardContent>
-              </Card>
+                  <h4 className="text-sm font-bold text-[var(--text-high)]">{template.name}</h4>
+                </div>
+                <p className="text-xs text-[var(--text-mid)] mb-3 line-clamp-2">{template.description}</p>
+                <div className="flex flex-wrap gap-1 mb-2">
+                  {template.nodes.map((node, i) => (
+                    <div key={node.id} className="flex items-center gap-1">
+                      <Badge variant="outline" className="text-xs">
+                        {ACTION_ICONS[node.action] || '⚙️'} {node.label}
+                      </Badge>
+                      {i < template.nodes.length - 1 && (
+                        <span className="text-xs text-[var(--text-low)]">&rarr;</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                <Badge variant="default">{template.category}</Badge>
+              </div>
             ))}
           </div>
           {createFromTemplateMutation.isPending && (
@@ -480,7 +517,7 @@ export default function WorkflowsPage() {
       </Dialog>
 
       {triggerMutation.isError && (
-        <Alert variant="destructive" className="mt-4">
+        <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>{triggerMutation.error?.message}</AlertDescription>
         </Alert>

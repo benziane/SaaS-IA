@@ -22,6 +22,7 @@ import {
   type ReactFlowInstance,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
+import { GitBranch } from 'lucide-react';
 
 import { useCreatePipeline } from '@/features/pipelines/hooks/usePipelines';
 
@@ -99,7 +100,7 @@ const NODE_TEMPLATES: NodeTemplate[] = [
     type: 'text_input',
     category: 'input',
     label: 'Text Input',
-    icon: '\u270F',
+    icon: '✏',
     description: 'Raw text input for the pipeline',
     fields: [
       { key: 'text', label: 'Input Text', type: 'textarea', placeholder: 'Enter text to process...' },
@@ -132,7 +133,7 @@ const NODE_TEMPLATES: NodeTemplate[] = [
     type: 'generate',
     category: 'ai',
     label: 'AI Generate',
-    icon: '\u2728',
+    icon: '✨',
     description: 'Generate text using AI models',
     fields: [
       { key: 'prompt', label: 'Prompt', type: 'textarea', placeholder: 'Write a prompt...' },
@@ -202,7 +203,7 @@ const NODE_TEMPLATES: NodeTemplate[] = [
     type: 'transform',
     category: 'data',
     label: 'Transform',
-    icon: '\u2699\uFE0F',
+    icon: '⚙️',
     description: 'Transform data (split, merge, format)',
     fields: [
       { key: 'operation', label: 'Operation', type: 'select', options: ['split_text', 'merge_texts', 'extract_json', 'format_template', 'chunk_text'], defaultValue: 'split_text' },
@@ -365,7 +366,7 @@ function BaseNode({ data, selected, id }: NodeProps<BuilderNode>) {
                   textAlign: 'right',
                 }}
               >
-                {val || '\u2014'}
+                {val || '—'}
               </span>
             </div>
           );
@@ -510,7 +511,7 @@ function PropertiesPanel({
           textAlign: 'center',
         }}
       >
-        <span style={{ fontSize: 32, marginBottom: 12, opacity: 0.4 }}>{'\uD83D\uDC48'}</span>
+        <span style={{ fontSize: 32, marginBottom: 12, opacity: 0.4 }}>{'👈'}</span>
         <div style={{ fontSize: 13, fontWeight: 500 }}>Select a node</div>
         <div style={{ fontSize: 11, marginTop: 4, color: '#4b5563' }}>
           Click on a node in the canvas to edit its properties
@@ -729,7 +730,7 @@ const defaultNodes: BuilderNode[] = [
     data: {
       label: 'Text Input',
       category: 'input',
-      icon: '\u270F',
+      icon: '✏',
       templateType: 'text_input',
       fields: NODE_TEMPLATES.find((t) => t.type === 'text_input')!.fields,
       fieldValues: { text: 'Enter your text here...' },
@@ -1133,6 +1134,17 @@ export default function PipelineBuilderPage() {
           zIndex: 20,
         }}
       >
+        {/* S+++ Page header */}
+        <div className="flex items-center gap-3 mr-2">
+          <div className="w-8 h-8 rounded-xl flex items-center justify-center bg-gradient-to-br from-[var(--accent)] to-[#a855f7] shrink-0">
+            <GitBranch className="h-4 w-4 text-white" />
+          </div>
+          <div>
+            <h1 className="text-sm font-bold text-[var(--text-high)] leading-none">Pipeline Builder</h1>
+            <p className="text-[10px] text-[var(--text-mid)] leading-none mt-0.5">Advanced pipeline step builder</p>
+          </div>
+        </div>
+
         {/* Back link */}
         <a
           href="/pipelines"
@@ -1143,10 +1155,10 @@ export default function PipelineBuilderPage() {
             display: 'flex',
             alignItems: 'center',
             gap: 4,
-            marginRight: 8,
+            marginRight: 4,
           }}
         >
-          {'\u2190'} Pipelines
+          ← Pipelines
         </a>
 
         <div style={{ width: 1, height: 24, background: '#2d2b3d', marginRight: 4 }} />
@@ -1198,7 +1210,7 @@ export default function PipelineBuilderPage() {
             transition: 'all 0.15s',
           }}
         >
-          {'\u21A9'} Undo
+          ↩ Undo
         </button>
 
         <button
@@ -1218,7 +1230,7 @@ export default function PipelineBuilderPage() {
             transition: 'all 0.15s',
           }}
         >
-          {'\uD83D\uDDD1'} Clear
+          🗑 Clear
         </button>
 
         <button
@@ -1239,7 +1251,7 @@ export default function PipelineBuilderPage() {
             transition: 'all 0.15s',
           }}
         >
-          {'\u25B6'} Run
+          ▶ Run
         </button>
 
         <button
@@ -1262,7 +1274,7 @@ export default function PipelineBuilderPage() {
             opacity: createMutation.isPending ? 0.7 : 1,
           }}
         >
-          {createMutation.isPending ? 'Saving...' : '\uD83D\uDCBE Save Pipeline'}
+          {createMutation.isPending ? 'Saving...' : '💾 Save Pipeline'}
         </button>
       </div>
 
@@ -1299,7 +1311,7 @@ export default function PipelineBuilderPage() {
           }}
         >
           <span>
-            {statusMessage.type === 'success' ? '\u2714' : statusMessage.type === 'error' ? '\u2716' : '\u2139'}
+            {statusMessage.type === 'success' ? '✔' : statusMessage.type === 'error' ? '✖' : 'ℹ'}
           </span>
           {statusMessage.text}
           <button
@@ -1314,7 +1326,7 @@ export default function PipelineBuilderPage() {
               opacity: 0.6,
             }}
           >
-            {'\u2715'}
+            ✕
           </button>
         </div>
       )}
@@ -1348,7 +1360,7 @@ export default function PipelineBuilderPage() {
               textAlign: sidebarCollapsed ? 'center' : 'right',
             }}
           >
-            {sidebarCollapsed ? '\u00BB' : '\u00AB'}
+            {sidebarCollapsed ? '»' : '«'}
           </button>
 
           {!sidebarCollapsed && (
@@ -1502,7 +1514,7 @@ export default function PipelineBuilderPage() {
                     userSelect: 'none',
                   }}
                 >
-                  <div style={{ fontSize: 48, marginBottom: 12, opacity: 0.3 }}>{'\u2B50'}</div>
+                  <div style={{ fontSize: 48, marginBottom: 12, opacity: 0.3 }}>⭐</div>
                   <div style={{ fontSize: 16, fontWeight: 600, color: '#6b7280' }}>
                     Drag nodes here to build your pipeline
                   </div>
@@ -1542,7 +1554,7 @@ export default function PipelineBuilderPage() {
               textAlign: propertiesCollapsed ? 'center' : 'left',
             }}
           >
-            {propertiesCollapsed ? '\u00AB' : '\u00BB'}
+            {propertiesCollapsed ? '«' : '»'}
           </button>
 
           {!propertiesCollapsed && (

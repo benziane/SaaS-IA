@@ -9,6 +9,9 @@ import Link from 'next/link'
 // MUI Imports — required by Sneat navigationCustomStyles which uses theme.spacing/transitions
 import { useColorScheme, useTheme } from '@mui/material/styles'
 
+// Lucide Imports
+import { ChevronLeft } from 'lucide-react'
+
 // Type Imports
 import type { Mode } from '@core/types'
 
@@ -29,8 +32,8 @@ type Props = {
 }
 
 const MenuToggle = (
-  <div className='icon-wrapper'>
-    <i className='bx-bxs-chevron-left' />
+  <div className='icon-wrapper flex items-center justify-center'>
+    <ChevronLeft className='h-4 w-4 text-[var(--text-mid)]' />
   </div>
 )
 
@@ -80,21 +83,16 @@ const Navigation = (props: Props) => {
   }, [settings.layout])
 
   return (
-    // eslint-disable-next-line lines-around-comment
-    // Sidebar Vertical Menu
     <VerticalNav
       customStyles={navigationCustomStyles(verticalNavOptions, theme, settings)}
-      collapsedWidth={85}
-      backgroundColor='var(--mui-palette-background-paper)'
-      // eslint-disable-next-line lines-around-comment
-      // The following condition adds the data-dark attribute to the VerticalNav component
-      // when semiDark is enabled and the mode or systemMode is light
+      collapsedWidth={72}
+      backgroundColor='var(--bg-surface)'
       {...(isSemiDark &&
         !isDark && {
           'data-dark': ''
         })}
     >
-      {/* Nav Header including Logo & nav toggle icons  */}
+      {/* Nav Header — Logo & collapse toggle */}
       <NavHeader>
         <Link href='/'>
           <Logo />
@@ -108,14 +106,13 @@ const Navigation = (props: Props) => {
           />
         )}
       </NavHeader>
+      {/* Scroll shadow indicator */}
       <div
         ref={shadowRef}
         className='absolute top-[72px] z-[2] opacity-0 pointer-events-none w-full transition-opacity duration-150 ease-in-out [&.scrolled]:opacity-100'
         style={{
           height: theme.mixins.toolbar.minHeight,
-          background: `linear-gradient(var(--mui-palette-background-paper) ${
-            theme.direction === 'rtl' ? '95%' : '5%'
-          }, rgb(var(--mui-palette-background-paperChannel) / 0.85) 30%, rgb(var(--mui-palette-background-paperChannel) / 0.5) 65%, rgb(var(--mui-palette-background-paperChannel) / 0.3) 75%, transparent)`,
+          background: 'linear-gradient(var(--bg-surface) 5%, rgba(15,22,41,0.85) 30%, rgba(15,22,41,0.5) 65%, rgba(15,22,41,0.3) 75%, transparent)',
         }}
       />
       <VerticalMenu scrollMenu={scrollMenu} />

@@ -5,7 +5,6 @@ import {
   Share2, Plus, Trash2, Send, Clock, BarChart3, Unlink, Copy, Loader2,
 } from 'lucide-react';
 
-import { Card, CardContent, CardFooter } from '@/lib/design-hub/components/Card';
 import { Badge } from '@/lib/design-hub/components/Badge';
 import { Alert, AlertDescription } from '@/lib/design-hub/components/Alert';
 import { Button } from '@/lib/design-hub/components/Button';
@@ -147,36 +146,34 @@ export default function SocialPublisherPage() {
     });
 
     return (
-      <Card key={post.id} className="mb-2">
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex gap-1 flex-wrap">
-              {platformChips}
-            </div>
-            <Badge variant={STATUS_VARIANT[post.status] || 'secondary'}>
-              {post.status}
-            </Badge>
+      <div key={post.id} className="surface-card p-5 mb-2">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex gap-1 flex-wrap">
+            {platformChips}
           </div>
-          <p className="text-sm whitespace-pre-wrap overflow-hidden text-ellipsis line-clamp-4 mb-2">
-            {post.content}
-          </p>
-          {post.hashtags.length > 0 && (
-            <div className="flex gap-1 flex-wrap mb-2">
-              {post.hashtags.map((h) => (
-                <Badge key={h} variant="outline">#{h}</Badge>
-              ))}
-            </div>
-          )}
-          <p className="text-xs text-[var(--text-low)]">
-            {post.schedule_at
-              ? `Scheduled: ${new Date(post.schedule_at).toLocaleString()}`
-              : post.published_at
-              ? `Published: ${new Date(post.published_at).toLocaleString()}`
-              : `Created: ${new Date(post.created_at).toLocaleString()}`}
-          </p>
-        </CardContent>
+          <Badge variant={STATUS_VARIANT[post.status] || 'secondary'}>
+            {post.status}
+          </Badge>
+        </div>
+        <p className="text-sm whitespace-pre-wrap overflow-hidden text-ellipsis line-clamp-4 mb-2">
+          {post.content}
+        </p>
+        {post.hashtags.length > 0 && (
+          <div className="flex gap-1 flex-wrap mb-2">
+            {post.hashtags.map((h) => (
+              <Badge key={h} variant="outline">#{h}</Badge>
+            ))}
+          </div>
+        )}
+        <p className="text-xs text-[var(--text-low)]">
+          {post.schedule_at
+            ? `Scheduled: ${new Date(post.schedule_at).toLocaleString()}`
+            : post.published_at
+            ? `Published: ${new Date(post.published_at).toLocaleString()}`
+            : `Created: ${new Date(post.created_at).toLocaleString()}`}
+        </p>
         {showActions && (
-          <CardFooter className="justify-end gap-1 pt-0 px-4 pb-3">
+          <div className="flex justify-end gap-1 pt-3 mt-3 border-t border-[var(--border)]">
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -233,22 +230,22 @@ export default function SocialPublisherPage() {
                 </Tooltip>
               )}
             </TooltipProvider>
-          </CardFooter>
+          </div>
         )}
-      </Card>
+      </div>
     );
   };
 
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-between mb-6">
+    <div className="p-5 space-y-5 animate-enter">
+      {/* Header */}
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-[var(--accent)] to-[#a855f7] shrink-0">
+          <Share2 className="h-5 w-5 text-white" />
+        </div>
         <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Share2 className="h-6 w-6 text-[var(--accent)]" /> Social Publisher
-          </h1>
-          <p className="text-sm text-[var(--text-mid)]">
-            Compose, schedule, and publish to multiple social media platforms
-          </p>
+          <h1 className="text-xl font-bold text-[var(--text-high)]">Social Publisher</h1>
+          <p className="text-xs text-[var(--text-mid)]">Multi-platform social publishing</p>
         </div>
       </div>
 
@@ -264,235 +261,223 @@ export default function SocialPublisherPage() {
         <TabsContent value="compose">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="md:col-span-2">
-              <Card>
-                <CardContent className="p-6">
-                  <h3 className="text-lg font-semibold mb-4">New Post</h3>
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium mb-1 text-[var(--text-mid)]">What do you want to share?</label>
-                    <Textarea
-                      rows={6}
-                      placeholder="Write your post content here..."
-                      value={content}
-                      onChange={(e) => setContent(e.target.value)}
-                      maxLength={10000}
+              <div className="surface-card p-5">
+                <h3 className="text-lg font-semibold mb-4">New Post</h3>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium mb-1 text-[var(--text-mid)]">What do you want to share?</label>
+                  <Textarea
+                    rows={6}
+                    placeholder="Write your post content here..."
+                    value={content}
+                    onChange={(e) => setContent(e.target.value)}
+                    maxLength={10000}
+                  />
+                  <p className="text-xs text-[var(--text-low)] mt-1">{content.length} / 10,000 characters</p>
+                </div>
+
+                <h4 className="text-sm font-semibold mb-2">Target Platforms</h4>
+                <div className="flex flex-wrap gap-1.5 mb-4">
+                  {PLATFORM_OPTIONS.map((p) => (
+                    <button
+                      key={p.id}
+                      type="button"
+                      className="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold border transition-colors cursor-pointer"
+                      style={
+                        selectedPlatforms.includes(p.id)
+                          ? { backgroundColor: p.color, color: '#fff', borderColor: p.color }
+                          : { borderColor: 'var(--border)', color: 'var(--text-mid)', backgroundColor: 'transparent' }
+                      }
+                      onClick={() => togglePlatform(p.id)}
+                    >
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-1 text-[var(--text-mid)]">Hashtags (comma separated)</label>
+                    <Input
+                      placeholder="AI, SaaS, innovation"
+                      value={hashtags}
+                      onChange={(e) => setHashtags(e.target.value)}
                     />
-                    <p className="text-xs text-[var(--text-low)] mt-1">{content.length} / 10,000 characters</p>
                   </div>
-
-                  <h4 className="text-sm font-semibold mb-2">Target Platforms</h4>
-                  <div className="flex flex-wrap gap-1.5 mb-4">
-                    {PLATFORM_OPTIONS.map((p) => (
-                      <button
-                        key={p.id}
-                        type="button"
-                        className="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold border transition-colors cursor-pointer"
-                        style={
-                          selectedPlatforms.includes(p.id)
-                            ? { backgroundColor: p.color, color: '#fff', borderColor: p.color }
-                            : { borderColor: 'var(--border)', color: 'var(--text-mid)', backgroundColor: 'transparent' }
-                        }
-                        onClick={() => togglePlatform(p.id)}
-                      >
-                        {p.label}
-                      </button>
-                    ))}
+                  <div>
+                    <label className="block text-sm font-medium mb-1 text-[var(--text-mid)]">Schedule (optional)</label>
+                    <Input
+                      type="datetime-local"
+                      value={scheduleDate}
+                      onChange={(e) => setScheduleDate(e.target.value)}
+                    />
                   </div>
+                </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium mb-1 text-[var(--text-mid)]">Hashtags (comma separated)</label>
-                      <Input
-                        placeholder="AI, SaaS, innovation"
-                        value={hashtags}
-                        onChange={(e) => setHashtags(e.target.value)}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1 text-[var(--text-mid)]">Schedule (optional)</label>
-                      <Input
-                        type="datetime-local"
-                        value={scheduleDate}
-                        onChange={(e) => setScheduleDate(e.target.value)}
-                      />
-                    </div>
-                  </div>
+                <div className="flex gap-2 mt-6 justify-end">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      if (!scheduleDate) return;
+                      handleCompose();
+                    }}
+                    disabled={!content.trim() || selectedPlatforms.length === 0 || !scheduleDate || createPostMutation.isPending}
+                  >
+                    <Clock className="h-4 w-4 mr-1" />
+                    Schedule
+                  </Button>
+                  <Button
+                    onClick={handleCompose}
+                    disabled={!content.trim() || selectedPlatforms.length === 0 || createPostMutation.isPending}
+                  >
+                    {createPostMutation.isPending
+                      ? <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                      : <Send className="h-4 w-4 mr-1" />}
+                    {scheduleDate ? 'Schedule Post' : 'Create Draft'}
+                  </Button>
+                </div>
 
-                  <div className="flex gap-2 mt-6 justify-end">
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        if (!scheduleDate) return;
-                        handleCompose();
-                      }}
-                      disabled={!content.trim() || selectedPlatforms.length === 0 || !scheduleDate || createPostMutation.isPending}
-                    >
-                      <Clock className="h-4 w-4 mr-1" />
-                      Schedule
-                    </Button>
-                    <Button
-                      onClick={handleCompose}
-                      disabled={!content.trim() || selectedPlatforms.length === 0 || createPostMutation.isPending}
-                    >
-                      {createPostMutation.isPending
-                        ? <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-                        : <Send className="h-4 w-4 mr-1" />}
-                      {scheduleDate ? 'Schedule Post' : 'Create Draft'}
-                    </Button>
-                  </div>
-
-                  {createPostMutation.isError && (
-                    <Alert variant="destructive" className="mt-4">
-                      <AlertDescription>{createPostMutation.error?.message}</AlertDescription>
-                    </Alert>
-                  )}
-                  {createPostMutation.isSuccess && (
-                    <Alert variant="success" className="mt-4">
-                      <AlertDescription>Post created successfully!</AlertDescription>
-                    </Alert>
-                  )}
-                </CardContent>
-              </Card>
+                {createPostMutation.isError && (
+                  <Alert variant="destructive" className="mt-4">
+                    <AlertDescription>{createPostMutation.error?.message}</AlertDescription>
+                  </Alert>
+                )}
+                {createPostMutation.isSuccess && (
+                  <Alert variant="success" className="mt-4">
+                    <AlertDescription>Post created successfully!</AlertDescription>
+                  </Alert>
+                )}
+              </div>
             </div>
 
             {/* Draft Posts sidebar */}
             <div>
-              <Card>
-                <CardContent className="p-6">
-                  <h3 className="text-lg font-semibold mb-4">Drafts ({draftPosts.length})</h3>
-                  {postsLoading ? (
-                    <Skeleton className="h-[200px] w-full" />
-                  ) : draftPosts.length === 0 ? (
-                    <p className="text-[var(--text-mid)] text-center py-8">
-                      No draft posts yet
-                    </p>
-                  ) : (
-                    draftPosts.map((post) => renderPostCard(post))
-                  )}
-                </CardContent>
-              </Card>
+              <div className="surface-card p-5">
+                <h3 className="text-lg font-semibold mb-4">Drafts ({draftPosts.length})</h3>
+                {postsLoading ? (
+                  <Skeleton className="h-[200px] w-full" />
+                ) : draftPosts.length === 0 ? (
+                  <p className="text-[var(--text-mid)] text-center py-8">
+                    No draft posts yet
+                  </p>
+                ) : (
+                  draftPosts.map((post) => renderPostCard(post))
+                )}
+              </div>
             </div>
           </div>
         </TabsContent>
 
         {/* ---- Scheduled Tab ---- */}
         <TabsContent value="scheduled">
-          <Card>
-            <CardContent className="p-6">
-              <h3 className="text-lg font-semibold mb-4">Scheduled Posts</h3>
-              {postsLoading ? (
-                <Skeleton className="h-[300px] w-full" />
-              ) : scheduledPosts.length === 0 ? (
-                <div className="text-center py-12">
-                  <Clock className="h-12 w-12 text-[var(--text-low)] mx-auto mb-2" />
-                  <p className="text-[var(--text-mid)]">No scheduled posts</p>
-                  <p className="text-sm text-[var(--text-mid)]">
-                    Schedule posts from the Compose tab
-                  </p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                  {scheduledPosts.map((post) => (
-                    <div key={post.id}>
-                      {renderPostCard(post)}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <div className="surface-card p-5">
+            <h3 className="text-lg font-semibold mb-4">Scheduled Posts</h3>
+            {postsLoading ? (
+              <Skeleton className="h-[300px] w-full" />
+            ) : scheduledPosts.length === 0 ? (
+              <div className="text-center py-12">
+                <Clock className="h-12 w-12 text-[var(--text-low)] mx-auto mb-2" />
+                <p className="text-[var(--text-mid)]">No scheduled posts</p>
+                <p className="text-sm text-[var(--text-mid)]">
+                  Schedule posts from the Compose tab
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                {scheduledPosts.map((post) => (
+                  <div key={post.id}>
+                    {renderPostCard(post)}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </TabsContent>
 
         {/* ---- Published Tab ---- */}
         <TabsContent value="published">
-          <Card>
-            <CardContent className="p-6">
-              <h3 className="text-lg font-semibold mb-4">Published Posts</h3>
-              {postsLoading ? (
-                <Skeleton className="h-[300px] w-full" />
-              ) : publishedPosts.length === 0 ? (
-                <div className="text-center py-12">
-                  <Share2 className="h-12 w-12 text-[var(--text-low)] mx-auto mb-2" />
-                  <p className="text-[var(--text-mid)]">No published posts yet</p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                  {publishedPosts.map((post) => (
-                    <div key={post.id}>
-                      {renderPostCard(post)}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <div className="surface-card p-5">
+            <h3 className="text-lg font-semibold mb-4">Published Posts</h3>
+            {postsLoading ? (
+              <Skeleton className="h-[300px] w-full" />
+            ) : publishedPosts.length === 0 ? (
+              <div className="text-center py-12">
+                <Share2 className="h-12 w-12 text-[var(--text-low)] mx-auto mb-2" />
+                <p className="text-[var(--text-mid)]">No published posts yet</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                {publishedPosts.map((post) => (
+                  <div key={post.id}>
+                    {renderPostCard(post)}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </TabsContent>
 
         {/* ---- Accounts Tab ---- */}
         <TabsContent value="accounts">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold">Connected Accounts</h3>
-                <Button size="sm" onClick={() => setConnectOpen(true)}>
-                  <Plus className="h-4 w-4 mr-1" />
-                  Connect Account
+          <div className="surface-card p-5">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold">Connected Accounts</h3>
+              <Button size="sm" onClick={() => setConnectOpen(true)}>
+                <Plus className="h-4 w-4 mr-1" />
+                Connect Account
+              </Button>
+            </div>
+            {accountsLoading ? (
+              <Skeleton className="h-[200px] w-full" />
+            ) : !accounts?.length ? (
+              <div className="text-center py-12">
+                <Unlink className="h-12 w-12 text-[var(--text-low)] mx-auto mb-2" />
+                <p className="text-[var(--text-mid)]">No accounts connected</p>
+                <Button variant="ghost" size="sm" onClick={() => setConnectOpen(true)} className="mt-2">
+                  Connect your first account
                 </Button>
               </div>
-              {accountsLoading ? (
-                <Skeleton className="h-[200px] w-full" />
-              ) : !accounts?.length ? (
-                <div className="text-center py-12">
-                  <Unlink className="h-12 w-12 text-[var(--text-low)] mx-auto mb-2" />
-                  <p className="text-[var(--text-mid)]">No accounts connected</p>
-                  <Button variant="ghost" size="sm" onClick={() => setConnectOpen(true)} className="mt-2">
-                    Connect your first account
-                  </Button>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                  {accounts.map((account) => {
-                    const platformInfo = PLATFORM_OPTIONS.find((p) => p.id === account.platform);
-                    return (
-                      <Card key={account.id}>
-                        <CardContent className="p-4">
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <span
-                                className="inline-flex items-center rounded px-2 py-0.5 text-xs font-semibold text-white mb-2"
-                                style={{ backgroundColor: platformInfo?.color }}
-                              >
-                                {platformInfo?.label || account.platform}
-                              </span>
-                              <p className="text-sm font-semibold">{account.account_name}</p>
-                              <p className="text-xs text-[var(--text-low)]">
-                                Connected {new Date(account.created_at).toLocaleDateString()}
-                              </p>
-                            </div>
-                            <Badge variant={account.is_active ? 'success' : 'secondary'}>
-                              {account.is_active ? 'Active' : 'Inactive'}
-                            </Badge>
-                          </div>
-                        </CardContent>
-                        <CardFooter className="justify-end px-4 pb-3 pt-0">
-                          {account.is_active && (
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              onClick={() => disconnectMutation.mutate(account.id)}
-                              disabled={disconnectMutation.isPending}
-                            >
-                              <Unlink className="h-4 w-4 mr-1" />
-                              Disconnect
-                            </Button>
-                          )}
-                        </CardFooter>
-                      </Card>
-                    );
-                  })}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                {accounts.map((account) => {
+                  const platformInfo = PLATFORM_OPTIONS.find((p) => p.id === account.platform);
+                  return (
+                    <div key={account.id} className="surface-card p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <span
+                            className="inline-flex items-center rounded px-2 py-0.5 text-xs font-semibold text-white mb-2"
+                            style={{ backgroundColor: platformInfo?.color }}
+                          >
+                            {platformInfo?.label || account.platform}
+                          </span>
+                          <p className="text-sm font-semibold">{account.account_name}</p>
+                          <p className="text-xs text-[var(--text-low)]">
+                            Connected {new Date(account.created_at).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <Badge variant={account.is_active ? 'success' : 'secondary'}>
+                          {account.is_active ? 'Active' : 'Inactive'}
+                        </Badge>
+                      </div>
+                      {account.is_active && (
+                        <div className="flex justify-end pt-3 mt-3 border-t border-[var(--border)]">
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => disconnectMutation.mutate(account.id)}
+                            disabled={disconnectMutation.isPending}
+                          >
+                            <Unlink className="h-4 w-4 mr-1" />
+                            Disconnect
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </TabsContent>
       </Tabs>
 
@@ -564,34 +549,32 @@ export default function SocialPublisherPage() {
             analytics.map((a) => {
               const platformInfo = PLATFORM_OPTIONS.find((p) => p.id === a.platform);
               return (
-                <Card key={a.platform} className="mb-3">
-                  <CardContent className="p-4">
-                    <span
-                      className="inline-flex items-center rounded px-2 py-0.5 text-xs font-semibold text-white mb-3"
-                      style={{ backgroundColor: platformInfo?.color }}
-                    >
-                      {platformInfo?.label || a.platform}
-                    </span>
-                    <div className="grid grid-cols-4 gap-4">
-                      <div className="text-center">
-                        <p className="text-lg font-semibold">{a.impressions.toLocaleString()}</p>
-                        <p className="text-xs text-[var(--text-low)]">Impressions</p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-lg font-semibold">{a.engagements.toLocaleString()}</p>
-                        <p className="text-xs text-[var(--text-low)]">Engagements</p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-lg font-semibold">{a.clicks.toLocaleString()}</p>
-                        <p className="text-xs text-[var(--text-low)]">Clicks</p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-lg font-semibold">{a.shares.toLocaleString()}</p>
-                        <p className="text-xs text-[var(--text-low)]">Shares</p>
-                      </div>
+                <div key={a.platform} className="surface-card p-4 mb-3">
+                  <span
+                    className="inline-flex items-center rounded px-2 py-0.5 text-xs font-semibold text-white mb-3"
+                    style={{ backgroundColor: platformInfo?.color }}
+                  >
+                    {platformInfo?.label || a.platform}
+                  </span>
+                  <div className="grid grid-cols-4 gap-4">
+                    <div className="text-center">
+                      <p className="text-lg font-semibold">{a.impressions.toLocaleString()}</p>
+                      <p className="text-xs text-[var(--text-low)]">Impressions</p>
                     </div>
-                  </CardContent>
-                </Card>
+                    <div className="text-center">
+                      <p className="text-lg font-semibold">{a.engagements.toLocaleString()}</p>
+                      <p className="text-xs text-[var(--text-low)]">Engagements</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-lg font-semibold">{a.clicks.toLocaleString()}</p>
+                      <p className="text-xs text-[var(--text-low)]">Clicks</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-lg font-semibold">{a.shares.toLocaleString()}</p>
+                      <p className="text-xs text-[var(--text-low)]">Shares</p>
+                    </div>
+                  </div>
+                </div>
               );
             })
           )}

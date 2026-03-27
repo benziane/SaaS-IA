@@ -5,7 +5,6 @@ import {
   Plus, Trash2, Presentation, Download, ChevronLeft, ChevronRight, Copy, Loader2,
 } from 'lucide-react';
 
-import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/lib/design-hub/components/Button';
@@ -120,196 +119,191 @@ export default function PresentationsPage() {
   const slide = slides[currentSlide] || null;
 
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-3xl font-bold text-[var(--text-high)] flex items-center gap-2">
-            <Presentation className="h-8 w-8 text-[var(--accent)]" /> Presentations
-          </h1>
-          <p className="text-sm text-[var(--text-mid)]">
-            Generate AI-powered slide decks from topics, text, or transcriptions
-          </p>
+    <div className="p-5 space-y-5 animate-enter">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-[var(--accent)] to-[#a855f7] shrink-0">
+            <Presentation className="h-5 w-5 text-white" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold text-[var(--text-high)]">Presentations</h1>
+            <p className="text-xs text-[var(--text-mid)]">AI-powered slide generation</p>
+          </div>
         </div>
         <Button onClick={() => setCreateOpen(true)}>
           <Plus className="h-4 w-4 mr-2" /> New Presentation
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
         {/* Presentations List */}
         <div className="md:col-span-4">
-          <Card>
-            <CardContent className="p-6">
-              <h3 className="text-lg font-semibold text-[var(--text-high)] mb-4">My Presentations</h3>
-              {isLoading ? (
-                <Skeleton className="h-52 rounded-lg" />
-              ) : !presentations?.length ? (
-                <div className="text-center py-8">
-                  <Presentation className="h-12 w-12 text-[var(--text-low)] mx-auto mb-2" />
-                  <p className="text-[var(--text-mid)]">No presentations yet</p>
-                  <Button size="sm" variant="outline" className="mt-2" onClick={() => setCreateOpen(true)}>
-                    Create your first presentation
-                  </Button>
+          <div className="surface-card p-5">
+            <h3 className="text-lg font-semibold text-[var(--text-high)] mb-4">My Presentations</h3>
+            {isLoading ? (
+              <Skeleton className="h-52 rounded-lg" />
+            ) : !presentations?.length ? (
+              <div className="text-center py-8">
+                <Presentation className="h-12 w-12 text-[var(--text-low)] mx-auto mb-2" />
+                <p className="text-[var(--text-mid)]">No presentations yet</p>
+                <Button size="sm" variant="outline" className="mt-2" onClick={() => setCreateOpen(true)}>
+                  Create your first presentation
+                </Button>
+              </div>
+            ) : (
+              presentations.map((pres) => (
+                <div
+                  key={pres.id}
+                  className={`surface-card mb-2 cursor-pointer border border-[var(--border)] transition-colors hover:bg-[var(--bg-hover)] ${
+                    activePresentation?.id === pres.id ? 'bg-[var(--bg-surface)]' : ''
+                  }`}
+                  onClick={() => {
+                    setActivePresentation(pres);
+                    setCurrentSlide(0);
+                  }}
+                >
+                  <div className="py-3 px-4">
+                    <p className="text-sm font-medium text-[var(--text-high)]">{pres.title}</p>
+                    <span className="text-xs text-[var(--text-mid)] block mt-1">
+                      {pres.topic.substring(0, 80)}{pres.topic.length > 80 ? '...' : ''}
+                    </span>
+                    <div className="flex gap-1 mt-1 flex-wrap">
+                      <Badge variant="outline">{pres.template}</Badge>
+                      <Badge variant="outline">{pres.num_slides} slides</Badge>
+                      <Badge variant={STATUS_VARIANTS[pres.status] || 'default'}>{pres.status}</Badge>
+                    </div>
+                  </div>
+                  <div className="flex justify-end pt-0 px-4 pb-2">
+                    <button
+                      type="button"
+                      title="Delete"
+                      className="p-1 rounded hover:bg-red-100 text-red-500"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deleteMutation.mutate(pres.id);
+                        if (activePresentation?.id === pres.id) setActivePresentation(null);
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
                 </div>
-              ) : (
-                presentations.map((pres) => (
-                  <Card
-                    key={pres.id}
-                    className={`mb-2 cursor-pointer border border-[var(--border)] transition-colors hover:bg-[var(--bg-hover)] ${
-                      activePresentation?.id === pres.id ? 'bg-[var(--bg-surface)]' : ''
-                    }`}
-                    onClick={() => {
-                      setActivePresentation(pres);
-                      setCurrentSlide(0);
-                    }}
-                  >
-                    <CardContent className="py-3 px-4">
-                      <p className="text-sm font-medium text-[var(--text-high)]">{pres.title}</p>
-                      <span className="text-xs text-[var(--text-mid)] block mt-1">
-                        {pres.topic.substring(0, 80)}{pres.topic.length > 80 ? '...' : ''}
-                      </span>
-                      <div className="flex gap-1 mt-1 flex-wrap">
-                        <Badge variant="outline">{pres.template}</Badge>
-                        <Badge variant="outline">{pres.num_slides} slides</Badge>
-                        <Badge variant={STATUS_VARIANTS[pres.status] || 'default'}>{pres.status}</Badge>
-                      </div>
-                    </CardContent>
-                    <CardFooter className="justify-end pt-0 px-4 pb-2">
-                      <button
-                        type="button"
-                        title="Delete"
-                        className="p-1 rounded hover:bg-red-100 text-red-500"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          deleteMutation.mutate(pres.id);
-                          if (activePresentation?.id === pres.id) setActivePresentation(null);
-                        }}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </CardFooter>
-                  </Card>
-                ))
-              )}
-            </CardContent>
-          </Card>
+              ))
+            )}
+          </div>
         </div>
 
         {/* Slide Viewer */}
         <div className="md:col-span-8">
           {activePresentation && slide ? (
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-[var(--text-high)]">{activePresentation.title}</h3>
-                  <div className="flex gap-2">
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <button type="button" title="Export" className="p-1.5 rounded hover:bg-[var(--bg-hover)]" onClick={() => setExportOpen(true)}>
-                            <Download className="h-5 w-5 text-[var(--text-mid)]" />
-                          </button>
-                        </TooltipTrigger>
-                        <TooltipContent>Export</TooltipContent>
-                      </Tooltip>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <button type="button" title="Copy slide content" className="p-1.5 rounded hover:bg-[var(--bg-hover)]" onClick={() => handleCopy(slide.content)}>
-                            <Copy className="h-5 w-5 text-[var(--text-mid)]" />
-                          </button>
-                        </TooltipTrigger>
-                        <TooltipContent>Copy slide content</TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </div>
+            <div className="surface-card p-5">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-[var(--text-high)]">{activePresentation.title}</h3>
+                <div className="flex gap-2">
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button type="button" title="Export" className="p-1.5 rounded hover:bg-[var(--bg-hover)]" onClick={() => setExportOpen(true)}>
+                          <Download className="h-5 w-5 text-[var(--text-mid)]" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent>Export</TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button type="button" title="Copy slide content" className="p-1.5 rounded hover:bg-[var(--bg-hover)]" onClick={() => handleCopy(slide.content)}>
+                          <Copy className="h-5 w-5 text-[var(--text-mid)]" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent>Copy slide content</TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 </div>
+              </div>
 
-                {/* Slide display */}
-                <Card className="min-h-[400px] flex flex-col justify-center p-8 bg-gray-50 dark:bg-gray-900 border border-[var(--border)]">
-                  <h2
-                    className={`mb-4 font-bold ${
-                      slide.layout === 'title_slide' ? 'text-3xl text-center' : 'text-xl'
-                    } ${
-                      slide.layout === 'section_header' ? 'text-center' : ''
-                    } text-[var(--text-high)]`}
-                  >
-                    {slide.title}
-                  </h2>
-                  <p
-                    className={`text-[var(--text-high)] whitespace-pre-wrap leading-relaxed ${
-                      slide.layout === 'quote' ? 'text-center italic' : ''
-                    }`}
-                  >
-                    {slide.content}
-                  </p>
-                  {slide.notes && (
-                    <div className="mt-6 pt-4 border-t border-dashed border-[var(--border)]">
-                      <span className="text-xs text-[var(--text-mid)]">
-                        Speaker notes: {slide.notes}
-                      </span>
-                    </div>
-                  )}
-                </Card>
-
-                {/* Navigation */}
-                <div className="flex items-center justify-center gap-4 mt-4">
-                  <button
-                    type="button"
-                    title="Previous slide"
-                    className="p-1.5 rounded hover:bg-[var(--bg-hover)] disabled:opacity-40"
-                    onClick={() => setCurrentSlide((prev) => Math.max(0, prev - 1))}
-                    disabled={currentSlide === 0}
-                  >
-                    <ChevronLeft className="h-5 w-5 text-[var(--text-mid)]" />
-                  </button>
-                  <span className="text-sm text-[var(--text-mid)]">
-                    Slide {currentSlide + 1} / {slides.length}
-                  </span>
-                  <button
-                    type="button"
-                    title="Next slide"
-                    className="p-1.5 rounded hover:bg-[var(--bg-hover)] disabled:opacity-40"
-                    onClick={() => setCurrentSlide((prev) => Math.min(slides.length - 1, prev + 1))}
-                    disabled={currentSlide === slides.length - 1}
-                  >
-                    <ChevronRight className="h-5 w-5 text-[var(--text-mid)]" />
-                  </button>
-                </div>
-
-                {/* Slide thumbnails */}
-                <div className="flex gap-1 mt-4 overflow-x-auto pb-2">
-                  {slides.map((s, idx) => (
-                    <Badge
-                      key={idx}
-                      variant={idx === currentSlide ? 'default' : 'outline'}
-                      className="cursor-pointer shrink-0"
-                      onClick={() => setCurrentSlide(idx)}
-                    >
-                      {idx + 1}. {s.title.substring(0, 20)}{s.title.length > 20 ? '...' : ''}
-                    </Badge>
-                  ))}
-                </div>
-
-                <Separator className="my-4" />
-                <div className="flex gap-4">
-                  <span className="text-xs text-[var(--text-mid)]">Template: {activePresentation.template}</span>
-                  <span className="text-xs text-[var(--text-mid)]">Style: {activePresentation.style}</span>
-                  <span className="text-xs text-[var(--text-mid)]">Layout: {slide.layout}</span>
-                </div>
-              </CardContent>
-            </Card>
-          ) : (
-            <Card>
-              <CardContent className="text-center py-16 px-6">
-                <Presentation className="h-16 w-16 text-[var(--text-low)] mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-[var(--text-mid)]">
-                  Select a presentation or create a new one
-                </h3>
-                <p className="text-sm text-[var(--text-mid)] mt-2">
-                  Enter a topic, choose a template, and let AI generate your slide deck
+              {/* Slide display */}
+              <div className="surface-card min-h-[400px] flex flex-col justify-center p-8 bg-gray-50 dark:bg-gray-900 border border-[var(--border)]">
+                <h2
+                  className={`mb-4 font-bold ${
+                    slide.layout === 'title_slide' ? 'text-3xl text-center' : 'text-xl'
+                  } ${
+                    slide.layout === 'section_header' ? 'text-center' : ''
+                  } text-[var(--text-high)]`}
+                >
+                  {slide.title}
+                </h2>
+                <p
+                  className={`text-[var(--text-high)] whitespace-pre-wrap leading-relaxed ${
+                    slide.layout === 'quote' ? 'text-center italic' : ''
+                  }`}
+                >
+                  {slide.content}
                 </p>
-              </CardContent>
-            </Card>
+                {slide.notes && (
+                  <div className="mt-6 pt-4 border-t border-dashed border-[var(--border)]">
+                    <span className="text-xs text-[var(--text-mid)]">
+                      Speaker notes: {slide.notes}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Navigation */}
+              <div className="flex items-center justify-center gap-4 mt-4">
+                <button
+                  type="button"
+                  title="Previous slide"
+                  className="p-1.5 rounded hover:bg-[var(--bg-hover)] disabled:opacity-40"
+                  onClick={() => setCurrentSlide((prev) => Math.max(0, prev - 1))}
+                  disabled={currentSlide === 0}
+                >
+                  <ChevronLeft className="h-5 w-5 text-[var(--text-mid)]" />
+                </button>
+                <span className="text-sm text-[var(--text-mid)]">
+                  Slide {currentSlide + 1} / {slides.length}
+                </span>
+                <button
+                  type="button"
+                  title="Next slide"
+                  className="p-1.5 rounded hover:bg-[var(--bg-hover)] disabled:opacity-40"
+                  onClick={() => setCurrentSlide((prev) => Math.min(slides.length - 1, prev + 1))}
+                  disabled={currentSlide === slides.length - 1}
+                >
+                  <ChevronRight className="h-5 w-5 text-[var(--text-mid)]" />
+                </button>
+              </div>
+
+              {/* Slide thumbnails */}
+              <div className="flex gap-1 mt-4 overflow-x-auto pb-2">
+                {slides.map((s, idx) => (
+                  <Badge
+                    key={idx}
+                    variant={idx === currentSlide ? 'default' : 'outline'}
+                    className="cursor-pointer shrink-0"
+                    onClick={() => setCurrentSlide(idx)}
+                  >
+                    {idx + 1}. {s.title.substring(0, 20)}{s.title.length > 20 ? '...' : ''}
+                  </Badge>
+                ))}
+              </div>
+
+              <Separator className="my-4" />
+              <div className="flex gap-4">
+                <span className="text-xs text-[var(--text-mid)]">Template: {activePresentation.template}</span>
+                <span className="text-xs text-[var(--text-mid)]">Style: {activePresentation.style}</span>
+                <span className="text-xs text-[var(--text-mid)]">Layout: {slide.layout}</span>
+              </div>
+            </div>
+          ) : (
+            <div className="surface-card p-5 text-center py-16">
+              <Presentation className="h-16 w-16 text-[var(--text-low)] mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-[var(--text-mid)]">
+                Select a presentation or create a new one
+              </h3>
+              <p className="text-sm text-[var(--text-mid)] mt-2">
+                Enter a topic, choose a template, and let AI generate your slide deck
+              </p>
+            </div>
           )}
         </div>
       </div>

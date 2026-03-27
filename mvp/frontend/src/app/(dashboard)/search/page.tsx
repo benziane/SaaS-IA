@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { Search, Sparkles, Loader2 } from 'lucide-react';
 
-import { Card, CardContent } from '@/lib/design-hub/components/Card';
 import { Badge } from '@/lib/design-hub/components/Badge';
 import { Button } from '@/lib/design-hub/components/Button';
 import { Input } from '@/lib/design-hub/components/Input';
@@ -62,107 +61,100 @@ export default function SearchPage() {
   };
 
   return (
-    <div className="p-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold flex items-center gap-2">
-          <Search className="h-6 w-6 text-[var(--accent)]" /> Universal Search
-        </h1>
-        <p className="text-sm text-[var(--text-mid)]">
-          Search across all platform data: transcriptions, documents, content, conversations
-        </p>
+    <div className="p-5 space-y-5 animate-enter">
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-[var(--accent)] to-[#a855f7] shrink-0">
+          <Search className="h-5 w-5 text-white" />
+        </div>
+        <div>
+          <h1 className="text-xl font-bold text-[var(--text-high)]">Universal Search</h1>
+          <p className="text-xs text-[var(--text-mid)]">Search across all platform data: transcriptions, documents, content, conversations</p>
+        </div>
       </div>
 
       {/* Search Bar */}
-      <Card className="mb-6">
-        <CardContent className="p-6">
-          <div className="flex gap-2">
-            <Input
-              className="flex-1"
-              placeholder="Search across all your platform data..."
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') handleSearch(); }}
-            />
-            <Button
-              onClick={handleSearch}
-              disabled={!query.trim() || loading}
-            >
-              {loading
-                ? <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-                : <Search className="h-4 w-4 mr-1" />}
-              Search
-            </Button>
-            <Button
-              variant="outline"
-              onClick={handleAskAnswer}
-              disabled={!query.trim() || answerLoading}
-            >
-              {answerLoading
-                ? <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-                : <Sparkles className="h-4 w-4 mr-1" />}
-              Ask AI
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="surface-card p-5">
+        <div className="flex gap-2">
+          <Input
+            className="flex-1"
+            placeholder="Search across all your platform data..."
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') handleSearch(); }}
+          />
+          <Button
+            onClick={handleSearch}
+            disabled={!query.trim() || loading}
+          >
+            {loading
+              ? <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+              : <Search className="h-4 w-4 mr-1" />}
+            Search
+          </Button>
+          <Button
+            variant="outline"
+            onClick={handleAskAnswer}
+            disabled={!query.trim() || answerLoading}
+          >
+            {answerLoading
+              ? <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+              : <Sparkles className="h-4 w-4 mr-1" />}
+            Ask AI
+          </Button>
+        </div>
+      </div>
 
       {/* AI Answer */}
       {answer && (
-        <Card className="mb-6 bg-[var(--bg-elevated)]">
-          <CardContent className="p-6">
-            <h4 className="text-sm font-semibold mb-2 flex items-center gap-1">
-              <Sparkles className="h-4 w-4 text-[var(--accent)]" /> AI Answer
-            </h4>
-            <p className="text-sm whitespace-pre-wrap">{answer}</p>
-          </CardContent>
-        </Card>
+        <div className="surface-card p-5 bg-[var(--bg-elevated)]">
+          <h4 className="text-sm font-semibold mb-2 flex items-center gap-1">
+            <Sparkles className="h-4 w-4 text-[var(--accent)]" /> AI Answer
+          </h4>
+          <p className="text-sm whitespace-pre-wrap">{answer}</p>
+        </div>
       )}
 
       {/* Facets + Results */}
       {total > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
           {/* Facets */}
           <div className="md:col-span-1">
-            <Card>
-              <CardContent className="p-6">
-                <h4 className="text-sm font-semibold mb-2">Sources ({total} results)</h4>
-                {Object.entries(facets).map(([module, count]) => (
-                  <div key={module} className="flex justify-between items-center mb-1.5">
-                    <Badge
-                      variant="outline"
-                      className={MODULE_COLORS[module] || 'bg-[var(--bg-elevated)]'}
-                    >
-                      {MODULE_ICONS[module] || '\uD83D\uDCC4'} {module}
-                    </Badge>
-                    <span className="text-sm font-bold">{count}</span>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
+            <div className="surface-card p-5">
+              <h4 className="text-sm font-semibold mb-2">Sources ({total} results)</h4>
+              {Object.entries(facets).map(([module, count]) => (
+                <div key={module} className="flex justify-between items-center mb-1.5">
+                  <Badge
+                    variant="outline"
+                    className={MODULE_COLORS[module] || 'bg-[var(--bg-elevated)]'}
+                  >
+                    {MODULE_ICONS[module] || '\uD83D\uDCC4'} {module}
+                  </Badge>
+                  <span className="text-sm font-bold">{count}</span>
+                </div>
+              ))}
+            </div>
           </div>
 
           {/* Results */}
           <div className="md:col-span-3 space-y-2">
             {results.map((r, i) => (
-              <Card key={i}>
-                <CardContent className="px-4 py-3">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Badge
-                      variant="outline"
-                      className={MODULE_COLORS[r._module] || 'bg-[var(--bg-elevated)]'}
-                    >
-                      {MODULE_ICONS[r._module] || '\uD83D\uDCC4'} {r._module}
-                    </Badge>
-                    <span className="text-sm font-semibold">{r.title}</span>
-                    <Badge variant="outline" className="ml-auto">
-                      {(r.score * 100).toFixed(0)}%
-                    </Badge>
-                  </div>
-                  <p className="text-sm text-[var(--text-mid)] overflow-hidden text-ellipsis line-clamp-2">
-                    {r.content}
-                  </p>
-                </CardContent>
-              </Card>
+              <div key={i} className="surface-card px-4 py-3">
+                <div className="flex items-center gap-2 mb-1">
+                  <Badge
+                    variant="outline"
+                    className={MODULE_COLORS[r._module] || 'bg-[var(--bg-elevated)]'}
+                  >
+                    {MODULE_ICONS[r._module] || '\uD83D\uDCC4'} {r._module}
+                  </Badge>
+                  <span className="text-sm font-semibold">{r.title}</span>
+                  <Badge variant="outline" className="ml-auto">
+                    {(r.score * 100).toFixed(0)}%
+                  </Badge>
+                </div>
+                <p className="text-sm text-[var(--text-mid)] overflow-hidden text-ellipsis line-clamp-2">
+                  {r.content}
+                </p>
+              </div>
             ))}
           </div>
         </div>

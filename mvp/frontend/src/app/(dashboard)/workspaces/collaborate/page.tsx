@@ -2,10 +2,10 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  Plus, FileText, Zap, CheckCircle2, CheckCircle, ChevronLeft, ChevronRight,
+  Plus, FileText, CheckCircle2, CheckCircle, ChevronLeft, ChevronRight,
   Circle, CloudOff, Cloud, Code, MessageSquare, Trash2, ChevronDown, ChevronUp,
   Bold, Italic, Underline, List, History, Reply, RotateCcw, Send,
-  RefreshCw, Type, Wifi,
+  RefreshCw, Type, Wifi, Users,
 } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
@@ -702,104 +702,116 @@ export default function CollaboratePage() {
 
   return (
     <TooltipProvider>
-      <div className="flex flex-col h-[calc(100vh-64px)] overflow-hidden">
-        {/* Top bar */}
-        <div className="flex items-center justify-between px-4 py-2 border-b border-[var(--border)] bg-[var(--bg-surface)] min-h-[48px]">
-          <div className="flex items-center gap-4">
-            <Zap className="h-5 w-5 text-[var(--accent)]" />
-            <h2 className="text-lg font-bold text-[var(--text-high)]">Collaborative Editor</h2>
-            <Badge variant="outline" className="flex items-center gap-1.5 text-[0.7rem]">
-              <Circle className="h-2 w-2 text-green-400 fill-green-400" /> Real-time
-            </Badge>
+      <div className="p-5 space-y-5 animate-enter">
+        {/* Page header */}
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-[var(--accent)] to-[#a855f7] shrink-0">
+            <Users className="h-5 w-5 text-white" />
           </div>
-
-          <div className="flex items-center gap-4">
-            <PresenceBar users={users} />
-            <Separator orientation="vertical" className="h-6" />
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  type="button"
-                  onClick={() => setCommentsPanelOpen(!commentsPanelOpen)}
-                  className={`relative p-1.5 rounded transition-colors ${commentsPanelOpen ? 'text-[var(--accent)] bg-[var(--accent)]/10' : 'text-[var(--text-mid)] hover:bg-[var(--bg-elevated)]'}`}
-                  aria-label={commentsPanelOpen ? 'Hide comments' : 'Show comments'}
-                >
-                  <MessageSquare className="h-4 w-4" />
-                  {comments.filter((c) => !c.resolved).length > 0 && (
-                    <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500 text-white text-[9px] flex items-center justify-center font-semibold">
-                      {Math.min(comments.filter((c) => !c.resolved).length, 9)}
-                    </span>
-                  )}
-                </button>
-              </TooltipTrigger>
-              <TooltipContent>{commentsPanelOpen ? 'Hide comments' : 'Show comments'}</TooltipContent>
-            </Tooltip>
+          <div>
+            <h1 className="text-xl font-bold text-[var(--text-high)]">Collaborative Editor</h1>
+            <p className="text-xs text-[var(--text-mid)]">Real-time workspace collaboration</p>
           </div>
         </div>
 
-        {/* Main content area */}
-        <div className="flex flex-1 overflow-hidden">
-          <DocumentSidebar
-            documents={documents} selectedId={selectedDocId} onSelect={handleSelectDoc}
-            onCreateNew={handleCreateDoc} collapsed={sidebarCollapsed}
-            onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
-          />
+        {/* Editor surface */}
+        <div className="surface-card p-0 overflow-hidden">
+          {/* Top bar */}
+          <div className="flex items-center justify-between px-4 py-2 border-b border-[var(--border)] min-h-[48px]">
+            <div className="flex items-center gap-4">
+              <Badge variant="outline" className="flex items-center gap-1.5 text-[0.7rem]">
+                <Circle className="h-2 w-2 text-green-400 fill-green-400" /> Real-time
+              </Badge>
+            </div>
 
-          {/* Editor area */}
-          <div className="flex-1 flex flex-col overflow-hidden">
-            {/* Collaborative editing indicator */}
-            <div className="px-4 py-1.5 bg-[var(--bg-elevated)] flex items-center gap-2">
-              <div className="flex gap-1">
-                {users.filter((u) => u.isOnline).map((u) => (
-                  <Tooltip key={u.id}>
-                    <TooltipTrigger asChild>
-                      <div className="w-2 h-2 rounded-full" style={{ backgroundColor: u.color, animation: 'pulse 2s infinite' }} />
-                    </TooltipTrigger>
-                    <TooltipContent>{u.name} is editing</TooltipContent>
-                  </Tooltip>
-                ))}
+            <div className="flex items-center gap-4">
+              <PresenceBar users={users} />
+              <Separator orientation="vertical" className="h-6" />
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    onClick={() => setCommentsPanelOpen(!commentsPanelOpen)}
+                    className={`relative p-1.5 rounded transition-colors ${commentsPanelOpen ? 'text-[var(--accent)] bg-[var(--accent)]/10' : 'text-[var(--text-mid)] hover:bg-[var(--bg-elevated)]'}`}
+                    aria-label={commentsPanelOpen ? 'Hide comments' : 'Show comments'}
+                  >
+                    <MessageSquare className="h-4 w-4" />
+                    {comments.filter((c) => !c.resolved).length > 0 && (
+                      <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500 text-white text-[9px] flex items-center justify-center font-semibold">
+                        {Math.min(comments.filter((c) => !c.resolved).length, 9)}
+                      </span>
+                    )}
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>{commentsPanelOpen ? 'Hide comments' : 'Show comments'}</TooltipContent>
+              </Tooltip>
+            </div>
+          </div>
+
+          {/* Main content area */}
+          <div className="flex overflow-hidden" style={{ height: 'calc(100vh - 280px)', minHeight: 400 }}>
+            <DocumentSidebar
+              documents={documents} selectedId={selectedDocId} onSelect={handleSelectDoc}
+              onCreateNew={handleCreateDoc} collapsed={sidebarCollapsed}
+              onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
+            />
+
+            {/* Editor area */}
+            <div className="flex-1 flex flex-col overflow-hidden">
+              {/* Collaborative editing indicator */}
+              <div className="px-4 py-1.5 bg-[var(--bg-elevated)] flex items-center gap-2">
+                <div className="flex gap-1">
+                  {users.filter((u) => u.isOnline).map((u) => (
+                    <Tooltip key={u.id}>
+                      <TooltipTrigger asChild>
+                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: u.color, animation: 'pulse 2s infinite' }} />
+                      </TooltipTrigger>
+                      <TooltipContent>{u.name} is editing</TooltipContent>
+                    </Tooltip>
+                  ))}
+                </div>
+                <span className="text-[0.7rem] text-[var(--text-low)]">
+                  {users.filter((u) => u.isOnline).length} collaborators editing | Yjs WebSocket: awaiting backend connection
+                </span>
               </div>
-              <span className="text-[0.7rem] text-[var(--text-low)]">
-                {users.filter((u) => u.isOnline).length} collaborators editing | Yjs WebSocket: awaiting backend connection
-              </span>
+
+              {/* Toolbar */}
+              <div className="px-4 pt-2">
+                <EditorToolbar onCommand={handleEditorCommand} activeFormats={activeFormats} />
+              </div>
+
+              {/* Editor */}
+              <div className="flex-1 overflow-auto px-4 pb-2">
+                <div className="min-h-full border border-[var(--border)] border-t-0 rounded-b-lg">
+                  <div
+                    ref={editorRef}
+                    contentEditable
+                    suppressContentEditableWarning
+                    dangerouslySetInnerHTML={{ __html: INITIAL_CONTENT }}
+                    onInput={handleContentChange}
+                    onMouseUp={updateActiveFormats}
+                    onKeyUp={updateActiveFormats}
+                    className="p-6 min-h-[400px] outline-none text-[0.95rem] leading-7 text-[var(--text-high)] [&_h1]:text-[1.75rem] [&_h1]:font-bold [&_h1]:mt-4 [&_h1]:mb-2 [&_h1]:border-b [&_h1]:border-[var(--border)] [&_h1]:pb-1 [&_h2]:text-[1.35rem] [&_h2]:font-semibold [&_h2]:mt-5 [&_h2]:mb-1.5 [&_h3]:text-[1.1rem] [&_h3]:font-semibold [&_h3]:mt-4 [&_h3]:mb-1 [&_h3]:text-[var(--text-mid)] [&_p]:mb-2 [&_ul]:pl-6 [&_ul]:mb-2 [&_ol]:pl-6 [&_ol]:mb-2 [&_li]:mb-1 [&_pre]:bg-[var(--bg-elevated)] [&_pre]:p-4 [&_pre]:rounded [&_pre]:font-mono [&_pre]:text-[0.85rem] [&_pre]:overflow-auto [&_pre]:mb-2 [&_code]:bg-[var(--bg-elevated)] [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_code]:font-mono [&_code]:text-[0.85rem]"
+                  />
+                </div>
+              </div>
+
+              <VersionHistory versions={versions} open={versionHistoryOpen} onToggle={() => setVersionHistoryOpen(!versionHistoryOpen)} onRestore={handleRestoreVersion} />
             </div>
 
-            {/* Toolbar */}
-            <div className="px-4 pt-2">
-              <EditorToolbar onCommand={handleEditorCommand} activeFormats={activeFormats} />
-            </div>
-
-            {/* Editor */}
-            <div className="flex-1 overflow-auto px-4 pb-2">
-              <div className="min-h-full border border-[var(--border)] border-t-0 rounded-b-lg">
-                <div
-                  ref={editorRef}
-                  contentEditable
-                  suppressContentEditableWarning
-                  dangerouslySetInnerHTML={{ __html: INITIAL_CONTENT }}
-                  onInput={handleContentChange}
-                  onMouseUp={updateActiveFormats}
-                  onKeyUp={updateActiveFormats}
-                  className="p-6 min-h-[400px] outline-none text-[0.95rem] leading-7 text-[var(--text-high)] [&_h1]:text-[1.75rem] [&_h1]:font-bold [&_h1]:mt-4 [&_h1]:mb-2 [&_h1]:border-b [&_h1]:border-[var(--border)] [&_h1]:pb-1 [&_h2]:text-[1.35rem] [&_h2]:font-semibold [&_h2]:mt-5 [&_h2]:mb-1.5 [&_h3]:text-[1.1rem] [&_h3]:font-semibold [&_h3]:mt-4 [&_h3]:mb-1 [&_h3]:text-[var(--text-mid)] [&_p]:mb-2 [&_ul]:pl-6 [&_ul]:mb-2 [&_ol]:pl-6 [&_ol]:mb-2 [&_li]:mb-1 [&_pre]:bg-[var(--bg-elevated)] [&_pre]:p-4 [&_pre]:rounded [&_pre]:font-mono [&_pre]:text-[0.85rem] [&_pre]:overflow-auto [&_pre]:mb-2 [&_code]:bg-[var(--bg-elevated)] [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_code]:font-mono [&_code]:text-[0.85rem]"
+            {/* Comments panel (right) */}
+            {commentsPanelOpen && (
+              <div className="w-[320px] min-w-[320px] h-full bg-[var(--bg-surface)] overflow-hidden flex flex-col border-l border-[var(--border)]">
+                <CommentsPanel
+                  comments={comments} onResolve={handleResolveComment} onReply={handleReplyComment}
+                  onDelete={handleDeleteComment} onAdd={handleAddComment}
                 />
               </div>
-            </div>
-
-            <VersionHistory versions={versions} open={versionHistoryOpen} onToggle={() => setVersionHistoryOpen(!versionHistoryOpen)} onRestore={handleRestoreVersion} />
+            )}
           </div>
 
-          {/* Comments panel (right) */}
-          {commentsPanelOpen && (
-            <div className="w-[320px] min-w-[320px] h-full bg-[var(--bg-surface)] overflow-hidden flex flex-col border-l border-[var(--border)]">
-              <CommentsPanel
-                comments={comments} onResolve={handleResolveComment} onReply={handleReplyComment}
-                onDelete={handleDeleteComment} onAdd={handleAddComment}
-              />
-            </div>
-          )}
+          <StatusBar connectionStatus={connectionStatus} lastSaved={lastSaved} isSyncing={isSyncing} documentId={selectedDocId} wordCount={wordCount} charCount={charCount} />
         </div>
-
-        <StatusBar connectionStatus={connectionStatus} lastSaved={lastSaved} isSyncing={isSyncing} documentId={selectedDocId} wordCount={wordCount} charCount={charCount} />
       </div>
     </TooltipProvider>
   );

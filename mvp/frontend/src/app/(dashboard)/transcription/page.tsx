@@ -16,7 +16,6 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Controller, useForm } from 'react-hook-form';
 
-import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
@@ -319,12 +318,12 @@ function TranscriptionDetail({ transcription, onClose }: TranscriptionDetailProp
   const showOriginalText = !streamDone;
 
   return (
-    <Card className="mt-6">
-      <CardContent className="p-6">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold text-[var(--text-high)]">
-            Transcription Details
-          </h3>
+    <div className="surface-card p-6 animate-enter">
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-sm font-semibold text-[var(--text-high)] flex items-center gap-2">
+          <Sparkles className="h-4 w-4 text-[var(--accent)]" />
+          Transcription Details
+        </h3>
           <button type="button" onClick={onClose} className="p-1 text-[var(--text-low)] hover:text-[var(--text-high)] transition-colors" aria-label="Close details">
             <X className="h-5 w-5" />
           </button>
@@ -494,8 +493,7 @@ function TranscriptionDetail({ transcription, onClose }: TranscriptionDetailProp
             )}
           </div>
         )}
-      </CardContent>
-    </Card>
+    </div>
   );
 }
 
@@ -834,16 +832,19 @@ export default function TranscriptionPage(): JSX.Element {
 
   return (
     <TooltipProvider>
-      <div>
+      <div className="p-5 space-y-5 animate-enter">
         {/* Header */}
-        <div className="mb-8 flex justify-between items-center">
-          <div>
-            <h1 className="text-2xl font-semibold text-[var(--text-high)] mb-1">
-              Transcriptions
-            </h1>
-            <p className="text-[var(--text-mid)]">
-              Transcribe audio and video from YouTube, URL, file upload, or microphone recording
-            </p>
+        <div className="flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-[var(--accent)] to-[#a855f7] shrink-0">
+              <FileAudio className="h-5 w-5 text-white" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-[var(--text-high)]">Transcriptions</h1>
+              <p className="text-xs text-[var(--text-mid)]">
+                YouTube, URL, file upload, or microphone recording
+              </p>
+            </div>
           </div>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -856,11 +857,11 @@ export default function TranscriptionPage(): JSX.Element {
         </div>
 
         {/* Create Form with Tabs */}
-        <Card className="mb-8">
-          <CardContent className="p-6">
-            <h3 className="text-lg font-semibold text-[var(--text-high)] mb-4">
-              New Transcription
-            </h3>
+        <div className="surface-card p-6">
+          <h3 className="text-sm font-semibold text-[var(--text-high)] mb-4 flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-[var(--accent)]" />
+            New Transcription
+          </h3>
 
             <Tabs defaultValue="url">
               <TabsList className="mb-6">
@@ -939,15 +940,14 @@ export default function TranscriptionPage(): JSX.Element {
                 <RecordAudioTab onRecordingUploaded={handleUploadComplete} />
               </TabsContent>
             </Tabs>
-          </CardContent>
-        </Card>
+        </div>
 
         {/* Transcriptions Table */}
-        <Card>
-          <CardContent className="p-6">
-            <h3 className="text-lg font-semibold text-[var(--text-high)] mb-4">
-              Your Transcriptions
-            </h3>
+        <div className="surface-card p-6">
+          <h3 className="text-sm font-semibold text-[var(--text-high)] mb-4 flex items-center gap-2">
+            <Subtitles className="h-4 w-4 text-[var(--accent)]" />
+            Your Transcriptions
+          </h3>
 
             {isLoading ? (
               <div className="py-8 text-center">
@@ -1063,8 +1063,7 @@ export default function TranscriptionPage(): JSX.Element {
                 </table>
               </div>
             )}
-          </CardContent>
-        </Card>
+        </div>
 
         {/* Selected Transcription Detail Panel */}
         {selectedTranscription && (

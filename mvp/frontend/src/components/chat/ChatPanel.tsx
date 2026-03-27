@@ -1,19 +1,10 @@
-/**
- * ChatPanel - Message display area for a conversation
- * Renders a scrollable list of messages with role-based styling.
- * User messages are right-aligned with primary color, assistant messages
- * are left-aligned with a grey background, and system messages appear
- * as subtle info banners. Auto-scrolls to the bottom on new messages.
- */
-
 'use client';
 
 import { useCallback, useEffect, useRef } from 'react';
 import { Bot, User } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/lib/design-hub/components/Avatar';
-import { Spinner } from '@/components/ui/spinner';
+import { Skeleton } from '@/lib/design-hub/components/Skeleton';
 
 import { StreamingText } from '@/components/ui/StreamingText';
 import type { Message } from '@/features/conversation/types';
@@ -23,23 +14,56 @@ import type { Message } from '@/features/conversation/types';
    ======================================================================== */
 
 export interface ChatPanelProps {
-  /** Existing messages for the conversation */
   messages: Message[];
-  /** Text accumulated so far for the current streaming response */
   streamingText: string;
-  /** Whether the AI is currently generating a response */
   isStreaming: boolean;
-  /** Provider name for the current streaming response */
   streamingProvider?: string;
-  /** Token count for the completed streaming response */
   streamingTokenCount?: number;
-  /** Whether the conversation data is loading */
   isLoading: boolean;
 }
 
 /* ========================================================================
    SUB-COMPONENTS
    ======================================================================== */
+
+function StreamingDots(): JSX.Element {
+  return (
+    <span className="inline-flex items-center gap-[3px] h-4">
+      <span
+        className="w-1.5 h-1.5 rounded-full bg-[var(--text-low)] animate-pulse"
+        style={{ animationDelay: '0ms', animationDuration: '1s' }}
+      />
+      <span
+        className="w-1.5 h-1.5 rounded-full bg-[var(--text-low)] animate-pulse"
+        style={{ animationDelay: '200ms', animationDuration: '1s' }}
+      />
+      <span
+        className="w-1.5 h-1.5 rounded-full bg-[var(--text-low)] animate-pulse"
+        style={{ animationDelay: '400ms', animationDuration: '1s' }}
+      />
+    </span>
+  );
+}
+
+function BotAvatar(): JSX.Element {
+  return (
+    <Avatar className="h-8 w-8 mt-1 shrink-0">
+      <AvatarFallback className="bg-gradient-to-br from-[var(--accent)]/20 to-[#a855f7]/20 border border-[var(--accent)]/30">
+        <Bot className="h-4 w-4 text-[var(--accent)]" />
+      </AvatarFallback>
+    </Avatar>
+  );
+}
+
+function UserAvatar(): JSX.Element {
+  return (
+    <Avatar className="h-8 w-8 mt-1 shrink-0">
+      <AvatarFallback className="bg-gradient-to-br from-[var(--accent)] to-[#a855f7]">
+        <User className="h-4 w-4 text-white" />
+      </AvatarFallback>
+    </Avatar>
+  );
+}
 
 interface MessageBubbleProps {
   message: Message;
@@ -49,7 +73,6 @@ function MessageBubble({ message }: MessageBubbleProps): JSX.Element {
   const isUser = message.role === 'user';
   const isSystem = message.role === 'system';
 
-  // System messages render as info banners
   if (isSystem) {
     return (
       <div className="px-4 py-1">
@@ -64,42 +87,30 @@ function MessageBubble({ message }: MessageBubbleProps): JSX.Element {
 
   return (
     <div
-      className={`flex ${isUser ? 'justify-end' : 'justify-start'} px-4 py-1.5 gap-2 items-start`}
+      className={`flex ${isUser ? 'justify-end' : 'justify-start'} px-4 py-1.5 gap-2.5 items-start`}
     >
-      {/* Assistant avatar */}
-      {!isUser && (
-        <Avatar className="h-8 w-8 mt-1">
-          <AvatarFallback className="bg-gray-600 text-white">
-            <Bot className="h-4 w-4" />
-          </AvatarFallback>
-        </Avatar>
-      )}
+      {!isUser && <BotAvatar />}
 
-      {/* Message content */}
-      <div className="max-w-[70%] min-w-[60px]">
-        {/* Provider label for assistant messages */}
+      <div className={`flex flex-col ${isUser ? 'items-end' : 'items-start'} min-w-[60px]`}>
         {!isUser && message.provider && (
-          <Badge variant="outline" className="h-[18px] text-[0.65rem] mb-1 border-gray-400">
+          <span className="text-[10px] text-[var(--text-low)] mb-1 px-1">
             {message.provider}
-          </Badge>
+          </span>
         )}
 
         <div
-          className={`px-4 py-2.5 ${
+          className={
             isUser
-              ? 'rounded-[16px_16px_4px_16px] bg-[var(--accent)] text-[var(--bg-app,#fff)]'
-              : 'rounded-[16px_16px_16px_4px] bg-[var(--bg-elevated)] text-[var(--text-high)]'
-          }`}
+              ? 'bg-gradient-to-br from-[var(--accent)] to-[var(--accent)]/70 text-white rounded-2xl rounded-br-sm px-4 py-2.5 max-w-[75%]'
+              : 'bg-[var(--bg-elevated)] border border-[var(--border)] text-[var(--text-high)] rounded-2xl rounded-bl-sm px-4 py-2.5 max-w-[80%]'
+          }
         >
           <p className="text-sm whitespace-pre-wrap break-words leading-relaxed">
             {message.content}
           </p>
         </div>
 
-        {/* Timestamp */}
-        <span
-          className={`block mt-0.5 text-[0.65rem] text-[var(--text-low)] ${isUser ? 'text-right' : 'text-left'}`}
-        >
+        <span className="block mt-0.5 text-[10px] text-[var(--text-low)]">
           {new Date(message.created_at).toLocaleTimeString([], {
             hour: '2-digit',
             minute: '2-digit',
@@ -107,14 +118,40 @@ function MessageBubble({ message }: MessageBubbleProps): JSX.Element {
         </span>
       </div>
 
-      {/* User avatar */}
-      {isUser && (
-        <Avatar className="h-8 w-8 mt-1">
-          <AvatarFallback className="bg-[var(--accent)] text-white">
-            <User className="h-4 w-4" />
-          </AvatarFallback>
-        </Avatar>
-      )}
+      {isUser && <UserAvatar />}
+    </div>
+  );
+}
+
+/* ========================================================================
+   LOADING SKELETON
+   ======================================================================== */
+
+function ChatSkeleton(): JSX.Element {
+  return (
+    <div className="flex flex-col gap-4 px-4 py-6">
+      <div className="flex items-start gap-2.5">
+        <Skeleton className="h-8 w-8 rounded-full shrink-0" />
+        <div className="space-y-2 flex-1">
+          <Skeleton className="h-4 w-[55%]" />
+          <Skeleton className="h-4 w-[40%]" />
+        </div>
+      </div>
+      <div className="flex items-start gap-2.5 justify-end">
+        <div className="space-y-2 flex-1 flex flex-col items-end">
+          <Skeleton className="h-4 w-[45%]" />
+          <Skeleton className="h-4 w-[30%]" />
+        </div>
+        <Skeleton className="h-8 w-8 rounded-full shrink-0" />
+      </div>
+      <div className="flex items-start gap-2.5">
+        <Skeleton className="h-8 w-8 rounded-full shrink-0" />
+        <div className="space-y-2 flex-1">
+          <Skeleton className="h-4 w-[65%]" />
+          <Skeleton className="h-4 w-[50%]" />
+          <Skeleton className="h-4 w-[35%]" />
+        </div>
+      </div>
     </div>
   );
 }
@@ -134,7 +171,6 @@ export function ChatPanel({
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to bottom when messages change or streaming text updates
   const scrollToBottom = useCallback(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, []);
@@ -145,8 +181,8 @@ export function ChatPanel({
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-full">
-        <Spinner size={32} />
+      <div className="flex-1 overflow-hidden">
+        <ChatSkeleton />
       </div>
     );
   }
@@ -157,9 +193,11 @@ export function ChatPanel({
       className="flex-1 overflow-auto flex flex-col py-4"
     >
       {messages.length === 0 && !isStreaming && (
-        <div className="flex-1 flex flex-col justify-center items-center gap-2 text-[var(--text-low)]">
-          <Bot className="h-12 w-12 opacity-30" />
-          <p className="text-sm text-[var(--text-low)]">
+        <div className="flex-1 flex flex-col justify-center items-center gap-3 text-[var(--text-low)]">
+          <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-[var(--accent)]/20 to-[#a855f7]/20 border border-[var(--accent)]/30 flex items-center justify-center">
+            <Bot className="h-7 w-7 text-[var(--accent)]" />
+          </div>
+          <p className="text-sm text-[var(--text-mid)]">
             Send a message to start the conversation.
           </p>
         </div>
@@ -169,34 +207,33 @@ export function ChatPanel({
         <MessageBubble key={message.id} message={message} />
       ))}
 
-      {/* Streaming response indicator */}
+      {/* Streaming response */}
       {isStreaming && (
-        <div className="flex justify-start px-4 py-1.5 gap-2 items-start">
-          <Avatar className="h-8 w-8 mt-1">
-            <AvatarFallback className="bg-gray-600 text-white">
-              <Bot className="h-4 w-4" />
-            </AvatarFallback>
-          </Avatar>
+        <div className="flex justify-start px-4 py-1.5 gap-2.5 items-start">
+          <BotAvatar />
 
-          <div className="max-w-[70%] min-w-[200px]">
+          <div className="flex flex-col items-start min-w-[60px]">
             {streamingProvider && (
-              <Badge variant="outline" className="h-[18px] text-[0.65rem] mb-1 border-gray-400">
+              <span className="text-[10px] text-[var(--text-low)] mb-1 px-1">
                 {streamingProvider}
-              </Badge>
+              </span>
             )}
-            <div className="px-4 py-2.5 rounded-[16px_16px_16px_4px] bg-[var(--bg-elevated)] text-[var(--text-high)]">
-              <StreamingText
-                text={streamingText}
-                isStreaming={isStreaming}
-                provider={streamingProvider}
-                tokenCount={streamingTokenCount}
-              />
+            <div className="bg-[var(--bg-elevated)] border border-[var(--border)] text-[var(--text-high)] rounded-2xl rounded-bl-sm px-4 py-2.5 max-w-[80%]">
+              {streamingText ? (
+                <StreamingText
+                  text={streamingText}
+                  isStreaming={isStreaming}
+                  provider={streamingProvider}
+                  tokenCount={streamingTokenCount}
+                />
+              ) : (
+                <StreamingDots />
+              )}
             </div>
           </div>
         </div>
       )}
 
-      {/* Scroll anchor */}
       <div ref={bottomRef} />
     </div>
   );

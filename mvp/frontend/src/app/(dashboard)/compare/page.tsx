@@ -1,9 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Loader2, Star } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Loader2, Star, Scale, BarChart3, Zap } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/lib/design-hub/components/Button';
 import { Textarea } from '@/lib/design-hub/components/Textarea';
@@ -17,6 +15,16 @@ const AVAILABLE_PROVIDERS = [
   { id: 'claude', label: 'Claude Sonnet' },
   { id: 'groq', label: 'Groq Llama 70B' },
 ];
+
+function SpeedDot({ ms }: { ms: number }) {
+  const color =
+    ms < 2000
+      ? 'bg-green-400'
+      : ms < 5000
+        ? 'bg-yellow-400'
+        : 'bg-red-400';
+  return <span className={`inline-block w-2 h-2 rounded-full shrink-0 ${color}`} title={`${ms}ms`} />;
+}
 
 function StarRating({
   onChange,
@@ -84,48 +92,41 @@ function ResultCard({
     );
   };
 
-  const timeBadgeVariant = result.response_time_ms < 2000
-    ? 'success'
-    : result.response_time_ms < 5000
-      ? 'warning'
-      : 'destructive';
-
   return (
-    <Card className="h-full">
-      <CardContent className="p-6">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold text-[var(--text-high)]">{result.provider}</h3>
-          <Badge variant={timeBadgeVariant}>
-            {result.response_time_ms}ms
-          </Badge>
-        </div>
-
-        {result.error ? (
-          <Alert variant="destructive" className="mb-4">
-            <AlertDescription>{result.error}</AlertDescription>
-          </Alert>
-        ) : (
-          <p className="text-sm text-[var(--text-high)] whitespace-pre-wrap max-h-[300px] overflow-auto mb-4 p-2 bg-[var(--bg-elevated)] rounded-[var(--radius-md,6px)]">
-            {result.response}
-          </p>
-        )}
-
+    <div className="surface-card p-6 h-full flex flex-col animate-enter">
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-base font-semibold text-[var(--text-high)]">{result.provider}</h3>
         <div className="flex items-center gap-2">
-          <span className="text-sm text-[var(--text-mid)]">Rate:</span>
-          <StarRating
-            onChange={(value) => handleVote(value)}
-            disabled={voted || !!result.error}
-          />
-          {voted && (
-            <span className="text-xs text-green-400">Voted</span>
-          )}
+          <SpeedDot ms={result.response_time_ms} />
+          <span className="text-xs text-[var(--text-mid)]">{result.response_time_ms}ms</span>
         </div>
+      </div>
 
-        <span className="text-xs text-[var(--text-mid)] mt-2 block">
-          Model: {result.model}
-        </span>
-      </CardContent>
-    </Card>
+      {result.error ? (
+        <Alert variant="destructive" className="mb-4">
+          <AlertDescription>{result.error}</AlertDescription>
+        </Alert>
+      ) : (
+        <p className="text-sm text-[var(--text-high)] whitespace-pre-wrap max-h-[300px] overflow-auto mb-4 p-3 bg-[var(--bg-elevated)] rounded-[var(--radius-md,6px)] flex-1">
+          {result.response}
+        </p>
+      )}
+
+      <div className="flex items-center gap-2 mt-auto">
+        <span className="text-sm text-[var(--text-mid)]">Rate:</span>
+        <StarRating
+          onChange={(value) => handleVote(value)}
+          disabled={voted || !!result.error}
+        />
+        {voted && (
+          <span className="text-xs text-green-400">Voted</span>
+        )}
+      </div>
+
+      <span className="text-xs text-[var(--text-mid)] mt-2 block">
+        Model: {result.model}
+      </span>
+    </div>
   );
 }
 
@@ -156,71 +157,77 @@ export default function ComparePage() {
   };
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold text-[var(--text-high)] mb-6">
-        Compare AI Models
-      </h1>
+    <div className="p-5 space-y-5 animate-enter">
+      {/* Page Header */}
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-[var(--accent)] to-[#a855f7] shrink-0">
+          <Scale className="h-5 w-5 text-white" />
+        </div>
+        <div>
+          <h1 className="text-xl font-bold text-[var(--text-high)]">Compare AI Models</h1>
+          <p className="text-xs text-[var(--text-mid)]">Run the same prompt across providers and vote for the best response</p>
+        </div>
+      </div>
 
       {/* Input Section */}
-      <Card className="mb-6">
-        <CardContent className="p-6">
-          <Textarea
-            rows={4}
-            value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
-            placeholder="Write a prompt to compare across AI models..."
-            className="mb-4"
-          />
+      <div className="surface-card p-5">
+        <Textarea
+          rows={4}
+          value={prompt}
+          onChange={(e) => setPrompt(e.target.value)}
+          placeholder="Write a prompt to compare across AI models..."
+          className="mb-4"
+        />
 
-          <div className="flex justify-between items-center">
-            <div className="flex gap-4">
-              {AVAILABLE_PROVIDERS.map((provider) => (
-                <label
-                  key={provider.id}
-                  className="flex items-center gap-2 text-sm text-[var(--text-high)] cursor-pointer"
-                >
-                  <Checkbox
-                    checked={selectedProviders.includes(provider.id)}
-                    onCheckedChange={() => handleToggleProvider(provider.id)}
-                  />
-                  {provider.label}
-                </label>
-              ))}
-            </div>
-
-            <Button
-              onClick={handleCompare}
-              disabled={runMutation.isPending || !prompt.trim() || selectedProviders.length === 0}
-            >
-              {runMutation.isPending ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Comparing...
-                </>
-              ) : (
-                'Compare'
-              )}
-            </Button>
+        <div className="flex flex-wrap justify-between items-center gap-4">
+          <div className="flex gap-4 flex-wrap">
+            {AVAILABLE_PROVIDERS.map((provider) => (
+              <label
+                key={provider.id}
+                className="flex items-center gap-2 text-sm text-[var(--text-high)] cursor-pointer"
+              >
+                <Checkbox
+                  checked={selectedProviders.includes(provider.id)}
+                  onCheckedChange={() => handleToggleProvider(provider.id)}
+                />
+                {provider.label}
+              </label>
+            ))}
           </div>
 
-          {runMutation.isError && (
-            <Alert variant="destructive" className="mt-4">
-              <AlertDescription>
-                {runMutation.error?.message || 'Comparison failed'}
-              </AlertDescription>
-            </Alert>
-          )}
-        </CardContent>
-      </Card>
+          <Button
+            onClick={handleCompare}
+            disabled={runMutation.isPending || !prompt.trim() || selectedProviders.length === 0}
+          >
+            {runMutation.isPending ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Comparing...
+              </>
+            ) : (
+              'Compare'
+            )}
+          </Button>
+        </div>
+
+        {runMutation.isError && (
+          <Alert variant="destructive" className="mt-4">
+            <AlertDescription>
+              {runMutation.error?.message || 'Comparison failed'}
+            </AlertDescription>
+          </Alert>
+        )}
+      </div>
 
       {/* Results Section */}
       {comparison && (
-        <>
-          <h2 className="text-lg font-semibold text-[var(--text-high)] mb-4">
+        <div className="space-y-3">
+          <h2 className="text-sm font-semibold text-[var(--text-high)] flex items-center gap-2">
+            <Zap className="h-4 w-4 text-[var(--accent)]" />
             Results
           </h2>
           <div
-            className="grid gap-6 mb-8"
+            className="grid gap-5"
             style={{
               gridTemplateColumns: `repeat(${Math.min(comparison.results.length, 3)}, minmax(0, 1fr))`,
             }}
@@ -234,33 +241,26 @@ export default function ComparePage() {
               />
             ))}
           </div>
-        </>
+        </div>
       )}
 
       {/* Stats Section */}
       {stats && stats.length > 0 && (
-        <>
-          <h2 className="text-lg font-semibold text-[var(--text-high)] mb-4">
+        <div className="space-y-3">
+          <h2 className="text-sm font-semibold text-[var(--text-high)] flex items-center gap-2">
+            <BarChart3 className="h-4 w-4 text-[var(--accent)]" />
             Provider Statistics
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {stats.map((stat) => (
-              <Card key={stat.provider}>
-                <CardContent className="p-6">
-                  <h3 className="text-base font-semibold text-[var(--text-high)]">
-                    {stat.provider}
-                  </h3>
-                  <p className="text-sm text-[var(--text-mid)]">
-                    Avg Score: {stat.avg_score}/5
-                  </p>
-                  <p className="text-sm text-[var(--text-mid)]">
-                    Total Votes: {stat.total_votes}
-                  </p>
-                </CardContent>
-              </Card>
+              <div key={stat.provider} className="surface-card p-5">
+                <h3 className="text-sm font-semibold text-[var(--text-high)] mb-2">{stat.provider}</h3>
+                <p className="text-xs text-[var(--text-mid)]">Avg Score: <span className="text-[var(--text-high)] font-medium">{stat.avg_score}/5</span></p>
+                <p className="text-xs text-[var(--text-mid)]">Total Votes: <span className="text-[var(--text-high)] font-medium">{stat.total_votes}</span></p>
+              </div>
             ))}
           </div>
-        </>
+        </div>
       )}
     </div>
   );

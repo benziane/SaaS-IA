@@ -1,9 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { Copy, X } from 'lucide-react';
+import { Code2, Copy, X } from 'lucide-react';
 
-import { Card, CardContent } from '@/lib/design-hub/components/Card';
 import { Button } from '@/lib/design-hub/components/Button';
 import { Badge } from '@/lib/design-hub/components/Badge';
 import { Skeleton } from '@/lib/design-hub/components/Skeleton';
@@ -81,14 +80,20 @@ export default function APIDocsPage() {
   };
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold text-[var(--text-high)] mb-6">
-        API Documentation & Keys
-      </h1>
+    <div className="p-5 space-y-5 animate-enter">
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-[var(--accent)] to-[#a855f7] shrink-0">
+          <Code2 className="h-5 w-5 text-white" />
+        </div>
+        <div>
+          <h1 className="text-xl font-bold text-[var(--text-high)]">API Documentation &amp; Keys</h1>
+          <p className="text-xs text-[var(--text-mid)]">Interactive API reference</p>
+        </div>
+      </div>
 
       {/* Created Key Alert */}
       {createdKey && (
-        <Alert variant="warning" className="mb-6 relative">
+        <Alert variant="warning" className="relative">
           <button
             type="button"
             onClick={() => setCreatedKey(null)}
@@ -113,82 +118,78 @@ export default function APIDocsPage() {
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
         {/* API Keys Management */}
         <div className="md:col-span-5">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-lg font-semibold text-[var(--text-high)]">API Keys</h2>
-                <Button size="sm" onClick={() => setCreateOpen(true)}>
-                  Create Key
-                </Button>
-              </div>
+          <div className="surface-card p-5">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-semibold text-[var(--text-high)]">API Keys</h2>
+              <Button size="sm" onClick={() => setCreateOpen(true)}>
+                Create Key
+              </Button>
+            </div>
 
-              {isLoading ? (
-                <Skeleton className="h-[150px] w-full" />
-              ) : !keys?.length ? (
-                <p className="text-sm text-[var(--text-mid)]">
-                  No API keys created yet.
-                </p>
-              ) : (
-                <div className="space-y-1">
-                  {keys.map((key) => (
-                    <div
-                      key={key.id}
-                      className="flex items-center justify-between py-2 px-1"
-                    >
-                      <div>
-                        <p className="text-sm font-medium text-[var(--text-high)]">{key.name}</p>
-                        <p className="text-xs text-[var(--text-mid)]">
-                          {key.key_prefix}... |{' '}
-                          {key.last_used_at
-                            ? `Last used: ${new Date(key.last_used_at).toLocaleDateString()}`
-                            : 'Never used'}
-                        </p>
-                      </div>
-                      {key.is_active ? (
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={() => revokeMutation.mutate(key.id)}
-                        >
-                          Revoke
-                        </Button>
-                      ) : (
-                        <Badge variant="secondary">Revoked</Badge>
-                      )}
+            {isLoading ? (
+              <Skeleton className="h-[150px] w-full" />
+            ) : !keys?.length ? (
+              <p className="text-sm text-[var(--text-mid)]">
+                No API keys created yet.
+              </p>
+            ) : (
+              <div className="space-y-1">
+                {keys.map((key) => (
+                  <div
+                    key={key.id}
+                    className="flex items-center justify-between py-2 px-1"
+                  >
+                    <div>
+                      <p className="text-sm font-medium text-[var(--text-high)]">{key.name}</p>
+                      <p className="text-xs text-[var(--text-mid)]">
+                        {key.key_prefix}... |{' '}
+                        {key.last_used_at
+                          ? `Last used: ${new Date(key.last_used_at).toLocaleDateString()}`
+                          : 'Never used'}
+                      </p>
                     </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                    {key.is_active ? (
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => revokeMutation.mutate(key.id)}
+                      >
+                        Revoke
+                      </Button>
+                    ) : (
+                      <Badge variant="secondary">Revoked</Badge>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* API Documentation */}
         <div className="md:col-span-7">
-          <Card>
-            <CardContent className="p-6">
-              <h2 className="text-lg font-semibold text-[var(--text-high)] mb-4">
-                Public API v1
-              </h2>
-              <p className="text-sm text-[var(--text-mid)] mb-6">
-                Authenticate using the <code className="bg-[var(--bg-elevated)] px-1 rounded text-xs">X-API-Key</code> header with your API key.
-              </p>
+          <div className="surface-card p-5">
+            <h2 className="text-lg font-semibold text-[var(--text-high)] mb-4">
+              Public API v1
+            </h2>
+            <p className="text-sm text-[var(--text-mid)] mb-6">
+              Authenticate using the <code className="bg-[var(--bg-elevated)] px-1 rounded text-xs">X-API-Key</code> header with your API key.
+            </p>
 
-              {API_EXAMPLES.map((example, idx) => (
-                <div key={idx} className="mb-6">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Badge variant="default">{example.method}</Badge>
-                    <span className="text-sm font-semibold text-[var(--text-high)]">{example.endpoint}</span>
-                  </div>
-                  <p className="text-sm text-[var(--text-mid)] mb-2">{example.title}</p>
-                  <div className="bg-gray-900 text-gray-100 p-4 rounded-md font-mono text-xs whitespace-pre-wrap overflow-auto">
-                    {example.curl}
-                  </div>
-                  {idx < API_EXAMPLES.length - 1 && <Separator className="mt-4" />}
+            {API_EXAMPLES.map((example, idx) => (
+              <div key={idx} className="mb-6">
+                <div className="flex items-center gap-2 mb-2">
+                  <Badge variant="default">{example.method}</Badge>
+                  <span className="text-sm font-semibold text-[var(--text-high)]">{example.endpoint}</span>
                 </div>
-              ))}
-            </CardContent>
-          </Card>
+                <p className="text-sm text-[var(--text-mid)] mb-2">{example.title}</p>
+                <div className="bg-gray-900 text-gray-100 p-4 rounded-md font-mono text-xs whitespace-pre-wrap overflow-auto">
+                  {example.curl}
+                </div>
+                {idx < API_EXAMPLES.length - 1 && <Separator className="mt-4" />}
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 

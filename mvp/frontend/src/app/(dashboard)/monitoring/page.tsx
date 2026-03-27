@@ -1,9 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { HeartPulse, Gauge } from 'lucide-react';
+import { Activity, Gauge } from 'lucide-react';
 
-import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/lib/design-hub/components/Skeleton';
@@ -31,8 +30,8 @@ export default function MonitoringPage() {
       .finally(() => setLoading(false));
   }, [days]);
 
-  if (loading) return <div className="p-6"><Skeleton className="h-96 rounded-lg" /></div>;
-  if (!data) return <div className="p-6"><p className="text-[var(--text-mid)]">No monitoring data available</p></div>;
+  if (loading) return <div className="p-5"><Skeleton className="h-96 rounded-lg" /></div>;
+  if (!data) return <div className="p-5"><p className="text-[var(--text-mid)]">No monitoring data available</p></div>;
 
   const kpis = [
     { label: 'Total Calls', value: data.total_calls.toLocaleString(), color: 'text-[var(--accent)]' },
@@ -43,15 +42,16 @@ export default function MonitoringPage() {
   ];
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-3xl font-bold text-[var(--text-high)] flex items-center gap-2">
-            <HeartPulse className="h-8 w-8 text-[var(--accent)]" /> AI Monitoring
-          </h1>
-          <p className="text-sm text-[var(--text-mid)]">
-            LLM observability - calls, latency, cost, providers, errors
-          </p>
+    <div className="p-5 space-y-5 animate-enter">
+      <div className="flex justify-between items-center">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-[var(--accent)] to-[#a855f7] shrink-0">
+            <Activity className="h-5 w-5 text-white" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold text-[var(--text-high)]">AI Monitoring</h1>
+            <p className="text-xs text-[var(--text-mid)]">LLM observability - calls, latency, cost, providers, errors</p>
+          </div>
         </div>
         <Select value={days} onValueChange={setDays}>
           <SelectTrigger className="w-32">
@@ -67,77 +67,69 @@ export default function MonitoringPage() {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-6">
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
         {kpis.map((kpi) => (
-          <Card key={kpi.label} className="border border-[var(--border)]">
-            <CardContent className="text-center py-4 px-3">
-              <p className={`text-3xl font-bold ${kpi.color}`}>{kpi.value}</p>
-              <span className="text-xs text-[var(--text-mid)]">{kpi.label}</span>
-            </CardContent>
-          </Card>
+          <div key={kpi.label} className="surface-card p-5 text-center">
+            <p className={`text-3xl font-bold ${kpi.color}`}>{kpi.value}</p>
+            <span className="text-xs text-[var(--text-mid)]">{kpi.label}</span>
+          </div>
         ))}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         {/* Provider Comparison */}
-        <Card>
-          <CardContent className="p-6">
-            <h3 className="text-lg font-semibold text-[var(--text-high)] flex items-center gap-2 mb-4">
-              <Gauge className="h-5 w-5" /> Provider Performance
-            </h3>
-            {data.providers.map((p: Record<string, unknown>) => (
-              <div key={p.provider as string} className="mb-4">
-                <div className="flex justify-between mb-1">
-                  <div className="flex gap-1">
-                    <Badge>{p.provider as string}</Badge>
-                    <Badge variant="outline">{p.calls as number} calls</Badge>
-                    <Badge variant="outline">{p.avg_latency_ms as number}ms</Badge>
-                  </div>
-                  <span className="text-xs text-[var(--text-mid)]">{p.success_rate as number}% success</span>
+        <div className="surface-card p-5">
+          <h3 className="text-lg font-semibold text-[var(--text-high)] flex items-center gap-2 mb-4">
+            <Gauge className="h-5 w-5" /> Provider Performance
+          </h3>
+          {data.providers.map((p: Record<string, unknown>) => (
+            <div key={p.provider as string} className="mb-4">
+              <div className="flex justify-between mb-1">
+                <div className="flex gap-1">
+                  <Badge>{p.provider as string}</Badge>
+                  <Badge variant="outline">{p.calls as number} calls</Badge>
+                  <Badge variant="outline">{p.avg_latency_ms as number}ms</Badge>
                 </div>
-                <Progress
-                  value={p.success_rate as number}
-                  className={`h-2 ${(p.success_rate as number) > 95 ? '' : '[&>div]:bg-yellow-500'}`}
-                />
+                <span className="text-xs text-[var(--text-mid)]">{p.success_rate as number}% success</span>
               </div>
-            ))}
-          </CardContent>
-        </Card>
+              <Progress
+                value={p.success_rate as number}
+                className={`h-2 ${(p.success_rate as number) > 95 ? '' : '[&>div]:bg-yellow-500'}`}
+              />
+            </div>
+          ))}
+        </div>
 
         {/* Module Usage */}
-        <Card>
-          <CardContent className="p-6">
-            <h3 className="text-lg font-semibold text-[var(--text-high)] mb-4">Module Usage</h3>
-            {data.modules.map((m: Record<string, unknown>) => (
-              <div key={m.module as string} className="flex justify-between mb-2 pb-2 border-b border-[var(--border)]">
-                <Badge variant="outline">{m.module as string}</Badge>
-                <div className="flex gap-2">
-                  <span className="text-sm text-[var(--text-high)]">{m.calls as number} calls</span>
-                  <span className="text-xs text-[var(--text-mid)]">${((m.cost_cents as number) / 100).toFixed(4)}</span>
-                </div>
+        <div className="surface-card p-5">
+          <h3 className="text-lg font-semibold text-[var(--text-high)] mb-4">Module Usage</h3>
+          {data.modules.map((m: Record<string, unknown>) => (
+            <div key={m.module as string} className="flex justify-between mb-2 pb-2 border-b border-[var(--border)]">
+              <Badge variant="outline">{m.module as string}</Badge>
+              <div className="flex gap-2">
+                <span className="text-sm text-[var(--text-high)]">{m.calls as number} calls</span>
+                <span className="text-xs text-[var(--text-mid)]">${((m.cost_cents as number) / 100).toFixed(4)}</span>
               </div>
-            ))}
-          </CardContent>
-        </Card>
+            </div>
+          ))}
+        </div>
 
         {/* Recent Errors */}
         {data.recent_errors.length > 0 && (
           <div className="md:col-span-2">
-            <Card>
-              <CardContent className="p-6">
-                <h3 className="text-lg font-semibold text-red-500 mb-4">Recent Errors</h3>
-                {data.recent_errors.map((e: Record<string, unknown>, i: number) => (
-                  <div key={i} className="mb-2 pb-2 border-b border-[var(--border)]">
-                    <div className="flex gap-1 mb-1">
-                      <Badge variant="destructive">{e.provider as string}</Badge>
-                      <Badge variant="outline">{e.module as string}</Badge>
-                      <Badge variant="outline">{e.action as string}</Badge>
-                    </div>
-                    <span className="text-xs text-red-500">{e.error as string}</span>
+            <div className="surface-card p-5">
+              <h3 className="text-lg font-semibold text-red-500 mb-4">Recent Errors</h3>
+              {data.recent_errors.map((e: Record<string, unknown>, i: number) => (
+                <div key={i} className="mb-2 pb-2 border-b border-[var(--border)]">
+                  <div className="flex gap-1 mb-1">
+                    <Badge variant="destructive">{e.provider as string}</Badge>
+                    <Badge variant="outline">{e.module as string}</Badge>
+                    <Badge variant="outline">{e.action as string}</Badge>
                   </div>
-                ))}
-              </CardContent>
-            </Card>
+                  <span className="text-xs text-red-500">{e.error as string}</span>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>

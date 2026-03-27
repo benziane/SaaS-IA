@@ -17,6 +17,12 @@ import Footer from '@components/layout/vertical/Footer';
 // Guard Imports (REFONTE)
 import { AuthGuard } from '@/components/guards';
 
+// Breadcrumb
+import { BreadcrumbBar } from '@/components/layout/shared/BreadcrumbBar';
+import { EmailVerificationBanner } from '@/components/layout/shared/EmailVerificationBanner';
+import CommandPalette from '@/components/ui/CommandPalette';
+import BottomNav from '@/components/mobile/BottomNav';
+
 /* ========================================================================
    COMPONENT
    ======================================================================== */
@@ -29,7 +35,11 @@ export default function DashboardLayout({ children }: ChildrenType) {
         navbar={<Navbar />}
         footer={<Footer />}
       >
+        <BreadcrumbBar />
+        <EmailVerificationBanner />
+        <CommandPalette />
         {children}
+        <BottomNav />
       </VerticalLayout>
     </AuthGuard>
   );

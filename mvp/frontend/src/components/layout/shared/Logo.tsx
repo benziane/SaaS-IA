@@ -4,8 +4,8 @@
 import { useEffect, useRef } from 'react'
 import type { CSSProperties } from 'react'
 
-// Component Imports
-import SneatLogo from '@core/svg/Logo'
+// Icon Imports
+import { Sparkles } from 'lucide-react'
 
 // Config Imports
 import themeConfig from '@configs/themeConfig'
@@ -45,7 +45,9 @@ const Logo = ({ color }: { color?: CSSProperties['color'] }) => {
 
   return (
     <div className='flex items-center'>
-      <SneatLogo className='text-2xl text-primary' />
+      <div className='w-7 h-7 rounded-lg flex items-center justify-center bg-gradient-to-br from-[var(--accent)] to-[#a855f7] shrink-0'>
+        <Sparkles className='h-4 w-4 text-white' />
+      </div>
       <span
         ref={logoTextRef}
         className='text-[1.75rem] leading-none font-bold tracking-[0.15px]'

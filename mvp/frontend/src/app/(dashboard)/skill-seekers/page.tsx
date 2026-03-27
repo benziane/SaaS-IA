@@ -4,10 +4,9 @@ import { useState } from 'react';
 import {
   GitFork, PlusCircle, Sparkles, XCircle, X,
   Trash2, Download, Eye, RotateCcw, Rocket,
-  Terminal, RefreshCw, Loader2, Check,
+  RefreshCw, Loader2, Check, Package,
 } from 'lucide-react';
 
-import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/lib/design-hub/components/Alert';
 import { Progress } from '@/components/ui/progress';
@@ -124,15 +123,15 @@ function SkillCatalogueDrawer({
               const isSelected = selectedRepos.includes(item.repo);
               const isDisabled = !isSelected && selectedRepos.length >= 10;
               return (
-                <Card
+                <div
                   key={item.repo}
-                  className={`flex flex-col h-full ${isDisabled ? 'opacity-50' : ''}`}
+                  className={`surface-card flex flex-col h-full ${isDisabled ? 'opacity-50' : ''}`}
                   style={{
                     borderColor: isSelected ? CATEGORY_COLORS[item.category] : undefined,
                     borderWidth: isSelected ? 2 : 1,
                   }}
                 >
-                  <CardContent className="flex-1 p-3 pb-1">
+                  <div className="flex-1 p-3 pb-1">
                     <div className="flex justify-between items-start mb-1">
                       <span className="text-sm font-semibold leading-tight text-[var(--text-high)]">
                         {item.name}
@@ -152,8 +151,8 @@ function SkillCatalogueDrawer({
                       ))}
                     </div>
                     <span className="text-xs text-[var(--text-low)]">{formatStars(item.stars)} stars</span>
-                  </CardContent>
-                  <CardFooter className="p-3 pt-1">
+                  </div>
+                  <div className="p-3 pt-1">
                     {isSelected ? (
                       <Button
                         size="sm"
@@ -173,8 +172,8 @@ function SkillCatalogueDrawer({
                         Add
                       </Button>
                     )}
-                  </CardFooter>
-                </Card>
+                  </div>
+                </div>
               );
             })}
           </div>
@@ -280,16 +279,17 @@ export default function SkillSeekersPage() {
   };
 
   return (
-    <div className="p-6">
+    <div className="p-5 space-y-5 animate-enter">
       {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2 text-[var(--text-high)]">
-            <Terminal className="h-6 w-6 text-[var(--accent)]" /> Skill Seekers
-          </h1>
-          <p className="text-sm text-[var(--text-mid)]">
-            Scrape GitHub repos and package them for Claude AI consumption
-          </p>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-[var(--accent)] to-[#a855f7] shrink-0">
+            <Package className="h-5 w-5 text-white" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold text-[var(--text-high)]">Skill Seekers</h1>
+            <p className="text-xs text-[var(--text-mid)]">GitHub skill discovery and packaging</p>
+          </div>
         </div>
         <TooltipProvider>
           <Tooltip>
@@ -305,7 +305,7 @@ export default function SkillSeekersPage() {
 
       {/* CLI status alert */}
       {!statusLoading && statusData && !statusData.installed && (
-        <Alert variant="warning" className="mb-6">
+        <Alert variant="warning">
           <AlertDescription>
             <strong>skill-seekers CLI not installed.</strong> Running in mock mode.
             Install it with: <code className="font-mono">pip install skill-seekers</code>
@@ -315,312 +315,302 @@ export default function SkillSeekersPage() {
 
       {/* Stats cards */}
       {statsData && (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {[
             { label: 'Total Jobs', value: statsData.total_jobs, colorClass: 'text-[var(--accent)]' },
             { label: 'Completed', value: statsData.completed, colorClass: 'text-green-400' },
             { label: 'Failed', value: statsData.failed, colorClass: 'text-red-400' },
             { label: 'Repos Scraped', value: statsData.total_repos_scraped, colorClass: 'text-blue-400' },
           ].map((stat) => (
-            <Card key={stat.label}>
-              <CardContent className="text-center py-4 px-4">
-                <p className={`text-2xl font-bold ${stat.colorClass}`}>{stat.value}</p>
-                <p className="text-xs text-[var(--text-low)]">{stat.label}</p>
-              </CardContent>
-            </Card>
+            <div key={stat.label} className="surface-card p-4 text-center">
+              <p className={`text-2xl font-bold ${stat.colorClass}`}>{stat.value}</p>
+              <p className="text-xs text-[var(--text-low)]">{stat.label}</p>
+            </div>
           ))}
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
         {/* Left panel: Create job form */}
         <div className="md:col-span-5">
-          <Card>
-            <CardContent className="p-6">
-              <h2 className="text-lg font-semibold text-[var(--text-high)] mb-4 flex items-center gap-2">
-                <GitFork className="h-5 w-5" /> New Scrape Job
-              </h2>
+          <div className="surface-card p-5">
+            <h2 className="text-lg font-semibold text-[var(--text-high)] mb-4 flex items-center gap-2">
+              <GitFork className="h-5 w-5" /> New Scrape Job
+            </h2>
 
-              {/* Repo input */}
-              <div className="flex gap-2 mb-4">
-                <div className="flex-1">
-                  <Input
-                    placeholder="e.g. anthropics/claude-code"
-                    value={repoInput}
-                    onChange={(e) => setRepoInput(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                    className={repos.length >= 10 ? 'border-red-500' : ''}
-                  />
-                  {repos.length >= 10 && (
-                    <p className="text-xs text-red-400 mt-1">Max 10 repos</p>
-                  )}
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleAddRepo}
-                  disabled={!repoInput.trim() || repos.length >= 10}
-                  className="px-2"
-                  title="Add repo"
-                >
-                  <PlusCircle className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCatalogueOpen(true)}
-                  className="whitespace-nowrap"
-                >
-                  <Sparkles className="h-4 w-4 mr-1" /> Catalogue
-                </Button>
+            {/* Repo input */}
+            <div className="flex gap-2 mb-4">
+              <div className="flex-1">
+                <Input
+                  placeholder="e.g. anthropics/claude-code"
+                  value={repoInput}
+                  onChange={(e) => setRepoInput(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  className={repos.length >= 10 ? 'border-red-500' : ''}
+                />
+                {repos.length >= 10 && (
+                  <p className="text-xs text-red-400 mt-1">Max 10 repos</p>
+                )}
               </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleAddRepo}
+                disabled={!repoInput.trim() || repos.length >= 10}
+                className="px-2"
+                title="Add repo"
+              >
+                <PlusCircle className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCatalogueOpen(true)}
+                className="whitespace-nowrap"
+              >
+                <Sparkles className="h-4 w-4 mr-1" /> Catalogue
+              </Button>
+            </div>
 
-              {/* Repo chips */}
-              {repos.length > 0 && (
-                <div className="flex flex-wrap gap-1 mb-4">
-                  {repos.map((repo) => (
-                    <Badge key={repo} variant="secondary" className="text-xs flex items-center gap-1">
-                      <GitFork className="h-3 w-3" /> {repo}
-                      <button type="button" onClick={() => handleRemoveRepo(repo)} className="ml-0.5 hover:text-red-400">
-                        <X className="h-3 w-3" />
-                      </button>
-                    </Badge>
-                  ))}
-                </div>
-              )}
-
-              <Separator className="my-4" />
-
-              {/* Target checkboxes */}
-              <h3 className="text-sm font-semibold text-[var(--text-high)] mb-2">
-                Package Targets
-              </h3>
-              <div className="flex flex-wrap gap-3 mb-4">
-                {TARGET_OPTIONS.map((opt) => (
-                  <label key={opt.id} className="flex items-center gap-1.5 text-sm text-[var(--text-mid)]">
-                    <Checkbox
-                      checked={targets.includes(opt.id)}
-                      onCheckedChange={() => handleToggleTarget(opt.id)}
-                    />
-                    {opt.label}
-                  </label>
+            {/* Repo chips */}
+            {repos.length > 0 && (
+              <div className="flex flex-wrap gap-1 mb-4">
+                {repos.map((repo) => (
+                  <Badge key={repo} variant="secondary" className="text-xs flex items-center gap-1">
+                    <GitFork className="h-3 w-3" /> {repo}
+                    <button type="button" onClick={() => handleRemoveRepo(repo)} className="ml-0.5 hover:text-red-400">
+                      <X className="h-3 w-3" />
+                    </button>
+                  </Badge>
                 ))}
               </div>
+            )}
 
-              <Separator className="my-4" />
+            <Separator className="my-4" />
 
-              {/* Enhance toggle */}
-              <label className="flex items-center gap-2 text-sm text-[var(--text-mid)] mb-1">
-                <Switch checked={enhance} onCheckedChange={setEnhance} />
-                AI Enhancement Pass
-              </label>
-              <p className="text-xs text-[var(--text-low)] mb-4">
-                Runs an additional AI pass to improve content structure and readability
-              </p>
+            {/* Target checkboxes */}
+            <h3 className="text-sm font-semibold text-[var(--text-high)] mb-2">
+              Package Targets
+            </h3>
+            <div className="flex flex-wrap gap-3 mb-4">
+              {TARGET_OPTIONS.map((opt) => (
+                <label key={opt.id} className="flex items-center gap-1.5 text-sm text-[var(--text-mid)]">
+                  <Checkbox
+                    checked={targets.includes(opt.id)}
+                    onCheckedChange={() => handleToggleTarget(opt.id)}
+                  />
+                  {opt.label}
+                </label>
+              ))}
+            </div>
 
-              {/* Launch button */}
-              <Button
-                className="w-full"
-                size="lg"
-                onClick={handleLaunch}
-                disabled={repos.length === 0 || targets.length === 0 || createMutation.isPending}
-              >
-                {createMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Rocket className="h-4 w-4 mr-2" />}
-                {createMutation.isPending ? 'Launching...' : `Scrape ${repos.length} Repo${repos.length !== 1 ? 's' : ''}`}
-              </Button>
+            <Separator className="my-4" />
 
-              {createMutation.isError && (
-                <Alert variant="destructive" className="mt-4">
-                  <AlertDescription>
-                    {createMutation.error?.message || 'Failed to create job'}
-                  </AlertDescription>
-                </Alert>
-              )}
-            </CardContent>
-          </Card>
+            {/* Enhance toggle */}
+            <label className="flex items-center gap-2 text-sm text-[var(--text-mid)] mb-1">
+              <Switch checked={enhance} onCheckedChange={setEnhance} />
+              AI Enhancement Pass
+            </label>
+            <p className="text-xs text-[var(--text-low)] mb-4">
+              Runs an additional AI pass to improve content structure and readability
+            </p>
+
+            {/* Launch button */}
+            <Button
+              className="w-full"
+              size="lg"
+              onClick={handleLaunch}
+              disabled={repos.length === 0 || targets.length === 0 || createMutation.isPending}
+            >
+              {createMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Rocket className="h-4 w-4 mr-2" />}
+              {createMutation.isPending ? 'Launching...' : `Scrape ${repos.length} Repo${repos.length !== 1 ? 's' : ''}`}
+            </Button>
+
+            {createMutation.isError && (
+              <Alert variant="destructive" className="mt-4">
+                <AlertDescription>
+                  {createMutation.error?.message || 'Failed to create job'}
+                </AlertDescription>
+              </Alert>
+            )}
+          </div>
         </div>
 
         {/* Right panel: Job history */}
         <div className="md:col-span-7">
-          <Card>
-            <CardContent className="p-6">
-              <h2 className="text-lg font-semibold text-[var(--text-high)] mb-2">
-                Job History
-              </h2>
-              <div className="flex gap-1 mb-4 flex-wrap">
-                {STATUS_TABS.map((tab) => (
-                  <button
-                    key={tab.value}
-                    type="button"
-                    onClick={() => setStatusFilter(tab.value)}
-                    className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
-                      statusFilter === tab.value
-                        ? 'bg-[var(--accent)] text-[var(--bg-app)]'
-                        : 'border border-[var(--border)] text-[var(--text-mid)] hover:bg-[var(--bg-elevated)]'
-                    }`}
-                  >
-                    {tab.label}
-                  </button>
+          <div className="surface-card p-5">
+            <h2 className="text-lg font-semibold text-[var(--text-high)] mb-2">
+              Job History
+            </h2>
+            <div className="flex gap-1 mb-4 flex-wrap">
+              {STATUS_TABS.map((tab) => (
+                <button
+                  key={tab.value}
+                  type="button"
+                  onClick={() => setStatusFilter(tab.value)}
+                  className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
+                    statusFilter === tab.value
+                      ? 'bg-[var(--accent)] text-[var(--bg-app)]'
+                      : 'border border-[var(--border)] text-[var(--text-mid)] hover:bg-[var(--bg-elevated)]'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+
+            {jobsLoading ? (
+              <div className="space-y-2">
+                {[1, 2, 3].map((i) => (
+                  <Skeleton key={i} className="h-20 rounded" />
                 ))}
               </div>
-
-              {jobsLoading ? (
-                <div className="space-y-2">
-                  {[1, 2, 3].map((i) => (
-                    <Skeleton key={i} className="h-20 rounded" />
-                  ))}
-                </div>
-              ) : !jobsData?.items.length ? (
-                <p className="text-[var(--text-mid)] py-8 text-center">
-                  No scrape jobs yet. Add repos and launch your first job.
-                </p>
-              ) : (
-                jobsData.items.map((job) => (
-                  <Card key={job.id} className="mb-3 border border-[var(--border)]">
-                    <CardContent className="py-3 px-4">
-                      {/* Job header */}
-                      <div className="flex justify-between items-center mb-1">
-                        <div className="flex items-center gap-2">
-                          <Badge variant={STATUS_COLORS[job.status] || 'secondary'}>
-                            {job.status}
-                          </Badge>
-                          <span className="text-sm text-[var(--text-mid)]">
-                            {new Date(job.created_at).toLocaleString()}
-                          </span>
-                        </div>
-                        <div className="flex gap-1">
-                          {(job.status === ScrapeJobStatus.RUNNING || job.status === ScrapeJobStatus.PENDING) && (
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <button type="button" title="Cancel job" className="p-1 rounded hover:bg-[var(--bg-elevated)] text-[var(--text-mid)]" onClick={() => cancelMutation.mutate(job.id)} disabled={cancelMutation.isPending}>
-                                    <XCircle className="h-4 w-4" />
-                                  </button>
-                                </TooltipTrigger>
-                                <TooltipContent>Cancel job</TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          )}
-                          {job.status === ScrapeJobStatus.FAILED && (
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <button type="button" title="Retry job" className="p-1 rounded hover:bg-[var(--bg-elevated)] text-[var(--text-mid)]" onClick={() => retryMutation.mutate(job.id)} disabled={retryMutation.isPending}>
-                                    <RotateCcw className="h-4 w-4" />
-                                  </button>
-                                </TooltipTrigger>
-                                <TooltipContent>Retry job</TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          )}
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <button type="button" title="Delete job" className="p-1 rounded hover:bg-[var(--bg-elevated)] text-[var(--text-mid)]" onClick={() => deleteMutation.mutate(job.id)} disabled={deleteMutation.isPending}>
-                                  <Trash2 className="h-4 w-4" />
-                                </button>
-                              </TooltipTrigger>
-                              <TooltipContent>Delete job</TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        </div>
-                      </div>
-
-                      {/* Repos */}
-                      <div className="flex flex-wrap gap-1 mb-2">
-                        {job.repos.map((repo) => (
-                          <Badge key={repo} variant="outline" className="text-xs flex items-center gap-1">
-                            <GitFork className="h-3 w-3" /> {repo}
-                          </Badge>
-                        ))}
-                        {job.enhance && <Badge variant="outline" className="text-xs text-purple-400 border-purple-400/30">Enhanced</Badge>}
-                      </div>
-
-                      {/* Progress bar for running jobs */}
+            ) : !jobsData?.items.length ? (
+              <p className="text-[var(--text-mid)] py-8 text-center">
+                No scrape jobs yet. Add repos and launch your first job.
+              </p>
+            ) : (
+              jobsData.items.map((job) => (
+                <div key={job.id} className="surface-card p-4 mb-3 border border-[var(--border)]">
+                  {/* Job header */}
+                  <div className="flex justify-between items-center mb-1">
+                    <div className="flex items-center gap-2">
+                      <Badge variant={STATUS_COLORS[job.status] || 'secondary'}>
+                        {job.status}
+                      </Badge>
+                      <span className="text-sm text-[var(--text-mid)]">
+                        {new Date(job.created_at).toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="flex gap-1">
                       {(job.status === ScrapeJobStatus.RUNNING || job.status === ScrapeJobStatus.PENDING) && (
-                        <div className="mb-2">
-                          <div className="flex justify-between mb-1">
-                            <span className="text-xs text-[var(--text-low)]">{job.current_step}</span>
-                            <span className="text-xs text-[var(--text-low)]">{job.progress}%</span>
-                          </div>
-                          <Progress value={job.progress > 0 ? job.progress : undefined} className="h-1.5" />
-                        </div>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <button type="button" title="Cancel job" className="p-1 rounded hover:bg-[var(--bg-elevated)] text-[var(--text-mid)]" onClick={() => cancelMutation.mutate(job.id)} disabled={cancelMutation.isPending}>
+                                <XCircle className="h-4 w-4" />
+                              </button>
+                            </TooltipTrigger>
+                            <TooltipContent>Cancel job</TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                       )}
+                      {job.status === ScrapeJobStatus.FAILED && (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <button type="button" title="Retry job" className="p-1 rounded hover:bg-[var(--bg-elevated)] text-[var(--text-mid)]" onClick={() => retryMutation.mutate(job.id)} disabled={retryMutation.isPending}>
+                                <RotateCcw className="h-4 w-4" />
+                              </button>
+                            </TooltipTrigger>
+                            <TooltipContent>Retry job</TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button type="button" title="Delete job" className="p-1 rounded hover:bg-[var(--bg-elevated)] text-[var(--text-mid)]" onClick={() => deleteMutation.mutate(job.id)} disabled={deleteMutation.isPending}>
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent>Delete job</TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                  </div>
 
-                      {/* Error */}
-                      {job.status === ScrapeJobStatus.FAILED && job.error && (
-                        <Alert variant="destructive" className="mt-2 py-1">
-                          <AlertDescription className="text-xs">{job.error}</AlertDescription>
-                        </Alert>
-                      )}
+                  {/* Repos */}
+                  <div className="flex flex-wrap gap-1 mb-2">
+                    {job.repos.map((repo) => (
+                      <Badge key={repo} variant="outline" className="text-xs flex items-center gap-1">
+                        <GitFork className="h-3 w-3" /> {repo}
+                      </Badge>
+                    ))}
+                    {job.enhance && <Badge variant="outline" className="text-xs text-purple-400 border-purple-400/30">Enhanced</Badge>}
+                  </div>
 
-                      {/* Download + Preview links for completed jobs */}
-                      {job.status === ScrapeJobStatus.COMPLETED && job.output_files.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mt-2">
-                          {job.output_files.map((filename) => (
-                            <div key={filename} className="flex gap-1">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="text-xs"
-                                onClick={async () => {
-                                  try {
-                                    const data = await previewFile(job.id, filename);
-                                    setPreviewData({ filename, content: data.content, truncated: data.truncated });
-                                  } catch (err) {
-                                    setPreviewData({ filename, content: `Error loading preview: ${err instanceof Error ? err.message : 'Unknown error'}`, truncated: false });
-                                  }
-                                }}
-                              >
-                                <Eye className="h-3 w-3 mr-1" /> Preview
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="text-xs"
-                                onClick={async () => {
-                                  try {
-                                    const url = await getSignedDownloadUrl(job.id, filename);
-                                    window.open(url, '_blank');
-                                  } catch (err) {
-                                    alert(`Download failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
-                                  }
-                                }}
-                              >
-                                <Download className="h-3 w-3 mr-1" /> {filename}
-                              </Button>
-                            </div>
-                          ))}
+                  {/* Progress bar for running jobs */}
+                  {(job.status === ScrapeJobStatus.RUNNING || job.status === ScrapeJobStatus.PENDING) && (
+                    <div className="mb-2">
+                      <div className="flex justify-between mb-1">
+                        <span className="text-xs text-[var(--text-low)]">{job.current_step}</span>
+                        <span className="text-xs text-[var(--text-low)]">{job.progress}%</span>
+                      </div>
+                      <Progress value={job.progress > 0 ? job.progress : undefined} className="h-1.5" />
+                    </div>
+                  )}
+
+                  {/* Error */}
+                  {job.status === ScrapeJobStatus.FAILED && job.error && (
+                    <Alert variant="destructive" className="mt-2 py-1">
+                      <AlertDescription className="text-xs">{job.error}</AlertDescription>
+                    </Alert>
+                  )}
+
+                  {/* Download + Preview links for completed jobs */}
+                  {job.status === ScrapeJobStatus.COMPLETED && job.output_files.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {job.output_files.map((filename) => (
+                        <div key={filename} className="flex gap-1">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-xs"
+                            onClick={async () => {
+                              try {
+                                const data = await previewFile(job.id, filename);
+                                setPreviewData({ filename, content: data.content, truncated: data.truncated });
+                              } catch (err) {
+                                setPreviewData({ filename, content: `Error loading preview: ${err instanceof Error ? err.message : 'Unknown error'}`, truncated: false });
+                              }
+                            }}
+                          >
+                            <Eye className="h-3 w-3 mr-1" /> Preview
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-xs"
+                            onClick={async () => {
+                              try {
+                                const url = await getSignedDownloadUrl(job.id, filename);
+                                window.open(url, '_blank');
+                              } catch (err) {
+                                alert(`Download failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
+                              }
+                            }}
+                          >
+                            <Download className="h-3 w-3 mr-1" /> {filename}
+                          </Button>
                         </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                ))
-              )}
-            </CardContent>
-          </Card>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
         </div>
       </div>
 
       {/* Preview dialog */}
       {previewData && (
-        <Card className="fixed bottom-4 right-4 left-4 max-h-[50vh] overflow-auto z-50 shadow-xl">
-          <CardContent className="p-4">
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-sm font-semibold text-[var(--text-high)]">{previewData.filename}</span>
-              <Button size="sm" variant="ghost" onClick={() => setPreviewData(null)}>Close</Button>
-            </div>
-            {previewData.truncated && (
-              <Alert variant="info" className="mb-2 py-1">
-                <AlertDescription className="text-xs">Preview truncated. Download the full file for complete content.</AlertDescription>
-              </Alert>
-            )}
-            <Separator className="mb-2" />
-            <pre className="whitespace-pre-wrap font-mono text-xs max-h-[35vh] overflow-auto text-[var(--text-mid)]">
-              {previewData.content}
-            </pre>
-          </CardContent>
-        </Card>
+        <div className="surface-card fixed bottom-4 right-4 left-4 max-h-[50vh] overflow-auto z-50 shadow-xl p-4">
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-sm font-semibold text-[var(--text-high)]">{previewData.filename}</span>
+            <Button size="sm" variant="ghost" onClick={() => setPreviewData(null)}>Close</Button>
+          </div>
+          {previewData.truncated && (
+            <Alert variant="info" className="mb-2 py-1">
+              <AlertDescription className="text-xs">Preview truncated. Download the full file for complete content.</AlertDescription>
+            </Alert>
+          )}
+          <Separator className="mb-2" />
+          <pre className="whitespace-pre-wrap font-mono text-xs max-h-[35vh] overflow-auto text-[var(--text-mid)]">
+            {previewData.content}
+          </pre>
+        </div>
       )}
 
       {/* Catalogue Drawer */}

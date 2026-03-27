@@ -1,9 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { Users, Play, Trash2, Sparkles, Copy, Loader2 } from 'lucide-react';
+import { Users, Users2, Play, Trash2, Sparkles, Copy, Loader2 } from 'lucide-react';
 
-import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/lib/design-hub/components/Button';
@@ -60,15 +59,16 @@ export default function CrewsPage() {
   };
 
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2 text-[var(--text-high)]">
-            <Users className="h-7 w-7 text-[var(--accent)]" /> AI Agent Crews
-          </h1>
-          <p className="text-sm text-[var(--text-mid)]">
-            Build collaborative teams of specialized AI agents
-          </p>
+    <div className="p-5 space-y-5 animate-enter">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-[var(--accent)] to-[#a855f7] shrink-0">
+            <Users2 className="h-5 w-5 text-white" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold text-[var(--text-high)]">AI Agent Crews</h1>
+            <p className="text-xs text-[var(--text-mid)]">Multi-agent crew coordination</p>
+          </div>
         </div>
         <Button variant="outline" onClick={() => setTemplatesOpen(true)}>
           <Sparkles className="h-4 w-4 mr-2" />
@@ -78,22 +78,23 @@ export default function CrewsPage() {
 
       {/* Templates quick start */}
       {!crews?.length && templates && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
           {templates.map((t) => (
-            <Card key={t.id} className="cursor-pointer hover:border-[var(--accent)] transition-colors"
-              onClick={() => templateMutation.mutate({ templateId: t.id })}>
-              <CardContent className="p-4">
-                <h4 className="text-sm font-bold text-[var(--text-high)]">{t.name}</h4>
-                <p className="text-xs text-[var(--text-mid)]">{t.description}</p>
-                <div className="mt-2 flex flex-wrap gap-1">
-                  {t.agents.map((a) => (
-                    <Badge key={a.id} variant="outline" className="text-xs">
-                      {ROLE_ICONS[a.role] || '⚙️'} {a.name}
-                    </Badge>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+            <div
+              key={t.id}
+              className="surface-card p-5 cursor-pointer hover:border-[var(--accent)] transition-colors"
+              onClick={() => templateMutation.mutate({ templateId: t.id })}
+            >
+              <h4 className="text-sm font-bold text-[var(--text-high)]">{t.name}</h4>
+              <p className="text-xs text-[var(--text-mid)]">{t.description}</p>
+              <div className="mt-2 flex flex-wrap gap-1">
+                {t.agents.map((a) => (
+                  <Badge key={a.id} variant="outline" className="text-xs">
+                    {ROLE_ICONS[a.role] || '⚙️'} {a.name}
+                  </Badge>
+                ))}
+              </div>
+            </div>
           ))}
         </div>
       )}
@@ -101,33 +102,29 @@ export default function CrewsPage() {
       {isLoading ? (
         <Skeleton className="h-[300px] w-full" />
       ) : !crews?.length ? (
-        <Card>
-          <CardContent className="text-center py-16">
-            <Users className="h-16 w-16 text-[var(--text-low)] mb-4 mx-auto" />
-            <h3 className="text-lg font-semibold text-[var(--text-mid)]">No crews yet</h3>
-            <Button variant="ghost" className="mt-2" onClick={() => setTemplatesOpen(true)}>Use a Template</Button>
-          </CardContent>
-        </Card>
+        <div className="surface-card p-5 text-center py-16">
+          <Users className="h-16 w-16 text-[var(--text-low)] mb-4 mx-auto" />
+          <h3 className="text-lg font-semibold text-[var(--text-mid)]">No crews yet</h3>
+          <Button variant="ghost" className="mt-2" onClick={() => setTemplatesOpen(true)}>Use a Template</Button>
+        </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
           {crews.map((crew) => (
-            <Card key={crew.id}>
-              <CardContent className="p-4">
-                <div className="flex justify-between mb-2">
-                  <h4 className="text-base font-bold text-[var(--text-high)]">{crew.name}</h4>
-                  <Badge variant={STATUS_VARIANTS[crew.status] || 'secondary'}>{crew.status}</Badge>
-                </div>
-                {crew.goal && <p className="text-sm text-[var(--text-mid)] mb-2">{crew.goal}</p>}
-                <div className="flex flex-wrap gap-1 mb-2">
-                  {crew.agents.map((a) => (
-                    <Badge key={a.id} variant="outline" className="text-xs">
-                      {ROLE_ICONS[a.role] || '⚙️'} {a.name}
-                    </Badge>
-                  ))}
-                </div>
-                <Badge variant="outline" className="text-xs">{crew.process_type} | {crew.run_count} runs</Badge>
-              </CardContent>
-              <CardFooter className="flex justify-between px-4 pb-4">
+            <div key={crew.id} className="surface-card p-5 flex flex-col gap-2">
+              <div className="flex justify-between mb-2">
+                <h4 className="text-base font-bold text-[var(--text-high)]">{crew.name}</h4>
+                <Badge variant={STATUS_VARIANTS[crew.status] || 'secondary'}>{crew.status}</Badge>
+              </div>
+              {crew.goal && <p className="text-sm text-[var(--text-mid)]">{crew.goal}</p>}
+              <div className="flex flex-wrap gap-1">
+                {crew.agents.map((a) => (
+                  <Badge key={a.id} variant="outline" className="text-xs">
+                    {ROLE_ICONS[a.role] || '⚙️'} {a.name}
+                  </Badge>
+                ))}
+              </div>
+              <Badge variant="outline" className="text-xs w-fit">{crew.process_type} | {crew.run_count} runs</Badge>
+              <div className="flex justify-between mt-auto pt-2">
                 <Button variant="ghost" size="icon" className="text-red-400 hover:text-red-300" onClick={() => deleteMutation.mutate(crew.id)}>
                   <Trash2 className="h-4 w-4" />
                 </Button>
@@ -135,8 +132,8 @@ export default function CrewsPage() {
                   <Play className="h-4 w-4 mr-1" />
                   Run
                 </Button>
-              </CardFooter>
-            </Card>
+              </div>
+            </div>
           ))}
         </div>
       )}
@@ -223,20 +220,21 @@ export default function CrewsPage() {
           </DialogHeader>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
             {templates?.map((t) => (
-              <Card key={t.id} className="cursor-pointer hover:border-[var(--accent)] transition-colors"
-                onClick={() => { templateMutation.mutate({ templateId: t.id }); setTemplatesOpen(false); }}>
-                <CardContent className="p-4">
-                  <h4 className="text-base font-bold text-[var(--text-high)]">{t.name}</h4>
-                  <p className="text-sm text-[var(--text-mid)] mb-2">{t.description}</p>
-                  <div className="flex flex-wrap gap-1">
-                    {t.agents.map((a) => (
-                      <Badge key={a.id} variant="outline" className="text-xs">
-                        {ROLE_ICONS[a.role] || '⚙️'} {a.name}
-                      </Badge>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
+              <div
+                key={t.id}
+                className="surface-card p-5 cursor-pointer hover:border-[var(--accent)] transition-colors"
+                onClick={() => { templateMutation.mutate({ templateId: t.id }); setTemplatesOpen(false); }}
+              >
+                <h4 className="text-base font-bold text-[var(--text-high)]">{t.name}</h4>
+                <p className="text-sm text-[var(--text-mid)] mb-2">{t.description}</p>
+                <div className="flex flex-wrap gap-1">
+                  {t.agents.map((a) => (
+                    <Badge key={a.id} variant="outline" className="text-xs">
+                      {ROLE_ICONS[a.role] || '⚙️'} {a.name}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
             ))}
           </div>
           <DialogFooter>

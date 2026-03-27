@@ -1,9 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { Brain, Database, Rocket, BarChart3, Sparkles, Trash2, Loader2 } from 'lucide-react';
+import { Brain, Database, Rocket, BarChart3, Sparkles, Trash2, Loader2, Cpu } from 'lucide-react';
 
-import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
@@ -85,15 +84,17 @@ export default function FineTuningPage() {
   };
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2 text-[var(--text-high)]">
-            <Brain className="h-7 w-7 text-[var(--accent)]" /> Fine-Tuning Studio
-          </h1>
-          <p className="text-sm text-[var(--text-mid)]">
-            Create datasets from your platform data, train custom AI models, evaluate and deploy
-          </p>
+    <div className="p-5 space-y-5 animate-enter">
+      {/* Page header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-[var(--accent)] to-[#a855f7] shrink-0">
+            <Cpu className="h-5 w-5 text-white" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold text-[var(--text-high)]">Fine-Tuning Studio</h1>
+            <p className="text-xs text-[var(--text-mid)]">Custom model training and fine-tuning</p>
+          </div>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => setSourceOpen(true)}>
@@ -108,135 +109,123 @@ export default function FineTuningPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
         {/* Datasets */}
         <div className="md:col-span-5">
-          <Card>
-            <CardContent className="p-6">
-              <h2 className="text-lg font-semibold text-[var(--text-high)] mb-4">Training Datasets</h2>
-              {dsLoading ? <Skeleton className="h-[200px] w-full" /> : !datasets?.length ? (
-                <div className="text-center py-8">
-                  <Database className="h-12 w-12 text-[var(--text-low)] mb-2 mx-auto" />
-                  <p className="text-[var(--text-mid)]">No datasets yet</p>
-                  <p className="text-xs text-[var(--text-mid)]">
-                    Create one from your transcriptions, conversations, or documents
-                  </p>
-                </div>
-              ) : (
-                datasets.map((ds) => (
-                  <Card key={ds.id} className="mb-2">
-                    <CardContent className="py-3 px-4">
-                      <div className="flex justify-between mb-1">
-                        <h4 className="text-sm font-semibold text-[var(--text-high)]">{ds.name}</h4>
-                        <div className="flex gap-1 items-center">
-                          <Badge variant={STATUS_VARIANTS[ds.status] || 'secondary'}>{ds.status}</Badge>
-                          <Button variant="ghost" size="icon" className="h-7 w-7 text-red-400 hover:text-red-300" onClick={() => deleteDsMutation.mutate(ds.id)}>
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </Button>
-                        </div>
-                      </div>
-                      <div className="flex gap-1 flex-wrap">
-                        <Badge variant="outline" className="text-xs">{ds.source_type}</Badge>
-                        <Badge variant="outline" className="text-xs">{ds.sample_count} samples</Badge>
-                        <Badge variant="outline" className="text-xs">{ds.dataset_type}</Badge>
-                        {ds.quality_score !== null && (
-                          <Badge variant={ds.quality_score > 0.7 ? 'success' : 'warning'} className="text-xs">
-                            Quality: {(ds.quality_score * 100).toFixed(0)}%
-                          </Badge>
-                        )}
-                      </div>
-                    </CardContent>
-                    <CardFooter className="pt-0 px-4 pb-3">
-                      <Button variant="ghost" size="sm"
-                        onClick={() => assessMutation.mutate(ds.id)}
-                        disabled={assessMutation.isPending || ds.status !== 'ready'}>
-                        <BarChart3 className="h-4 w-4 mr-1" />
-                        Assess Quality
+          <div className="surface-card p-5">
+            <h2 className="text-lg font-semibold text-[var(--text-high)] mb-4">Training Datasets</h2>
+            {dsLoading ? <Skeleton className="h-[200px] w-full" /> : !datasets?.length ? (
+              <div className="text-center py-8">
+                <Database className="h-12 w-12 text-[var(--text-low)] mb-2 mx-auto" />
+                <p className="text-[var(--text-mid)]">No datasets yet</p>
+                <p className="text-xs text-[var(--text-mid)]">
+                  Create one from your transcriptions, conversations, or documents
+                </p>
+              </div>
+            ) : (
+              datasets.map((ds) => (
+                <div key={ds.id} className="surface-card p-4 mb-2">
+                  <div className="flex justify-between mb-1">
+                    <h4 className="text-sm font-semibold text-[var(--text-high)]">{ds.name}</h4>
+                    <div className="flex gap-1 items-center">
+                      <Badge variant={STATUS_VARIANTS[ds.status] || 'secondary'}>{ds.status}</Badge>
+                      <Button variant="ghost" size="icon" className="h-7 w-7 text-red-400 hover:text-red-300" onClick={() => deleteDsMutation.mutate(ds.id)}>
+                        <Trash2 className="h-3.5 w-3.5" />
                       </Button>
-                    </CardFooter>
-                  </Card>
-                ))
-              )}
-            </CardContent>
-          </Card>
+                    </div>
+                  </div>
+                  <div className="flex gap-1 flex-wrap mb-2">
+                    <Badge variant="outline" className="text-xs">{ds.source_type}</Badge>
+                    <Badge variant="outline" className="text-xs">{ds.sample_count} samples</Badge>
+                    <Badge variant="outline" className="text-xs">{ds.dataset_type}</Badge>
+                    {ds.quality_score !== null && (
+                      <Badge variant={ds.quality_score > 0.7 ? 'success' : 'warning'} className="text-xs">
+                        Quality: {(ds.quality_score * 100).toFixed(0)}%
+                      </Badge>
+                    )}
+                  </div>
+                  <Button variant="ghost" size="sm"
+                    onClick={() => assessMutation.mutate(ds.id)}
+                    disabled={assessMutation.isPending || ds.status !== 'ready'}>
+                    <BarChart3 className="h-4 w-4 mr-1" />
+                    Assess Quality
+                  </Button>
+                </div>
+              ))
+            )}
+          </div>
         </div>
 
         {/* Training Jobs */}
-        <div className="md:col-span-7">
-          <Card>
-            <CardContent className="p-6">
-              <h2 className="text-lg font-semibold text-[var(--text-high)] mb-4">Training Jobs</h2>
-              {jobsLoading ? <Skeleton className="h-[300px] w-full" /> : !jobs?.length ? (
-                <div className="text-center py-12">
-                  <Brain className="h-16 w-16 text-[var(--text-low)] mb-4 mx-auto" />
-                  <h3 className="text-lg font-semibold text-[var(--text-mid)]">No training jobs yet</h3>
-                  <p className="text-sm text-[var(--text-mid)]">
-                    Create a dataset first, then start training
-                  </p>
-                </div>
-              ) : (
-                jobs.map((job) => {
-                  const metrics = JSON.parse(job.metrics_json || '{}');
-                  return (
-                    <Card key={job.id} className="mb-4">
-                      <CardContent className="p-4">
-                        <div className="flex justify-between mb-2">
-                          <h4 className="text-base font-bold text-[var(--text-high)]">{job.name}</h4>
-                          <Badge variant={STATUS_VARIANTS[job.status] || 'secondary'}>{job.status}</Badge>
-                        </div>
-                        <div className="flex gap-1 mb-3 flex-wrap">
-                          <Badge variant="outline">{job.base_model}</Badge>
-                          <Badge variant="outline">{job.provider}</Badge>
-                          <Badge variant="outline">{job.epochs_completed}/{job.total_epochs} epochs</Badge>
-                          {job.estimated_cost_usd > 0 && (
-                            <Badge variant="outline">~${job.actual_cost_usd || job.estimated_cost_usd}</Badge>
-                          )}
-                        </div>
-                        {(job.status === 'training' || job.status === 'preparing') && (
-                          <Progress value={(job.epochs_completed / job.total_epochs) * 100} className="mb-2" />
-                        )}
-                        {metrics.final_loss !== undefined && (
-                          <p className="text-xs text-[var(--text-mid)]">
-                            Loss: {metrics.final_loss} | Eval Loss: {metrics.eval_loss}
-                          </p>
-                        )}
-                        {job.result_model_id && (
-                          <Alert variant="success" className="mt-2 py-1">
-                            <AlertDescription className="text-xs">Model ID: {job.result_model_id}</AlertDescription>
-                          </Alert>
-                        )}
-                        {job.error && (
-                          <Alert variant="destructive" className="mt-2 py-1">
-                            <AlertDescription>{job.error}</AlertDescription>
-                          </Alert>
-                        )}
-                      </CardContent>
-                    </Card>
-                  );
-                })
-              )}
-            </CardContent>
-          </Card>
+        <div className="md:col-span-7 space-y-5">
+          <div className="surface-card p-5">
+            <h2 className="text-lg font-semibold text-[var(--text-high)] mb-4">Training Jobs</h2>
+            {jobsLoading ? <Skeleton className="h-[300px] w-full" /> : !jobs?.length ? (
+              <div className="text-center py-12">
+                <Brain className="h-16 w-16 text-[var(--text-low)] mb-4 mx-auto" />
+                <h3 className="text-lg font-semibold text-[var(--text-mid)]">No training jobs yet</h3>
+                <p className="text-sm text-[var(--text-mid)]">
+                  Create a dataset first, then start training
+                </p>
+              </div>
+            ) : (
+              jobs.map((job) => {
+                const metrics = JSON.parse(job.metrics_json || '{}');
+                return (
+                  <div key={job.id} className="surface-card p-4 mb-4">
+                    <div className="flex justify-between mb-2">
+                      <h4 className="text-base font-bold text-[var(--text-high)]">{job.name}</h4>
+                      <Badge variant={STATUS_VARIANTS[job.status] || 'secondary'}>{job.status}</Badge>
+                    </div>
+                    <div className="flex gap-1 mb-3 flex-wrap">
+                      <Badge variant="outline">{job.base_model}</Badge>
+                      <Badge variant="outline">{job.provider}</Badge>
+                      <Badge variant="outline">{job.epochs_completed}/{job.total_epochs} epochs</Badge>
+                      {job.estimated_cost_usd > 0 && (
+                        <Badge variant="outline">~${job.actual_cost_usd || job.estimated_cost_usd}</Badge>
+                      )}
+                    </div>
+                    {(job.status === 'training' || job.status === 'preparing') && (
+                      <Progress value={(job.epochs_completed / job.total_epochs) * 100} className="mb-2" />
+                    )}
+                    {metrics.final_loss !== undefined && (
+                      <p className="text-xs text-[var(--text-mid)]">
+                        Loss: {metrics.final_loss} | Eval Loss: {metrics.eval_loss}
+                      </p>
+                    )}
+                    {job.result_model_id && (
+                      <Alert variant="success" className="mt-2 py-1">
+                        <AlertDescription className="text-xs">Model ID: {job.result_model_id}</AlertDescription>
+                      </Alert>
+                    )}
+                    {job.error && (
+                      <Alert variant="destructive" className="mt-2 py-1">
+                        <AlertDescription>{job.error}</AlertDescription>
+                      </Alert>
+                    )}
+                  </div>
+                );
+              })
+            )}
+          </div>
 
           {/* Available Models */}
           {models && (
-            <Card className="mt-4">
-              <CardContent className="p-6">
-                <h2 className="text-lg font-semibold text-[var(--text-high)] mb-2">Available Base Models</h2>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                  {models.map((m) => (
-                    <Card key={m.id} className="p-3">
-                      <h4 className="text-sm font-semibold text-[var(--text-high)]">{m.name}</h4>
-                      <p className="text-xs text-[var(--text-mid)]">{m.parameters} params</p>
-                      <div className="flex gap-1 mt-1">
-                        <Badge variant="outline" className="text-xs">{m.provider}</Badge>
-                        {m.supports_lora && <Badge variant="success" className="text-xs">LoRA</Badge>}
-                      </div>
-                    </Card>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+            <div className="surface-card p-5">
+              <h2 className="text-lg font-semibold text-[var(--text-high)] mb-2">Available Base Models</h2>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {models.map((m) => (
+                  <div key={m.id} className="surface-card p-3">
+                    <h4 className="text-sm font-semibold text-[var(--text-high)]">{m.name}</h4>
+                    <p className="text-xs text-[var(--text-mid)]">{m.parameters} params</p>
+                    <div className="flex gap-1 mt-1">
+                      <Badge variant="outline" className="text-xs">{m.provider}</Badge>
+                      {m.supports_lora && <Badge variant="success" className="text-xs">LoRA</Badge>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           )}
         </div>
       </div>

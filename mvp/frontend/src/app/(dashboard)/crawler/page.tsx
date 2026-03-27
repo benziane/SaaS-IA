@@ -1,9 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { Loader2 } from 'lucide-react';
+import { Globe, Loader2 } from 'lucide-react';
 
-import { Card, CardContent } from '@/lib/design-hub/components/Card';
 import { Button } from '@/lib/design-hub/components/Button';
 import { Badge } from '@/lib/design-hub/components/Badge';
 import { Alert, AlertDescription } from '@/lib/design-hub/components/Alert';
@@ -16,7 +15,7 @@ import type { ImageData } from '@/features/crawler/types';
 
 function ImageCard({ image }: { image: ImageData }) {
   return (
-    <Card className="h-full overflow-hidden">
+    <div className="surface-card h-full overflow-hidden">
       <img
         src={image.src}
         alt={image.alt}
@@ -25,7 +24,7 @@ function ImageCard({ image }: { image: ImageData }) {
           (e.target as HTMLImageElement).style.display = 'none';
         }}
       />
-      <CardContent className="p-3">
+      <div className="p-3">
         {image.alt && (
           <p className="text-xs text-[var(--text-mid)] truncate">
             {image.alt}
@@ -36,8 +35,8 @@ function ImageCard({ image }: { image: ImageData }) {
             {image.description}
           </p>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
 
@@ -71,113 +70,117 @@ export default function CrawlerPage() {
   const indexData = indexMutation.data;
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold text-[var(--text-high)] mb-6">Web Crawler</h1>
+    <div className="p-5 space-y-5 animate-enter">
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-[var(--accent)] to-[#a855f7] shrink-0">
+          <Globe className="h-5 w-5 text-white" />
+        </div>
+        <div>
+          <h1 className="text-xl font-bold text-[var(--text-high)]">Web Crawler</h1>
+          <p className="text-xs text-[var(--text-mid)]">Scrape, analyze with vision AI, and index web pages to your knowledge base</p>
+        </div>
+      </div>
 
-      <Card className="mb-6">
-        <CardContent className="p-6">
-          <div className="mb-4">
-            <label className="text-sm font-medium text-[var(--text-mid)] mb-1.5 block">
-              URL to crawl
-            </label>
-            <Input
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              placeholder="https://example.com"
-            />
-          </div>
+      <div className="surface-card p-5">
+        <div className="mb-4">
+          <label className="text-sm font-medium text-[var(--text-mid)] mb-1.5 block">
+            URL to crawl
+          </label>
+          <Input
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            placeholder="https://example.com"
+          />
+        </div>
 
-          <Tabs value={tab} onValueChange={setTab} className="mb-4">
-            <TabsList>
-              <TabsTrigger value="scrape">Scrape</TabsTrigger>
-              <TabsTrigger value="vision">Scrape + Vision AI</TabsTrigger>
-              <TabsTrigger value="index">Index to Knowledge Base</TabsTrigger>
-            </TabsList>
+        <Tabs value={tab} onValueChange={setTab} className="mb-4">
+          <TabsList>
+            <TabsTrigger value="scrape">Scrape</TabsTrigger>
+            <TabsTrigger value="vision">Scrape + Vision AI</TabsTrigger>
+            <TabsTrigger value="index">Index to Knowledge Base</TabsTrigger>
+          </TabsList>
 
-            <TabsContent value="scrape">
-              <Button onClick={handleScrape} disabled={!url.trim() || isLoading}>
-                {scrape.isPending ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Scraping...
-                  </>
-                ) : (
-                  'Scrape URL'
-                )}
-              </Button>
-            </TabsContent>
+          <TabsContent value="scrape">
+            <Button onClick={handleScrape} disabled={!url.trim() || isLoading}>
+              {scrape.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Scraping...
+                </>
+              ) : (
+                'Scrape URL'
+              )}
+            </Button>
+          </TabsContent>
 
-            <TabsContent value="vision">
-              <Button variant="secondary" onClick={handleScrapeVision} disabled={!url.trim() || isLoading}>
-                {scrapeVision.isPending ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Analyzing...
-                  </>
-                ) : (
-                  'Scrape + Analyze Images'
-                )}
-              </Button>
-            </TabsContent>
+          <TabsContent value="vision">
+            <Button variant="secondary" onClick={handleScrapeVision} disabled={!url.trim() || isLoading}>
+              {scrapeVision.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Analyzing...
+                </>
+              ) : (
+                'Scrape + Analyze Images'
+              )}
+            </Button>
+          </TabsContent>
 
-            <TabsContent value="index">
-              <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <Checkbox
-                    id="crawl-subpages"
-                    checked={crawlSubpages}
-                    onCheckedChange={(checked) => setCrawlSubpages(checked === true)}
-                  />
-                  <label htmlFor="crawl-subpages" className="text-sm text-[var(--text-high)] cursor-pointer">
-                    Crawl subpages (up to 5)
-                  </label>
-                </div>
-                <Button
-                  className="bg-green-600 hover:bg-green-700 text-white"
-                  onClick={handleIndex}
-                  disabled={!url.trim() || isLoading}
-                >
-                  {indexMutation.isPending ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Indexing...
-                    </>
-                  ) : (
-                    'Index to Knowledge Base'
-                  )}
-                </Button>
+          <TabsContent value="index">
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="crawl-subpages"
+                  checked={crawlSubpages}
+                  onCheckedChange={(checked) => setCrawlSubpages(checked === true)}
+                />
+                <label htmlFor="crawl-subpages" className="text-sm text-[var(--text-high)] cursor-pointer">
+                  Crawl subpages (up to 5)
+                </label>
               </div>
-            </TabsContent>
-          </Tabs>
+              <Button
+                className="bg-green-600 hover:bg-green-700 text-white"
+                onClick={handleIndex}
+                disabled={!url.trim() || isLoading}
+              >
+                {indexMutation.isPending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Indexing...
+                  </>
+                ) : (
+                  'Index to Knowledge Base'
+                )}
+              </Button>
+            </div>
+          </TabsContent>
+        </Tabs>
 
-          {(scrape.isError || scrapeVision.isError || indexMutation.isError) && (
-            <Alert variant="destructive" className="mt-4">
-              <AlertDescription>
-                {(scrape.error ?? scrapeVision.error ?? indexMutation.error)?.message}
-              </AlertDescription>
-            </Alert>
-          )}
-        </CardContent>
-      </Card>
+        {(scrape.isError || scrapeVision.isError || indexMutation.isError) && (
+          <Alert variant="destructive" className="mt-4">
+            <AlertDescription>
+              {(scrape.error ?? scrapeVision.error ?? indexMutation.error)?.message}
+            </AlertDescription>
+          </Alert>
+        )}
+      </div>
 
       {/* Scrape Results */}
       {scrapeData?.success && (
-        <div>
-          <Card className="mb-6">
-            <CardContent className="p-6">
-              <h2 className="text-lg font-semibold text-[var(--text-high)] mb-2">{scrapeData.title || 'Scraped Content'}</h2>
-              <div className="flex gap-2 mb-4">
-                <Badge variant="secondary">{String(scrapeData.text_length)} chars</Badge>
-                <Badge>{String(scrapeData.image_count)} images</Badge>
-              </div>
-              <div className="max-h-[400px] overflow-auto bg-[var(--bg-elevated)] p-4 rounded-md">
-                <pre className="text-sm text-[var(--text-high)] whitespace-pre-wrap font-mono text-[0.85rem]">
-                  {scrapeData.markdown.substring(0, 5000)}
-                  {scrapeData.markdown.length > 5000 ? '\n\n... (truncated)' : ''}
-                </pre>
-              </div>
-            </CardContent>
-          </Card>
+        <div className="space-y-5">
+          <div className="surface-card p-5">
+            <h2 className="text-lg font-semibold text-[var(--text-high)] mb-2">{scrapeData.title || 'Scraped Content'}</h2>
+            <div className="flex gap-2 mb-4">
+              <Badge variant="secondary">{String(scrapeData.text_length)} chars</Badge>
+              <Badge>{String(scrapeData.image_count)} images</Badge>
+            </div>
+            <div className="max-h-[400px] overflow-auto bg-[var(--bg-elevated)] p-4 rounded-md">
+              <pre className="text-sm text-[var(--text-high)] whitespace-pre-wrap font-mono text-[0.85rem]">
+                {scrapeData.markdown.substring(0, 5000)}
+                {scrapeData.markdown.length > 5000 ? '\n\n... (truncated)' : ''}
+              </pre>
+            </div>
+          </div>
 
           {scrapeData.images.length > 0 && (
             <div>
@@ -194,18 +197,16 @@ export default function CrawlerPage() {
 
       {/* Vision Results */}
       {visionData?.success && (
-        <div>
-          <Card className="mb-6">
-            <CardContent className="p-6">
-              <h2 className="text-lg font-semibold text-[var(--text-high)] mb-2">{visionData.title || 'Vision Analysis'}</h2>
-              <Badge variant="secondary" className="mb-4">Provider: {visionData.vision_provider}</Badge>
-              <div className="max-h-[300px] overflow-auto bg-[var(--bg-elevated)] p-4 rounded-md">
-                <pre className="text-sm text-[var(--text-high)] whitespace-pre-wrap font-mono text-[0.85rem]">
-                  {visionData.markdown.substring(0, 3000)}
-                </pre>
-              </div>
-            </CardContent>
-          </Card>
+        <div className="space-y-5">
+          <div className="surface-card p-5">
+            <h2 className="text-lg font-semibold text-[var(--text-high)] mb-2">{visionData.title || 'Vision Analysis'}</h2>
+            <Badge variant="secondary" className="mb-4">Provider: {visionData.vision_provider}</Badge>
+            <div className="max-h-[300px] overflow-auto bg-[var(--bg-elevated)] p-4 rounded-md">
+              <pre className="text-sm text-[var(--text-high)] whitespace-pre-wrap font-mono text-[0.85rem]">
+                {visionData.markdown.substring(0, 3000)}
+              </pre>
+            </div>
+          </div>
 
           {visionData.images.length > 0 && (
             <div>

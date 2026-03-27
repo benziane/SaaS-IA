@@ -2,10 +2,9 @@
 
 import { useRef, useState } from 'react';
 import {
-  Bot, Mic, Square, Send, History, Loader2,
+  Radio, Bot, Mic, Square, Send, History, Loader2,
 } from 'lucide-react';
 
-import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/lib/design-hub/components/Button';
 import { Input } from '@/lib/design-hub/components/Input';
@@ -68,21 +67,22 @@ export default function RealtimePage() {
   };
 
   return (
-    <div className="p-6">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-[var(--text-high)] flex items-center gap-2">
-          <Bot className="h-8 w-8 text-[var(--accent)]" /> Realtime AI
-        </h1>
-        <p className="text-sm text-[var(--text-mid)]">
-          Live AI conversations with voice, vision, and knowledge base integration
-        </p>
+    <div className="p-5 space-y-5 animate-enter">
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-[var(--accent)] to-[#a855f7] shrink-0">
+          <Radio className="h-5 w-5 text-white" />
+        </div>
+        <div>
+          <h1 className="text-xl font-bold text-[var(--text-high)]">Realtime AI</h1>
+          <p className="text-xs text-[var(--text-mid)]">Real-time AI voice and vision sessions</p>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
         {/* Chat Area */}
         <div className="md:col-span-8">
           {activeSession ? (
-            <Card className="h-[70vh] flex flex-col">
+            <div className="surface-card h-[70vh] flex flex-col">
               <div className="p-4 flex justify-between items-center border-b border-[var(--border)]">
                 <div className="flex items-center gap-2">
                   <Badge>{MODE_ICONS[activeSession.mode] || '🎤'}</Badge>
@@ -134,93 +134,87 @@ export default function RealtimePage() {
                   <Send className="h-5 w-5" />
                 </button>
               </div>
-            </Card>
+            </div>
           ) : (
-            <Card>
-              <CardContent className="text-center py-16 px-6">
-                <Bot className="h-16 w-16 text-[var(--text-low)] mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-[var(--text-mid)] mb-4">Start a Realtime AI Session</h3>
-                <div className="grid grid-cols-2 gap-4 max-w-md mx-auto mb-6">
-                  <div>
-                    <label className="text-xs text-[var(--text-mid)] mb-1 block">Mode</label>
-                    <Select value={mode} onValueChange={setMode}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Mode" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="voice">Voice Chat</SelectItem>
-                        <SelectItem value="vision">Vision Analysis</SelectItem>
-                        <SelectItem value="voice_vision">Voice + Vision</SelectItem>
-                        <SelectItem value="meeting">Meeting Assistant</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <label className="text-xs text-[var(--text-mid)] mb-1 block">Provider</label>
-                    <Select value={provider} onValueChange={setProvider}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Provider" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="gemini">Gemini Flash</SelectItem>
-                        <SelectItem value="groq">Groq (Ultra-fast)</SelectItem>
-                        <SelectItem value="claude">Claude</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="col-span-2">
-                    <Input
-                      placeholder="System Prompt (optional, e.g., You are a helpful coding assistant...)"
-                      value={systemPrompt}
-                      onChange={(e) => setSystemPrompt(e.target.value)}
-                    />
-                  </div>
+            <div className="surface-card p-5 text-center py-16 px-6">
+              <Bot className="h-16 w-16 text-[var(--text-low)] mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-[var(--text-mid)] mb-4">Start a Realtime AI Session</h3>
+              <div className="grid grid-cols-2 gap-4 max-w-md mx-auto mb-6">
+                <div>
+                  <label className="text-xs text-[var(--text-mid)] mb-1 block">Mode</label>
+                  <Select value={mode} onValueChange={setMode}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Mode" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="voice">Voice Chat</SelectItem>
+                      <SelectItem value="vision">Vision Analysis</SelectItem>
+                      <SelectItem value="voice_vision">Voice + Vision</SelectItem>
+                      <SelectItem value="meeting">Meeting Assistant</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-                <Button
-                  size="lg"
-                  onClick={handleCreate}
-                  disabled={createMutation.isPending}
-                >
-                  {createMutation.isPending ? (
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  ) : (
-                    <Mic className="h-4 w-4 mr-2" />
-                  )}
-                  Start Session
-                </Button>
-              </CardContent>
-            </Card>
+                <div>
+                  <label className="text-xs text-[var(--text-mid)] mb-1 block">Provider</label>
+                  <Select value={provider} onValueChange={setProvider}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Provider" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="gemini">Gemini Flash</SelectItem>
+                      <SelectItem value="groq">Groq (Ultra-fast)</SelectItem>
+                      <SelectItem value="claude">Claude</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="col-span-2">
+                  <Input
+                    placeholder="System Prompt (optional, e.g., You are a helpful coding assistant...)"
+                    value={systemPrompt}
+                    onChange={(e) => setSystemPrompt(e.target.value)}
+                  />
+                </div>
+              </div>
+              <Button
+                size="lg"
+                onClick={handleCreate}
+                disabled={createMutation.isPending}
+              >
+                {createMutation.isPending ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Mic className="h-4 w-4 mr-2" />
+                )}
+                Start Session
+              </Button>
+            </div>
           )}
         </div>
 
         {/* Session History */}
         <div className="md:col-span-4">
-          <Card>
-            <CardContent className="p-6">
-              <h3 className="text-lg font-semibold text-[var(--text-high)] flex items-center gap-2 mb-4">
-                <History className="h-5 w-5" /> Sessions
-              </h3>
-              {isLoading ? <Skeleton className="h-72 rounded-lg" /> : !sessions?.length ? (
-                <p className="text-[var(--text-mid)]">No sessions yet</p>
-              ) : (
-                sessions.map((s) => (
-                  <Card key={s.id} className="mb-2 border border-[var(--border)]">
-                    <CardContent className="py-3 px-4">
-                      <div className="flex justify-between">
-                        <span className="text-sm font-medium text-[var(--text-high)]">{s.title || 'Untitled'}</span>
-                        <Badge variant={STATUS_VARIANTS[s.status] || 'default'}>{s.status}</Badge>
-                      </div>
-                      <div className="flex gap-1 mt-1">
-                        <Badge variant="outline">{MODE_ICONS[s.mode] || s.mode}</Badge>
-                        <Badge variant="outline">{s.provider}</Badge>
-                        <Badge variant="outline">{s.total_turns} turns</Badge>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))
-              )}
-            </CardContent>
-          </Card>
+          <div className="surface-card p-5">
+            <h3 className="text-lg font-semibold text-[var(--text-high)] flex items-center gap-2 mb-4">
+              <History className="h-5 w-5" /> Sessions
+            </h3>
+            {isLoading ? <Skeleton className="h-72 rounded-lg" /> : !sessions?.length ? (
+              <p className="text-[var(--text-mid)]">No sessions yet</p>
+            ) : (
+              sessions.map((s) => (
+                <div key={s.id} className="surface-card p-4 mb-2">
+                  <div className="flex justify-between">
+                    <span className="text-sm font-medium text-[var(--text-high)]">{s.title || 'Untitled'}</span>
+                    <Badge variant={STATUS_VARIANTS[s.status] || 'default'}>{s.status}</Badge>
+                  </div>
+                  <div className="flex gap-1 mt-1">
+                    <Badge variant="outline">{MODE_ICONS[s.mode] || s.mode}</Badge>
+                    <Badge variant="outline">{s.provider}</Badge>
+                    <Badge variant="outline">{s.total_turns} turns</Badge>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
         </div>
       </div>
     </div>

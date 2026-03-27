@@ -9,10 +9,9 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { MessageSquare, X } from 'lucide-react';
+import { MessageSquare, X, Sparkles } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 
-import { Card } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 import { useConversations, useConversation } from '@/features/conversation/hooks';
@@ -138,14 +137,12 @@ export default function ChatPage(): JSX.Element {
     (content: string) => {
       if (!activeConversationId) return;
 
-      // Reset streaming state
       setStreamingText('');
       setStreamProvider(undefined);
       setStreamTokenCount(undefined);
       setStreamError(null);
       accumulatedTextRef.current = '';
 
-      // Optimistically add the user message
       const optimisticUserMessage: Message = {
         id: `pending-${Date.now()}`,
         role: 'user',
@@ -166,9 +163,6 @@ export default function ChatPage(): JSX.Element {
           onDone: (info) => {
             setStreamProvider(info.provider);
             setStreamTokenCount(info.tokens_streamed);
-
-            // Clear pending messages and refetch the conversation to get
-            // the persisted messages from the server
             setPendingMessages([]);
             void queryClient.invalidateQueries({
               queryKey: queryKeys.conversations.detail(activeConversationId),
@@ -176,8 +170,6 @@ export default function ChatPage(): JSX.Element {
             void queryClient.invalidateQueries({
               queryKey: queryKeys.conversations.lists(),
             });
-
-            // Reset streaming text after a brief delay for the refetch
             setTimeout(() => {
               setStreamingText('');
               setStreamProvider(undefined);
@@ -186,7 +178,6 @@ export default function ChatPage(): JSX.Element {
           },
           onError: (error: string) => {
             setStreamError(error);
-            // Still refetch to get any messages that were persisted
             setPendingMessages([]);
             void queryClient.invalidateQueries({
               queryKey: queryKeys.conversations.detail(activeConversationId),
@@ -199,10 +190,11 @@ export default function ChatPage(): JSX.Element {
   );
 
   return (
-    <div className="flex gap-4" style={{ height: 'calc(100vh - 120px)' }}>
+    <div className="flex gap-4 p-5 animate-enter" style={{ height: 'calc(100vh - 120px)' }}>
+
       {/* Left Panel: Conversation List */}
-      <Card
-        className="flex flex-col overflow-hidden shrink-0"
+      <div
+        className="surface-card flex flex-col overflow-hidden shrink-0"
         style={{ width: SIDEBAR_WIDTH, minWidth: SIDEBAR_WIDTH }}
       >
         <ConversationList
@@ -213,28 +205,38 @@ export default function ChatPage(): JSX.Element {
           onCreate={handleCreateConversation}
           isLoading={isLoadingList}
         />
-      </Card>
+      </div>
 
       {/* Right Panel: Active Chat */}
-      <Card className="flex-1 flex flex-col overflow-hidden">
+      <div className="surface-card flex-1 flex flex-col overflow-hidden">
         {activeConversationId ? (
           <>
             {/* Chat Header */}
-            <div className="px-4 py-3 border-b border-[var(--border)] flex items-center gap-2">
-              <MessageSquare className="w-5 h-5 text-[var(--accent)]" />
-              <h6 className="text-base font-semibold text-[var(--text-high)]">
-                {activeConversation?.title || 'New Conversation'}
-              </h6>
-              {activeConversation?.transcription_id && (
-                <span className="ml-auto text-xs text-[var(--text-mid)] bg-[var(--bg-elevated)] px-2 py-0.5 rounded">
-                  Linked to transcription
+            <div className="px-5 py-3.5 border-b border-[var(--border)] flex items-center gap-3 shrink-0">
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-gradient-to-br from-[var(--accent)] to-[#a855f7] shrink-0">
+                <MessageSquare className="w-4 h-4 text-white" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-[var(--text-high)] truncate">
+                  {activeConversation?.title || 'New Conversation'}
+                </p>
+                {activeConversation?.transcription_id && (
+                  <span className="text-xs text-[var(--accent)]">
+                    Linked to transcription
+                  </span>
+                )}
+              </div>
+              {isStreaming && (
+                <span className="flex items-center gap-1.5 text-xs text-[var(--accent)]">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent)] animate-pulse" />
+                  Streaming
                 </span>
               )}
             </div>
 
             {/* Stream Error */}
             {streamError && (
-              <Alert variant="destructive" className="mx-4 mt-2">
+              <Alert variant="destructive" className="mx-4 mt-3">
                 <div className="flex items-center justify-between">
                   <AlertDescription>{streamError}</AlertDescription>
                   <button
@@ -269,17 +271,21 @@ export default function ChatPage(): JSX.Element {
           </>
         ) : (
           /* No conversation selected */
-          <div className="flex-1 flex flex-col justify-center items-center gap-4 text-[var(--text-mid)]">
-            <MessageSquare className="w-16 h-16 opacity-15" />
-            <h6 className="text-base font-semibold text-[var(--text-mid)]">
-              Select a conversation or create a new one
-            </h6>
-            <p className="text-sm text-[var(--text-mid)]">
-              Chat with AI about your transcriptions and more.
-            </p>
+          <div className="flex-1 flex flex-col justify-center items-center gap-4 p-8">
+            <div className="w-16 h-16 rounded-2xl flex items-center justify-center bg-gradient-to-br from-[var(--accent)]/20 to-[#a855f7]/20 border border-[var(--accent)]/20">
+              <Sparkles className="w-8 h-8 text-[var(--accent)]" />
+            </div>
+            <div className="text-center">
+              <p className="text-base font-semibold text-[var(--text-high)] mb-1">
+                Start a conversation
+              </p>
+              <p className="text-sm text-[var(--text-mid)]">
+                Select a conversation from the list or create a new one.
+              </p>
+            </div>
           </div>
         )}
-      </Card>
+      </div>
 
     </div>
   );

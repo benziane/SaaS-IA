@@ -3,10 +3,9 @@
 import { useState } from 'react';
 import {
   Plus, Trash2, Pencil, Copy, BarChart3, List, Upload, Sparkles,
-  Ban, Link, Star, ArrowUp, ArrowDown, Loader2, FileText,
+  Ban, Link, Star, ArrowUp, ArrowDown, Loader2, FileText, ClipboardList,
 } from 'lucide-react';
 
-import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
@@ -166,15 +165,16 @@ export default function FormsPage() {
   };
 
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-3xl font-bold text-[var(--text-high)] flex items-center gap-2">
-            <FileText className="h-8 w-8 text-[var(--accent)]" /> AI Forms
-          </h1>
-          <p className="text-sm text-[var(--text-mid)]">
-            Create AI-powered forms with smart validation, response analysis, and AI-generated fields
-          </p>
+    <div className="p-5 space-y-5 animate-enter">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-[var(--accent)] to-[#a855f7] shrink-0">
+            <ClipboardList className="h-5 w-5 text-white" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold text-[var(--text-high)]">AI Forms</h1>
+            <p className="text-xs text-[var(--text-mid)]">Conversational AI form builder</p>
+          </div>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => setGenerateOpen(true)}>
@@ -193,8 +193,8 @@ export default function FormsPage() {
           ))}
         </div>
       ) : !forms?.length ? (
-        <Card>
-          <CardContent className="text-center py-16 px-6">
+        <div className="surface-card p-5">
+          <div className="text-center py-16 px-6">
             <FileText className="h-16 w-16 text-[var(--text-low)] mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-[var(--text-mid)]">No forms yet</h3>
             <p className="text-sm text-[var(--text-mid)] mt-2 mb-4">
@@ -208,16 +208,16 @@ export default function FormsPage() {
                 <Plus className="h-4 w-4 mr-2" /> Create Form
               </Button>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
           {forms.map((form) => (
-            <Card
+            <div
               key={form.id}
-              className="flex flex-col h-full border border-[var(--border)] hover:border-[var(--accent)] transition-colors"
+              className="surface-card p-5 flex flex-col h-full hover:border-[var(--accent)] transition-colors"
             >
-              <CardContent className="flex-1 p-4">
+              <div className="flex-1">
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="text-lg font-semibold text-[var(--text-high)] truncate max-w-[70%]">
                     {form.title}
@@ -245,9 +245,9 @@ export default function FormsPage() {
                     {form.responses_count} response{form.responses_count !== 1 ? 's' : ''}
                   </span>
                 </div>
-              </CardContent>
+              </div>
 
-              <CardFooter className="justify-end gap-1 px-4 pb-3 pt-0">
+              <div className="flex justify-end gap-1 pt-3 mt-3 border-t border-[var(--border)]">
                 <TooltipProvider>
                   {form.status === 'draft' && (
                     <Tooltip>
@@ -356,8 +356,8 @@ export default function FormsPage() {
                     <TooltipContent>Delete</TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
-              </CardFooter>
-            </Card>
+              </div>
+            </div>
           ))}
         </div>
       )}
@@ -414,7 +414,7 @@ export default function FormsPage() {
               </div>
 
               {editFields.map((field, index) => (
-                <Card key={field.field_id} className="mb-2 p-3 border border-[var(--border)]">
+                <div key={field.field_id} className="surface-card p-3 mb-2">
                   <div className="grid grid-cols-12 gap-2 items-center">
                     <div className="col-span-4">
                       <Input
@@ -475,7 +475,7 @@ export default function FormsPage() {
                       </button>
                     </div>
                   </div>
-                </Card>
+                </div>
               ))}
 
               {editFields.length === 0 && (
@@ -735,28 +735,22 @@ export default function FormsPage() {
           {analytics ? (
             <div className="space-y-6">
               <div className="grid grid-cols-3 gap-4">
-                <Card className="border border-[var(--border)]">
-                  <CardContent className="text-center p-4">
-                    <p className="text-3xl font-bold text-[var(--text-high)]">{analytics.total_responses}</p>
-                    <span className="text-xs text-[var(--text-mid)]">Total Responses</span>
-                  </CardContent>
-                </Card>
-                <Card className="border border-[var(--border)]">
-                  <CardContent className="text-center p-4">
-                    <p className="text-3xl font-bold text-[var(--text-high)]">
-                      {(analytics.completion_rate * 100).toFixed(0)}%
-                    </p>
-                    <span className="text-xs text-[var(--text-mid)]">Completion Rate</span>
-                  </CardContent>
-                </Card>
-                <Card className="border border-[var(--border)]">
-                  <CardContent className="text-center p-4">
-                    <p className="text-3xl font-bold text-[var(--text-high)]">
-                      {Object.keys(analytics.field_stats).length}
-                    </p>
-                    <span className="text-xs text-[var(--text-mid)]">Fields Tracked</span>
-                  </CardContent>
-                </Card>
+                <div className="surface-card p-5">
+                  <p className="text-3xl font-bold text-[var(--text-high)] text-center">{analytics.total_responses}</p>
+                  <span className="text-xs text-[var(--text-mid)] block text-center">Total Responses</span>
+                </div>
+                <div className="surface-card p-5">
+                  <p className="text-3xl font-bold text-[var(--text-high)] text-center">
+                    {(analytics.completion_rate * 100).toFixed(0)}%
+                  </p>
+                  <span className="text-xs text-[var(--text-mid)] block text-center">Completion Rate</span>
+                </div>
+                <div className="surface-card p-5">
+                  <p className="text-3xl font-bold text-[var(--text-high)] text-center">
+                    {Object.keys(analytics.field_stats).length}
+                  </p>
+                  <span className="text-xs text-[var(--text-mid)] block text-center">Fields Tracked</span>
+                </div>
               </div>
 
               {/* Field stats */}
@@ -784,13 +778,11 @@ export default function FormsPage() {
               {analytics.ai_insights && (
                 <div>
                   <p className="text-sm font-medium text-[var(--text-high)] mb-2">AI Insights</p>
-                  <Card className="border border-[var(--border)]">
-                    <CardContent className="p-4">
-                      <p className="text-sm text-[var(--text-high)] whitespace-pre-wrap">
-                        {analytics.ai_insights}
-                      </p>
-                    </CardContent>
-                  </Card>
+                  <div className="surface-card p-5">
+                    <p className="text-sm text-[var(--text-high)] whitespace-pre-wrap">
+                      {analytics.ai_insights}
+                    </p>
+                  </div>
                 </div>
               )}
             </div>

@@ -1,13 +1,8 @@
-/**
- * Platform Modules Page - Grade S++
- * Admin view of all registered backend modules and their status
- */
-
 'use client';
 
 import { useEffect, useState } from 'react';
 
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Package2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/lib/design-hub/components/Alert';
 import { Skeleton } from '@/lib/design-hub/components/Skeleton';
@@ -34,23 +29,19 @@ interface ModuleInfo {
 
 function ModuleCardSkeleton(): JSX.Element {
   return (
-    <Card className="h-full">
-      <CardHeader>
-        <div className="flex justify-between items-start">
-          <div className="flex-1">
-            <Skeleton className="h-5 w-3/5 mb-2" />
-            <Skeleton className="h-3 w-1/3" />
-          </div>
-          <Skeleton className="h-6 w-[70px] rounded" />
+    <div className="surface-card p-5 h-full">
+      <div className="flex justify-between items-start mb-3">
+        <div className="flex-1">
+          <Skeleton className="h-5 w-3/5 mb-2" />
+          <Skeleton className="h-3 w-1/3" />
         </div>
-      </CardHeader>
-      <CardContent>
-        <Skeleton className="h-4 w-full mb-1" />
-        <Skeleton className="h-4 w-4/5 mb-4" />
-        <Skeleton className="h-3 w-2/5 mb-2" />
-        <Skeleton className="h-3 w-1/2" />
-      </CardContent>
-    </Card>
+        <Skeleton className="h-6 w-[70px] rounded" />
+      </div>
+      <Skeleton className="h-4 w-full mb-1" />
+      <Skeleton className="h-4 w-4/5 mb-4" />
+      <Skeleton className="h-3 w-2/5 mb-2" />
+      <Skeleton className="h-3 w-1/2" />
+    </div>
   );
 }
 
@@ -60,19 +51,17 @@ function ModuleCardSkeleton(): JSX.Element {
 
 function ModuleCard({ module }: { module: ModuleInfo }): JSX.Element {
   return (
-    <Card className="h-full flex flex-col">
-      <CardHeader>
-        <div className="flex justify-between items-start">
-          <div>
-            <CardTitle className="text-base">{module.name}</CardTitle>
-            <CardDescription>v{module.version}</CardDescription>
-          </div>
-          <Badge variant={module.enabled !== false ? 'success' : 'secondary'}>
-            {module.enabled !== false ? 'Enabled' : 'Disabled'}
-          </Badge>
+    <div className="surface-card p-5 h-full flex flex-col">
+      <div className="flex justify-between items-start mb-3">
+        <div>
+          <p className="text-base font-semibold text-[var(--text-high)]">{module.name}</p>
+          <p className="text-xs text-[var(--text-mid)]">v{module.version}</p>
         </div>
-      </CardHeader>
-      <CardContent className="flex-1">
+        <Badge variant={module.enabled !== false ? 'success' : 'secondary'}>
+          {module.enabled !== false ? 'Enabled' : 'Disabled'}
+        </Badge>
+      </div>
+      <div className="flex-1">
         <p className="text-sm text-[var(--text-mid)] mb-4">
           {module.description}
         </p>
@@ -98,8 +87,8 @@ function ModuleCard({ module }: { module: ModuleInfo }): JSX.Element {
             </div>
           </>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
 
@@ -146,26 +135,27 @@ export default function ModulesPage(): JSX.Element {
      ======================================================================== */
 
   return (
-    <div>
+    <div className="p-5 space-y-5 animate-enter">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-2xl font-semibold text-[var(--text-high)] mb-1">
-          Platform Modules
-        </h1>
-        <p className="text-[var(--text-mid)]">
-          Overview of all registered backend modules and their current status.
-        </p>
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-[var(--accent)] to-[#a855f7] shrink-0">
+          <Package2 className="h-5 w-5 text-white" />
+        </div>
+        <div>
+          <h1 className="text-xl font-bold text-[var(--text-high)]">Platform Modules</h1>
+          <p className="text-xs text-[var(--text-mid)]">Active modules and system status</p>
+        </div>
       </div>
 
       {/* Error State */}
       {error && (
-        <Alert variant="destructive" className="mb-6">
+        <Alert variant="destructive">
           <AlertDescription>Failed to load modules: {error}</AlertDescription>
         </Alert>
       )}
 
       {/* Module Cards Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
         {loading
           ? Array.from({ length: 3 }).map((_, index) => (
               <ModuleCardSkeleton key={index} />
@@ -177,16 +167,16 @@ export default function ModulesPage(): JSX.Element {
 
       {/* Empty State */}
       {!loading && !error && modules.length === 0 && (
-        <Card className="mt-6">
-          <CardContent className="py-12 text-center">
+        <div className="surface-card p-5 mt-5">
+          <div className="py-12 text-center">
             <h2 className="text-lg font-semibold text-[var(--text-mid)] mb-1">
               No modules registered
             </h2>
             <p className="text-sm text-[var(--text-mid)]">
               Backend modules will appear here once they are registered with the platform.
             </p>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
     </div>
   );

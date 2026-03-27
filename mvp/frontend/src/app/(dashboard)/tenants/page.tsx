@@ -1,9 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus, Pencil, Palette } from 'lucide-react';
+import { Plus, Pencil, Palette, Building2 } from 'lucide-react';
 
-import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/lib/design-hub/components/Alert';
 import { Button } from '@/lib/design-hub/components/Button';
@@ -425,7 +424,7 @@ export default function TenantsPage() {
 
   if (isLoading) {
     return (
-      <div className="p-6">
+      <div className="p-5">
         <Skeleton className="w-72 h-10 mb-4" />
         <Skeleton className="h-[400px]" />
       </div>
@@ -434,7 +433,7 @@ export default function TenantsPage() {
 
   if (error) {
     return (
-      <div className="p-6">
+      <div className="p-5">
         <Alert variant="destructive">
           <AlertDescription>
             Failed to load tenants. You may not have admin access.
@@ -447,13 +446,16 @@ export default function TenantsPage() {
   const tenants = data?.tenants || [];
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-[var(--text-high)]">Tenant Management</h1>
-          <p className="text-sm text-[var(--text-mid)]">
-            {data?.count || 0} organization{(data?.count || 0) !== 1 ? 's' : ''} registered
-          </p>
+    <div className="p-5 space-y-5 animate-enter">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-[var(--accent)] to-[#a855f7] shrink-0">
+            <Building2 className="h-5 w-5 text-white" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold text-[var(--text-high)]">Tenant Management</h1>
+            <p className="text-xs text-[var(--text-mid)]">Multi-tenant isolation and management</p>
+          </div>
         </div>
         <Button onClick={() => setCreateOpen(true)}>
           <Plus className="h-4 w-4 mr-1" /> New Tenant
@@ -461,33 +463,27 @@ export default function TenantsPage() {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-        <Card>
-          <CardContent className="p-6">
-            <p className="text-4xl font-bold text-[var(--accent)]">{tenants.length}</p>
-            <p className="text-sm text-[var(--text-mid)]">Total Tenants</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <p className="text-4xl font-bold text-green-400">
-              {tenants.filter((t) => t.is_active).length}
-            </p>
-            <p className="text-sm text-[var(--text-mid)]">Active</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <p className="text-4xl font-bold text-purple-400">
-              {tenants.filter((t) => t.plan === 'enterprise').length}
-            </p>
-            <p className="text-sm text-[var(--text-mid)]">Enterprise</p>
-          </CardContent>
-        </Card>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="surface-card p-5">
+          <p className="text-4xl font-bold text-[var(--accent)]">{tenants.length}</p>
+          <p className="text-sm text-[var(--text-mid)]">Total Tenants</p>
+        </div>
+        <div className="surface-card p-5">
+          <p className="text-4xl font-bold text-green-400">
+            {tenants.filter((t) => t.is_active).length}
+          </p>
+          <p className="text-sm text-[var(--text-mid)]">Active</p>
+        </div>
+        <div className="surface-card p-5">
+          <p className="text-4xl font-bold text-purple-400">
+            {tenants.filter((t) => t.plan === 'enterprise').length}
+          </p>
+          <p className="text-sm text-[var(--text-mid)]">Enterprise</p>
+        </div>
       </div>
 
       {/* Tenants Table */}
-      <Card>
+      <div className="surface-card p-5">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -557,7 +553,7 @@ export default function TenantsPage() {
             </tbody>
           </table>
         </div>
-      </Card>
+      </div>
 
       {/* Dialogs */}
       <CreateTenantDialog open={createOpen} onClose={() => setCreateOpen(false)} />

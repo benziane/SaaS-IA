@@ -1,15 +1,8 @@
-/**
- * ChatInput - Message input component for conversation chat
- * Supports Enter to send, Shift+Enter for newline, and character count display.
- * Disables input while the AI is streaming a response.
- */
-
 'use client';
 
 import { useCallback, useState } from 'react';
-import { Send, CircleStop } from 'lucide-react';
+import { Send, Square } from 'lucide-react';
 import { Textarea } from '@/lib/design-hub/components/Textarea';
-import { Button } from '@/lib/design-hub/components/Button';
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/lib/design-hub/components/Tooltip';
 
 /* ========================================================================
@@ -23,15 +16,10 @@ const MAX_CHARACTERS = 4000;
    ======================================================================== */
 
 export interface ChatInputProps {
-  /** Called when the user submits a message */
   onSend: (message: string) => void;
-  /** Called to abort the current stream */
   onStop?: () => void;
-  /** Whether an AI response is currently streaming */
   isStreaming: boolean;
-  /** Whether the input should be fully disabled (e.g. no conversation selected) */
   disabled?: boolean;
-  /** Placeholder text */
   placeholder?: string;
 }
 
@@ -69,58 +57,58 @@ export function ChatInput({
   );
 
   return (
-    <div className="flex items-end gap-2 p-4 border-t border-[var(--border)] bg-[var(--bg-surface)]">
-      <div className="flex-1 relative">
-        <Textarea
-          value={value}
-          onChange={(e) => setValue(e.target.value.slice(0, MAX_CHARACTERS))}
-          onKeyDown={handleKeyDown}
-          placeholder={placeholder}
-          disabled={disabled || isStreaming}
-          className="min-h-[40px] max-h-[160px] rounded-lg resize-none"
-          rows={1}
-        />
-        <span className="absolute right-2 -bottom-5 text-[0.7rem] text-[var(--text-low)]">
-          {characterCount}/{MAX_CHARACTERS}
-        </span>
-      </div>
+    <div className="border-t border-[var(--border)] bg-[var(--bg-surface)] px-4 py-3">
+      <div className="flex items-end gap-2">
+        <div className="flex-1 relative">
+          <Textarea
+            value={value}
+            onChange={(e) => setValue(e.target.value.slice(0, MAX_CHARACTERS))}
+            onKeyDown={handleKeyDown}
+            placeholder={placeholder}
+            disabled={disabled || isStreaming}
+            className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-xl px-4 py-3 text-sm resize-none focus:border-[var(--accent)]/50 focus:ring-1 focus:ring-[var(--accent)]/20 min-h-[44px] max-h-[160px]"
+            rows={1}
+          />
+          <span className="absolute right-3 -bottom-5 text-[10px] text-[var(--text-low)]">
+            {characterCount}/{MAX_CHARACTERS}
+          </span>
+        </div>
 
-      <TooltipProvider>
-        {isStreaming ? (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={onStop}
-                className="mb-0.5 text-amber-500 hover:text-amber-600"
-              >
-                <CircleStop className="h-5 w-5" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Stop generating</TooltipContent>
-          </Tooltip>
-        ) : (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span>
-                <Button
-                  variant="default"
-                  size="icon"
-                  onClick={handleSend}
-                  disabled={!canSend}
-                  className="mb-0.5"
+        <TooltipProvider>
+          {isStreaming ? (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  onClick={onStop}
+                  className="mb-0.5 h-9 w-9 rounded-xl flex items-center justify-center bg-[var(--error)]/10 text-[var(--error)] border border-[var(--error)]/30 hover:bg-[var(--error)]/20 transition-colors shrink-0"
                 >
-                  <Send className="h-5 w-5" />
-                </Button>
-              </span>
-            </TooltipTrigger>
-            <TooltipContent>
-              {canSend ? 'Send message (Enter)' : 'Type a message to send'}
-            </TooltipContent>
-          </Tooltip>
-        )}
-      </TooltipProvider>
+                  <Square className="h-4 w-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>Stop generating</TooltipContent>
+            </Tooltip>
+          ) : (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span>
+                  <button
+                    type="button"
+                    onClick={handleSend}
+                    disabled={!canSend}
+                    className="mb-0.5 h-9 w-9 rounded-xl flex items-center justify-center bg-gradient-to-br from-[var(--accent)] to-[var(--accent)]/80 text-white hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+                  >
+                    <Send className="h-4 w-4" />
+                  </button>
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                {canSend ? 'Send message (Enter)' : 'Type a message to send'}
+              </TooltipContent>
+            </Tooltip>
+          )}
+        </TooltipProvider>
+      </div>
     </div>
   );
 }

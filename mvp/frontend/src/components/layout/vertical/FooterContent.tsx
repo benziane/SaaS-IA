@@ -20,30 +20,16 @@ const FooterContent = () => {
     <div
       className={classnames(verticalLayoutClasses.footerContent, 'flex items-center justify-between flex-wrap gap-4')}
     >
-      <p>
-        <span className='text-textSecondary'>{`© ${new Date().getFullYear()}, Made with `}</span>
-        <span>{`❤️`}</span>
-        <span className='text-textSecondary'>{` by `}</span>
-        <Link href='https://themeselection.com' target='_blank' className='text-primary'>
-          ThemeSelection
-        </Link>
-      </p>
+      <p className='text-xs text-[var(--text-low)]'>© 2025 SaaS-IA</p>
       {!isBreakpointReached && (
         <div className='flex items-center gap-4'>
-          <Link href='https://themeselection.com/license' target='_blank' className='text-primary'>
-            License
-          </Link>
-          <Link href='https://themeselection.com' target='_blank' className='text-primary'>
-            More Themes
-          </Link>
-          <Link
-            href='https://demos.themeselection.com/sneat-mui-nextjs-admin-template/documentation'
-            target='_blank'
-            className='text-primary'
-          >
+          <Link href='#' className='text-xs text-[var(--text-low)] hover:text-[var(--accent)] transition-colors'>
             Documentation
           </Link>
-          <Link href='https://themeselection.com/support' target='_blank' className='text-primary'>
+          <Link href='/api-docs' className='text-xs text-[var(--text-low)] hover:text-[var(--accent)] transition-colors'>
+            API Reference
+          </Link>
+          <Link href='#' className='text-xs text-[var(--text-low)] hover:text-[var(--accent)] transition-colors'>
             Support
           </Link>
         </div>

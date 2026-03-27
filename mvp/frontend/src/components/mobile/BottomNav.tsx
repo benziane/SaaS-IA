@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter } from 'next/navigation';
 import { useMemo } from 'react';
-import { LayoutDashboard, MessageSquare, Mic, BookOpen, MoreHorizontal } from 'lucide-react';
+import { LayoutDashboard, MessageSquare, Mic, BookOpen, Settings } from 'lucide-react';
 
 import { useIsMobile, useIsInstalled } from '@/hooks/useMobile';
 
@@ -11,7 +11,7 @@ const NAV_ITEMS = [
   { label: 'Chat', icon: MessageSquare, path: '/chat' },
   { label: 'Transcription', icon: Mic, path: '/transcription' },
   { label: 'Knowledge', icon: BookOpen, path: '/knowledge' },
-  { label: 'More', icon: MoreHorizontal, path: '/more' },
+  { label: 'Settings', icon: Settings, path: '/settings' },
 ] as const;
 
 export default function BottomNav() {

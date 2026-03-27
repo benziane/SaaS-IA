@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Flag, Search, PowerOff, RotateCcw, Trash2, Users, Percent, ToggleLeft, Loader2 } from 'lucide-react';
 
-import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Slider } from '@/components/ui/slider';
@@ -207,7 +206,7 @@ export default function FeatureFlagsPage() {
 
   if (error) {
     return (
-      <div className="p-6">
+      <div className="p-5">
         <Alert variant="destructive">
           <AlertDescription>Failed to load feature flags: {error.message}</AlertDescription>
         </Alert>
@@ -217,37 +216,36 @@ export default function FeatureFlagsPage() {
 
   return (
     <TooltipProvider>
-      <div className="p-6">
+      <div className="p-5 space-y-5 animate-enter">
         {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold flex items-center gap-2 text-[var(--text-high)]">
-            <Flag className="h-7 w-7 text-[var(--accent)]" /> Feature Flags
-          </h1>
-          <p className="text-sm text-[var(--text-mid)]">
-            Runtime feature control -- toggle modules, percentage rollouts, and user whitelists without redeployment
-          </p>
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-[var(--accent)] to-[#a855f7] shrink-0">
+            <Flag className="h-5 w-5 text-white" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold text-[var(--text-high)]">Feature Flags</h1>
+            <p className="text-xs text-[var(--text-mid)]">Kill switches and percentage rollouts</p>
+          </div>
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {[
             { label: 'Total Flags', value: stats.total, color: 'text-[var(--accent)]' },
             { label: 'Enabled', value: stats.enabled, color: 'text-green-400' },
             { label: 'Disabled', value: stats.disabled, color: 'text-red-400' },
             { label: 'Overridden', value: stats.overridden, color: 'text-amber-400' },
           ].map((stat) => (
-            <Card key={stat.label}>
-              <CardContent className="text-center py-3 px-4">
-                <p className={`text-2xl font-bold ${stat.color}`}>{stat.value}</p>
-                <p className="text-xs text-[var(--text-mid)]">{stat.label}</p>
-              </CardContent>
-            </Card>
+            <div key={stat.label} className="surface-card p-5 text-center">
+              <p className={`text-2xl font-bold ${stat.color}`}>{stat.value}</p>
+              <p className="text-xs text-[var(--text-mid)]">{stat.label}</p>
+            </div>
           ))}
         </div>
 
         {/* Filters */}
-        <Card className="mb-6">
-          <CardContent className="flex gap-4 items-center flex-wrap p-4">
+        <div className="surface-card p-5">
+          <div className="flex gap-4 items-center flex-wrap">
             <div className="relative min-w-[250px]">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-low)]" />
               <Input
@@ -271,11 +269,11 @@ export default function FeatureFlagsPage() {
             <span className="text-sm text-[var(--text-mid)] ml-auto">
               {flags.length} flag{flags.length !== 1 ? 's' : ''} shown
             </span>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Flags Table */}
-        <Card>
+        <div className="surface-card p-5">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
@@ -387,7 +385,7 @@ export default function FeatureFlagsPage() {
               </tbody>
             </table>
           </div>
-        </Card>
+        </div>
 
         {/* Edit Dialog */}
         <Dialog

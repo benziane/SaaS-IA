@@ -5,7 +5,6 @@ import {
   Bot, Plus, Trash2, Pencil, Copy, Code, BarChart3, MessageSquare, Globe, Loader2,
 } from 'lucide-react';
 
-import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/lib/design-hub/components/Button';
@@ -93,15 +92,17 @@ export default function ChatbotsPage() {
   };
 
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-3xl font-bold text-[var(--text-high)] flex items-center gap-2">
-            <Bot className="h-8 w-8 text-[var(--accent)]" /> Chatbot Builder
-          </h1>
-          <p className="text-sm text-[var(--text-mid)]">
-            Create AI chatbots with custom knowledge bases, deploy on web widgets and messaging channels
-          </p>
+    <div className="p-5 space-y-5 animate-enter">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-[var(--accent)] to-[#a855f7] shrink-0">
+            <Bot className="h-5 w-5 text-white" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold text-[var(--text-high)]">Chatbot Builder</h1>
+            <p className="text-xs text-[var(--text-mid)]">Build and deploy RAG chatbots</p>
+          </div>
         </div>
         <Button onClick={() => setCreateOpen(true)}>
           <Plus className="h-4 w-4 mr-2" /> New Chatbot
@@ -115,8 +116,8 @@ export default function ChatbotsPage() {
           ))}
         </div>
       ) : !chatbots?.length ? (
-        <Card>
-          <CardContent className="text-center py-16 px-6">
+        <div className="surface-card p-5">
+          <div className="text-center py-16 px-6">
             <Bot className="h-16 w-16 text-[var(--text-low)] mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-[var(--text-mid)]">No chatbots yet</h3>
             <p className="text-sm text-[var(--text-mid)] mt-2 mb-4">
@@ -125,16 +126,16 @@ export default function ChatbotsPage() {
             <Button onClick={() => setCreateOpen(true)}>
               <Plus className="h-4 w-4 mr-2" /> Create your first chatbot
             </Button>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
           {chatbots.map((bot) => (
-            <Card
+            <div
               key={bot.id}
-              className="flex flex-col h-full border border-[var(--border)] hover:border-[var(--accent)] transition-colors"
+              className="surface-card p-5 flex flex-col h-full border border-[var(--border)] hover:border-[var(--accent)] transition-colors"
             >
-              <CardContent className="flex-1 p-4">
+              <div className="flex-1">
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="text-lg font-semibold text-[var(--text-high)] truncate max-w-[70%]">
                     {bot.name}
@@ -186,9 +187,9 @@ export default function ChatbotsPage() {
                     </span>
                   )}
                 </div>
-              </CardContent>
+              </div>
 
-              <CardFooter className="justify-end gap-1 px-4 pb-3 pt-0">
+              <div className="flex justify-end gap-1 pt-3 mt-3 border-t border-[var(--border)]">
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -252,8 +253,8 @@ export default function ChatbotsPage() {
                     <TooltipContent>Delete</TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
-              </CardFooter>
-            </Card>
+              </div>
+            </div>
           ))}
         </div>
       )}
@@ -452,32 +453,24 @@ export default function ChatbotsPage() {
           {analytics ? (
             <div>
               <div className="grid grid-cols-2 gap-4 mb-4">
-                <Card className="border border-[var(--border)]">
-                  <CardContent className="text-center p-4">
-                    <p className="text-3xl font-bold text-[var(--text-high)]">{analytics.total_conversations}</p>
-                    <span className="text-xs text-[var(--text-mid)]">Conversations</span>
-                  </CardContent>
-                </Card>
-                <Card className="border border-[var(--border)]">
-                  <CardContent className="text-center p-4">
-                    <p className="text-3xl font-bold text-[var(--text-high)]">{analytics.total_messages}</p>
-                    <span className="text-xs text-[var(--text-mid)]">Messages</span>
-                  </CardContent>
-                </Card>
-                <Card className="border border-[var(--border)]">
-                  <CardContent className="text-center p-4">
-                    <p className="text-3xl font-bold text-[var(--text-high)]">{analytics.avg_messages_per_conversation}</p>
-                    <span className="text-xs text-[var(--text-mid)]">Avg Messages/Conv</span>
-                  </CardContent>
-                </Card>
-                <Card className="border border-[var(--border)]">
-                  <CardContent className="text-center p-4">
-                    <p className="text-3xl font-bold text-[var(--text-high)]">
-                      {analytics.satisfaction_score !== null ? analytics.satisfaction_score : '--'}
-                    </p>
-                    <span className="text-xs text-[var(--text-mid)]">Satisfaction</span>
-                  </CardContent>
-                </Card>
+                <div className="surface-card p-4 text-center">
+                  <p className="text-3xl font-bold text-[var(--text-high)]">{analytics.total_conversations}</p>
+                  <span className="text-xs text-[var(--text-mid)]">Conversations</span>
+                </div>
+                <div className="surface-card p-4 text-center">
+                  <p className="text-3xl font-bold text-[var(--text-high)]">{analytics.total_messages}</p>
+                  <span className="text-xs text-[var(--text-mid)]">Messages</span>
+                </div>
+                <div className="surface-card p-4 text-center">
+                  <p className="text-3xl font-bold text-[var(--text-high)]">{analytics.avg_messages_per_conversation}</p>
+                  <span className="text-xs text-[var(--text-mid)]">Avg Messages/Conv</span>
+                </div>
+                <div className="surface-card p-4 text-center">
+                  <p className="text-3xl font-bold text-[var(--text-high)]">
+                    {analytics.satisfaction_score !== null ? analytics.satisfaction_score : '--'}
+                  </p>
+                  <span className="text-xs text-[var(--text-mid)]">Satisfaction</span>
+                </div>
               </div>
 
               {analytics.top_questions.length > 0 && (

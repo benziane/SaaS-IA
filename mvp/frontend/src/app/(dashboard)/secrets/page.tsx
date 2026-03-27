@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 
-import { Card, CardContent } from '@/components/ui/card';
+import { KeyRound } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/lib/design-hub/components/Alert';
 import { Progress } from '@/components/ui/progress';
@@ -257,9 +257,9 @@ export default function SecretsPage() {
 
   if (secretsLoading || alertsLoading || healthLoading) {
     return (
-      <div className="p-6">
+      <div className="p-5">
         <Skeleton className="w-72 h-10 mb-4" />
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-5 mb-5">
           {[1, 2, 3, 4].map((i) => (
             <Skeleton key={i} className="h-[100px]" />
           ))}
@@ -271,7 +271,7 @@ export default function SecretsPage() {
 
   if (secretsError) {
     return (
-      <div className="p-6">
+      <div className="p-5">
         <Alert variant="destructive">
           <AlertDescription>
             Failed to load secrets data. You may need admin privileges.
@@ -282,54 +282,52 @@ export default function SecretsPage() {
   }
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-[var(--text-high)]">Secrets Rotation Manager</h1>
+    <div className="p-5 space-y-5 animate-enter">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-[var(--accent)] to-[#a855f7] shrink-0">
+            <KeyRound className="h-5 w-5 text-white" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold text-[var(--text-high)]">Secrets Manager</h1>
+            <p className="text-xs text-[var(--text-mid)]">Secret rotation tracking and health</p>
+          </div>
+        </div>
         <Button onClick={() => setRegisterOpen(true)}>
           Register Secret
         </Button>
       </div>
 
       {/* Health Score + Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
-        <Card className="md:col-span-1">
-          <CardContent className="p-6">
-            {health && <HealthScore score={health.score} />}
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6 text-center">
-            <p className="text-4xl font-bold text-[var(--text-high)]">{health?.total ?? 0}</p>
-            <p className="text-sm text-[var(--text-mid)]">Total Tracked</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6 text-center">
-            <p className="text-4xl font-bold text-green-400">{health?.healthy ?? 0}</p>
-            <p className="text-sm text-[var(--text-mid)]">Healthy</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6 text-center">
-            <p className="text-4xl font-bold text-amber-400">{health?.warning ?? 0}</p>
-            <p className="text-sm text-[var(--text-mid)]">Warning</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6 text-center">
-            <p className="text-4xl font-bold text-red-400">
-              {(health?.overdue ?? 0) + (health?.compromised ?? 0)}
-            </p>
-            <p className="text-sm text-[var(--text-mid)]">
-              Overdue / Compromised
-            </p>
-          </CardContent>
-        </Card>
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <div className="surface-card p-5 md:col-span-1">
+          {health && <HealthScore score={health.score} />}
+        </div>
+        <div className="surface-card p-5 text-center">
+          <p className="text-4xl font-bold text-[var(--text-high)]">{health?.total ?? 0}</p>
+          <p className="text-sm text-[var(--text-mid)]">Total Tracked</p>
+        </div>
+        <div className="surface-card p-5 text-center">
+          <p className="text-4xl font-bold text-green-400">{health?.healthy ?? 0}</p>
+          <p className="text-sm text-[var(--text-mid)]">Healthy</p>
+        </div>
+        <div className="surface-card p-5 text-center">
+          <p className="text-4xl font-bold text-amber-400">{health?.warning ?? 0}</p>
+          <p className="text-sm text-[var(--text-mid)]">Warning</p>
+        </div>
+        <div className="surface-card p-5 text-center">
+          <p className="text-4xl font-bold text-red-400">
+            {(health?.overdue ?? 0) + (health?.compromised ?? 0)}
+          </p>
+          <p className="text-sm text-[var(--text-mid)]">
+            Overdue / Compromised
+          </p>
+        </div>
       </div>
 
       {/* Alerts */}
       {alerts && alerts.length > 0 && (
-        <div className="mb-6 space-y-2">
+        <div className="space-y-2">
           {alerts.map((alert, idx) => (
             <Alert
               key={idx}
@@ -345,78 +343,76 @@ export default function SecretsPage() {
       )}
 
       {/* Secrets Table */}
-      <Card>
-        <CardContent className="p-6">
-          <h2 className="text-lg font-semibold text-[var(--text-high)] mb-4">
-            Registered Secrets
-          </h2>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-[var(--border)]">
-                  <th className="text-left py-2 px-3 font-medium text-[var(--text-mid)]">Name</th>
-                  <th className="text-left py-2 px-3 font-medium text-[var(--text-mid)]">Type</th>
-                  <th className="text-left py-2 px-3 font-medium text-[var(--text-mid)]">Status</th>
-                  <th className="text-right py-2 px-3 font-medium text-[var(--text-mid)]">Age (days)</th>
-                  <th className="text-right py-2 px-3 font-medium text-[var(--text-mid)]">Rotation Period</th>
-                  <th className="text-left py-2 px-3 font-medium text-[var(--text-mid)]">Last Rotated</th>
-                  <th className="text-left py-2 px-3 font-medium text-[var(--text-mid)]">Next Rotation</th>
-                  <th className="text-right py-2 px-3 font-medium text-[var(--text-mid)]">Rotations</th>
-                  <th className="text-left py-2 px-3 font-medium text-[var(--text-mid)]">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {secrets?.map((secret) => {
-                  const isOverdue =
-                    secret.next_rotation_at &&
-                    new Date(secret.next_rotation_at) < new Date();
-                  return (
-                    <tr
-                      key={secret.id}
-                      className={`border-b border-[var(--border)] ${
-                        secret.status === 'compromised'
-                          ? 'bg-red-500/5'
-                          : isOverdue
-                          ? 'bg-amber-500/5'
-                          : ''
-                      }`}
-                    >
-                      <td className="py-2 px-3">
-                        <span className="font-semibold font-mono text-[var(--text-high)]">
-                          {secret.name}
-                        </span>
-                      </td>
-                      <td className="py-2 px-3">
-                        <Badge variant="outline" className="text-xs">{secret.secret_type}</Badge>
-                      </td>
-                      <td className="py-2 px-3">
-                        <StatusChip status={secret.status} />
-                      </td>
-                      <td className="py-2 px-3 text-right text-[var(--text-high)]">{secret.age_days}</td>
-                      <td className="py-2 px-3 text-right text-[var(--text-high)]">{secret.rotation_days}d</td>
-                      <td className="py-2 px-3 text-[var(--text-mid)]">{formatDate(secret.last_rotated_at)}</td>
-                      <td className="py-2 px-3 text-[var(--text-mid)]">{formatDate(secret.next_rotation_at)}</td>
-                      <td className="py-2 px-3 text-right text-[var(--text-high)]">{secret.rotation_count}</td>
-                      <td className="py-2 px-3">
-                        <SecretActionsCell secret={secret} />
-                      </td>
-                    </tr>
-                  );
-                })}
-                {(!secrets || secrets.length === 0) && (
-                  <tr>
-                    <td colSpan={9} className="text-center py-6">
-                      <p className="text-[var(--text-mid)]">
-                        No secrets registered. Click &quot;Register Secret&quot; to start tracking.
-                      </p>
+      <div className="surface-card p-5">
+        <h2 className="text-lg font-semibold text-[var(--text-high)] mb-4">
+          Registered Secrets
+        </h2>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-[var(--border)]">
+                <th className="text-left py-2 px-3 font-medium text-[var(--text-mid)]">Name</th>
+                <th className="text-left py-2 px-3 font-medium text-[var(--text-mid)]">Type</th>
+                <th className="text-left py-2 px-3 font-medium text-[var(--text-mid)]">Status</th>
+                <th className="text-right py-2 px-3 font-medium text-[var(--text-mid)]">Age (days)</th>
+                <th className="text-right py-2 px-3 font-medium text-[var(--text-mid)]">Rotation Period</th>
+                <th className="text-left py-2 px-3 font-medium text-[var(--text-mid)]">Last Rotated</th>
+                <th className="text-left py-2 px-3 font-medium text-[var(--text-mid)]">Next Rotation</th>
+                <th className="text-right py-2 px-3 font-medium text-[var(--text-mid)]">Rotations</th>
+                <th className="text-left py-2 px-3 font-medium text-[var(--text-mid)]">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {secrets?.map((secret) => {
+                const isOverdue =
+                  secret.next_rotation_at &&
+                  new Date(secret.next_rotation_at) < new Date();
+                return (
+                  <tr
+                    key={secret.id}
+                    className={`border-b border-[var(--border)] ${
+                      secret.status === 'compromised'
+                        ? 'bg-red-500/5'
+                        : isOverdue
+                        ? 'bg-amber-500/5'
+                        : ''
+                    }`}
+                  >
+                    <td className="py-2 px-3">
+                      <span className="font-semibold font-mono text-[var(--text-high)]">
+                        {secret.name}
+                      </span>
+                    </td>
+                    <td className="py-2 px-3">
+                      <Badge variant="outline" className="text-xs">{secret.secret_type}</Badge>
+                    </td>
+                    <td className="py-2 px-3">
+                      <StatusChip status={secret.status} />
+                    </td>
+                    <td className="py-2 px-3 text-right text-[var(--text-high)]">{secret.age_days}</td>
+                    <td className="py-2 px-3 text-right text-[var(--text-high)]">{secret.rotation_days}d</td>
+                    <td className="py-2 px-3 text-[var(--text-mid)]">{formatDate(secret.last_rotated_at)}</td>
+                    <td className="py-2 px-3 text-[var(--text-mid)]">{formatDate(secret.next_rotation_at)}</td>
+                    <td className="py-2 px-3 text-right text-[var(--text-high)]">{secret.rotation_count}</td>
+                    <td className="py-2 px-3">
+                      <SecretActionsCell secret={secret} />
                     </td>
                   </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
+                );
+              })}
+              {(!secrets || secrets.length === 0) && (
+                <tr>
+                  <td colSpan={9} className="text-center py-6">
+                    <p className="text-[var(--text-mid)]">
+                      No secrets registered. Click &quot;Register Secret&quot; to start tracking.
+                    </p>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
 
       <RegisterDialog open={registerOpen} onClose={() => setRegisterOpen(false)} />
     </div>
