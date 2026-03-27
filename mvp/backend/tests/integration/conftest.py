@@ -271,6 +271,24 @@ def _import_all_models():
 
 
 # ---------------------------------------------------------------------------
+# Fixture: reset_rate_limiter (autouse — resets slowapi in-memory storage between tests)
+# ---------------------------------------------------------------------------
+
+@pytest.fixture(autouse=True)
+def reset_rate_limiter():
+    from limits.storage import MemoryStorage
+    from limits.strategies import FixedWindowRateLimiter
+    from app.rate_limit import limiter
+    original_storage = limiter._storage
+    original_limiter = limiter._limiter
+    limiter._storage = MemoryStorage()
+    limiter._limiter = FixedWindowRateLimiter(limiter._storage)
+    yield
+    limiter._storage = original_storage
+    limiter._limiter = original_limiter
+
+
+# ---------------------------------------------------------------------------
 # Fixture: db_engine
 # ---------------------------------------------------------------------------
 

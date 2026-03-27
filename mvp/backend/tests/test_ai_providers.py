@@ -6,6 +6,9 @@ This script tests all AI providers (Gemini, Groq, Claude) to ensure
 API keys are correctly configured and working.
 """
 
+import pytest
+pytestmark = pytest.mark.skip(reason="dev script, not a pytest test")
+
 import asyncio
 import sys
 import os

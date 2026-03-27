@@ -22,6 +22,7 @@ os.environ.setdefault("CLAUDE_API_KEY", "MOCK")
 os.environ.setdefault("GROQ_API_KEY", "MOCK")
 
 import httpx
+from unittest.mock import AsyncMock, patch
 from sqlmodel import SQLModel
 from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession as SAAsyncSession
@@ -39,6 +40,178 @@ from app.models.pipeline import Pipeline, PipelineExecution  # noqa: F401
 from app.models.knowledge import Document, DocumentChunk  # noqa: F401
 from app.models.api_key import APIKey  # noqa: F401
 from app.models.workspace import Workspace, WorkspaceMember, SharedItem, Comment  # noqa: F401
+
+
+# ---------------------------------------------------------------------------
+# Redis isolation — session-scoped, autouse
+# ---------------------------------------------------------------------------
+# When the full pytest suite runs, earlier test modules import app.rate_limit
+# (with a real Redis URL from tests/conftest.py), creating Redis-backed
+# singletons before this file can override REDIS_URL.  The setdefault() calls
+# above arrive too late for those module-level singletons.
+#
+# Fix A: Replace the SlowAPI limiter's storage with an in-memory backend so
+#         @limiter.limit() decorators never touch Redis.
+# Fix B: Reset app.cache._redis_client to None so the lazy getter re-evaluates
+#         REDIS_URL on the first async call, and patch _get_redis to return a
+#         lightweight in-memory mock so login-lockout, feature-flags, token-
+#         blacklist, and the sliding-window middleware all work without Redis.
+
+class _MockRedis:
+    """Minimal in-memory Redis mock for test isolation."""
+
+    def __init__(self):
+        self._store: dict = {}
+
+    async def ping(self) -> bool:
+        return True
+
+    async def get(self, key: str):
+        return self._store.get(key)
+
+    async def set(self, key: str, value, ex: int = None, px: int = None):
+        self._store[key] = value
+        return True
+
+    # alias used by some Redis clients
+    async def setex(self, key: str, time: int, value):
+        self._store[key] = value
+        return True
+
+    async def delete(self, *keys: str):
+        for k in keys:
+            self._store.pop(k, None)
+        return len(keys)
+
+    async def exists(self, *keys: str) -> int:
+        return sum(1 for k in keys if k in self._store)
+
+    async def incr(self, key: str) -> int:
+        val = int(self._store.get(key, 0)) + 1
+        self._store[key] = val
+        return val
+
+    async def expire(self, key: str, seconds: int) -> bool:
+        return key in self._store
+
+    async def ttl(self, key: str) -> int:
+        return -2 if key not in self._store else -1
+
+    async def keys(self, pattern: str = "*"):
+        return list(self._store.keys())
+
+    async def flushdb(self):
+        self._store.clear()
+
+    async def aclose(self):
+        pass
+
+    async def close(self):
+        pass
+
+    def pipeline(self, transaction: bool = True):
+        return _MockPipeline(self)
+
+    async def scan_iter(self, match: str = "*"):
+        import fnmatch
+        for k in list(self._store.keys()):
+            if fnmatch.fnmatch(k, match):
+                yield k
+
+
+class _MockPipeline:
+    def __init__(self, redis: "_MockRedis"):
+        self._redis = redis
+        self._commands: list = []
+
+    def incr(self, key):
+        self._commands.append(("incr", key)); return self
+
+    def expire(self, key, seconds):
+        self._commands.append(("expire", key, seconds)); return self
+
+    def set(self, key, value, ex=None):
+        self._commands.append(("set", key, value, ex)); return self
+
+    def get(self, key):
+        self._commands.append(("get", key)); return self
+
+    def delete(self, *keys):
+        self._commands.append(("delete", *keys)); return self
+
+    def zadd(self, key, mapping):
+        self._commands.append(("zadd", key, mapping)); return self
+
+    def zremrangebyscore(self, key, min_score, max_score):
+        self._commands.append(("zremrangebyscore", key, min_score, max_score)); return self
+
+    def zcard(self, key):
+        self._commands.append(("zcard", key)); return self
+
+    async def execute(self):
+        results = []
+        for cmd in self._commands:
+            op = cmd[0]
+            if op == "incr":
+                results.append(await self._redis.incr(cmd[1]))
+            elif op == "expire":
+                results.append(await self._redis.expire(cmd[1], cmd[2]))
+            elif op == "set":
+                results.append(await self._redis.set(cmd[1], cmd[2], ex=cmd[3] if len(cmd) > 3 else None))
+            elif op == "get":
+                results.append(await self._redis.get(cmd[1]))
+            elif op == "delete":
+                results.append(await self._redis.delete(*cmd[1:]))
+            elif op in ("zadd", "zremrangebyscore", "zcard"):
+                results.append(0)
+            else:
+                results.append(None)
+        self._commands.clear()
+        return results
+
+
+_mock_redis_instance = _MockRedis()
+
+
+@pytest.fixture(scope="session", autouse=True)
+def _patch_app_state():
+    """
+    Session-scoped fixture that patches all Redis-dependent app singletons
+    to use an in-memory mock, ensuring no real Redis connection is attempted.
+
+    Patches applied:
+    1. SlowAPI limiter storage -> MemoryStorage (fixes @limiter.limit() decorators)
+    2. app.cache._get_redis -> returns _mock_redis_instance (fixes login lockout,
+       token blacklist, feature flags, sliding-window rate limiter)
+    3. app.cache._redis_client reset to None so the lazy getter is clean
+    """
+    import app.cache as _cache_mod
+    from limits.storage import MemoryStorage
+    from limits.strategies import FixedWindowRateLimiter
+    from app.rate_limit import limiter
+
+    # Fix 1: SlowAPI limiter -> in-memory storage
+    _orig_storage = limiter._storage
+    _orig_limiter = limiter._limiter
+    mem_storage = MemoryStorage()
+    mem_limiter = FixedWindowRateLimiter(mem_storage)
+    limiter._storage = mem_storage
+    limiter._limiter = mem_limiter
+
+    # Fix 2 & 3: Reset the lazy Redis singleton and patch _get_redis
+    _orig_redis_client = _cache_mod._redis_client
+    _cache_mod._redis_client = None
+
+    async def _mock_get_redis():
+        return _mock_redis_instance
+
+    with patch("app.cache._get_redis", side_effect=_mock_get_redis):
+        yield
+
+    # Restore originals
+    limiter._storage = _orig_storage
+    limiter._limiter = _orig_limiter
+    _cache_mod._redis_client = _orig_redis_client
 
 
 # ---------------------------------------------------------------------------
@@ -73,7 +246,16 @@ app.dependency_overrides[get_session] = override_get_session
 
 @pytest.fixture(autouse=True)
 async def setup_db():
-    """Create all tables before each test, drop after."""
+    """Create all tables before each test, drop after.  Also clears module-
+    level caches (feature flags, mock Redis) so tests are fully isolated."""
+    # Clear feature-flag in-memory caches populated by previous tests
+    from app.core.feature_flags import _flag_cache
+    from app.middleware.feature_flag_middleware import _module_flag_cache
+    _flag_cache.clear()
+    _module_flag_cache.clear()
+    # Reset mock Redis so each test starts with a clean slate
+    _mock_redis_instance._store.clear()
+
     async with TEST_ENGINE.begin() as conn:
         await conn.run_sync(SQLModel.metadata.create_all)
     yield
@@ -91,6 +273,7 @@ async def test_user():
             full_name="Integration Tester",
             role=Role.USER,
             is_active=True,
+            email_verified=True,
         )
         session.add(user)
         await session.commit()
@@ -137,7 +320,12 @@ class TestHealthEndpoints:
 
     @pytest.mark.asyncio
     async def test_health(self, client):
-        response = await client.get("/health")
+        _up = {"status": "up", "latency_ms": 0.1}
+        with (
+            patch("app.api.health._check_postgres", new_callable=AsyncMock, return_value=_up),
+            patch("app.api.health._check_redis", new_callable=AsyncMock, return_value=_up),
+        ):
+            response = await client.get("/health")
         assert response.status_code == 200
         data = response.json()
         assert data["status"] == "healthy"
