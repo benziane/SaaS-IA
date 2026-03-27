@@ -13,6 +13,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.database import get_session
 from app.auth import get_current_user
+from app.modules.auth_guards.middleware import require_verified_email
 from app.models.user import User, Role
 from app.modules.billing.service import BillingService
 from app.modules.billing.middleware import require_transcription_quota
@@ -388,7 +389,7 @@ async def list_transcriptions(
 async def delete_transcription(
     request: Request,
     job_id: UUID,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
     service: TranscriptionService = Depends(get_transcription_service)
 ):
@@ -431,7 +432,7 @@ async def batch_transcribe(
     request: Request,
     body: BatchTranscribeRequest,
     background_tasks: BackgroundTasks,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
     service: TranscriptionService = Depends(get_transcription_service),
 ):
@@ -476,7 +477,7 @@ async def batch_transcribe(
 async def generate_chapters(
     request: Request,
     job_id: UUID,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
     service: TranscriptionService = Depends(get_transcription_service),
 ):
@@ -512,7 +513,7 @@ async def generate_summary(
     request: Request,
     job_id: UUID,
     style: str = Query("executive", description="Summary style: executive, detailed, bullet_points, action_items"),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
     service: TranscriptionService = Depends(get_transcription_service),
 ):
@@ -547,7 +548,7 @@ async def generate_summary(
 async def extract_keywords(
     request: Request,
     job_id: UUID,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
     service: TranscriptionService = Depends(get_transcription_service),
 ):
@@ -746,7 +747,7 @@ async def download_debug_audio(
 async def debug_transcribe(
     job_id: str,
     data: TranscriptionCreate,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     service: TranscriptionService = Depends(get_transcription_service)
 ):
     """
@@ -966,7 +967,7 @@ async def debug_transcribe(
 
 @router.post("/debug/run-backend-test", status_code=status.HTTP_200_OK)
 async def run_backend_test(
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_verified_email)
 ):
     """
     Run the complete backend-only transcription test.
@@ -1051,7 +1052,7 @@ async def run_backend_test(
 async def smart_transcribe(
     request: Request,
     body: SmartTranscribeRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """
@@ -1098,7 +1099,7 @@ async def smart_transcribe(
 async def get_metadata(
     request: Request,
     body: MetadataRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
 ):
     """
     Extract YouTube video metadata.
@@ -1124,7 +1125,7 @@ async def get_metadata(
 async def transcribe_playlist(
     request: Request,
     body: PlaylistTranscribeRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """
@@ -1173,7 +1174,7 @@ async def transcribe_playlist(
 async def auto_chapter(
     request: Request,
     body: MetadataRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """
@@ -1273,7 +1274,7 @@ async def auto_chapter(
 async def check_stream_status(
     request: Request,
     body: LiveStreamCaptureRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
 ):
     """
     Check if a URL is a live stream and return its status.
@@ -1300,7 +1301,7 @@ async def check_stream_status(
 async def capture_live_stream(
     request: Request,
     body: LiveStreamCaptureRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """
@@ -1359,7 +1360,7 @@ async def capture_live_stream(
 async def analyze_video(
     request: Request,
     body: VideoAnalyzeRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """

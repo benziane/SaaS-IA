@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.auth import get_current_user
+from app.modules.auth_guards.middleware import require_verified_email
 from app.database import get_session
 from app.models.user import User
 from app.modules.billing.schemas import CheckoutRequest, CheckoutResponse, PlanRead, PortalResponse, QuotaRead
@@ -96,7 +97,7 @@ async def get_my_quota(
 async def create_checkout(
     request: Request,
     body: CheckoutRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """
@@ -123,7 +124,7 @@ async def create_checkout(
 @limiter.limit("5/minute")
 async def create_portal(
     request: Request,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """
