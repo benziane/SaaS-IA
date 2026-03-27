@@ -1,0 +1,9 @@
+{
+  "name": "youtube_transcription",
+  "version": "1.0.0",
+  "description": "Standalone YouTube transcription — instant subtitles, smart transcribe, playlist, live streams, video analysis",
+  "prefix": "/api/youtube",
+  "tags": ["youtube"],
+  "enabled": true,
+  "dependencies": ["transcription"]
+}

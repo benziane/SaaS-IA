@@ -115,6 +115,11 @@ const verticalMenuData = (): VerticalMenuDataType[] => [
     isSection: true,
   },
   {
+    label: 'Settings',
+    href: '/settings',
+    icon: 'tabler:settings',
+  },
+  {
     label: 'Profile',
     href: '/profile',
     icon: 'tabler:user-circle',
