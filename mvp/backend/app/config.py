@@ -51,6 +51,15 @@ class Settings(BaseSettings):
     # Social Publisher token encryption key (Fernet-compatible base64 key, or any string)
     SOCIAL_TOKEN_KEY: str = ""
 
+    # Email / SMTP (optional — falls back to console logger if not set)
+    SMTP_HOST: str = ""
+    SMTP_PORT: int = 587
+    SMTP_USER: str = ""
+    SMTP_PASSWORD: str = ""
+    SMTP_FROM: str = "noreply@saas-ia.com"
+    SMTP_TLS: bool = True
+    FRONTEND_URL: str = "http://localhost:3002"
+
     # CORS
     CORS_ORIGINS: str = "http://localhost:3002,http://localhost:8004"
     

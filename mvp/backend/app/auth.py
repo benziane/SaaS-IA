@@ -2,9 +2,12 @@
 JWT Authentication and user management
 """
 
+import secrets
 import uuid
 from datetime import UTC, datetime, timedelta, timezone
 from typing import Optional
+
+from pydantic import BaseModel, EmailStr, Field
 
 import structlog
 from fastapi import APIRouter, Depends, HTTPException, status, Request
@@ -94,6 +97,15 @@ async def _reset_login_attempts(email: str) -> None:
         await client.delete(f"login_attempts:{email}")
     except Exception as e:
         logger.debug("login_lockout_reset_error", email=email, error=str(e))
+
+
+async def _get_token_redis():
+    """Get Redis client for auth tokens (forgot-password, verify-email)."""
+    try:
+        from app.cache import _get_redis as _cache_get_redis
+        return await _cache_get_redis()
+    except Exception:
+        return None
 
 
 # Router
@@ -602,3 +614,195 @@ async def logout_all(
     logger.info("user_logged_out_all", user_id=str(current_user.id))
 
     return {"message": "All sessions have been logged out"}
+
+
+# ---------------------------------------------------------------------------
+# Password reset & email verification schemas
+# ---------------------------------------------------------------------------
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    password: str = Field(min_length=8)
+
+
+class VerifyEmailRequest(BaseModel):
+    token: str
+
+
+class ResendVerifyRequest(BaseModel):
+    email: EmailStr
+
+
+# ---------------------------------------------------------------------------
+# Password reset & email verification endpoints
+# ---------------------------------------------------------------------------
+
+@router.post("/forgot-password")
+@limiter.limit("5/minute")
+async def forgot_password(
+    request: Request,
+    body: ForgotPasswordRequest,
+    session: AsyncSession = Depends(get_session),
+):
+    """
+    Request a password reset link.
+
+    Returns the same response whether or not the email is registered to
+    prevent user enumeration. Stores a short-lived token in Redis (1 h).
+
+    Rate limit: 5 requests/minute
+    """
+    result = await session.execute(select(User).where(User.email == body.email))
+    user = result.scalar_one_or_none()
+
+    if user is not None:
+        client = await _get_token_redis()
+        if client is not None:
+            token = secrets.token_urlsafe(32)
+            await client.setex(f"pwd_reset:{token}", 3600, body.email)
+            from app.email_service import send_password_reset_email
+            await send_password_reset_email(body.email, token)
+            logger.info("password_reset_requested", email=body.email)
+        else:
+            logger.warning("forgot_password_redis_unavailable", email=body.email)
+
+    return {"message": "If this email is registered, a password reset link has been sent."}
+
+
+@router.post("/reset-password")
+@limiter.limit("10/minute")
+async def reset_password(
+    request: Request,
+    body: ResetPasswordRequest,
+    session: AsyncSession = Depends(get_session),
+):
+    """
+    Complete a password reset using the token received by email.
+
+    Deletes the token from Redis after use (single-use). No auth required.
+
+    Rate limit: 10 requests/minute
+    """
+    client = await _get_token_redis()
+    if client is None:
+        raise HTTPException(status_code=503, detail="Service temporarily unavailable. Please try again later.")
+
+    email_bytes = await client.get(f"pwd_reset:{body.token}")
+    if email_bytes is None:
+        raise HTTPException(status_code=400, detail="Invalid or expired reset token")
+
+    email = email_bytes.decode() if isinstance(email_bytes, bytes) else email_bytes
+
+    result = await session.execute(select(User).where(User.email == email))
+    user = result.scalar_one_or_none()
+    if user is None:
+        raise HTTPException(status_code=400, detail="User not found")
+
+    user.hashed_password = get_password_hash(body.password)
+    user.updated_at = datetime.now(UTC)
+    session.add(user)
+    await session.commit()
+
+    await client.delete(f"pwd_reset:{body.token}")
+    logger.info("password_reset_completed", email=email)
+
+    return {"message": "Password updated successfully."}
+
+
+@router.post("/verify-email")
+@limiter.limit("20/minute")
+async def verify_email(
+    request: Request,
+    body: VerifyEmailRequest,
+    session: AsyncSession = Depends(get_session),
+):
+    """
+    Verify an email address using the token sent during registration.
+
+    Deletes the token from Redis after use (single-use). No auth required.
+
+    Rate limit: 20 requests/minute
+    """
+    client = await _get_token_redis()
+    if client is None:
+        raise HTTPException(status_code=503, detail="Service temporarily unavailable. Please try again later.")
+
+    email_bytes = await client.get(f"email_verify:{body.token}")
+    if email_bytes is None:
+        raise HTTPException(status_code=400, detail="Invalid or expired verification token")
+
+    email = email_bytes.decode() if isinstance(email_bytes, bytes) else email_bytes
+
+    # Mark user as verified in DB
+    result = await session.execute(select(User).where(User.email == email))
+    user = result.scalar_one_or_none()
+    if user:
+        user.email_verified = True
+        user.updated_at = datetime.now(UTC)
+        session.add(user)
+        await session.commit()
+
+    await client.delete(f"email_verify:{body.token}")
+    logger.info("email_verified", email=email)
+
+    return {"message": "Email verified successfully.", "email": email}
+
+
+@router.post("/resend-verify")
+@limiter.limit("3/minute")
+async def resend_verify(
+    request: Request,
+    body: ResendVerifyRequest,
+    session: AsyncSession = Depends(get_session),
+):
+    """
+    Resend the email verification link.
+
+    Returns the same response whether or not the email is registered to
+    prevent user enumeration. Stores a fresh token in Redis (24 h).
+
+    Rate limit: 3 requests/minute
+    """
+    result = await session.execute(select(User).where(User.email == body.email))
+    user = result.scalar_one_or_none()
+
+    if user is not None:
+        client = await _get_token_redis()
+        if client is not None:
+            token = secrets.token_urlsafe(32)
+            await client.setex(f"email_verify:{token}", 86400, body.email)
+            from app.email_service import send_verification_email
+            await send_verification_email(body.email, token)
+            logger.info("email_verification_resent", email=body.email)
+        else:
+            logger.warning("resend_verify_redis_unavailable", email=body.email)
+
+    return {"message": "If this email is registered, a verification link has been sent."}
+
+
+@router.post("/test-email")
+@limiter.limit("1/minute")
+async def test_email_delivery(
+    request: Request,
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Send a test email to verify SMTP configuration.
+    Only works for admin users.
+    Rate limit: 1/minute to prevent abuse.
+    """
+    if current_user.role.value != "admin":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin only")
+    try:
+        from app.email_service import send_verification_email
+        import secrets as _secrets
+        token = _secrets.token_urlsafe(8)
+        await send_verification_email(current_user.email, token)
+        logger.info("smtp_test_sent", email=current_user.email)
+        return {"message": f"Test email dispatched to {current_user.email}. Check console if SMTP not configured."}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Email delivery failed: {str(e)[:200]}")

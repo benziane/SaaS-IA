@@ -79,6 +79,7 @@ class UserRead(BaseModel):
     full_name: Optional[str]
     role: Role
     is_active: bool
+    email_verified: bool
     created_at: datetime
     
     class Config:
@@ -90,6 +91,7 @@ class UserRead(BaseModel):
                 "full_name": "John Doe",
                 "role": "user",
                 "is_active": True,
+                "email_verified": False,
                 "created_at": "2025-11-13T21:00:00Z"
             }
         }

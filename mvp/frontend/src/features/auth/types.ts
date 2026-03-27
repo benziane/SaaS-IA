@@ -13,6 +13,7 @@ export interface User {
   full_name: string | null;
   role: 'admin' | 'user';
   is_active: boolean;
+  email_verified: boolean;
   created_at: string;
 }
 
