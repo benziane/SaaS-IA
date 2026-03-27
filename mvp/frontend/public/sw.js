@@ -4,7 +4,7 @@
  * offline fallback, push notifications, background sync.
  */
 
-const CACHE_VERSION = 'saas-ia-v1';
+const CACHE_VERSION = 'saas-ia-v2';
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const DYNAMIC_CACHE = `${CACHE_VERSION}-dynamic`;
 const API_CACHE = `${CACHE_VERSION}-api`;
@@ -19,6 +19,10 @@ const PRECACHE_URLS = [
   '/manifest.json',
   '/icons/icon-192x192.png',
   '/icons/icon-512x512.png',
+  '/youtube',
+  '/monitoring',
+  '/settings',
+  '/forgot-password',
 ];
 
 // File extensions for cache-first strategy

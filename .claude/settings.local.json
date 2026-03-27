@@ -5,7 +5,9 @@
       "WebFetch(domain:oneuptime.com)",
       "WebFetch(domain:medium.com)",
       "WebFetch(domain:nataliamalesa.com)",
-      "WebFetch(domain:dev.to)"
+      "WebFetch(domain:dev.to)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:docs.crawl4ai.com)"
     ]
   }
 }

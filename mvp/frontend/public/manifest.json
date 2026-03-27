@@ -1,11 +1,11 @@
 {
   "name": "SaaS-IA - Plateforme Intelligence Artificielle",
   "short_name": "SaaS-IA",
-  "description": "Plateforme SaaS modulaire d'IA - 33 modules, enterprise-grade",
+  "description": "Plateforme SaaS modulaire d'IA — 48 modules, enterprise-grade, AI monitoring, YouTube transcription, multi-agent crews",
   "start_url": "/dashboard",
   "display": "standalone",
-  "background_color": "#0a0a0f",
-  "theme_color": "#2563eb",
+  "background_color": "#040713",
+  "theme_color": "#05C3DB",
   "orientation": "any",
   "categories": ["productivity", "business", "utilities"],
   "icons": [
@@ -20,8 +20,13 @@
   ],
   "screenshots": [],
   "shortcuts": [
-    {"name": "Dashboard", "url": "/dashboard", "icons": [{"src": "/icons/icon-96x96.png", "sizes": "96x96"}]},
-    {"name": "Chat IA", "url": "/chat", "icons": [{"src": "/icons/icon-96x96.png", "sizes": "96x96"}]},
-    {"name": "Transcription", "url": "/transcription", "icons": [{"src": "/icons/icon-96x96.png", "sizes": "96x96"}]}
+    {"name": "Dashboard", "url": "/dashboard", "description": "Overview and stats", "icons": [{"src": "/icons/icon-96x96.png", "sizes": "96x96"}]},
+    {"name": "Chat IA", "url": "/chat", "description": "AI conversation", "icons": [{"src": "/icons/icon-96x96.png", "sizes": "96x96"}]},
+    {"name": "Transcription", "url": "/transcription", "description": "Transcribe audio/video", "icons": [{"src": "/icons/icon-96x96.png", "sizes": "96x96"}]},
+    {"name": "YouTube Studio", "url": "/youtube", "description": "YouTube transcription", "icons": [{"src": "/icons/icon-96x96.png", "sizes": "96x96"}]},
+    {"name": "Knowledge Base", "url": "/knowledge", "description": "Documents and RAG search", "icons": [{"src": "/icons/icon-96x96.png", "sizes": "96x96"}]},
+    {"name": "AI Agents", "url": "/agents", "description": "Autonomous AI agents", "icons": [{"src": "/icons/icon-96x96.png", "sizes": "96x96"}]},
+    {"name": "Monitoring", "url": "/monitoring", "description": "LLM observability", "icons": [{"src": "/icons/icon-96x96.png", "sizes": "96x96"}]},
+    {"name": "Settings", "url": "/settings", "description": "App settings", "icons": [{"src": "/icons/icon-96x96.png", "sizes": "96x96"}]}
   ]
 }
