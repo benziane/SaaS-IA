@@ -9,9 +9,9 @@ const colorSchemes = (skin: Skin): Theme['colorSchemes'] => {
     light: {
       palette: {
         primary: {
-          main: '#696CFF',
-          light: '#8789FF',
-          dark: '#5E61E6',
+          main: '#05C3DB',
+          light: '#33D5E8',
+          dark: '#04A8BC',
           lighterOpacity: 'rgb(var(--mui-palette-primary-mainChannel) / 0.08)',
           lightOpacity: 'rgb(var(--mui-palette-primary-mainChannel) / 0.16)',
           mainOpacity: 'rgb(var(--mui-palette-primary-mainChannel) / 0.24)',
@@ -83,7 +83,7 @@ const colorSchemes = (skin: Skin): Theme['colorSchemes'] => {
         divider: `rgb(var(--mui-mainColorChannels-light) / 0.12)`,
         dividerChannel: 'var(--mui-mainColorChannels-light)',
         background: {
-          default: skin === 'bordered' ? '#FFFFFF' : '#F5F5F9',
+          default: skin === 'bordered' ? '#FFFFFF' : '#F8FAFC',
           paper: '#FFFFFF',
           paperChannel: '255 255 255'
         },
@@ -148,22 +148,22 @@ const colorSchemes = (skin: Skin): Theme['colorSchemes'] => {
           border: 'var(--mui-palette-divider)'
         },
         customColors: {
-          bodyBg: '#F5F5F9',
-          chatBg: '#F7F8F8',
-          greyLightBg: '#FAFAFA',
+          bodyBg: '#F8FAFC',
+          chatBg: '#F1F5F9',
+          greyLightBg: '#F8FAFC',
           inputBorder: `rgb(var(--mui-mainColorChannels-light) / 0.22)`,
           tableHeaderBg: '#FFFFFF',
           tooltipText: '#FFFFFF',
-          trackBg: '#EEF1F3'
+          trackBg: '#E2E8F0'
         }
       }
     },
     dark: {
       palette: {
         primary: {
-          main: '#696CFF',
-          light: '#8789FF',
-          dark: '#5E61E6',
+          main: '#05C3DB',
+          light: '#33D5E8',
+          dark: '#04A8BC',
           lighterOpacity: 'rgb(var(--mui-palette-primary-mainChannel) / 0.08)',
           lightOpacity: 'rgb(var(--mui-palette-primary-mainChannel) / 0.16)',
           mainOpacity: 'rgb(var(--mui-palette-primary-mainChannel) / 0.24)',
@@ -235,9 +235,9 @@ const colorSchemes = (skin: Skin): Theme['colorSchemes'] => {
         divider: `rgb(var(--mui-mainColorChannels-dark) / 0.12)`,
         dividerChannel: 'var(--mui-mainColorChannels-dark)',
         background: {
-          default: skin === 'bordered' ? '#2B2C40' : '#232333',
-          paper: '#2B2C40',
-          paperChannel: '43 44 64'
+          default: skin === 'bordered' ? '#0F1629' : '#040713',
+          paper: '#0F1629',
+          paperChannel: '15 22 41'
         },
         action: {
           active: `rgb(var(--mui-mainColorChannels-dark) / 0.6)`,
@@ -269,7 +269,7 @@ const colorSchemes = (skin: Skin): Theme['colorSchemes'] => {
           successFilledBg: 'var(--mui-palette-success-main)'
         },
         Avatar: {
-          defaultBg: '#373B50'
+          defaultBg: '#1D2840'
         },
         Chip: {
           defaultBorder: 'var(--mui-palette-divider)'
@@ -300,13 +300,13 @@ const colorSchemes = (skin: Skin): Theme['colorSchemes'] => {
           border: 'var(--mui-palette-divider)'
         },
         customColors: {
-          bodyBg: '#232333',
-          chatBg: '#20202E',
-          greyLightBg: '#313246',
+          bodyBg: '#040713',
+          chatBg: '#080C1A',
+          greyLightBg: '#1D2840',
           inputBorder: `rgb(var(--mui-mainColorChannels-dark) / 0.22)`,
-          tableHeaderBg: '#2B2C40',
-          tooltipText: '#2B2C40',
-          trackBg: '#41415F'
+          tableHeaderBg: '#0F1629',
+          tooltipText: '#0F1629',
+          trackBg: '#1D2840'
         }
       }
     }

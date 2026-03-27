@@ -86,7 +86,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: '#09090d',
+  themeColor: '#05C3DB',
 };
 
 /* ========================================================================
@@ -109,10 +109,8 @@ export default async function RootLayout({ children }: RootLayoutProps): Promise
   const systemMode = await getSystemMode();
 
   return (
-    <html lang="en" dir={direction} className={`${inter.variable} ${jetbrainsMono.variable}`} suppressHydrationWarning>
+    <html lang="en" dir={direction} data-recipe="saas-ia" className={`${inter.variable} ${jetbrainsMono.variable}`} suppressHydrationWarning>
       <head>
-        {/* Boxicons for theme switcher */}
-        <link rel="stylesheet" href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" />
         {/* Iconify API for Tabler Icons (sidebar menu icons) */}
         <script src="https://code.iconify.design/iconify-icon/2.3.0/iconify-icon.min.js" defer />
         {/* Tabler Icons CSS for className-based rendering */}
@@ -156,6 +154,17 @@ export default async function RootLayout({ children }: RootLayoutProps): Promise
         />
         
         {/* Security Headers are in next.config.ts */}
+
+        {/* Service Worker Registration */}
+        <script
+          dangerouslySetInnerHTML={{ __html: `
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function() {
+      navigator.serviceWorker.register('/sw.js').catch(function() {});
+    });
+  }
+` }}
+        />
       </head>
       <body suppressHydrationWarning>
         <Providers 

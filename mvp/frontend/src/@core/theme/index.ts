@@ -1,6 +1,3 @@
-// Next Imports
-import { Public_Sans } from 'next/font/google'
-
 // MUI Imports
 import type { Theme } from '@mui/material/styles'
 
@@ -16,7 +13,9 @@ import shadows from './shadows'
 import customShadows from './customShadows'
 import typography from './typography'
 
-const public_sans = Public_Sans({ subsets: ['latin'], weight: ['300', '400', '500', '600', '700', '800', '900'] })
+// Inter is loaded via next/font/google in app/layout.tsx as --font-inter CSS var
+// globals.css maps: --font-sans → var(--font-inter, "Inter")
+const FONT_SANS = '"Inter Variable", "Inter", system-ui, -apple-system, sans-serif'
 
 const theme = (settings: Settings, mode: SystemMode, direction: Theme['direction']): Theme => {
   return {
@@ -35,13 +34,13 @@ const theme = (settings: Settings, mode: SystemMode, direction: Theme['direction
       }
     },
     shadows: shadows(mode),
-    typography: typography(public_sans.style.fontFamily),
+    typography: typography(FONT_SANS),
     customShadows: customShadows(mode),
     mainColorChannels: {
       light: '34 48 62',
-      dark: '230 230 241',
+      dark: '200 220 240',
       lightShadow: '34 48 62',
-      darkShadow: '20 20 29'
+      darkShadow: '4 7 19'
     }
   } as Theme
 }

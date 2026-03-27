@@ -326,6 +326,138 @@ a {
    PRINT STYLES
    ======================================================================== */
 
+/* ========================================================================
+   SCROLLBAR — slim, design-hub aware
+   ======================================================================== */
+
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-app);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+  transition: background var(--duration-base);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-low);
+}
+
+/* ========================================================================
+   SELECTION
+   ======================================================================== */
+
+::selection {
+  background: var(--accent-glow);
+  color: var(--accent);
+}
+
+/* ========================================================================
+   GLASSMORPHISM UTILITIES
+   ======================================================================== */
+
+.glass {
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.glass-light {
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+}
+
+/* ========================================================================
+   GRADIENT TEXT
+   ======================================================================== */
+
+.text-gradient {
+  background: linear-gradient(135deg, var(--accent) 0%, #a855f7 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.text-gradient-warm {
+  background: linear-gradient(135deg, #f97316 0%, #ec4899 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ========================================================================
+   ANIMATIONS
+   ======================================================================== */
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 8px hsla(187, 96%, 47%, 0.3); }
+  50%       { box-shadow: 0 0 24px hsla(187, 96%, 47%, 0.6); }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2.5s ease-in-out infinite;
+}
+
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.animate-enter {
+  animation: fadeSlideIn 0.4s var(--ease-out, cubic-bezier(0, 0, 0.2, 1)) both;
+}
+
+@keyframes shimmer {
+  from { background-position: -200% 0; }
+  to   { background-position: 200% 0; }
+}
+
+.animate-shimmer {
+  background: linear-gradient(90deg, var(--bg-elevated) 25%, var(--bg-overlay) 50%, var(--bg-elevated) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.6s ease-in-out infinite;
+}
+
+/* ========================================================================
+   SURFACE UTILITIES
+   ======================================================================== */
+
+.surface-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+}
+
+.surface-elevated {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+
+/* Accent border glow on focus/hover */
+.border-glow-accent {
+  transition: border-color var(--duration-base), box-shadow var(--duration-base);
+}
+
+.border-glow-accent:hover,
+.border-glow-accent:focus-within {
+  border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+/* ========================================================================
+   PRINT STYLES
+   ======================================================================== */
+
 @media print {
   * {
     background: transparent !important;
@@ -376,5 +508,14 @@ a {
   h2,
   h3 {
     page-break-after: avoid;
+  }
+}
+
+/* Mobile: add bottom padding so content isn't hidden behind BottomNav */
+@media (max-width: 767px) {
+  .layout-content-height-nav-hidden,
+  main,
+  [class*="layout-content"] {
+    padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px)) !important;
   }
 }

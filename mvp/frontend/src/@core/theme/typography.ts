@@ -5,22 +5,9 @@ const typography = (fontFamily: string): Theme['typography'] =>
   ({
     fontFamily:
       typeof fontFamily === 'undefined' || fontFamily === ''
-        ? [
-            '"Public Sans"',
-            'sans-serif',
-            '-apple-system',
-            'BlinkMacSystemFont',
-            '"Segoe UI"',
-            'Roboto',
-            '"Helvetica Neue"',
-            'Arial',
-            'sans-serif',
-            '"Apple Color Emoji"',
-            '"Segoe UI Emoji"',
-            '"Segoe UI Symbol"'
-          ].join(',')
+        ? '"Inter Variable", "Inter", system-ui, -apple-system, sans-serif'
         : fontFamily,
-    fontSize: 13.125,
+    fontSize: 14,
     h1: {
       fontSize: '2.875rem',
       fontWeight: 500,

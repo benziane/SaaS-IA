@@ -1,11 +1,10 @@
 /**
  * Design Hub Bridge CSS
- * Maps design-hub tokens to MUI CSS variables for Sneat layout compatibility.
+ * Bridges saas-ia recipe tokens (source of truth in globals.css) to MUI CSS
+ * variables consumed by the Sneat layout shell. No recipe imports here —
+ * other recipe tokens (cockpit-ui, automation-tool) must be scoped per-page
+ * to avoid overriding the active :root variables.
  */
-
-/* Alternate recipe tokens (override :root on specific pages) */
-@import '../lib/design-hub/recipes/cockpit-ui/tokens.css';
-@import '../lib/design-hub/recipes/automation-tool/tokens.css';
 
 /* MUI compatibility aliases (always active, consumed by Sneat shell) */
 :root {
