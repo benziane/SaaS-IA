@@ -10,6 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.auth import get_current_user
+from app.modules.auth_guards.middleware import require_verified_email
 from app.database import get_session
 from app.models.user import User
 from app.modules.ai_workflows.schemas import (
@@ -78,7 +79,7 @@ def _run_to_read(run) -> RunRead:
 async def create_workflow(
     request: Request,
     body: WorkflowCreate,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """
@@ -167,7 +168,7 @@ async def create_from_template(
     request: Request,
     template_id: str,
     name: Optional[str] = Query(None),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """
@@ -216,7 +217,7 @@ async def update_workflow(
     request: Request,
     workflow_id: UUID,
     body: WorkflowUpdate,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """
@@ -241,7 +242,7 @@ async def update_workflow(
 async def delete_workflow(
     request: Request,
     workflow_id: UUID,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """
@@ -266,7 +267,7 @@ async def trigger_workflow(
     request: Request,
     workflow_id: UUID,
     body: TriggerRequest = TriggerRequest(),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """

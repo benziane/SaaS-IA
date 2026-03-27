@@ -424,6 +424,12 @@ class WorkflowService:
             return await WorkflowService._node_crawl(previous_output, config)
         elif action == "transcribe":
             return await WorkflowService._node_transcribe(previous_output, config)
+        elif action == "youtube_transcript":
+            return await WorkflowService._node_youtube_transcript(previous_output, config)
+        elif action == "youtube_smart":
+            return await WorkflowService._node_youtube_smart(previous_output, config)
+        elif action == "youtube_metadata":
+            return await WorkflowService._node_youtube_metadata(previous_output, config)
         elif action == "search_knowledge":
             return await WorkflowService._node_search_kb(previous_output, config, user_id)
         elif action == "index_knowledge":
@@ -581,6 +587,64 @@ class WorkflowService:
             "action": "transcribe",
             "url": url,
         }
+
+    @staticmethod
+    async def _node_youtube_transcript(text: str, config: dict) -> dict:
+        url = config.get("url", text or "").strip()
+        if not url:
+            return {"output": "", "error": "No YouTube URL for transcript", "action": "youtube_transcript"}
+        language = config.get("language", "auto")
+        try:
+            from app.transcription.youtube_transcript import get_youtube_transcript
+            result = await get_youtube_transcript(url, language)
+            if not result:
+                return {"output": "", "error": "No subtitles available", "action": "youtube_transcript"}
+            return {
+                "output": result.get("full_text", ""),
+                "provider": result.get("provider", "youtube_subtitles"),
+                "action": "youtube_transcript",
+            }
+        except Exception as e:
+            return {"output": "", "error": str(e)[:500], "action": "youtube_transcript"}
+
+    @staticmethod
+    async def _node_youtube_smart(text: str, config: dict) -> dict:
+        url = config.get("url", text or "").strip()
+        if not url:
+            return {"output": "", "error": "No YouTube URL", "action": "youtube_smart"}
+        language = config.get("language", "auto")
+        try:
+            from app.transcription.youtube_transcript import get_youtube_transcript, download_video
+            result = await get_youtube_transcript(url, language)
+            if result:
+                return {"output": result.get("full_text", ""), "provider": "youtube_subtitles", "action": "youtube_smart"}
+            video_data = await download_video(url)
+            if video_data and video_data.get("file_path"):
+                from app.transcription.whisper_service import transcribe_with_whisper
+                whisper = await transcribe_with_whisper(video_data["file_path"])
+                if whisper:
+                    return {"output": whisper.get("text", ""), "provider": "whisper", "action": "youtube_smart"}
+            return {"output": "", "error": "No transcription provider succeeded", "action": "youtube_smart"}
+        except Exception as e:
+            return {"output": "", "error": str(e)[:500], "action": "youtube_smart"}
+
+    @staticmethod
+    async def _node_youtube_metadata(text: str, config: dict) -> dict:
+        url = config.get("url", text or "").strip()
+        if not url:
+            return {"output": "", "error": "No YouTube URL", "action": "youtube_metadata"}
+        try:
+            from app.transcription.youtube_transcript import get_youtube_metadata
+            metadata = await get_youtube_metadata(url)
+            if not metadata:
+                return {"output": "", "error": "Could not fetch metadata", "action": "youtube_metadata"}
+            return {
+                "output": f"{metadata.get('title', '')} — {metadata.get('uploader', '')} ({metadata.get('duration_seconds', 0)}s)",
+                "metadata": metadata,
+                "action": "youtube_metadata",
+            }
+        except Exception as e:
+            return {"output": "", "error": str(e)[:500], "action": "youtube_metadata"}
 
     @staticmethod
     async def _node_search_kb(text: str, config: dict, user_id: UUID) -> dict:

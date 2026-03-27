@@ -53,6 +53,11 @@ AVAILABLE_ACTIONS = {
     "edit_audio": "Edit an audio file (trim, fade, normalize, noise reduction, speed change, merge)",
     "generate_podcast": "Create a podcast episode with AI chapters, show notes, and RSS feed",
     "analyze_repo": "Analyze a GitHub repository: detect tech stack, score code quality, scan dependencies and security",
+    "youtube_transcript": "Get instant YouTube subtitles/transcript without downloading (free, uses youtube-transcript-api)",
+    "youtube_metadata": "Extract YouTube video metadata: title, channel, duration, views, description, chapters",
+    "youtube_smart": "Smart YouTube transcription: tries free subtitles first, falls back to Whisper local transcription",
+    "youtube_playlist": "Batch transcribe all videos in a YouTube playlist or channel (up to 50 videos)",
+    "youtube_analyze": "Download YouTube video and analyze frames with AI Vision (content, scenes, objects)",
 }
 
 
@@ -111,6 +116,17 @@ def _heuristic_plan(instruction: str) -> list[dict]:
     """Simple rule-based planning fallback."""
     instruction_lower = instruction.lower()
     steps = []
+
+    # YouTube-specific: smart transcript, metadata, playlist, analysis
+    if any(w in instruction_lower for w in ["youtube.com", "youtu.be", "youtube playlist", "playlist youtube"]):
+        if any(w in instruction_lower for w in ["playlist", "channel", "bulk", "batch", "multiple video"]):
+            return [{"action": "youtube_playlist", "description": "Batch transcribe YouTube playlist", "input": {"url": "", "language": "auto", "max_videos": 20}}]
+        if any(w in instruction_lower for w in ["metadata", "title", "channel", "views", "duration", "info"]):
+            return [{"action": "youtube_metadata", "description": "Extract YouTube video metadata", "input": {"url": ""}}]
+        if any(w in instruction_lower for w in ["analyz", "frame", "vision", "visual", "scene"]):
+            return [{"action": "youtube_analyze", "description": "Analyze YouTube video frames with AI Vision", "input": {"url": ""}}]
+        # Default for YouTube URLs: smart transcription
+        return [{"action": "youtube_smart", "description": "Smart YouTube transcription (subtitles → Whisper)", "input": {"url": "", "language": "auto"}}]
 
     if any(w in instruction_lower for w in ["transcri", "youtube", "video", "audio"]):
         steps.append({
@@ -354,6 +370,13 @@ def _heuristic_plan(instruction: str) -> list[dict]:
             "action": "batch_transcribe",
             "description": "Batch transcribe multiple YouTube URLs concurrently",
             "input": {},
+        })
+
+    if any(w in instruction_lower for w in ["youtube playlist", "playlist youtube", "transcri.*playlist", "playlist.*transcri"]):
+        steps.append({
+            "action": "youtube_playlist",
+            "description": "Transcribe YouTube playlist",
+            "input": {"url": "", "max_videos": 20},
         })
 
     if any(w in instruction_lower for w in ["summary of transcri", "summarize transcri", "resume transcri", "executive summary", "action items from transcri", "bullet points from transcri"]):

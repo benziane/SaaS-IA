@@ -10,6 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.auth import get_current_user
+from app.modules.auth_guards.middleware import require_verified_email
 from app.database import get_session
 from app.models.user import User
 from app.modules.pipelines.schemas import (
@@ -64,7 +65,7 @@ def _execution_to_read(execution) -> ExecutionRead:
 async def create_pipeline(
     request: Request,
     body: PipelineCreate,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """
@@ -137,7 +138,7 @@ async def update_pipeline(
     request: Request,
     pipeline_id: UUID,
     body: PipelineUpdate,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """
@@ -162,7 +163,7 @@ async def update_pipeline(
 async def delete_pipeline(
     request: Request,
     pipeline_id: UUID,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """
@@ -186,7 +187,7 @@ async def delete_pipeline(
 async def execute_pipeline(
     request: Request,
     pipeline_id: UUID,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """

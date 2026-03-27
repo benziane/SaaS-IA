@@ -49,6 +49,35 @@ async def _exec_crawl_web(input_data: dict, previous: Optional[str]) -> dict:
         return {"output": "", "error": str(e)[:500], "action": "crawl_web"}
 
 
+async def _exec_seed_web_urls(input_data: dict, previous: Optional[str]) -> dict:
+    """Discover all URLs for a domain via sitemap or crawl-based seeding."""
+    domain = input_data.get("domain", previous or "")
+    if not domain:
+        return {"output": "", "error": "No domain provided for URL seeding", "action": "seed_web_urls"}
+
+    try:
+        from app.modules.web_crawler.service import WebCrawlerService
+
+        result = await WebCrawlerService.seed_urls(
+            domain=domain,
+            source=input_data.get("source", "sitemap"),
+            max_urls=input_data.get("max_urls", 100),
+        )
+
+        if result.get("success"):
+            urls = result.get("urls", [])
+            total = result.get("total", 0)
+            output = f"Found {total} URLs for {domain}:\n" + "\n".join(urls[:50])
+            if total > 50:
+                output += f"\n... and {total - 50} more"
+            return {"output": output, "action": "seed_web_urls", "domain": domain, "urls": urls, "total": total}
+
+        return {"output": "", "error": result.get("error", "URL seeding failed"), "action": "seed_web_urls"}
+
+    except Exception as e:
+        return {"output": "", "error": str(e)[:500], "action": "seed_web_urls"}
+
+
 async def _exec_analyze_image(input_data: dict, previous: Optional[str]) -> dict:
     """Analyze an image URL with AI Vision."""
     image_url = input_data.get("image_url", input_data.get("url", ""))
@@ -84,6 +113,7 @@ async def execute_step(action: str, input_data: dict, previous_output: Optional[
         "analyze_sentiment": _exec_sentiment,
         "create_pipeline": _exec_generate,  # Fallback to generate for now
         "crawl_web": _exec_crawl_web,
+        "seed_web_urls": _exec_seed_web_urls,
         "analyze_image": _exec_analyze_image,
         "generate_content": _exec_generate_content,
         "run_workflow": _exec_run_workflow,
@@ -112,6 +142,11 @@ async def execute_step(action: str, input_data: dict, previous_output: Optional[
         "process_pdf": _exec_process_pdf,
         "edit_audio": _exec_edit_audio,
         "generate_podcast": _exec_generate_podcast,
+        "youtube_transcript": _exec_youtube_transcript,
+        "youtube_metadata": _exec_youtube_metadata,
+        "youtube_smart": _exec_youtube_smart,
+        "youtube_playlist": _exec_youtube_playlist,
+        "youtube_analyze": _exec_youtube_analyze,
     }
 
     handler = handlers.get(action, _exec_generate)
@@ -964,6 +999,141 @@ async def _exec_batch_transcribe(input_data: dict, previous: Optional[str]) -> d
         }
     except Exception as e:
         return {"output": "", "error": str(e)[:500], "action": "batch_transcribe"}
+
+
+async def _exec_youtube_transcript(input_data: dict, previous: Optional[str]) -> dict:
+    """Get YouTube transcript instantly via subtitles (free, no download)."""
+    url = input_data.get("url", "") or previous or ""
+    if not url:
+        return {"output": "", "error": "No YouTube URL provided", "action": "youtube_transcript"}
+    language = input_data.get("language", "auto")
+    try:
+        from app.transcription.youtube_transcript import get_youtube_transcript
+        result = await get_youtube_transcript(url, language)
+        if not result:
+            return {"output": "", "error": "No subtitles available for this video", "action": "youtube_transcript"}
+        return {
+            "output": result.get("full_text", ""),
+            "provider": result.get("provider", "youtube_subtitles"),
+            "language": result.get("language", ""),
+            "duration_seconds": result.get("duration_seconds", 0),
+            "action": "youtube_transcript",
+        }
+    except Exception as e:
+        return {"output": "", "error": str(e)[:500], "action": "youtube_transcript"}
+
+
+async def _exec_youtube_metadata(input_data: dict, previous: Optional[str]) -> dict:
+    """Extract YouTube video metadata."""
+    url = input_data.get("url", "") or previous or ""
+    if not url:
+        return {"output": "", "error": "No YouTube URL provided", "action": "youtube_metadata"}
+    try:
+        from app.transcription.youtube_transcript import get_youtube_metadata
+        metadata = await get_youtube_metadata(url)
+        if not metadata:
+            return {"output": "", "error": "Could not fetch metadata for this URL", "action": "youtube_metadata"}
+        output = (
+            f"Title: {metadata.get('title', '')}\n"
+            f"Channel: {metadata.get('uploader', '')}\n"
+            f"Duration: {metadata.get('duration_seconds', 0)}s\n"
+            f"Views: {metadata.get('view_count', 0)}\n"
+            f"Description: {metadata.get('description', '')[:300]}"
+        )
+        return {"output": output, "metadata": metadata, "action": "youtube_metadata"}
+    except Exception as e:
+        return {"output": "", "error": str(e)[:500], "action": "youtube_metadata"}
+
+
+async def _exec_youtube_smart(input_data: dict, previous: Optional[str]) -> dict:
+    """Smart YouTube transcription: subtitles first, Whisper fallback."""
+    url = input_data.get("url", "") or previous or ""
+    if not url:
+        return {"output": "", "error": "No YouTube URL provided", "action": "youtube_smart"}
+    language = input_data.get("language", "auto")
+    try:
+        # Try subtitles first (free)
+        from app.transcription.youtube_transcript import get_youtube_transcript, download_video
+        result = await get_youtube_transcript(url, language)
+        if result:
+            return {
+                "output": result.get("full_text", ""),
+                "provider": "youtube_subtitles",
+                "language": result.get("language", ""),
+                "action": "youtube_smart",
+            }
+        # Fallback: download + whisper
+        video_data = await download_video(url)
+        if video_data and video_data.get("file_path"):
+            from app.transcription.whisper_service import transcribe_with_whisper
+            whisper_result = await transcribe_with_whisper(video_data["file_path"])
+            if whisper_result:
+                return {
+                    "output": whisper_result.get("text", ""),
+                    "provider": "whisper",
+                    "action": "youtube_smart",
+                }
+        return {"output": "", "error": "Could not transcribe video with any provider", "action": "youtube_smart"}
+    except Exception as e:
+        return {"output": "", "error": str(e)[:500], "action": "youtube_smart"}
+
+
+async def _exec_youtube_playlist(input_data: dict, previous: Optional[str]) -> dict:
+    """Transcribe all videos in a YouTube playlist."""
+    url = input_data.get("url", "") or previous or ""
+    if not url:
+        return {"output": "", "error": "No playlist URL provided", "action": "youtube_playlist"}
+    language = input_data.get("language", "auto")
+    max_videos = int(input_data.get("max_videos", 20))
+    try:
+        from app.transcription.youtube_transcript import get_playlist_videos, get_youtube_transcript
+        videos = await get_playlist_videos(url, max_videos)
+        if not videos:
+            return {"output": "", "error": "No videos found in playlist", "action": "youtube_playlist"}
+        results = []
+        for v in videos[:max_videos]:
+            video_url = v.get("url", "")
+            if not video_url:
+                continue
+            transcript = await get_youtube_transcript(video_url, language)
+            results.append({
+                "video_id": v.get("id", ""),
+                "title": v.get("title", ""),
+                "success": transcript is not None,
+                "transcript": transcript.get("full_text", "")[:500] if transcript else "",
+            })
+        summary = f"Transcribed {sum(1 for r in results if r['success'])}/{len(results)} videos"
+        return {"output": summary, "results": results, "action": "youtube_playlist"}
+    except Exception as e:
+        return {"output": "", "error": str(e)[:500], "action": "youtube_playlist"}
+
+
+async def _exec_youtube_analyze(input_data: dict, previous: Optional[str]) -> dict:
+    """Download video and analyze frames with AI Vision."""
+    url = input_data.get("url", "") or previous or ""
+    if not url:
+        return {"output": "", "error": "No YouTube URL provided", "action": "youtube_analyze"}
+    try:
+        from app.transcription.youtube_transcript import download_video
+        from app.transcription.video_tools import VideoToolsService
+        video_data = await download_video(url)
+        if not video_data or not video_data.get("file_path"):
+            return {"output": "", "error": "Could not download video", "action": "youtube_analyze"}
+        analyses = await VideoToolsService.analyze_video_frames(
+            video_path=video_data["file_path"],
+            interval_seconds=int(input_data.get("interval_seconds", 60)),
+            max_frames=int(input_data.get("max_frames", 5)),
+            prompt=input_data.get("prompt", "Describe what is happening in this video frame"),
+        )
+        descriptions = [f"[{a.get('timestamp', 0)}s] {a.get('description', '')}" for a in analyses]
+        return {
+            "output": "\n".join(descriptions),
+            "frames_analyzed": len(analyses),
+            "title": video_data.get("title", ""),
+            "action": "youtube_analyze",
+        }
+    except Exception as e:
+        return {"output": "", "error": str(e)[:500], "action": "youtube_analyze"}
 
 
 async def _exec_generate_summary(input_data: dict, previous: Optional[str]) -> dict:

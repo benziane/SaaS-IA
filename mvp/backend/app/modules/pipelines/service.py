@@ -880,6 +880,70 @@ class PipelineService:
             else:
                 step_output = "No dataset_id provided" if not dataset_id else "No pipeline context"
             return {"type": "fine_tune", "output": step_output}
+
+        # ---- YouTube transcript step (instant subtitles) ----
+        elif step_type == "youtube_transcript":
+            url = config.get("url", previous_output or "").strip()
+            language = config.get("language", "auto")
+            if url:
+                try:
+                    from app.transcription.youtube_transcript import get_youtube_transcript
+                    result = await get_youtube_transcript(url, language)
+                    step_output = result.get("full_text", "") if result else "No subtitles available"
+                except Exception as e:
+                    step_output = f"YouTube transcript failed: {str(e)[:500]}"
+            else:
+                step_output = "No YouTube URL provided"
+            return {"type": "youtube_transcript", "output": step_output}
+
+        # ---- YouTube smart transcription (subtitles → Whisper fallback) ----
+        elif step_type == "youtube_smart":
+            url = config.get("url", previous_output or "").strip()
+            language = config.get("language", "auto")
+            if url:
+                try:
+                    from app.transcription.youtube_transcript import get_youtube_transcript, download_video
+                    result = await get_youtube_transcript(url, language)
+                    if result:
+                        step_output = result.get("full_text", "")
+                    else:
+                        video_data = await download_video(url)
+                        if video_data and video_data.get("file_path"):
+                            from app.transcription.whisper_service import transcribe_with_whisper
+                            whisper = await transcribe_with_whisper(video_data["file_path"])
+                            step_output = whisper.get("text", "") if whisper else "Whisper transcription empty"
+                        else:
+                            step_output = "Could not download video for transcription"
+                except Exception as e:
+                    step_output = f"YouTube smart transcription failed: {str(e)[:500]}"
+            else:
+                step_output = "No YouTube URL provided"
+            return {"type": "youtube_smart", "output": step_output}
+
+        # ---- YouTube metadata extraction ----
+        elif step_type == "youtube_metadata":
+            url = config.get("url", previous_output or "").strip()
+            if url:
+                try:
+                    from app.transcription.youtube_transcript import get_youtube_metadata
+                    import json as _json
+                    metadata = await get_youtube_metadata(url)
+                    if metadata:
+                        step_output = _json.dumps({
+                            "title": metadata.get("title", ""),
+                            "uploader": metadata.get("uploader", ""),
+                            "duration_seconds": metadata.get("duration_seconds", 0),
+                            "view_count": metadata.get("view_count", 0),
+                            "description": metadata.get("description", "")[:300],
+                        }, ensure_ascii=False)
+                    else:
+                        step_output = "Could not fetch YouTube metadata"
+                except Exception as e:
+                    step_output = f"YouTube metadata failed: {str(e)[:500]}"
+            else:
+                step_output = "No YouTube URL provided"
+            return {"type": "youtube_metadata", "output": step_output}
+
         else:
             return {"type": step_type, "output": previous_output or "", "note": "Unknown step type"}
 
