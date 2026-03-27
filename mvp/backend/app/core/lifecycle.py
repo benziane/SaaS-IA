@@ -130,6 +130,13 @@ async def lifespan(app):
     await init_db()
     logger.info("database_initialized")
 
+    # Start crawl4ai singleton browser (avoids 2s Playwright cold-start per request)
+    try:
+        from app.modules.web_crawler.service import init_crawler
+        await init_crawler()
+    except Exception as exc:
+        logger.debug("crawl4ai_init_skipped", error=str(exc))
+
     # Recover orphaned skill_seekers jobs (stuck in RUNNING after restart)
     try:
         from app.modules.skill_seekers.service import SkillSeekersService
@@ -173,6 +180,13 @@ async def lifespan(app):
 
     # Drain active requests
     await _wait_for_drain(timeout=30.0)
+
+    # Close crawl4ai singleton browser
+    try:
+        from app.modules.web_crawler.service import close_crawler
+        await close_crawler()
+    except Exception as exc:
+        logger.debug("crawl4ai_close_skipped", error=str(exc))
 
     # Dispose database engine
     try:

@@ -1,7 +1,7 @@
 {
   "name": "web_crawler",
-  "version": "1.0.0",
-  "description": "Web scraping with text and image extraction, AI vision analysis",
+  "version": "6.0.0",
+  "description": "Full crawl4ai surface: fit_markdown, CSS/XPath/regex extraction, AI schema gen, raw HTML processing, batch crawl, deep crawl (BFS/DFS/Best-First + filters + resume), seed URLs (BM25), adaptive crawl (self-tuning), HTTP-only scrape, CrawlerHub profiles, geolocation, undetected browser, LLM table extraction",
   "prefix": "/api/crawler",
   "tags": ["web_crawler"],
   "enabled": true,
