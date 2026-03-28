@@ -135,10 +135,37 @@ def test_user():
     user.full_name = "Test User"
     user.role = "user"
     user.is_active = True
+    user.email_verified = True
     user.hashed_password = "$2b$12$mock_hashed_password_for_testing"
     user.created_at = datetime.now(UTC)
     user.updated_at = datetime.now(UTC)
     return user
+
+
+def override_auth(app, user):
+    """Override both ``get_current_user`` and the email-verification guards.
+
+    The ``require_verified_email`` guard resolves its user via
+    ``_lazy_get_current_user`` -- a *different* dependency from
+    ``app.auth.get_current_user``.  Overriding only ``get_current_user``
+    leaves the guard using its own token-parsing path, which returns 403
+    for mock users that lack a real JWT.
+
+    Call this helper instead of setting ``get_current_user`` manually::
+
+        override_auth(app, test_user)
+        ...
+        app.dependency_overrides.clear()
+    """
+    from app.auth import get_current_user
+    from app.modules.auth_guards.middleware import (
+        require_verified_email,
+        require_verified_email_soft,
+    )
+
+    app.dependency_overrides[get_current_user] = lambda: user
+    app.dependency_overrides[require_verified_email] = lambda: user
+    app.dependency_overrides[require_verified_email_soft] = lambda: user
 
 
 @pytest.fixture()

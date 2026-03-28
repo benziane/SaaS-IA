@@ -13,13 +13,29 @@ Usage in a route:
 """
 
 from fastapi import Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer
+from sqlmodel.ext.asyncio.session import AsyncSession
 
-from app.auth import get_current_user
+from app.database import get_session
 from app.models.user import User
+
+# Use the same OAuth2 scheme so FastAPI knows to expect a Bearer token.
+_oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
+
+
+async def _lazy_get_current_user(
+    token: str = Depends(_oauth2_scheme),
+    session: AsyncSession = Depends(get_session),
+) -> User:
+    """Resolve current user with a lazy import to break the circular
+    dependency between app.auth and app.modules.auth_guards.middleware."""
+    from app.auth import get_current_user
+
+    return await get_current_user(token=token, session=session)
 
 
 async def require_verified_email(
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(_lazy_get_current_user),
 ) -> User:
     """
     Dependency: blocks with 403 if user has not verified their email.
@@ -40,7 +56,7 @@ async def require_verified_email(
 
 
 async def require_verified_email_soft(
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(_lazy_get_current_user),
 ) -> User:
     """
     Soft variant: always passes through, does NOT block.

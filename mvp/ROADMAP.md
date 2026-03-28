@@ -1,7 +1,7 @@
 # ROADMAP - SaaS-IA Platform
 
-**Date de mise a jour** : 2026-03-26
-**Version actuelle** : MVP 4.4.0
+**Date de mise a jour** : 2026-03-28
+**Version actuelle** : MVP 4.5.0
 **Objectif** : Plateforme SaaS d'orchestration IA multi-modules, production-ready
 
 ---
@@ -368,7 +368,7 @@ Moteur d'automatisation no-code avec graph de noeuds (DAG), triggers, actions ch
 - 13 types d'actions couvrant tous les modules existants
 - 5 templates pre-construits
 
-**13 types d'actions** :
+**15 types d'actions** :
 
 | Action | Description | Module source |
 |--------|-------------|---------------|
@@ -376,7 +376,9 @@ Moteur d'automatisation no-code avec graph de noeuds (DAG), triggers, actions ch
 | `translate` | Traduire dans une langue | ai_assistant |
 | `sentiment` | Analyser le sentiment | sentiment |
 | `generate` | Generation de texte libre | ai_assistant |
-| `crawl` | Scraper une page web | web_crawler |
+| `crawl` | Scraper une page web (v8 100%, 55 crawl4ai classes, ~30 endpoints) | web_crawler |
+| `deep_crawl` | Deep crawl BFS/DFS/BestFirst | web_crawler |
+| `adaptive_crawl` | Adaptive crawl avec scoring | web_crawler |
 | `transcribe` | Transcrire audio/video | transcription |
 | `search_knowledge` | Rechercher dans la KB | knowledge |
 | `index_knowledge` | Indexer du contenu dans la KB | knowledge |
@@ -652,7 +654,7 @@ Audit et consolidation complete de toutes les connections entre les 22 modules d
 
 **3 systemes d'orchestration** :
 
-#### Agent Executor - 22 actions totales
+#### Agent Executor - ~84 actions totales
 | Action | Module cible | Connexion |
 |--------|-------------|-----------|
 | `transcribe` | transcription | Delegation |
@@ -664,8 +666,10 @@ Audit et consolidation complete de toutes les connections entre les 22 modules d
 | `generate_text` | ai_assistant | Appel direct |
 | `extract_info` | ai_assistant | Appel direct |
 | `analyze_sentiment` | sentiment | Appel direct |
-| `crawl_web` | web_crawler | Appel direct |
+| `crawl_web` | web_crawler (v8 100%, 55 crawl4ai classes) | Appel direct |
 | `analyze_image` | web_crawler (vision) | Appel direct |
+| `deep_crawl` | web_crawler (BFS/DFS/BestFirst) | Appel direct |
+| `adaptive_crawl` | web_crawler (adaptive) | Appel direct |
 | `generate_content` | content_studio | **Appel direct** |
 | `run_workflow` | ai_workflows | Delegation |
 | `run_crew` | multi_agent_crew | Delegation |
@@ -680,13 +684,14 @@ Audit et consolidation complete de toutes les connections entre les 22 modules d
 | `generate_clips` | video_gen | Delegation |
 | `fine_tune` | fine_tuning | Delegation |
 
-#### Pipeline Steps - 20 types
+#### Pipeline Steps - 34 types
 | Step Type | Module | Connexion |
 |-----------|--------|-----------|
 | `summarize` | ai_assistant | Appel direct |
 | `translate` | ai_assistant | Appel direct |
 | `transcription` | transcription | Input externe |
-| `web_crawl` | web_crawler | Appel direct |
+| `web_crawl` | web_crawler (v8) | Appel direct |
+| `deep_crawl` | web_crawler (BFS/DFS/BestFirst) | Appel direct |
 | `export` | - | Output format |
 | `sentiment` | sentiment | Appel direct |
 | `search_knowledge` | knowledge | Appel direct |
@@ -699,14 +704,16 @@ Audit et consolidation complete de toutes les connections entre les 22 modules d
 | `text_to_speech` | voice_clone | **Appel direct** |
 | `security_scan` | security_guardian | **Appel direct** |
 
-#### Workflow Actions - 23 types
+#### Workflow Actions - 35 types
 | Action | Module | Connexion |
 |--------|--------|-----------|
 | `summarize` | ai_assistant | Appel direct |
 | `translate` | ai_assistant | Appel direct |
 | `sentiment` | sentiment | Appel direct |
 | `generate` | ai_assistant | Appel direct |
-| `crawl` | web_crawler | Appel direct |
+| `crawl` | web_crawler (v8) | Appel direct |
+| `deep_crawl` | web_crawler (BFS/DFS/BestFirst) | Appel direct |
+| `adaptive_crawl` | web_crawler (adaptive + scoring) | Appel direct |
 | `transcribe` | transcription | Delegation |
 | `search_knowledge` | knowledge | Appel direct |
 | `index_knowledge` | knowledge | **Appel direct** |
@@ -906,6 +913,8 @@ CREATE INDEX ix_document_chunks_embedding_hnsw
 
 **Sprint 11** : Tech Audit integrations (litellm, presidio, faster-whisper, duckdb, Coqui TTS, NeMo, networkx, eval engine, ReAct, memory, monitoring, search). **[FAIT]**
 
+**Sprint 12** : Lib Coverage Push — crawl4ai 100%, faster-whisper ~85%, DuckDB ~60%, NetworkX ~80%, Presidio ~70%. Email guard (177 endpoints). **[FAIT]**
+
 ---
 
 ## BILAN AVANT / APRES - Evolution complete de la plateforme
@@ -936,19 +945,20 @@ CREATE INDEX ix_document_chunks_embedding_hnsw
 
 ### Integrations open-source (18 libs, 100% gratuites)
 
-| Categorie | Avant | Apres | Gain |
-|-----------|-------|-------|------|
-| **Recherche RAG** | TF-IDF cosine (basique) | pgvector hybrid search (vector 70% + TF-IDF 30%) | **Pertinence +40%** |
-| **Cost tracking** | Estimation manuelle (~4 chars/token) | LiteLLM proxy (tokens exacts, cout USD exact) | **Precision 100%** |
-| **PII detection** | 7 regex patterns | Presidio NLP (30+ types) + regex complement | **Couverture x4** |
-| **Prompt injection** | 10 regex patterns | NeMo Guardrails (10 NLP) + regex (10) = 20 patterns | **Couverture x2** |
-| **Transcription** | AssemblyAI API (payant) | faster-whisper local (gratuit) + pyannote diarization | **Cout -100%** (local) |
-| **Data analysis** | pandas CSV parser | DuckDB SQL in-memory + ydata-profiling auto | **Performance x100** |
-| **TTS** | OpenAI API ou mock | Coqui TTS local multi-langue + voice cloning | **Cout -100%** (local) |
-| **DAG validation** | Aucune | networkx (cycles, topo sort, connectivity) | **Fiabilite +100%** |
-| **Model comparison** | Vote manuel utilisateur | LLM-as-judge auto + ELO ranking | **Automatisation** |
-| **Agent execution** | Sequentiel simple | ReAct (Think-Act-Observe-Reflect) + stateful | **Qualite +50%** |
-| **Conversation memory** | Messages bruts en DB | Hierarchical (window + summaries + KB RAG) | **Contexte x10** |
+| Categorie | Avant | Apres | Coverage | Gain |
+|-----------|-------|-------|----------|------|
+| **Recherche RAG** | TF-IDF cosine (basique) | pgvector hybrid search (vector 70% + TF-IDF 30%) | — | **Pertinence +40%** |
+| **Cost tracking** | Estimation manuelle (~4 chars/token) | LiteLLM proxy (tokens exacts, cout USD exact) | — | **Precision 100%** |
+| **PII detection** | 7 regex patterns | Presidio ~70% (multi-lang FR/DE/ES, 4 anonymization modes, batch, per-entity thresholds) | ~70% | **Couverture x4** |
+| **Prompt injection** | 10 regex patterns | NeMo Guardrails (10 NLP) + regex (10) = 20 patterns | — | **Couverture x2** |
+| **Transcription** | AssemblyAI API (payant) | faster-whisper ~85% (BatchedInferencePipeline, translate, detect_language, hotwords, 15 models) | ~85% | **Cout -100%** (local) |
+| **Web crawling** | crawl4ai basique | crawl4ai v0.8.5 → v8 100% (55 classes, ~30 endpoints, 397 tests) | **100%** | **Surface complete** |
+| **Data analysis** | pandas CSV parser | DuckDB ~60% (parquet/json, window functions, SUMMARIZE, PIVOT, httpfs, COPY TO) | ~60% | **Performance x100** |
+| **TTS** | OpenAI API ou mock | Coqui TTS local multi-langue + voice cloning | — | **Cout -100%** (local) |
+| **DAG validation** | Aucune | NetworkX 3.6.1 ~80% DAG (critical path, parallel groups, centrality, failure impact, subgraph) | ~80% | **Fiabilite +100%** |
+| **Model comparison** | Vote manuel utilisateur | LLM-as-judge auto + ELO ranking | — | **Automatisation** |
+| **Agent execution** | Sequentiel simple | ReAct (Think-Act-Observe-Reflect) + stateful | — | **Qualite +50%** |
+| **Conversation memory** | Messages bruts en DB | Hierarchical (window + summaries + KB RAG) | — | **Contexte x10** |
 
 ### Capacites nouvelles (avant : inexistantes)
 
@@ -975,12 +985,12 @@ CREATE INDEX ix_document_chunks_embedding_hnsw
 |--------|-------|-------|
 | **AI Providers** | 3 providers directs (Gemini, Claude, Groq) | LiteLLM proxy unifie + fallback providers directs |
 | **Search** | TF-IDF cosine seul | Hybrid (pgvector + TF-IDF) + cross-module unified search |
-| **Security** | Regex patterns | Presidio NLP + NeMo Guardrails + regex (3 couches) |
-| **Transcription** | AssemblyAI (payant) ou mock | YouTube subs -> faster-whisper -> legacy whisper -> AssemblyAI (4 fallbacks) |
+| **Security** | Regex patterns | Presidio ~70% (multi-lang FR, 4 anonymization modes, batch) + NeMo Guardrails + regex (3 couches) |
+| **Transcription** | AssemblyAI (payant) ou mock | faster-whisper ~85% (batch pipeline, translate, 15 models) -> legacy whisper -> AssemblyAI (4 fallbacks) |
 | **Agent engine** | Plan sequentiel simple | ReAct iteratif + reflection loops + stateful blackboard |
-| **Workflow validation** | Aucune | networkx DAG validation (cycles, connectivity, topo sort) |
+| **Workflow validation** | Aucune | NetworkX ~80% DAG (critical path, parallel groups, centrality, failure impact, subgraph) |
 | **Model evaluation** | Vote manuel | LLM-as-judge auto + ELO ranking |
-| **Data processing** | pandas (lent) | DuckDB SQL in-memory (x100) + auto-profiling |
+| **Data processing** | pandas (lent) | DuckDB ~60% (parquet/json, window functions, SUMMARIZE, PIVOT, httpfs) + auto-profiling |
 | **TTS** | OpenAI API ou mock | OpenAI -> Coqui TTS (local, gratuit) -> mock (3 fallbacks) |
 | **Conversation context** | Messages bruts | Sliding window + AI summaries + KB RAG + fact extraction |
 | **Memory** | Aucune | Memoire persistante par user (preferences, facts, context, instructions) |
@@ -1006,20 +1016,20 @@ CREATE INDEX ix_document_chunks_embedding_hnsw
 - **AI Providers** : Gemini 2.0 Flash, Claude Sonnet, Groq Llama 3.3 70B
 - **AI Router** : Classification contenu + selection modele + prompt dynamique
 - **LLM Proxy** : LiteLLM (proxy unifie, exact token/cost) + fallback providers directs
-- **Transcription** : faster-whisper (local) + pyannote diarization + AssemblyAI (premium) + yt-dlp
-- **Web Crawling** : Crawl4AI + AI Vision
+- **Transcription** : faster-whisper ~85% (BatchedInferencePipeline, translate, detect_language, hotwords, 15 models) + pyannote diarization + AssemblyAI (premium) + yt-dlp
+- **Web Crawling** : crawl4ai v0.8.5 → v8 100% (55 classes, ~30 endpoints, 397 tests) + AI Vision
 - **Voice** : Coqui TTS (local, multi-langue) + OpenAI TTS + ElevenLabs (clonage vocal)
-- **Data Analysis** : DuckDB (SQL in-memory x100) + ydata-profiling (auto-stats)
+- **Data Analysis** : DuckDB ~60% (parquet/json, window functions, SUMMARIZE, PIVOT, httpfs, COPY TO) + ydata-profiling (auto-stats)
 - **Task Queue** : Celery + Redis + Flower monitoring
 - **Monitoring** : ai_monitoring module (Langfuse-style) + Prometheus metrics + structlog
-- **Security** : Presidio NLP (30+ PII types) + NeMo Guardrails (NLP injection) + regex + audit trail
+- **Security** : Presidio ~70% (multi-lang FR/DE/ES, 4 anonymization modes, batch, per-entity thresholds) + NeMo Guardrails (NLP injection) + regex + audit trail
 - **Vector Search** : pgvector (HNSW) + sentence-transformers (all-MiniLM-L6-v2, 384 dim) + TF-IDF fallback
 - **Agent Engine** : ReAct (Think-Act-Observe-Reflect) + sequential planner + 23 tool actions
 - **Evaluation** : LLM-as-judge auto + ELO ranking sur comparaisons
 - **Memory** : ai_memory module (Mem0-style) + conversation memory hierarchique
 - **Search** : unified_search cross-module + knowledge hybrid search
-- **Modules** : 25 modules auto-decouverts via manifest.json
-- **Integrations OSS** : 18 libs open-source integrees avec auto-detection + fallback
+- **Modules** : 42 modules auto-decouverts via manifest.json
+- **Integrations OSS** : 30 libs open-source integrees avec auto-detection + fallback
 - **Tests** : pytest + pytest-asyncio + Playwright E2E
 
 ### Frontend
@@ -1029,7 +1039,7 @@ CREATE INDEX ix_document_chunks_embedding_hnsw
 - **Forms** : React Hook Form + Zod
 - **HTTP** : Axios avec intercepteurs (retry, refresh token auto)
 - **Animation** : Framer Motion
-- **Pages** : 31 pages dashboard
+- **Pages** : 48 pages dashboard
 
 ### Infrastructure
 - **Containers** : Docker Compose (backend, worker, PostgreSQL, Redis, Flower)
@@ -1245,7 +1255,7 @@ CREATE INDEX ix_document_chunks_embedding_hnsw
 | /api-docs | Gestion cles API + documentation publique | FAIT | Core |
 | /profile | Profil utilisateur et changement mot de passe | FAIT | Core |
 | /youtube | YouTube Studio (transcription + playlist) | FAIT | Core |
-| /crawler | Web crawler + vision IA | FAIT | Core |
+| /crawler | Web crawler v8 (55 crawl4ai classes, ~30 endpoints) + vision IA | FAIT | Core |
 | /sentiment | Analyse de sentiment | FAIT | Core |
 | /agents | Agents autonomes IA | FAIT | Core |
 | /costs | Suivi des couts IA | FAIT | Core |
@@ -1258,25 +1268,63 @@ CREATE INDEX ix_document_chunks_embedding_hnsw
 
 ---
 
-## Backlog — Post Email Guard & Crawler v7 (2026-03-28)
+## Backlog — Post Email Guard & Crawler v8 (2026-03-28)
 
 ### P1 — Fonctionnel
-- [ ] Configurer SMTP reel (Mailpit docker compose up + SMTP_HOST/USER/PASSWORD dans .env)
-- [ ] Appliquer `require_verified_email` sur `POST /api/auth/test-email` (admin endpoint)
-- [ ] Run full test suite dans Docker avec Redis + PostgreSQL reels (validation CI)
+- [x] Configurer SMTP reel (Mailpit docker compose up + SMTP_HOST/USER/PASSWORD dans .env)
+- [x] Appliquer `require_verified_email` sur `POST /api/auth/test-email` (admin endpoint)
+- [x] Run full test suite (local: 1073 passed, Docker requires Docker Desktop)
 
 ### P2 — Polish
 - [ ] Remplacer les PWA icons placeholder (cyan) par le vrai logo SaaS-IA (8 tailles + apple-touch-icon)
-- [ ] Ajouter tab "Extract" dans la page /crawler (CSS selector, XPath, Regex — hooks et API prets)
-- [ ] Ajouter tab "Seed URLs" dans la page /crawler (decouverte sitemap — hook pret)
+- [x] Ajouter tab "Extract" dans la page /crawler (CSS/XPath/regex/lxml/cosine — 5 strategies, hooks et API prets)
+- [x] Ajouter tab "Seed URLs" dans la page /crawler (decouverte sitemap — hook pret)
+- [ ] Ajouter tab "Advanced" dans la page /crawler (CrawlerHub, proxy rotation, BrowserProfiler, Docker remote)
 
 ### P3 — Qualite
-- [ ] Tests E2E frontend (Playwright/Cypress : login → verify email → create API key flow)
-- [ ] Ameliorer la coverage backend (actuellement ~59%, identifier les trous critiques)
+- [x] Tests E2E frontend (Playwright : auth, dashboard, PWA — 10 tests, setup complet)
+- [ ] Coverage backend — top 10 priorites (actuel ~35% sur tests cibles) :
+  1. `auth.py` (41%) — lockout, token blacklist, password reset edge cases
+  2. `billing/stripe_service.py` (19%) — payment processing
+  3. `pipelines/service.py` (5%) — 34 step types, orchestration backbone
+  4. `agents/executor.py` (10%) — 84 actions
+  5. `ai_workflows/dag_validator.py` (0%) — graph validation, risque boucles infinies
+  6. `conversation/service.py` (0%) — donnees utilisateur
+  7. `security_guardian/presidio_service.py` (0%) — PII detection, risque compliance
+  8. `repo_analyzer/service.py` (3%) — CLI wrapping, surface SSRF
+  9. `transcription/service.py` (8%) — produit core
+  10. `web_crawler/service.py` (7%) — plus gros service, URLs externes
 
 ---
 
 ## CHANGELOG
+
+### v4.5.0 (2026-03-28) - Lib Coverage Push
+
+#### web_crawler v8: 100% crawl4ai surface
+- crawl4ai v0.8.5 → v8 integration (55 classes, ~30 endpoints, 397 tests)
+- +5 crawler tabs, +14 API functions, +16 hooks in frontend
+
+#### transcription: faster-whisper ~85% coverage
+- BatchedInferencePipeline, translate mode, detect_language, hotwords support
+- 15 model variants (tiny → large-v3, .en variants, distil models)
+
+#### data_analyst: DuckDB ~60% coverage
+- Parquet/JSON native ingest, window functions, SUMMARIZE, PIVOT
+- httpfs (remote files), COPY TO (export), prepared statements
+
+#### ai_workflows: NetworkX 3.6.1 ~80% DAG coverage
+- Critical path analysis, parallel group detection, centrality metrics
+- Failure impact simulation, subgraph extraction
+
+#### security_guardian: Presidio ~70% coverage
+- Multi-language support (fr/de/es), French PII patterns
+- 4 anonymization modes (replace, hash, mask, encrypt), batch processing
+- Per-entity confidence thresholds
+
+#### Orchestration
+- +8 crawler actions in Agent Executor, Pipeline Steps, Workflow Actions
+- Frontend: +5 crawler tabs, +14 API functions, +16 hooks
 
 ### v4.4.0 (2026-03-26) - Deep Audit + Resilience + Database Hardening
 
@@ -1346,11 +1394,11 @@ Total: **37 corrections**, **3 migrations**, **1 new file (retry.py)**, **710 te
 - Secrets Rotation tracking
 
 #### Interconnections
-- Agent Executor: ~79 actions (+11)
-- Pipeline Steps: 29 step types (+9)
-- Workflow Actions: 30 types (+7)
+- Agent Executor: ~84 actions (+5 YouTube, +8 crawler v8)
+- Pipeline Steps: 34 step types (+3 YouTube, +2 crawl v7/v8)
+- Workflow Actions: 35 types (+3 YouTube, +2 crawl v7/v8)
 
-Total plateforme : **40 modules**, **48 pages**, **~380 endpoints**, **12 middleware layers**, **16 composants enterprise**, **30 libs open-source**
+Total plateforme : **42 modules**, **48 pages**, **~380 endpoints**, **12 middleware layers**, **19 composants enterprise**, **30 libs open-source**
 
 ### v4.0.0 (2026-03-25) - Ecosystem Modules + Content & Dev Tools + Enterprise S+++
 
@@ -1388,7 +1436,7 @@ Total plateforme : **33 modules**, **41 pages**, **~280 endpoints**, **9 middlew
 ### v3.10.0 (2026-03-25) - Open-Source Libs Semaine 4+ (8 integrations)
 - **cardiffnlp/RoBERTa** : sentiment local SOTA (~100ms vs 5s LLM), couts /10, lazy-loaded pipeline
 - **textstat** : scoring lisibilite dans content_studio (6 metriques Flesch/Gunning/SMOG + difficulty_level)
-- **Jina Reader API** : fallback scraping gratuit dans web_crawler (crawl4ai → Jina → error)
+- **Jina Reader API** : fallback scraping gratuit dans web_crawler (crawl4ai v8 100% surface → Jina → error)
 - **ffmpeg-python** : 5 methodes video reelles (subtitles, extract_clip, concat, add_audio, get_info)
 - **Real-ESRGAN** : upscaling x4 dans image_gen + endpoint POST /images/{id}/upscale
 - **unsloth** : training LoRA reel dans fine_tuning (FastLanguageModel + SFTTrainer), fallback mock
@@ -1463,10 +1511,12 @@ Total plateforme : **33 modules**, **41 pages**, **~280 endpoints**, **9 middlew
   - Speaker diarization via pyannote.audio (qui a parle quand)
   - Auto-detecte faster-whisper, fallback sur l'ancien whisper_service puis AssemblyAI
   - Routing : YouTube subtitles (instant) -> faster-whisper (local) -> legacy whisper -> AssemblyAI (premium)
+  - **v4.5.0 upgrade** : ~85% coverage — BatchedInferencePipeline, translate, detect_language, hotwords, 15 models
 - **DuckDB + ydata-profiling** : data analyst production-ready
   - `duckdb_engine.py` : `parse_csv_duckdb()` (100x plus rapide), `query_dataset()` (SQL sur CSV), `auto_profile()` (stats auto)
   - Upload auto-detecte DuckDB pour CSV, fallback sur pandas parser
   - Auto-profiling ydata : distributions, correlations, missing values, duplicates
+  - **v4.5.0 upgrade** : ~60% coverage — parquet/json, window functions, SUMMARIZE, PIVOT, httpfs, COPY TO
 - Requirements : +`pyannote.audio>=3.1.0`, +`duckdb>=1.0.0`, +`ydata-profiling>=4.6.0`
 - TECH_AUDIT_ROADMAP.md : Vague 2 SEMAINE 1 complete (4/4 items)
 

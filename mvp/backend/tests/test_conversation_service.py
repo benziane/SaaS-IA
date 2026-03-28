@@ -29,6 +29,7 @@ async def _create_user(session, user_id=None):
         hashed_password="$2b$12$fakehash",
         role=Role.USER,
         is_active=True,
+        email_verified=True,
     )
     session.add(user)
     await session.commit()
@@ -554,6 +555,7 @@ class TestConversationRouteCreate:
         """Creating a conversation without transcription returns 201."""
         import httpx
         from app.auth import get_current_user
+        from app.modules.auth_guards.middleware import require_verified_email
         from app.database import get_session
 
         mock_session = AsyncMock()
@@ -574,6 +576,7 @@ class TestConversationRouteCreate:
         # Patch the route's internal logic: it creates Conversation directly
         # so we need to mock session.add + flush + commit + refresh
         app.dependency_overrides[get_current_user] = lambda: test_user
+        app.dependency_overrides[require_verified_email] = lambda: test_user
         app.dependency_overrides[get_session] = lambda: mock_session
 
         try:
@@ -612,6 +615,7 @@ class TestConversationRouteList:
         """Listing conversations returns paginated response."""
         import httpx
         from app.auth import get_current_user
+        from app.modules.auth_guards.middleware import require_verified_email
         from app.database import get_session
 
         mock_session = AsyncMock()
@@ -627,6 +631,7 @@ class TestConversationRouteList:
         mock_session.execute = AsyncMock(side_effect=[mock_count_result, mock_list_result])
 
         app.dependency_overrides[get_current_user] = lambda: test_user
+        app.dependency_overrides[require_verified_email] = lambda: test_user
         app.dependency_overrides[get_session] = lambda: mock_session
 
         try:
@@ -662,6 +667,7 @@ class TestConversationRouteGetAndDelete:
         """GET a non-existent conversation returns 404."""
         import httpx
         from app.auth import get_current_user
+        from app.modules.auth_guards.middleware import require_verified_email
         from app.database import get_session
 
         mock_session = AsyncMock()
@@ -671,6 +677,7 @@ class TestConversationRouteGetAndDelete:
         mock_session.execute = AsyncMock(return_value=mock_result)
 
         app.dependency_overrides[get_current_user] = lambda: test_user
+        app.dependency_overrides[require_verified_email] = lambda: test_user
         app.dependency_overrides[get_session] = lambda: mock_session
 
         try:
@@ -695,6 +702,7 @@ class TestConversationRouteGetAndDelete:
         """DELETE a non-existent conversation returns 404."""
         import httpx
         from app.auth import get_current_user
+        from app.modules.auth_guards.middleware import require_verified_email
         from app.database import get_session
 
         mock_session = AsyncMock()
@@ -703,6 +711,7 @@ class TestConversationRouteGetAndDelete:
         mock_session.execute = AsyncMock(return_value=mock_result)
 
         app.dependency_overrides[get_current_user] = lambda: test_user
+        app.dependency_overrides[require_verified_email] = lambda: test_user
         app.dependency_overrides[get_session] = lambda: mock_session
 
         try:

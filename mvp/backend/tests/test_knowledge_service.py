@@ -448,10 +448,12 @@ class TestKnowledgeSearchEndpoint:
     @pytest.mark.asyncio
     async def test_search_endpoint_returns_results(self, app, auth_headers, test_user):
         from app.auth import get_current_user
+        from app.modules.auth_guards.middleware import require_verified_email
         from app.database import get_session
 
         mock_session = AsyncMock()
         app.dependency_overrides[get_current_user] = lambda: test_user
+        app.dependency_overrides[require_verified_email] = lambda: test_user
         app.dependency_overrides[get_session] = lambda: mock_session
 
         try:
@@ -500,10 +502,12 @@ class TestKnowledgeDocumentNotFound:
     @pytest.mark.asyncio
     async def test_chunks_not_found(self, app, auth_headers, test_user):
         from app.auth import get_current_user
+        from app.modules.auth_guards.middleware import require_verified_email
         from app.database import get_session
 
         mock_session = AsyncMock()
         app.dependency_overrides[get_current_user] = lambda: test_user
+        app.dependency_overrides[require_verified_email] = lambda: test_user
         app.dependency_overrides[get_session] = lambda: mock_session
 
         try:

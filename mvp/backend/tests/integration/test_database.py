@@ -160,6 +160,7 @@ class TestDatabaseCRUD:
             full_name="CRUD Test",
             role=Role.USER,
             is_active=True,
+            email_verified=True,
         )
         session.add(user)
         await session.commit()
@@ -210,6 +211,7 @@ class TestDatabaseCRUD:
             hashed_password="$2b$12$test_hash",
             role=Role.USER,
             is_active=True,
+            email_verified=True,
         )
         session.add(user)
         await session.commit()
@@ -284,6 +286,7 @@ class TestPooling:
                 hashed_password="$2b$12$hash",
                 role=Role.USER,
                 is_active=True,
+                email_verified=True,
             )
             s1.add(user)
             # Do NOT commit

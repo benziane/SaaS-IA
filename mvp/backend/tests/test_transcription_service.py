@@ -518,6 +518,7 @@ class TestTranscriptionRouteCreate:
         """Valid creation request returns 201 with a transcription object."""
         import httpx
         from app.auth import get_current_user
+        from app.modules.auth_guards.middleware import require_verified_email
         from app.database import get_session
         from app.modules.billing.middleware import require_transcription_quota
         from app.modules.transcription.routes import get_transcription_service
@@ -549,6 +550,7 @@ class TestTranscriptionRouteCreate:
         mock_service.process_transcription = AsyncMock()
 
         app.dependency_overrides[get_current_user] = lambda: test_user
+        app.dependency_overrides[require_verified_email] = lambda: test_user
         app.dependency_overrides[require_transcription_quota] = lambda: test_user
         app.dependency_overrides[get_session] = lambda: mock_session
         app.dependency_overrides[get_transcription_service] = lambda: mock_service
@@ -585,11 +587,13 @@ class TestTranscriptionRouteCreate:
         """Invalid URL returns 422 validation error."""
         import httpx
         from app.auth import get_current_user
+        from app.modules.auth_guards.middleware import require_verified_email
         from app.database import get_session
         from app.modules.billing.middleware import require_transcription_quota
 
         mock_session = AsyncMock()
         app.dependency_overrides[get_current_user] = lambda: test_user
+        app.dependency_overrides[require_verified_email] = lambda: test_user
         app.dependency_overrides[require_transcription_quota] = lambda: test_user
         app.dependency_overrides[get_session] = lambda: mock_session
 
@@ -623,11 +627,13 @@ class TestTranscriptionRouteList:
         """List endpoint returns paginated response with correct structure."""
         import httpx
         from app.auth import get_current_user
+        from app.modules.auth_guards.middleware import require_verified_email
         from app.database import get_session
         from app.modules.transcription.service import TranscriptionService
 
         mock_session = AsyncMock()
         app.dependency_overrides[get_current_user] = lambda: test_user
+        app.dependency_overrides[require_verified_email] = lambda: test_user
         app.dependency_overrides[get_session] = lambda: mock_session
 
         try:
@@ -670,11 +676,13 @@ class TestTranscriptionRouteGetAndDelete:
         """GET with a non-existent ID returns 404."""
         import httpx
         from app.auth import get_current_user
+        from app.modules.auth_guards.middleware import require_verified_email
         from app.database import get_session
         from app.modules.transcription.service import TranscriptionService
 
         mock_session = AsyncMock()
         app.dependency_overrides[get_current_user] = lambda: test_user
+        app.dependency_overrides[require_verified_email] = lambda: test_user
         app.dependency_overrides[get_session] = lambda: mock_session
 
         try:
@@ -705,6 +713,7 @@ class TestTranscriptionRouteGetAndDelete:
         """GET an existing transcription returns 200 with data."""
         import httpx
         from app.auth import get_current_user
+        from app.modules.auth_guards.middleware import require_verified_email
         from app.database import get_session
         from app.modules.transcription.service import TranscriptionService
 
@@ -731,6 +740,7 @@ class TestTranscriptionRouteGetAndDelete:
         mock_job.completed_at = None
 
         app.dependency_overrides[get_current_user] = lambda: test_user
+        app.dependency_overrides[require_verified_email] = lambda: test_user
         app.dependency_overrides[get_session] = lambda: mock_session
 
         try:
@@ -763,6 +773,7 @@ class TestTranscriptionRouteGetAndDelete:
         """DELETE an existing transcription returns 204."""
         import httpx
         from app.auth import get_current_user
+        from app.modules.auth_guards.middleware import require_verified_email
         from app.database import get_session
         from app.modules.transcription.service import TranscriptionService
 
@@ -774,6 +785,7 @@ class TestTranscriptionRouteGetAndDelete:
         mock_job.user_id = test_user.id
 
         app.dependency_overrides[get_current_user] = lambda: test_user
+        app.dependency_overrides[require_verified_email] = lambda: test_user
         app.dependency_overrides[get_session] = lambda: mock_session
 
         try:
@@ -810,11 +822,13 @@ class TestTranscriptionRouteGetAndDelete:
         """DELETE with a non-existent ID returns 404."""
         import httpx
         from app.auth import get_current_user
+        from app.modules.auth_guards.middleware import require_verified_email
         from app.database import get_session
         from app.modules.transcription.service import TranscriptionService
 
         mock_session = AsyncMock()
         app.dependency_overrides[get_current_user] = lambda: test_user
+        app.dependency_overrides[require_verified_email] = lambda: test_user
         app.dependency_overrides[get_session] = lambda: mock_session
 
         try:

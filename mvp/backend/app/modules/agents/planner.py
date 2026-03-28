@@ -60,6 +60,14 @@ AVAILABLE_ACTIONS = {
     "youtube_smart": "Smart YouTube transcription: tries free subtitles first, falls back to Whisper local transcription",
     "youtube_playlist": "Batch transcribe all videos in a YouTube playlist or channel (up to 50 videos)",
     "youtube_analyze": "Download YouTube video and analyze frames with AI Vision (content, scenes, objects)",
+    "scrape_http": "Fast HTTP scrape of a URL without browser (lightweight, CSS selector, fit markdown)",
+    "adaptive_crawl": "Self-tuning adaptive crawl with configurable strategy and confidence threshold",
+    "hub_crawl": "Crawl using pre-built site profiles for known sites (e.g., GitHub, Reddit, Wikipedia)",
+    "scrape_pdf": "Extract text content from a PDF URL",
+    "extract_cosine": "Semantic clustering extraction from a URL using cosine similarity",
+    "extract_lxml": "Structured JSON extraction from a URL using lxml and a schema",
+    "docker_crawl": "Remote Docker-based crawl for multiple URLs",
+    "chunk_regex": "Chunk text into segments using regex patterns",
 }
 
 
@@ -187,6 +195,78 @@ def _heuristic_plan(instruction: str) -> list[dict]:
         steps.append({
             "action": "deep_crawl",
             "description": "Deep-crawl the website with BestFirst strategy",
+            "input": {},
+        })
+        return steps
+
+    # ── Adaptive crawl ─────────────────────────────────
+    if any(w in instruction_lower for w in ["adaptive crawl", "adaptive scrape", "smart crawl", "self-tuning crawl", "auto crawl"]):
+        steps.append({
+            "action": "adaptive_crawl",
+            "description": "Self-tuning adaptive crawl",
+            "input": {},
+        })
+        return steps
+
+    # ── Hub crawl (site profiles) ──────────────────────
+    if any(w in instruction_lower for w in ["hub crawl", "site profile", "profile crawl"]):
+        steps.append({
+            "action": "hub_crawl",
+            "description": "Crawl using pre-built site profile",
+            "input": {},
+        })
+        return steps
+
+    # ── HTTP scrape (fast, no browser) ─────────────────
+    if any(w in instruction_lower for w in ["http scrape", "fast scrape", "lightweight scrape", "no browser", "scrape_http"]):
+        steps.append({
+            "action": "scrape_http",
+            "description": "Fast HTTP scrape without browser",
+            "input": {},
+        })
+        return steps
+
+    # ── PDF URL scrape ─────────────────────────────────
+    if any(w in instruction_lower for w in ["scrape pdf", "pdf url", "extract pdf from url", "download pdf"]):
+        steps.append({
+            "action": "scrape_pdf",
+            "description": "Extract content from PDF URL",
+            "input": {},
+        })
+        return steps
+
+    # ── Cosine / semantic clustering extraction ────────
+    if any(w in instruction_lower for w in ["cosine", "semantic cluster", "cluster extract", "similarity extract"]):
+        steps.append({
+            "action": "extract_cosine",
+            "description": "Semantic clustering extraction from URL",
+            "input": {},
+        })
+        return steps
+
+    # ── lxml structured extraction ─────────────────────
+    if any(w in instruction_lower for w in ["lxml", "structured extract", "json extract", "schema extract"]):
+        steps.append({
+            "action": "extract_lxml",
+            "description": "Structured JSON extraction using lxml",
+            "input": {},
+        })
+        return steps
+
+    # ── Docker crawl ───────────────────────────────────
+    if any(w in instruction_lower for w in ["docker crawl", "remote crawl", "docker scrape"]):
+        steps.append({
+            "action": "docker_crawl",
+            "description": "Remote Docker-based crawl",
+            "input": {},
+        })
+        return steps
+
+    # ── Chunk text with regex ──────────────────────────
+    if any(w in instruction_lower for w in ["chunk regex", "regex chunk", "split text", "chunk text", "text chunk"]):
+        steps.append({
+            "action": "chunk_regex",
+            "description": "Chunk text using regex patterns",
             "input": {},
         })
         return steps

@@ -88,7 +88,7 @@ Ce qui est interdit c'est de **supprimer un module entier ou remplacer une techn
 ## Modules existants (42)
 
 ### Core (13)
-transcription, conversation, knowledge (hybrid search: pgvector + TF-IDF), compare, pipelines, agents, sentiment, web_crawler, workspaces, billing, api_keys, cost_tracker, youtube_transcription (standalone /api/youtube, 8 endpoints)
+transcription, conversation, knowledge (hybrid search: pgvector + TF-IDF), compare, pipelines, agents, sentiment, web_crawler (v8, crawl4ai 100% API surface, ~30 endpoints), workspaces, billing, api_keys, cost_tracker, youtube_transcription (standalone /api/youtube, 8 endpoints)
 
 ### P0 - Content & Automation (2)
 content_studio (10 formats), ai_workflows (DAG engine, 19 actions, 5 templates, networkx validation)
@@ -126,15 +126,15 @@ tenants (multi-tenant isolation, PostgreSQL RLS, contextvars middleware), audit 
 |-----|--------|----------|
 | pgvector + sentence-transformers | knowledge | TF-IDF |
 | litellm | ai_assistant | providers directs |
-| presidio | security_guardian | regex patterns |
-| faster-whisper + pyannote | transcription | AssemblyAI |
-| duckdb + ydata-profiling | data_analyst | pandas parser |
+| presidio (multi-lang FR, 4 anonymization modes, batch, ~70% coverage) | security_guardian | regex patterns |
+| faster-whisper + pyannote (BatchedInferencePipeline, translate, detect_language, 15 models, ~85% coverage) | transcription | AssemblyAI |
+| duckdb + ydata-profiling (parquet/json, window functions, SUMMARIZE, PIVOT, httpfs, ~60% coverage) | data_analyst | pandas parser |
 | Coqui TTS | voice_clone | OpenAI TTS / mock |
 | NeMo-Guardrails | security_guardian | regex injection |
-| networkx | ai_workflows | Kahn's algorithm |
+| networkx (critical path, parallel groups, centrality, subgraph, ~80% DAG coverage) | ai_workflows | Kahn's algorithm |
 | cardiffnlp/RoBERTa (transformers) | sentiment | LLM analysis |
 | textstat | content_studio | word count basique |
-| Jina Reader API | web_crawler | crawl4ai seul |
+| crawl4ai (v8, 55 classes, 100% API surface, ~30 endpoints) | web_crawler | Jina Reader API |
 | ffmpeg-python | video_gen | mock placeholders |
 | Real-ESRGAN | image_gen | pas d'upscaling |
 | unsloth | fine_tuning | mock training |
@@ -162,9 +162,9 @@ Voir `mvp/docs/MODULE_ARCHITECTURE.md` pour le detail module par module.
 ## Interconnexions
 
 3 systemes d'orchestration connectent tous les modules :
-- **Agent Executor** : ~84 actions (appels directs aux services, +5 YouTube, +2 crawl v7)
-- **Pipeline Steps** : 34 step types (chaining sequentiel, +3 YouTube, +2 crawl v7)
-- **Workflow Actions** : 35 types (DAG avec branches paralleles, +3 YouTube, +2 crawl v7)
+- **Agent Executor** : ~84 actions (appels directs aux services, +5 YouTube, +2 crawl v8)
+- **Pipeline Steps** : 34 step types (chaining sequentiel, +3 YouTube, +2 crawl v8)
+- **Workflow Actions** : 35 types (DAG avec branches paralleles, +3 YouTube, +2 crawl v8)
 
 Quand on ajoute un nouveau module, penser a l'integrer dans les 3 systemes + le planner heuristique.
 

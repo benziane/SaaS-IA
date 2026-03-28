@@ -38,6 +38,7 @@ def _make_mock_user(email: str = "ws_test@test.com"):
     user.email = email
     user.full_name = "WS Test User"
     user.is_active = True
+    user.email_verified = True
     return user
 
 

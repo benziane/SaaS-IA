@@ -705,10 +705,12 @@ class TestPipelineNotFound:
     @pytest.mark.asyncio
     async def test_get_pipeline_not_found(self, app, auth_headers, test_user):
         from app.auth import get_current_user
+        from app.modules.auth_guards.middleware import require_verified_email
         from app.database import get_session
 
         mock_session = AsyncMock()
         app.dependency_overrides[get_current_user] = lambda: test_user
+        app.dependency_overrides[require_verified_email] = lambda: test_user
         app.dependency_overrides[get_session] = lambda: mock_session
 
         try:
@@ -739,10 +741,12 @@ class TestPipelineNotFound:
     @pytest.mark.asyncio
     async def test_delete_pipeline_not_found(self, app, auth_headers, test_user):
         from app.auth import get_current_user
+        from app.modules.auth_guards.middleware import require_verified_email
         from app.database import get_session
 
         mock_session = AsyncMock()
         app.dependency_overrides[get_current_user] = lambda: test_user
+        app.dependency_overrides[require_verified_email] = lambda: test_user
         app.dependency_overrides[get_session] = lambda: mock_session
 
         try:
@@ -773,10 +777,12 @@ class TestPipelineNotFound:
     @pytest.mark.asyncio
     async def test_execute_pipeline_not_found(self, app, auth_headers, test_user):
         from app.auth import get_current_user
+        from app.modules.auth_guards.middleware import require_verified_email
         from app.database import get_session
 
         mock_session = AsyncMock()
         app.dependency_overrides[get_current_user] = lambda: test_user
+        app.dependency_overrides[require_verified_email] = lambda: test_user
         app.dependency_overrides[get_session] = lambda: mock_session
 
         try:

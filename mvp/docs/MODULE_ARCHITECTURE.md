@@ -44,14 +44,14 @@ Les migrations Alembic dans `mvp/backend/alembic/versions/`.
 
 | Module | Pattern | Source d'inspiration | Libs utilisees | Fallback | Pourquoi cette approche | Alternative possible |
 |--------|---------|---------------------|----------------|----------|------------------------|---------------------|
-| **transcription** | A+B | AssemblyAI API + OpenAI Whisper | `faster-whisper`, `pyannote.audio`, `yt-dlp`, `assemblyai` | AssemblyAI payant si Whisper absent | faster-whisper donne du local gratuit avec diarization pyannote | whisperx (meilleure diarization alignee) |
+| **transcription** | A+B | AssemblyAI API + OpenAI Whisper | `faster-whisper` 1.2.1 (~85% coverage), `pyannote.audio`, `yt-dlp`, `assemblyai` | AssemblyAI payant si Whisper absent | faster-whisper donne du local gratuit avec diarization pyannote. BatchedInferencePipeline (8x throughput), initial_prompt + hotwords, task="translate", detect_language(), hallucination_silence_threshold, repetition_penalty, 15 model variants (distil/turbo), clip_timestamps | whisperx (meilleure diarization alignee) |
 | **conversation** | B | ChatGPT conversation patterns | Aucune lib specifique (utilise `AIAssistantService`) | LLM direct | Logique de conversation simple, pas besoin de framework | langchain (conversation memory chains) |
 | **knowledge** | A | pgvector docs + sentence-transformers | `pgvector`, `sentence-transformers`, `scikit-learn` (TF-IDF) | TF-IDF via sklearn | Hybrid search (vector + BM25/TF-IDF) donne les meilleurs resultats RAG | chromadb, qdrant, weaviate |
 | **compare** | B | Chatbot Arena (lmsys.org) | Aucune | LLM direct | Comparaison side-by-side simple, pas besoin de framework d'eval | promptfoo (eval framework) |
 | **pipelines** | B | Prefect / Airflow concepts | Aucune | - | Chaining sequentiel leger sans la complexite d'un orchestrateur externe | prefect, temporal |
 | **agents** | B | LangGraph / ReAct pattern (Yao 2022) | Aucune | - | Implementation maison du loop plan-execute-observe pour controle total | langgraph (10K+ stars) |
 | **sentiment** | A | cardiffnlp/twitter-roberta-base-sentiment | `transformers` (HuggingFace) | LLM analysis via AIAssistantService | Modele specialise sentiment donne F1 superieur aux LLM generiques | vaderSentiment, textblob |
-| **web_crawler** | A+C | Crawl4AI (GitHub) + Jina Reader API | `crawl4ai`, `httpx` (pour Jina) | Jina Reader si crawl4ai absent | Deux approches complementaires : JS rendering (crawl4ai) + clean markdown (Jina) | firecrawl, spider, scrapy |
+| **web_crawler** | A+C | Crawl4AI v8 (GitHub, 55 classes) | `crawl4ai`, `httpx` (pour Jina) | Jina Reader si crawl4ai absent | 100% crawl4ai coverage : fit_markdown, 5 extraction strategies (CSS/XPath/regex/lxml/cosine), deep crawl (BFS/DFS/BestFirst + CompositeScorer), adaptive crawl, HTTP scrape, CrawlerHub, proxy rotation, antibot, LLMContentFilter, C4A-Script, BrowserProfiler, Docker remote, PDF scraping, regex chunking, MemoryAdaptiveDispatcher + SemaphoreDispatcher + RateLimiter + CrawlerMonitor, ~30 endpoints | firecrawl, spider, scrapy |
 | **workspaces** | B | Notion / Slack collaboration model | Aucune | - | CRUD workspaces avec partage, pas besoin de CRDT pour le MVP | yjs (CRDT real-time collab) |
 | **billing** | B | Stripe Billing documentation | `stripe` | - | Integration Stripe directe, la plus standard du marche | paddle, lemonsqueezy |
 | **api_keys** | B | Stripe API keys pattern (sk_live / sk_test) | Aucune (SHA-256 stdlib `hashlib`) | - | Pattern simple et eprouve, zero dependance | - |
@@ -70,7 +70,7 @@ Les migrations Alembic dans `mvp/backend/alembic/versions/`.
 | Module | Pattern | Source d'inspiration | Libs utilisees | Fallback | Pourquoi cette approche | Alternative possible |
 |--------|---------|---------------------|----------------|----------|------------------------|---------------------|
 | **content_studio** | A+B | Repurpose.io + Copy.ai | `textstat` | Word count basique | 10 formats de contenu generes par LLM, textstat pour la lisibilite | - |
-| **ai_workflows** | A+B | n8n (40K stars) / Zapier / Temporal | `networkx` | Kahn's algorithm maison | DAG engine avec validation de cycles via networkx, 19 actions, 5 templates | temporal, inngest |
+| **ai_workflows** | A+B | n8n (40K stars) / Zapier / Temporal | `networkx` (~80% DAG coverage) | Kahn's algorithm maison | DAG engine avec validation de cycles via networkx, 19 actions, 5 templates. Critical path analysis, parallel execution groups, betweenness centrality, failure impact analysis, subgraph extraction, workflow complexity metrics | temporal, inngest |
 
 ### P1 - Intelligence & Safety (4 modules)
 
@@ -79,14 +79,14 @@ Les migrations Alembic dans `mvp/backend/alembic/versions/`.
 | **multi_agent_crew** | B | CrewAI (20K+ stars) | Aucune | - | Implementation maison du pattern multi-agent (9 roles, 4 templates) pour eviter la dependance CrewAI | crewai pip package |
 | **voice_clone** | A | OpenAI TTS API + Coqui TTS (GitHub) | `TTS` (Coqui), `openai` | OpenAI TTS si Coqui absent, mock si aucun | Coqui = open-source gratuit, OpenAI = qualite production | bark, fish-speech, styletts2 |
 | **realtime_ai** | A+B | LiveKit (GitHub) + OpenAI Realtime API | `livekit-server-sdk` | Text-based sessions (WebSocket simple) | LiveKit gere le WebRTC, on ajoute la couche AI par-dessus | livekit-agents |
-| **security_guardian** | A | Presidio (Microsoft, 3K stars) + NeMo Guardrails (NVIDIA) | `presidio-analyzer`, `nemoguardrails` | Regex patterns pour PII + injection detection | Presidio = PII detection enterprise, NeMo = guardrails IA | llm-guard, rebuff |
+| **security_guardian** | A | Presidio (Microsoft, 3K stars) + NeMo Guardrails (NVIDIA) | `presidio-analyzer` (~70% coverage), `nemoguardrails` | Regex patterns pour PII + injection detection | Presidio = PII detection enterprise, NeMo = guardrails IA. Multi-language (fr/de/es), custom French PII recognizers (NIR/IBAN/phone), 4 anonymization modes (replace/mask/hash/redact), per-entity score thresholds, BatchAnalyzerEngine, list_supported_entities | llm-guard, rebuff |
 
 ### P2 - Media & Intelligence (3 modules)
 
 | Module | Pattern | Source d'inspiration | Libs utilisees | Fallback | Pourquoi cette approche | Alternative possible |
 |--------|---------|---------------------|----------------|----------|------------------------|---------------------|
 | **image_gen** | A+B | DALL-E / Stability AI API patterns | `realesrgan` | Pas d'upscaling (generation directe seulement) | 10 styles generes par API IA, Real-ESRGAN pour upscale local | comfyui, automatic1111 |
-| **data_analyst** | A | PandasAI + Code Interpreter (OpenAI) | `duckdb`, `ydata-profiling` | Pandas parser basique | DuckDB = SQL analytique rapide en-memoire, ydata = profiling automatique | pandasai, lida (Microsoft) |
+| **data_analyst** | A | PandasAI + Code Interpreter (OpenAI) | `duckdb` (~60% coverage), `ydata-profiling` | Pandas parser basique | DuckDB = SQL analytique rapide en-memoire, ydata = profiling automatique. read_parquet/json, CORR/PERCENTILE_CONT/APPROX_COUNT_DISTINCT, window functions (ROW_NUMBER/RANK/LAG/LEAD), SUMMARIZE, COPY TO export (csv/parquet/json), PIVOT, httpfs (URL/S3 datasets) | pandasai, lida (Microsoft) |
 | **video_gen** | A+B | Remotion + HeyGen concepts | `ffmpeg-python` | Mock placeholders | ffmpeg = standard industrie pour le traitement video, 6 types de video | moviepy, remotion |
 
 ### P3 - Custom Models (1 module)
@@ -184,12 +184,12 @@ class ModuleService:
 | Module | Variable | Lib detectee | Fallback |
 |--------|----------|-------------|----------|
 | knowledge | `HAS_PGVECTOR` | pgvector + sentence-transformers | TF-IDF (sklearn) |
-| transcription | `HAS_FASTER_WHISPER` | faster-whisper | AssemblyAI (API payante) |
+| transcription | `HAS_FASTER_WHISPER` | faster-whisper 1.2.1 (~85% coverage) | AssemblyAI (API payante) |
 | voice_clone | `HAS_COQUI_TTS` | TTS (Coqui) | OpenAI TTS (API payante) |
-| security_guardian | `HAS_PRESIDIO` | presidio-analyzer | Regex patterns maison |
-| data_analyst | `HAS_DUCKDB` | duckdb | Pandas parser |
+| security_guardian | `HAS_PRESIDIO` | presidio-analyzer (~70% coverage) | Regex patterns maison |
+| data_analyst | `HAS_DUCKDB` | duckdb (~60% coverage) | Pandas parser |
 | sentiment | `HAS_TRANSFORMERS` | transformers (HuggingFace) | LLM analysis |
-| ai_workflows | `HAS_NETWORKX` | networkx | Kahn's algorithm maison |
+| ai_workflows | `HAS_NETWORKX` | networkx (~80% DAG coverage) | Kahn's algorithm maison |
 | video_gen | `HAS_FFMPEG` | ffmpeg-python | Mock placeholders |
 | image_gen | `HAS_REALESRGAN` | realesrgan | Pas d'upscaling |
 | fine_tuning | `HAS_UNSLOTH` | unsloth | Mock training |

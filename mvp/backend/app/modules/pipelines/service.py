@@ -990,6 +990,164 @@ class PipelineService:
                 step_output = "No YouTube URL provided"
             return {"type": "youtube_metadata", "output": step_output}
 
+        # ---- HTTP scrape step (web_crawler v8) ----
+        elif step_type == "scrape_http":
+            url = config.get("url", previous_output or "").strip()
+            if url and url.startswith("http"):
+                from app.modules.web_crawler.service import WebCrawlerService
+                result = await WebCrawlerService.scrape_http(
+                    url=url,
+                    css_selector=config.get("css_selector"),
+                    word_count_threshold=config.get("word_count_threshold", 50),
+                    use_fit_markdown=config.get("use_fit_markdown", True),
+                    headers=config.get("headers"),
+                    follow_redirects=config.get("follow_redirects", True),
+                )
+                if result.get("success"):
+                    step_output = result.get("markdown", "")
+                else:
+                    step_output = f"HTTP scrape failed: {result.get('error', 'unknown')}"
+            else:
+                step_output = "No valid URL for HTTP scrape"
+            return {"type": "scrape_http", "output": step_output}
+
+        # ---- Adaptive crawl step (web_crawler v8) ----
+        elif step_type == "adaptive_crawl":
+            url = config.get("url", previous_output or "").strip()
+            if url and url.startswith("http"):
+                from app.modules.web_crawler.service import WebCrawlerService
+                result = await WebCrawlerService.adaptive_crawl(
+                    url=url,
+                    query=config.get("query", ""),
+                    max_pages=config.get("max_pages", 10),
+                    max_depth=config.get("max_depth", 3),
+                    strategy=config.get("strategy", "bestfirst"),
+                    confidence_threshold=config.get("confidence_threshold", 0.7),
+                )
+                if result.get("success"):
+                    pages = result.get("results", [])
+                    step_output = f"Adaptive crawl: {len(pages)} pages found"
+                else:
+                    step_output = f"Adaptive crawl failed: {result.get('error', 'unknown')}"
+            else:
+                step_output = "No valid URL for adaptive crawl"
+            return {"type": "adaptive_crawl", "output": step_output}
+
+        # ---- Hub crawl step (web_crawler v8) ----
+        elif step_type == "hub_crawl":
+            url = config.get("url", previous_output or "").strip()
+            if url and url.startswith("http"):
+                from app.modules.web_crawler.service import WebCrawlerService
+                result = await WebCrawlerService.hub_crawl(
+                    url=url,
+                    site_profile=config.get("site_profile"),
+                    use_fit_markdown=config.get("use_fit_markdown", True),
+                )
+                if result.get("success"):
+                    step_output = result.get("markdown", "")
+                else:
+                    step_output = f"Hub crawl failed: {result.get('error', 'unknown')}"
+            else:
+                step_output = "No valid URL for hub crawl"
+            return {"type": "hub_crawl", "output": step_output}
+
+        # ---- PDF scrape step (web_crawler v8) ----
+        elif step_type == "scrape_pdf":
+            url = config.get("url", previous_output or "").strip()
+            if url and url.startswith("http"):
+                from app.modules.web_crawler.service import WebCrawlerService
+                result = await WebCrawlerService.scrape_pdf(
+                    url=url,
+                    extract_images=config.get("extract_images", False),
+                )
+                if result.get("success"):
+                    step_output = result.get("text", "")
+                else:
+                    step_output = f"PDF scrape failed: {result.get('error', 'unknown')}"
+            else:
+                step_output = "No valid URL for PDF scrape"
+            return {"type": "scrape_pdf", "output": step_output}
+
+        # ---- Cosine extraction step (web_crawler v8) ----
+        elif step_type == "extract_cosine":
+            url = config.get("url", previous_output or "").strip()
+            if url and url.startswith("http"):
+                from app.modules.web_crawler.service import WebCrawlerService
+                result = await WebCrawlerService.extract_cosine(
+                    url=url,
+                    word_count_threshold=config.get("word_count_threshold", 50),
+                    max_dist=config.get("max_dist", 0.2),
+                    top_k=config.get("top_k", 5),
+                    sim_threshold=config.get("sim_threshold", 0.3),
+                    semantic_filter=config.get("semantic_filter"),
+                )
+                if result.get("success"):
+                    clusters = result.get("clusters", [])
+                    step_output = f"Extracted {len(clusters)} semantic cluster(s)"
+                else:
+                    step_output = f"Cosine extraction failed: {result.get('error', 'unknown')}"
+            else:
+                step_output = "No valid URL for cosine extraction"
+            return {"type": "extract_cosine", "output": step_output}
+
+        # ---- lxml extraction step (web_crawler v8) ----
+        elif step_type == "extract_lxml":
+            url = config.get("url", previous_output or "").strip()
+            schema = config.get("schema")
+            if url and url.startswith("http") and schema:
+                from app.modules.web_crawler.service import WebCrawlerService
+                result = await WebCrawlerService.extract_lxml(
+                    url=url,
+                    schema=schema,
+                )
+                if result.get("success"):
+                    import json as _json
+                    step_output = _json.dumps(result.get("data", {}), ensure_ascii=False, indent=2)
+                else:
+                    step_output = f"lxml extraction failed: {result.get('error', 'unknown')}"
+            else:
+                if not schema:
+                    step_output = "No extraction schema provided"
+                else:
+                    step_output = "No valid URL for lxml extraction"
+            return {"type": "extract_lxml", "output": step_output}
+
+        # ---- Docker crawl step (web_crawler v8) ----
+        elif step_type == "docker_crawl":
+            urls = config.get("urls", [])
+            if not urls and previous_output:
+                urls = [u.strip() for u in previous_output.split("\n") if u.strip().startswith("http")]
+            if urls:
+                from app.modules.web_crawler.service import WebCrawlerService
+                result = await WebCrawlerService.docker_crawl(
+                    urls=urls,
+                    docker_url=config.get("docker_url"),
+                    timeout=config.get("timeout", 60),
+                )
+                if result.get("success"):
+                    results_list = result.get("results", [])
+                    successes = sum(1 for r in results_list if r.get("success"))
+                    step_output = f"Docker crawl: {successes}/{len(results_list)} succeeded"
+                else:
+                    step_output = f"Docker crawl failed: {result.get('error', 'unknown')}"
+            else:
+                step_output = "No URLs provided for Docker crawl"
+            return {"type": "docker_crawl", "output": step_output}
+
+        # ---- Chunk regex step (web_crawler v8) ----
+        elif step_type == "chunk_regex":
+            text = config.get("text", previous_output or "")
+            if text:
+                from app.modules.web_crawler.service import WebCrawlerService
+                chunks = WebCrawlerService.chunk_regex(
+                    text=text,
+                    patterns=config.get("patterns"),
+                )
+                step_output = f"Chunked into {len(chunks)} segment(s)"
+            else:
+                step_output = "No text provided for chunking"
+            return {"type": "chunk_regex", "output": step_output}
+
         else:
             return {"type": step_type, "output": previous_output or "", "note": "Unknown step type"}
 

@@ -426,6 +426,22 @@ class WorkflowService:
             return await WorkflowService._node_batch_crawl(previous_output, config)
         elif action == "deep_crawl":
             return await WorkflowService._node_deep_crawl(previous_output, config)
+        elif action == "scrape_http":
+            return await WorkflowService._node_scrape_http(previous_output, config)
+        elif action == "adaptive_crawl":
+            return await WorkflowService._node_adaptive_crawl(previous_output, config)
+        elif action == "hub_crawl":
+            return await WorkflowService._node_hub_crawl(previous_output, config)
+        elif action == "scrape_pdf":
+            return await WorkflowService._node_scrape_pdf(previous_output, config)
+        elif action == "extract_cosine":
+            return await WorkflowService._node_extract_cosine(previous_output, config)
+        elif action == "extract_lxml":
+            return await WorkflowService._node_extract_lxml(previous_output, config)
+        elif action == "docker_crawl":
+            return await WorkflowService._node_docker_crawl(previous_output, config)
+        elif action == "chunk_regex":
+            return await WorkflowService._node_chunk_regex(previous_output, config)
         elif action == "transcribe":
             return await WorkflowService._node_transcribe(previous_output, config)
         elif action == "youtube_transcript":
@@ -634,6 +650,196 @@ class WorkflowService:
             return {"output": "", "error": result.get("error", "Deep crawl failed"), "action": "deep_crawl"}
         except Exception as e:
             return {"output": "", "error": str(e)[:500], "action": "deep_crawl"}
+
+    @staticmethod
+    async def _node_scrape_http(text: str, config: dict) -> dict:
+        url = config.get("url", text or "").strip()
+        if not url or not url.startswith("http"):
+            return {"output": "", "error": "No valid URL", "action": "scrape_http"}
+        try:
+            from app.modules.web_crawler.service import WebCrawlerService
+            result = await WebCrawlerService.scrape_http(
+                url=url,
+                css_selector=config.get("css_selector"),
+                word_count_threshold=config.get("word_count_threshold", 50),
+                use_fit_markdown=config.get("use_fit_markdown", True),
+                headers=config.get("headers"),
+                follow_redirects=config.get("follow_redirects", True),
+            )
+            if result.get("success"):
+                return {
+                    "output": result.get("markdown", "")[:10000],
+                    "action": "scrape_http",
+                    "title": result.get("title", ""),
+                }
+            return {"output": "", "error": result.get("error", "HTTP scrape failed"), "action": "scrape_http"}
+        except Exception as e:
+            return {"output": "", "error": str(e)[:500], "action": "scrape_http"}
+
+    @staticmethod
+    async def _node_adaptive_crawl(text: str, config: dict) -> dict:
+        url = config.get("url", text or "").strip()
+        if not url or not url.startswith("http"):
+            return {"output": "", "error": "No valid URL", "action": "adaptive_crawl"}
+        try:
+            from app.modules.web_crawler.service import WebCrawlerService
+            result = await WebCrawlerService.adaptive_crawl(
+                url=url,
+                query=config.get("query", ""),
+                max_pages=config.get("max_pages", 10),
+                max_depth=config.get("max_depth", 3),
+                strategy=config.get("strategy", "bestfirst"),
+                confidence_threshold=config.get("confidence_threshold", 0.7),
+            )
+            if result.get("success"):
+                pages = result.get("results", [])
+                return {
+                    "output": f"Adaptive crawl: {len(pages)} pages from {url}",
+                    "action": "adaptive_crawl",
+                    "pages_crawled": len(pages),
+                }
+            return {"output": "", "error": result.get("error", "Adaptive crawl failed"), "action": "adaptive_crawl"}
+        except Exception as e:
+            return {"output": "", "error": str(e)[:500], "action": "adaptive_crawl"}
+
+    @staticmethod
+    async def _node_hub_crawl(text: str, config: dict) -> dict:
+        url = config.get("url", text or "").strip()
+        if not url or not url.startswith("http"):
+            return {"output": "", "error": "No valid URL", "action": "hub_crawl"}
+        try:
+            from app.modules.web_crawler.service import WebCrawlerService
+            result = await WebCrawlerService.hub_crawl(
+                url=url,
+                site_profile=config.get("site_profile"),
+                use_fit_markdown=config.get("use_fit_markdown", True),
+            )
+            if result.get("success"):
+                return {
+                    "output": result.get("markdown", "")[:10000],
+                    "action": "hub_crawl",
+                    "title": result.get("title", ""),
+                    "site_profile": result.get("site_profile", "auto"),
+                }
+            return {"output": "", "error": result.get("error", "Hub crawl failed"), "action": "hub_crawl"}
+        except Exception as e:
+            return {"output": "", "error": str(e)[:500], "action": "hub_crawl"}
+
+    @staticmethod
+    async def _node_scrape_pdf(text: str, config: dict) -> dict:
+        url = config.get("url", text or "").strip()
+        if not url or not url.startswith("http"):
+            return {"output": "", "error": "No valid URL", "action": "scrape_pdf"}
+        try:
+            from app.modules.web_crawler.service import WebCrawlerService
+            result = await WebCrawlerService.scrape_pdf(
+                url=url,
+                extract_images=config.get("extract_images", False),
+            )
+            if result.get("success"):
+                return {
+                    "output": result.get("text", "")[:10000],
+                    "action": "scrape_pdf",
+                    "pages": result.get("pages", 0),
+                }
+            return {"output": "", "error": result.get("error", "PDF scrape failed"), "action": "scrape_pdf"}
+        except Exception as e:
+            return {"output": "", "error": str(e)[:500], "action": "scrape_pdf"}
+
+    @staticmethod
+    async def _node_extract_cosine(text: str, config: dict) -> dict:
+        url = config.get("url", text or "").strip()
+        if not url or not url.startswith("http"):
+            return {"output": "", "error": "No valid URL", "action": "extract_cosine"}
+        try:
+            from app.modules.web_crawler.service import WebCrawlerService
+            result = await WebCrawlerService.extract_cosine(
+                url=url,
+                word_count_threshold=config.get("word_count_threshold", 50),
+                max_dist=config.get("max_dist", 0.2),
+                top_k=config.get("top_k", 5),
+                sim_threshold=config.get("sim_threshold", 0.3),
+                semantic_filter=config.get("semantic_filter"),
+            )
+            if result.get("success"):
+                clusters = result.get("clusters", [])
+                return {
+                    "output": f"Extracted {len(clusters)} semantic cluster(s) from {url}",
+                    "action": "extract_cosine",
+                    "clusters_count": len(clusters),
+                }
+            return {"output": "", "error": result.get("error", "Cosine extraction failed"), "action": "extract_cosine"}
+        except Exception as e:
+            return {"output": "", "error": str(e)[:500], "action": "extract_cosine"}
+
+    @staticmethod
+    async def _node_extract_lxml(text: str, config: dict) -> dict:
+        url = config.get("url", text or "").strip()
+        schema = config.get("schema")
+        if not url or not url.startswith("http"):
+            return {"output": "", "error": "No valid URL", "action": "extract_lxml"}
+        if not schema:
+            return {"output": "", "error": "No extraction schema provided", "action": "extract_lxml"}
+        try:
+            from app.modules.web_crawler.service import WebCrawlerService
+            result = await WebCrawlerService.extract_lxml(
+                url=url,
+                schema=schema,
+            )
+            if result.get("success"):
+                import json as _json
+                return {
+                    "output": _json.dumps(result.get("data", {}), ensure_ascii=False, indent=2)[:10000],
+                    "action": "extract_lxml",
+                }
+            return {"output": "", "error": result.get("error", "lxml extraction failed"), "action": "extract_lxml"}
+        except Exception as e:
+            return {"output": "", "error": str(e)[:500], "action": "extract_lxml"}
+
+    @staticmethod
+    async def _node_docker_crawl(text: str, config: dict) -> dict:
+        urls = config.get("urls", [])
+        if not urls and text:
+            urls = [u.strip() for u in text.split("\n") if u.strip().startswith("http")]
+        if not urls:
+            return {"output": "", "error": "No URLs for Docker crawl", "action": "docker_crawl"}
+        try:
+            from app.modules.web_crawler.service import WebCrawlerService
+            result = await WebCrawlerService.docker_crawl(
+                urls=urls,
+                docker_url=config.get("docker_url"),
+                timeout=config.get("timeout", 60),
+            )
+            if result.get("success"):
+                results_list = result.get("results", [])
+                successes = sum(1 for r in results_list if r.get("success"))
+                return {
+                    "output": f"Docker crawl: {successes}/{len(results_list)} succeeded",
+                    "action": "docker_crawl",
+                    "total": len(results_list),
+                }
+            return {"output": "", "error": result.get("error", "Docker crawl failed"), "action": "docker_crawl"}
+        except Exception as e:
+            return {"output": "", "error": str(e)[:500], "action": "docker_crawl"}
+
+    @staticmethod
+    async def _node_chunk_regex(text: str, config: dict) -> dict:
+        input_text = config.get("text", text or "")
+        if not input_text:
+            return {"output": "", "error": "No text for chunking", "action": "chunk_regex"}
+        try:
+            from app.modules.web_crawler.service import WebCrawlerService
+            chunks = WebCrawlerService.chunk_regex(
+                text=input_text,
+                patterns=config.get("patterns"),
+            )
+            return {
+                "output": f"Chunked into {len(chunks)} segment(s)",
+                "action": "chunk_regex",
+                "chunks_count": len(chunks),
+            }
+        except Exception as e:
+            return {"output": "", "error": str(e)[:500], "action": "chunk_regex"}
 
     @staticmethod
     async def _node_transcribe(text: str, config: dict) -> dict:

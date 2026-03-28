@@ -787,7 +787,9 @@ class TestWebCrawlerRoutes:
         def _mock_session():
             yield MagicMock()
 
+        from app.modules.auth_guards.middleware import require_verified_email
         app.dependency_overrides[get_current_user] = _auth_override
+        app.dependency_overrides[require_verified_email] = _auth_override
         app.dependency_overrides[require_ai_call_quota] = _auth_override
         app.dependency_overrides[get_session] = _mock_session
 
@@ -1534,7 +1536,9 @@ class TestWebCrawlerRoutesV3:
         def _mock_session():
             yield MagicMock()
 
+        from app.modules.auth_guards.middleware import require_verified_email
         app.dependency_overrides[get_current_user] = _auth_override
+        app.dependency_overrides[require_verified_email] = _auth_override
         app.dependency_overrides[require_ai_call_quota] = _auth_override
         app.dependency_overrides[get_session] = _mock_session
 
@@ -2224,7 +2228,9 @@ class TestWebCrawlerRoutesV4:
         def _mock_session():
             yield MagicMock()
 
+        from app.modules.auth_guards.middleware import require_verified_email
         app.dependency_overrides[get_current_user] = _auth_override
+        app.dependency_overrides[require_verified_email] = _auth_override
         app.dependency_overrides[require_ai_call_quota] = _auth_override
         app.dependency_overrides[get_session] = _mock_session
 
@@ -3063,7 +3069,9 @@ class TestWebCrawlerRoutesV5:
         def _mock_session():
             yield MagicMock()
 
+        from app.modules.auth_guards.middleware import require_verified_email
         app.dependency_overrides[get_current_user] = _auth_override
+        app.dependency_overrides[require_verified_email] = _auth_override
         app.dependency_overrides[require_ai_call_quota] = _auth_override
         app.dependency_overrides[get_session] = _mock_session
 
@@ -3993,7 +4001,9 @@ class TestWebCrawlerRoutesV6:
         def _mock_session():
             yield MagicMock()
 
+        from app.modules.auth_guards.middleware import require_verified_email
         app.dependency_overrides[get_current_user] = _auth_override
+        app.dependency_overrides[require_verified_email] = _auth_override
         app.dependency_overrides[require_ai_call_quota] = _auth_override
         app.dependency_overrides[get_session] = _mock_session
 
@@ -4826,7 +4836,9 @@ class TestWebCrawlerRoutesV7:
         def _mock_session():
             yield MagicMock()
 
+        from app.modules.auth_guards.middleware import require_verified_email
         app.dependency_overrides[get_current_user] = _auth_override
+        app.dependency_overrides[require_verified_email] = _auth_override
         app.dependency_overrides[require_ai_call_quota] = _auth_override
         app.dependency_overrides[get_session] = _mock_session
 
@@ -5717,7 +5729,9 @@ class TestWebCrawlerRoutesV8:
         def _mock_session():
             yield MagicMock()
 
+        from app.modules.auth_guards.middleware import require_verified_email
         app.dependency_overrides[get_current_user] = _auth_override
+        app.dependency_overrides[require_verified_email] = _auth_override
         app.dependency_overrides[require_ai_call_quota] = _auth_override
         app.dependency_overrides[get_session] = _mock_session
 

@@ -158,6 +158,272 @@ async def _exec_deep_crawl(input_data: dict, previous: Optional[str]) -> dict:
         return {"output": "", "error": str(e)[:500], "action": "deep_crawl"}
 
 
+async def _exec_scrape_http(input_data: dict, previous: Optional[str]) -> dict:
+    """Fast HTTP scrape without browser."""
+    url = input_data.get("url", previous or "")
+    if not url or not url.startswith("http"):
+        return {"output": "", "error": "No valid URL provided for HTTP scrape", "action": "scrape_http"}
+
+    try:
+        from app.modules.web_crawler.service import WebCrawlerService
+
+        result = await WebCrawlerService.scrape_http(
+            url=url,
+            css_selector=input_data.get("css_selector"),
+            word_count_threshold=input_data.get("word_count_threshold", 50),
+            use_fit_markdown=input_data.get("use_fit_markdown", True),
+            headers=input_data.get("headers"),
+            follow_redirects=input_data.get("follow_redirects", True),
+        )
+
+        if result.get("success"):
+            markdown = result.get("markdown", "")
+            title = result.get("title", "")
+            output = f"# {title}\n\n{markdown[:6000]}" if title else markdown[:6000]
+            return {
+                "output": output,
+                "action": "scrape_http",
+                "url": url,
+                "title": title,
+                "text_length": len(markdown),
+            }
+        return {"output": "", "error": result.get("error", "HTTP scrape failed"), "action": "scrape_http"}
+
+    except Exception as e:
+        return {"output": "", "error": str(e)[:500], "action": "scrape_http"}
+
+
+async def _exec_adaptive_crawl(input_data: dict, previous: Optional[str]) -> dict:
+    """Self-tuning adaptive crawl."""
+    url = input_data.get("url", previous or "")
+    if not url or not url.startswith("http"):
+        return {"output": "", "error": "No valid URL provided for adaptive crawl", "action": "adaptive_crawl"}
+
+    try:
+        from app.modules.web_crawler.service import WebCrawlerService
+
+        result = await WebCrawlerService.adaptive_crawl(
+            url=url,
+            query=input_data.get("query", ""),
+            max_pages=input_data.get("max_pages", 10),
+            max_depth=input_data.get("max_depth", 3),
+            strategy=input_data.get("strategy", "bestfirst"),
+            confidence_threshold=input_data.get("confidence_threshold", 0.7),
+        )
+
+        if result.get("success"):
+            pages = result.get("results", [])
+            output = f"Adaptive crawl from {url}: {len(pages)} pages found\n"
+            for p in pages[:10]:
+                title = p.get("title", p.get("url", "?"))[:60]
+                output += f"  - {title}\n"
+            return {
+                "output": output,
+                "action": "adaptive_crawl",
+                "pages_crawled": len(pages),
+            }
+        return {"output": "", "error": result.get("error", "Adaptive crawl failed"), "action": "adaptive_crawl"}
+
+    except Exception as e:
+        return {"output": "", "error": str(e)[:500], "action": "adaptive_crawl"}
+
+
+async def _exec_hub_crawl(input_data: dict, previous: Optional[str]) -> dict:
+    """Crawl using pre-built site profiles."""
+    url = input_data.get("url", previous or "")
+    if not url or not url.startswith("http"):
+        return {"output": "", "error": "No valid URL provided for hub crawl", "action": "hub_crawl"}
+
+    try:
+        from app.modules.web_crawler.service import WebCrawlerService
+
+        result = await WebCrawlerService.hub_crawl(
+            url=url,
+            site_profile=input_data.get("site_profile"),
+            use_fit_markdown=input_data.get("use_fit_markdown", True),
+        )
+
+        if result.get("success"):
+            markdown = result.get("markdown", "")
+            title = result.get("title", "")
+            profile = result.get("site_profile", "auto")
+            output = f"# {title}\n\n[Profile: {profile}]\n\n{markdown[:6000]}" if title else markdown[:6000]
+            return {
+                "output": output,
+                "action": "hub_crawl",
+                "url": url,
+                "title": title,
+                "site_profile": profile,
+                "text_length": len(markdown),
+            }
+        return {"output": "", "error": result.get("error", "Hub crawl failed"), "action": "hub_crawl"}
+
+    except Exception as e:
+        return {"output": "", "error": str(e)[:500], "action": "hub_crawl"}
+
+
+async def _exec_scrape_pdf(input_data: dict, previous: Optional[str]) -> dict:
+    """Extract content from a PDF URL."""
+    url = input_data.get("url", previous or "")
+    if not url or not url.startswith("http"):
+        return {"output": "", "error": "No valid URL provided for PDF scrape", "action": "scrape_pdf"}
+
+    try:
+        from app.modules.web_crawler.service import WebCrawlerService
+
+        result = await WebCrawlerService.scrape_pdf(
+            url=url,
+            extract_images=input_data.get("extract_images", False),
+        )
+
+        if result.get("success"):
+            text = result.get("text", "")
+            pages = result.get("pages", 0)
+            output = f"[PDF: {pages} pages]\n\n{text[:6000]}"
+            return {
+                "output": output,
+                "action": "scrape_pdf",
+                "url": url,
+                "pages": pages,
+                "text_length": len(text),
+            }
+        return {"output": "", "error": result.get("error", "PDF scrape failed"), "action": "scrape_pdf"}
+
+    except Exception as e:
+        return {"output": "", "error": str(e)[:500], "action": "scrape_pdf"}
+
+
+async def _exec_extract_cosine(input_data: dict, previous: Optional[str]) -> dict:
+    """Semantic clustering extraction from a URL."""
+    url = input_data.get("url", previous or "")
+    if not url or not url.startswith("http"):
+        return {"output": "", "error": "No valid URL provided for cosine extraction", "action": "extract_cosine"}
+
+    try:
+        from app.modules.web_crawler.service import WebCrawlerService
+
+        result = await WebCrawlerService.extract_cosine(
+            url=url,
+            word_count_threshold=input_data.get("word_count_threshold", 50),
+            max_dist=input_data.get("max_dist", 0.2),
+            top_k=input_data.get("top_k", 5),
+            sim_threshold=input_data.get("sim_threshold", 0.3),
+            semantic_filter=input_data.get("semantic_filter"),
+        )
+
+        if result.get("success"):
+            clusters = result.get("clusters", [])
+            output = f"Extracted {len(clusters)} semantic cluster(s) from {url}\n"
+            for i, c in enumerate(clusters[:10]):
+                output += f"  [{i+1}] {str(c)[:200]}\n"
+            return {
+                "output": output,
+                "action": "extract_cosine",
+                "url": url,
+                "clusters_count": len(clusters),
+            }
+        return {"output": "", "error": result.get("error", "Cosine extraction failed"), "action": "extract_cosine"}
+
+    except Exception as e:
+        return {"output": "", "error": str(e)[:500], "action": "extract_cosine"}
+
+
+async def _exec_extract_lxml(input_data: dict, previous: Optional[str]) -> dict:
+    """lxml-based JSON extraction from a URL."""
+    url = input_data.get("url", previous or "")
+    if not url or not url.startswith("http"):
+        return {"output": "", "error": "No valid URL provided for lxml extraction", "action": "extract_lxml"}
+
+    schema = input_data.get("schema")
+    if not schema:
+        return {"output": "", "error": "No extraction schema provided", "action": "extract_lxml"}
+
+    try:
+        from app.modules.web_crawler.service import WebCrawlerService
+
+        result = await WebCrawlerService.extract_lxml(
+            url=url,
+            schema=schema,
+        )
+
+        if result.get("success"):
+            data = result.get("data", {})
+            output = json.dumps(data, ensure_ascii=False, indent=2)[:6000]
+            return {
+                "output": output,
+                "action": "extract_lxml",
+                "url": url,
+            }
+        return {"output": "", "error": result.get("error", "lxml extraction failed"), "action": "extract_lxml"}
+
+    except Exception as e:
+        return {"output": "", "error": str(e)[:500], "action": "extract_lxml"}
+
+
+async def _exec_docker_crawl(input_data: dict, previous: Optional[str]) -> dict:
+    """Remote Docker-based crawl."""
+    urls = input_data.get("urls", [])
+    if not urls and previous:
+        urls = [u.strip() for u in previous.split("\n") if u.strip().startswith("http")]
+    if not urls:
+        return {"output": "", "error": "No URLs provided for Docker crawl", "action": "docker_crawl"}
+
+    try:
+        from app.modules.web_crawler.service import WebCrawlerService
+
+        result = await WebCrawlerService.docker_crawl(
+            urls=urls,
+            docker_url=input_data.get("docker_url"),
+            timeout=input_data.get("timeout", 60),
+        )
+
+        if result.get("success"):
+            results_list = result.get("results", [])
+            successes = sum(1 for r in results_list if r.get("success"))
+            output = f"Docker crawl: {successes}/{len(results_list)} succeeded\n"
+            for r in results_list[:10]:
+                title = r.get("title", r.get("url", "?"))[:60]
+                status = "OK" if r.get("success") else "FAIL"
+                output += f"  [{status}] {title}\n"
+            return {
+                "output": output,
+                "action": "docker_crawl",
+                "total": len(results_list),
+                "successes": successes,
+            }
+        return {"output": "", "error": result.get("error", "Docker crawl failed"), "action": "docker_crawl"}
+
+    except Exception as e:
+        return {"output": "", "error": str(e)[:500], "action": "docker_crawl"}
+
+
+async def _exec_chunk_regex(input_data: dict, previous: Optional[str]) -> dict:
+    """Chunk text using regex patterns."""
+    text = input_data.get("text", previous or "")
+    if not text:
+        return {"output": "", "error": "No text provided for chunking", "action": "chunk_regex"}
+
+    try:
+        from app.modules.web_crawler.service import WebCrawlerService
+
+        chunks = WebCrawlerService.chunk_regex(
+            text=text,
+            patterns=input_data.get("patterns"),
+        )
+
+        output = f"Chunked into {len(chunks)} segment(s)\n"
+        for i, chunk in enumerate(chunks[:20]):
+            output += f"  [{i+1}] {str(chunk)[:150]}\n"
+        return {
+            "output": output,
+            "action": "chunk_regex",
+            "chunks_count": len(chunks),
+        }
+
+    except Exception as e:
+        return {"output": "", "error": str(e)[:500], "action": "chunk_regex"}
+
+
 async def _exec_analyze_image(input_data: dict, previous: Optional[str]) -> dict:
     """Analyze an image URL with AI Vision."""
     image_url = input_data.get("image_url", input_data.get("url", ""))
@@ -196,6 +462,14 @@ async def execute_step(action: str, input_data: dict, previous_output: Optional[
         "seed_web_urls": _exec_seed_web_urls,
         "batch_crawl": _exec_batch_crawl,
         "deep_crawl": _exec_deep_crawl,
+        "scrape_http": _exec_scrape_http,
+        "adaptive_crawl": _exec_adaptive_crawl,
+        "hub_crawl": _exec_hub_crawl,
+        "scrape_pdf": _exec_scrape_pdf,
+        "extract_cosine": _exec_extract_cosine,
+        "extract_lxml": _exec_extract_lxml,
+        "docker_crawl": _exec_docker_crawl,
+        "chunk_regex": _exec_chunk_regex,
         "analyze_image": _exec_analyze_image,
         "generate_content": _exec_generate_content,
         "run_workflow": _exec_run_workflow,

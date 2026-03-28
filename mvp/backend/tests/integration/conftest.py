@@ -525,6 +525,7 @@ async def test_user_in_db(session):
         full_name="Integration Test User",
         role=Role.USER,
         is_active=True,
+        email_verified=True,
     )
     session.add(user)
     await session.commit()
