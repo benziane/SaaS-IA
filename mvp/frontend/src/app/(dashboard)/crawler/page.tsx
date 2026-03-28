@@ -10,8 +10,8 @@ import { Input } from '@/lib/design-hub/components/Input';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/lib/design-hub/components/Tabs';
 import { Checkbox } from '@/components/ui/checkbox';
 
-import { useIndexUrl, useScrape, useScrapeWithVision } from '@/features/crawler/hooks/useCrawler';
-import type { ImageData } from '@/features/crawler/types';
+import { useIndexUrl, useScrape, useScrapeWithVision, useBatchScrape, useDeepCrawl } from '@/features/crawler/hooks/useCrawler';
+import type { ImageData, BatchScrapeRequest, DeepCrawlRequest } from '@/features/crawler/types';
 
 function ImageCard({ image }: { image: ImageData }) {
   return (
@@ -44,10 +44,16 @@ export default function CrawlerPage() {
   const [url, setUrl] = useState('');
   const [tab, setTab] = useState('scrape');
   const [crawlSubpages, setCrawlSubpages] = useState(false);
+  const [batchUrls, setBatchUrls] = useState('');
+  const [maxDepth, setMaxDepth] = useState(3);
+  const [maxPages, setMaxPages] = useState(20);
+  const [strategy, setStrategy] = useState<'bfs' | 'dfs' | 'bestfirst'>('bestfirst');
 
   const scrape = useScrape();
   const scrapeVision = useScrapeWithVision();
   const indexMutation = useIndexUrl();
+  const batchMutation = useBatchScrape();
+  const deepCrawlMutation = useDeepCrawl();
 
   const handleScrape = () => {
     if (!url.trim()) return;
@@ -64,10 +70,12 @@ export default function CrawlerPage() {
     indexMutation.mutate({ url: url.trim(), crawlSubpages });
   };
 
-  const isLoading = scrape.isPending || scrapeVision.isPending || indexMutation.isPending;
+  const isLoading = scrape.isPending || scrapeVision.isPending || indexMutation.isPending || batchMutation.isPending || deepCrawlMutation.isPending;
   const scrapeData = scrape.data;
   const visionData = scrapeVision.data;
   const indexData = indexMutation.data;
+  const batchData = batchMutation.data;
+  const deepCrawlData = deepCrawlMutation.data;
 
   return (
     <div className="p-5 space-y-5 animate-enter">
@@ -98,6 +106,8 @@ export default function CrawlerPage() {
             <TabsTrigger value="scrape">Scrape</TabsTrigger>
             <TabsTrigger value="vision">Scrape + Vision AI</TabsTrigger>
             <TabsTrigger value="index">Index to Knowledge Base</TabsTrigger>
+            <TabsTrigger value="batch">Batch Crawl</TabsTrigger>
+            <TabsTrigger value="deep">Deep Crawl</TabsTrigger>
           </TabsList>
 
           <TabsContent value="scrape">
@@ -154,12 +164,80 @@ export default function CrawlerPage() {
               </Button>
             </div>
           </TabsContent>
+
+          <TabsContent value="batch">
+            <div className="surface-card rounded-xl p-5 space-y-4">
+              <label className="text-sm font-medium text-[var(--text-secondary)]">URLs (one per line)</label>
+              <textarea
+                className="w-full h-32 rounded-lg bg-[var(--bg-input)] border border-[var(--border)] p-3 text-sm font-mono resize-y focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                placeholder={"https://example.com\nhttps://another.com\nhttps://third.com"}
+                value={batchUrls}
+                onChange={(e) => setBatchUrls(e.target.value)}
+              />
+              <Button
+                disabled={!batchUrls.trim() || batchMutation.isPending}
+                onClick={() => {
+                  const urls = batchUrls.split('\n').map(u => u.trim()).filter(u => u.startsWith('http'));
+                  batchMutation.mutate({ urls });
+                }}
+              >
+                {batchMutation.isPending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Crawling...
+                  </>
+                ) : (
+                  `Crawl ${batchUrls.split('\n').filter(u => u.trim().startsWith('http')).length} URLs`
+                )}
+              </Button>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="deep">
+            <div className="surface-card rounded-xl p-5 space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-[var(--text-secondary)]">Strategy</label>
+                  <select
+                    className="mt-1 w-full rounded-lg bg-[var(--bg-input)] border border-[var(--border)] p-2.5 text-sm focus:ring-2 focus:ring-[var(--accent)]"
+                    value={strategy}
+                    onChange={(e) => setStrategy(e.target.value as 'bfs' | 'dfs' | 'bestfirst')}
+                  >
+                    <option value="bestfirst">BestFirst (smart)</option>
+                    <option value="bfs">BFS (breadth-first)</option>
+                    <option value="dfs">DFS (depth-first)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-[var(--text-secondary)]">Max Depth: {maxDepth}</label>
+                  <input type="range" min={1} max={5} value={maxDepth} onChange={(e) => setMaxDepth(+e.target.value)} className="mt-2 w-full accent-[var(--accent)]" />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-[var(--text-secondary)]">Max Pages: {maxPages}</label>
+                  <input type="range" min={1} max={50} value={maxPages} onChange={(e) => setMaxPages(+e.target.value)} className="mt-2 w-full accent-[var(--accent)]" />
+                </div>
+              </div>
+              <Button
+                disabled={!url.trim() || deepCrawlMutation.isPending}
+                onClick={() => deepCrawlMutation.mutate({ start_url: url, max_depth: maxDepth, max_pages: maxPages, strategy })}
+              >
+                {deepCrawlMutation.isPending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Crawling...
+                  </>
+                ) : (
+                  'Start Deep Crawl'
+                )}
+              </Button>
+            </div>
+          </TabsContent>
         </Tabs>
 
-        {(scrape.isError || scrapeVision.isError || indexMutation.isError) && (
+        {(scrape.isError || scrapeVision.isError || indexMutation.isError || batchMutation.isError || deepCrawlMutation.isError) && (
           <Alert variant="destructive" className="mt-4">
             <AlertDescription>
-              {(scrape.error ?? scrapeVision.error ?? indexMutation.error)?.message}
+              {(scrape.error ?? scrapeVision.error ?? indexMutation.error ?? batchMutation.error ?? deepCrawlMutation.error)?.message}
             </AlertDescription>
           </Alert>
         )}
@@ -232,6 +310,49 @@ export default function CrawlerPage() {
         </Alert>
       )}
 
+      {/* Batch Crawl Results */}
+      {batchData?.success && (
+        <div className="surface-card rounded-xl p-5 space-y-3">
+          <h2 className="text-lg font-semibold text-[var(--text-high)] mb-2">Batch Crawl Results</h2>
+          <div className="flex gap-2">
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-500/10 text-green-400">
+              {batchData.successes} succeeded
+            </span>
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-500/10 text-red-400">
+              {batchData.total - batchData.successes} failed
+            </span>
+          </div>
+          <div className="space-y-2">
+            {batchData.results.map((r, i) => (
+              <div key={i} className="flex items-center gap-2 p-2 rounded-lg bg-[var(--bg-surface)]/50 text-sm">
+                <span className={r.success ? 'text-green-400' : 'text-red-400'}>{r.success ? '\u2713' : '\u2717'}</span>
+                <span className="truncate flex-1">{r.title || r.url}</span>
+                <span className="text-[var(--text-muted)] text-xs">{r.text_length?.toLocaleString()} chars</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Deep Crawl Results */}
+      {deepCrawlData?.success && deepCrawlData.results && (
+        <div className="surface-card rounded-xl p-5 space-y-3">
+          <h2 className="text-lg font-semibold text-[var(--text-high)] mb-2">Deep Crawl Results</h2>
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[var(--accent)]/10 text-[var(--accent)]">
+            {deepCrawlData.results.length} pages found
+          </span>
+          <div className="space-y-2 max-h-96 overflow-y-auto">
+            {deepCrawlData.results.map((r, i) => (
+              <div key={i} className="flex items-center gap-2 p-2 rounded-lg bg-[var(--bg-surface)]/50 text-sm">
+                <span className={r.success ? 'text-green-400' : 'text-red-400'}>{r.success ? '\u2713' : '\u2717'}</span>
+                <span className="truncate flex-1">{r.title || r.url}</span>
+                <span className="text-[var(--text-muted)] text-xs">{r.text_length?.toLocaleString()} chars</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {(scrapeData && !scrapeData.success) && (
         <Alert variant="destructive" className="mt-4">
           <AlertDescription>{scrapeData.error}</AlertDescription>
@@ -245,6 +366,16 @@ export default function CrawlerPage() {
       {(indexData && !indexData.success) && (
         <Alert variant="destructive" className="mt-4">
           <AlertDescription>{indexData.error}</AlertDescription>
+        </Alert>
+      )}
+      {(batchData && !batchData.success) && (
+        <Alert variant="destructive" className="mt-4">
+          <AlertDescription>{batchData.error}</AlertDescription>
+        </Alert>
+      )}
+      {(deepCrawlData && !deepCrawlData.success) && (
+        <Alert variant="destructive" className="mt-4">
+          <AlertDescription>{deepCrawlData.error}</AlertDescription>
         </Alert>
       )}
     </div>

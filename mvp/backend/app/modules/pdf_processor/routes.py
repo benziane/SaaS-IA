@@ -11,6 +11,7 @@ from fastapi.responses import PlainTextResponse
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.auth import get_current_user
+from app.modules.auth_guards.middleware import require_verified_email
 from app.database import get_session
 from app.models.user import User
 from app.modules.pdf_processor.schemas import (
@@ -70,7 +71,7 @@ def _doc_to_read(doc) -> dict:
 async def upload_pdf(
     request: Request,
     file: UploadFile = File(..., description="PDF file to upload"),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """
@@ -148,7 +149,7 @@ async def get_pdf(
 async def delete_pdf(
     request: Request,
     pdf_id: UUID,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """
@@ -166,7 +167,7 @@ async def summarize_pdf(
     request: Request,
     pdf_id: UUID,
     body: PDFSummarizeRequest = PDFSummarizeRequest(),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """
@@ -191,7 +192,7 @@ async def summarize_pdf(
 async def extract_keywords(
     request: Request,
     pdf_id: UUID,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """
@@ -211,7 +212,7 @@ async def query_pdf(
     request: Request,
     pdf_id: UUID,
     body: PDFQueryRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """
@@ -261,7 +262,7 @@ async def export_pdf(
 async def compare_pdfs(
     request: Request,
     body: PDFCompareRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """
@@ -286,7 +287,7 @@ async def compare_pdfs(
 async def extract_tables(
     request: Request,
     pdf_id: UUID,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """
@@ -307,7 +308,7 @@ async def extract_tables(
 async def ocr_pdf(
     request: Request,
     pdf_id: UUID,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """

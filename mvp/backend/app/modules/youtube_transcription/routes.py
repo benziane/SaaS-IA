@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.auth import get_current_user
+from app.modules.auth_guards.middleware import require_verified_email
 from app.database import get_session
 from app.models.user import User
 from app.modules.billing.service import BillingService
@@ -33,7 +34,7 @@ router = APIRouter()
 async def validate_url(
     request: Request,
     body: YouTubeURLRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
 ):
     """
     Validate a YouTube URL and extract the video ID.
@@ -60,7 +61,7 @@ async def validate_url(
 async def get_metadata(
     request: Request,
     body: YouTubeURLRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
 ):
     """
     Extract YouTube video metadata.
@@ -103,7 +104,7 @@ async def get_metadata(
 async def get_transcript(
     request: Request,
     body: YouTubeURLRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
 ):
     """
     Fetch YouTube subtitles/transcript directly (no download needed).
@@ -143,7 +144,7 @@ async def get_transcript(
 async def smart_transcribe(
     request: Request,
     body: YouTubeURLRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """
@@ -216,7 +217,7 @@ async def smart_transcribe(
 async def transcribe_playlist(
     request: Request,
     body: PlaylistRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
 ):
     """
     Fetch transcripts for all videos in a YouTube playlist.
@@ -288,7 +289,7 @@ async def transcribe_playlist(
 async def check_stream_status(
     request: Request,
     body: StreamRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
 ):
     """
     Check if a URL is a live stream and return its current status.
@@ -318,7 +319,7 @@ async def check_stream_status(
 async def capture_stream(
     request: Request,
     body: StreamRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """
@@ -386,7 +387,7 @@ async def capture_stream(
 async def analyze_video(
     request: Request,
     body: VideoAnalyzeRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """

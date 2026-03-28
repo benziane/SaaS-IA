@@ -9,6 +9,7 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, Uplo
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.auth import get_current_user
+from app.modules.auth_guards.middleware import require_verified_email
 from app.database import get_session
 from app.models.user import User
 from app.modules.voice_clone.schemas import (
@@ -35,7 +36,7 @@ async def create_voice_profile(
     provider: str = Form(default="elevenlabs"),
     language: str = Form(default="auto"),
     audio_file: Optional[UploadFile] = File(None, description="Audio sample for voice cloning (5-30s)"),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """Create a voice profile, optionally from audio sample. Rate limit: 5/min"""
@@ -68,7 +69,7 @@ async def list_profiles(
 @limiter.limit("10/minute")
 async def delete_profile(
     request: Request, profile_id: UUID,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """Delete a voice profile. Rate limit: 10/min"""
@@ -80,7 +81,7 @@ async def delete_profile(
 @limiter.limit("5/minute")
 async def synthesize_speech(
     request: Request, body: SynthesizeRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """Synthesize text to speech. Rate limit: 5/min"""
@@ -95,7 +96,7 @@ async def synthesize_speech(
 @limiter.limit("3/minute")
 async def synthesize_from_source(
     request: Request, body: SynthesizeFromSourceRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """Synthesize from transcription or document. Rate limit: 3/min"""
@@ -110,7 +111,7 @@ async def synthesize_from_source(
 @limiter.limit("2/minute")
 async def dub_content(
     request: Request, body: DubRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """Dub content to another language (translate + TTS). Rate limit: 2/min"""

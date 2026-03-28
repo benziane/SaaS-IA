@@ -2,7 +2,7 @@
 
 ## Projet
 
-Plateforme SaaS modulaire d'intelligence artificielle - 40 modules backend auto-decouverts, 48 pages frontend, ~380 endpoints API. Architecture enterprise S+++ (v4.4.0).
+Plateforme SaaS modulaire d'intelligence artificielle - 42 modules backend auto-decouverts, 48 pages frontend, ~380 endpoints API. Architecture enterprise S+++ (v4.4.0).
 
 ## Stack technique
 
@@ -11,7 +11,7 @@ Plateforme SaaS modulaire d'intelligence artificielle - 40 modules backend auto-
 - **AI Providers** : Gemini 2.0 Flash, Claude Sonnet, Groq Llama 3.3 70B (via AIAssistantService + LiteLLM proxy)
 - **Infra** : Docker Compose (multi-stage), Prometheus, OpenTelemetry, structlog (JSON prod), Sentry/GlitchTip, Alembic
 - **Enterprise** : 12 middleware layers (CORS, RequestID, ShutdownGuard, Sentry, RateLimit, Logging, Security, Compression, Prometheus, Tenant, AuditMiddleware, FeatureFlagMiddleware), 19 enterprise components (circuit breaker, sliding window rate limit, graceful shutdown, K8s health probes, OpenTelemetry tracing, Sentry error tracking, structured logging, DB pooling 50+25, compression Gzip+Brotli, security headers OWASP, multi-stage Dockerfile, tini PID 1, Audit Log, Transactional Outbox, Feature Flags, Secrets Rotation, AI retry+timeout 60s, per-user AI semaphore max 5, CASCADE DELETE FK)
-- **Ports** : Backend 8004, Frontend 3002, PostgreSQL 5435, Redis 6382, Flower 5555
+- **Ports** : Backend 8004, Frontend 3002, PostgreSQL 5435, Redis 6382, Flower 5555, Mailpit 8025/1025
 
 ## Architecture modulaire
 
@@ -85,10 +85,10 @@ Ce qui est interdit c'est de **supprimer un module entier ou remplacer une techn
 - Pour ajouter un embedding a un chunk, utiliser raw SQL : `UPDATE document_chunks SET embedding = :emb WHERE id = :cid`
 - Toujours garder le TF-IDF comme fallback - ne jamais le supprimer
 
-## Modules existants (40)
+## Modules existants (42)
 
-### Core (12)
-transcription, conversation, knowledge (hybrid search: pgvector + TF-IDF), compare, pipelines, agents, sentiment, web_crawler, workspaces, billing, api_keys, cost_tracker
+### Core (13)
+transcription, conversation, knowledge (hybrid search: pgvector + TF-IDF), compare, pipelines, agents, sentiment, web_crawler, workspaces, billing, api_keys, cost_tracker, youtube_transcription (standalone /api/youtube, 8 endpoints)
 
 ### P0 - Content & Automation (2)
 content_studio (10 formats), ai_workflows (DAG engine, 19 actions, 5 templates, networkx validation)
@@ -117,8 +117,8 @@ skill_seekers (GitHub repo scraper + Claude AI packager, mock mode, async CLI, 1
 ### New (3)
 repo_analyzer (git CLI analysis, code metrics), pdf_processor (PyMuPDF + pdfplumber, text/table extraction), audio_studio (pydub + noisereduce, audio editing)
 
-### Enterprise (4)
-tenants (multi-tenant isolation, PostgreSQL RLS, contextvars middleware), audit (immutable hash chain, compliance-grade), feature_flags (kill switches, % rollout, Redis-backed), secrets (rotation tracking, alerts, health score)
+### Enterprise (5)
+tenants (multi-tenant isolation, PostgreSQL RLS, contextvars middleware), audit (immutable hash chain, compliance-grade), feature_flags (kill switches, % rollout, Redis-backed), secrets (rotation tracking, alerts, health score), auth_guards (require_verified_email on 177 POST/PUT/DELETE endpoints, soft+hard variants)
 
 ## Integrations open-source (30 libs)
 
@@ -162,9 +162,9 @@ Voir `mvp/docs/MODULE_ARCHITECTURE.md` pour le detail module par module.
 ## Interconnexions
 
 3 systemes d'orchestration connectent tous les modules :
-- **Agent Executor** : ~79 actions (appels directs aux services)
-- **Pipeline Steps** : 29 step types (chaining sequentiel)
-- **Workflow Actions** : 30 types (DAG avec branches paralleles)
+- **Agent Executor** : ~84 actions (appels directs aux services, +5 YouTube, +2 crawl v7)
+- **Pipeline Steps** : 34 step types (chaining sequentiel, +3 YouTube, +2 crawl v7)
+- **Workflow Actions** : 35 types (DAG avec branches paralleles, +3 YouTube, +2 crawl v7)
 
 Quand on ajoute un nouveau module, penser a l'integrer dans les 3 systemes + le planner heuristique.
 
@@ -181,6 +181,7 @@ Quand on ajoute un nouveau module, penser a l'integrer dans les 3 systemes + le 
 - **Audit IP** : X-Forwarded-For valide uniquement si peer IP dans `trusted_proxies_set`
 - **SSRF protection** : `_validate_url_for_ssrf()` (image_gen), `ALLOWED_HOSTS` (repo_analyzer)
 - **Path traversal** : `os.path.basename()` double couche (pdf_processor)
+- **Email verification** : `require_verified_email` guard sur 177 mutations (35 modules), soft variant disponible, 403 + code `EMAIL_NOT_VERIFIED` + action `resend_verification`
 
 ### Database
 - **CASCADE DELETE** : 78 FK sur 59 tables (migration 0017)
@@ -200,6 +201,7 @@ Quand on ajoute un nouveau module, penser a l'integrer dans les 3 systemes + le 
 ```bash
 # Backend
 cd mvp && docker compose up -d
+# Mailpit (dev email UI): http://localhost:8025
 cd mvp/backend && uvicorn app.main:app --reload --port 8000
 
 # Frontend
@@ -218,5 +220,5 @@ cd mvp/backend && alembic upgrade head
 - [README.md](mvp/README.md) - Vue d'ensemble et modules
 - [ROADMAP.md](mvp/ROADMAP.md) - Roadmap complete, changelog, endpoints API, connectivite
 - [TECH_AUDIT_ROADMAP.md](mvp/TECH_AUDIT_ROADMAP.md) - Audit open-source : libs a integrer, priorites, checkboxes de suivi
-- [MODULE_ARCHITECTURE.md](mvp/docs/MODULE_ARCHITECTURE.md) - Architecture detaillee des 40 modules : patterns, sources, libs, fallbacks
+- [MODULE_ARCHITECTURE.md](mvp/docs/MODULE_ARCHITECTURE.md) - Architecture detaillee des 42 modules : patterns, sources, libs, fallbacks
 - [backend/MIGRATIONS_GUIDE.md](mvp/backend/MIGRATIONS_GUIDE.md) - Guide migrations Alembic

@@ -351,6 +351,52 @@ class PipelineService:
                     step_output = "No pipeline context"
             return {"type": "crawl_and_index", "output": step_output}
 
+        # ---- Batch crawl step (web_crawler v7) ----
+        elif step_type == "batch_crawl":
+            urls = config.get("urls", [])
+            if not urls and previous_output:
+                urls = [u.strip() for u in previous_output.split("\n") if u.strip().startswith("http")]
+            if urls:
+                from app.modules.web_crawler.service import WebCrawlerService
+                result = await WebCrawlerService.batch_scrape(
+                    urls=urls,
+                    extract_images=config.get("extract_images", False),
+                    proxies=config.get("proxies"),
+                    dispatcher=config.get("dispatcher"),
+                )
+                if result.get("success"):
+                    results_list = result.get("results", [])
+                    successes = sum(1 for r in results_list if r.get("success"))
+                    step_output = f"Batch: {successes}/{len(results_list)} succeeded"
+                else:
+                    step_output = f"Batch crawl failed: {result.get('error', 'unknown')}"
+            else:
+                step_output = "No URLs provided for batch crawl"
+            return {"type": "batch_crawl", "output": step_output}
+
+        # ---- Deep crawl step (web_crawler v7) ----
+        elif step_type == "deep_crawl":
+            url = config.get("url", previous_output or "")
+            if url and url.startswith("http"):
+                from app.modules.web_crawler.service import WebCrawlerService
+                result = await WebCrawlerService.deep_crawl(
+                    start_url=url,
+                    max_depth=config.get("max_depth", 3),
+                    max_pages=config.get("max_pages", 20),
+                    extract_images=config.get("extract_images", False),
+                    composite_scorers=config.get("composite_scorers"),
+                    proxies=config.get("proxies"),
+                    dispatcher=config.get("dispatcher"),
+                )
+                if result.get("success"):
+                    pages = result.get("results", [])
+                    step_output = f"Deep crawl: {len(pages)} pages found"
+                else:
+                    step_output = f"Deep crawl failed: {result.get('error', 'unknown')}"
+            else:
+                step_output = "No valid URL for deep crawl"
+            return {"type": "deep_crawl", "output": step_output}
+
         # ---- Content Studio step ----
         elif step_type == "content_studio":
             text = config.get("text", previous_output or "")

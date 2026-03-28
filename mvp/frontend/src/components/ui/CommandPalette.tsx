@@ -48,6 +48,8 @@ const COMMANDS: CommandItem[] = [
   { id: 'presentations', label: 'Presentations', description: 'AI slide deck generator', href: '/presentations', icon: 'presentation', color: '#14b8a6', category: 'Content & Media', keywords: ['slides', 'powerpoint', 'presentation', 'deck'] },
   { id: 'audio-studio', label: 'Audio Studio', description: 'Audio editing and processing', href: '/audio-studio', icon: 'waveform', color: '#a855f7', category: 'Content & Media', keywords: ['audio', 'edit', 'noise', 'podcast'] },
   { id: 'social', label: 'Social Publisher', description: 'Multi-platform social publishing', href: '/social', icon: 'share', color: '#3b82f6', category: 'Content & Media', keywords: ['social', 'twitter', 'instagram', 'publish', 'schedule'] },
+  { id: 'batch-crawl', label: 'Batch Crawl', description: 'Crawl multiple URLs in parallel with proxy rotation', href: '/web-crawler?tab=batch', icon: 'globe', color: '#764ba2', category: 'Content & Media', keywords: ['crawl', 'batch', 'parallel', 'proxy', 'scrape', 'urls'] },
+  { id: 'deep-crawl', label: 'Deep Crawl', description: 'Spider a full site with BestFirst strategy', href: '/web-crawler?tab=deep', icon: 'globe', color: '#764ba2', category: 'Content & Media', keywords: ['crawl', 'deep', 'spider', 'site', 'bestfirst', 'scrape'] },
   // Intelligence
   { id: 'crews', label: 'Multi-Agent Crews', description: '9 roles, autonomous multi-agent teams', href: '/crews', icon: 'users', color: '#6366f1', category: 'Intelligence', keywords: ['crew', 'multi', 'agent', 'team', 'autonomous'] },
   { id: 'memory', label: 'AI Memory', description: 'Persistent memory and context', href: '/memory', icon: 'brain', color: '#8b5cf6', category: 'Intelligence', keywords: ['memory', 'context', 'remember', 'persist'] },

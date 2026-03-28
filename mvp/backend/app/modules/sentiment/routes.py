@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.auth import get_current_user
+from app.modules.auth_guards.middleware import require_verified_email
 from app.database import get_session
 from app.models.user import User
 from app.models.transcription import Transcription, TranscriptionStatus

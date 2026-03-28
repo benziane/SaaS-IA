@@ -9,6 +9,7 @@ from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.auth import get_current_user
+from app.modules.auth_guards.middleware import require_verified_email
 from app.database import get_session
 from app.models.user import User
 from app.modules.workspaces.schemas import (
@@ -33,7 +34,7 @@ router = APIRouter()
 async def create_workspace(
     request: Request,
     body: WorkspaceCreate,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """Create a new workspace. The creator becomes the owner."""
@@ -107,7 +108,7 @@ async def update_workspace(
     request: Request,
     workspace_id: UUID,
     body: WorkspaceUpdate,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """Update workspace (owner only)."""
@@ -129,7 +130,7 @@ async def update_workspace(
 async def delete_workspace(
     request: Request,
     workspace_id: UUID,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """Delete workspace (owner only)."""
@@ -145,7 +146,7 @@ async def invite_member(
     request: Request,
     workspace_id: UUID,
     body: InviteRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """Invite a user to the workspace by email (owner only)."""
@@ -194,7 +195,7 @@ async def remove_member(
     request: Request,
     workspace_id: UUID,
     user_id: UUID,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """Remove a member from workspace (owner only)."""
@@ -210,7 +211,7 @@ async def share_item(
     request: Request,
     workspace_id: UUID,
     body: ShareItemRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """Share a transcription, pipeline, or document with the workspace."""
@@ -244,7 +245,7 @@ async def add_comment(
     request: Request,
     item_id: UUID,
     body: CommentCreate,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """Add a comment to a shared item."""

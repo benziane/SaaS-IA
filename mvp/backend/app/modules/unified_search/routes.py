@@ -6,6 +6,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from starlette import status
 
 from app.auth import get_current_user
+from app.modules.auth_guards.middleware import require_verified_email
 from app.database import get_session
 from app.models.user import Role, User
 from app.modules.unified_search.service import UnifiedSearchService, is_meilisearch_available
@@ -62,7 +63,7 @@ async def index_document(
     doc_id: str = Body(..., description="Unique document identifier"),
     content: str = Body(..., description="Text content to index"),
     metadata: Optional[dict] = Body(None, description="Extra metadata fields"),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
 ):
     """Index a document in Meilisearch for fast search."""
     meta = metadata or {}
@@ -76,7 +77,7 @@ async def index_document(
 async def reindex_module(
     request: Request,
     module_name: str,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """Rebuild Meilisearch index for a specific module from PostgreSQL data."""

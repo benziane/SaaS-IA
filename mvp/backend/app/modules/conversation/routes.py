@@ -17,6 +17,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 import structlog
 
 from app.auth import get_current_user
+from app.modules.auth_guards.middleware import require_verified_email
 from app.database import get_session
 from app.models.user import User
 from app.modules.billing.service import BillingService
@@ -130,7 +131,7 @@ def _build_chat_prompt(messages: list[Message], rag_context: str = "") -> str:
 async def create_conversation(
     request: Request,
     body: ConversationCreate,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """
@@ -320,7 +321,7 @@ async def get_conversation(
 async def delete_conversation(
     request: Request,
     conversation_id: UUID,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """

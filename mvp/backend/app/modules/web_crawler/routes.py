@@ -1,11 +1,12 @@
 """
-Web crawler API routes — v5.
+Web crawler API routes — v8.
 """
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.auth import get_current_user
+from app.modules.auth_guards.middleware import require_verified_email
 from app.database import get_session
 from app.models.user import User
 from app.modules.billing.middleware import require_ai_call_quota
@@ -48,6 +49,25 @@ from app.modules.web_crawler.schemas import (
     TableData,
     VideoData,
     XPathExtractRequest,
+    C4ACompileRequest,
+    C4ACompileResponse,
+    C4ACompileFileRequest,
+    C4AValidateRequest,
+    C4AValidateResponse,
+    BrowserProfileCreateRequest,
+    BrowserProfileResponse,
+    DockerCrawlRequest,
+    DockerCrawlResponse,
+    DockerCrawlResult,
+    PdfScrapeRequest,
+    PdfScrapeResponse,
+    CosineExtractRequest,
+    CosineExtractResponse,
+    CosineCluster,
+    LxmlExtractRequest,
+    LxmlExtractResponse,
+    RegexChunkRequest,
+    RegexChunkResponse,
 )
 from app.modules.web_crawler.service import WebCrawlerService
 from app.rate_limit import limiter
@@ -60,7 +80,7 @@ router = APIRouter()
 async def scrape_url(
     request: Request,
     body: ScrapeRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
 ):
     """
     Scrape a URL with the full crawl4ai feature set.
@@ -146,6 +166,10 @@ async def scrape_url(
         # New v5
         geolocation=body.geolocation.model_dump() if body.geolocation else None,
         table_extraction_mode=body.table_extraction_mode,
+        # New v7
+        content_filter_mode=body.content_filter_mode,
+        proxies=[p.model_dump() for p in body.proxies] if body.proxies else None,
+        antibot_retry=body.antibot_retry,
     )
 
     return ScrapeResponse(
@@ -260,7 +284,7 @@ async def index_url(
 async def extract_structured(
     request: Request,
     body: ExtractRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
 ):
     """
     Extract structured data from a page using a CSS selector schema.
@@ -331,7 +355,7 @@ async def extract_with_llm(
 async def extract_regex(
     request: Request,
     body: RegexExtractRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
 ):
     """
     Extract structured data from a page using regex patterns.
@@ -369,7 +393,7 @@ async def extract_regex(
 async def extract_xpath(
     request: Request,
     body: XPathExtractRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
 ):
     """
     Extract structured data from a page using XPath selectors.
@@ -443,7 +467,7 @@ async def generate_schema(
 async def process_html(
     request: Request,
     body: ProcessHtmlRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
 ):
     """
     Process raw HTML without a browser fetch.
@@ -480,7 +504,7 @@ async def process_html(
 async def batch_scrape(
     request: Request,
     body: BatchScrapeRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
 ):
     """
     Scrape up to 10 URLs in parallel using crawl4ai's MemoryAdaptiveDispatcher.
@@ -494,6 +518,8 @@ async def batch_scrape(
         urls=body.urls,
         use_fit_markdown=body.use_fit_markdown,
         extract_images=body.extract_images,
+        dispatcher_config=body.dispatcher.model_dump() if body.dispatcher else None,
+        proxies=[p.model_dump() for p in body.proxies] if body.proxies else None,
     )
 
     return BatchScrapeResponse(
@@ -501,6 +527,7 @@ async def batch_scrape(
         succeeded=result.get("succeeded", 0),
         failed=result.get("failed", 0),
         results=[BatchScrapeResult(**r) for r in result.get("results", [])],
+        monitor_stats=result.get("monitor_stats"),
     )
 
 
@@ -551,6 +578,11 @@ async def deep_crawl(
         seo_filter=body.seo_filter,
         seo_filter_threshold=body.seo_filter_threshold,
         resume_state=body.resume_state,
+        # v7
+        composite_scorers=body.composite_scorers or None,
+        domain_authority_weights=body.domain_authority_weights or None,
+        dispatcher_config=body.dispatcher.model_dump() if body.dispatcher else None,
+        proxies=[p.model_dump() for p in body.proxies] if body.proxies else None,
     )
 
     pages_crawled = result.get("total_pages", 1)
@@ -566,6 +598,7 @@ async def deep_crawl(
         succeeded=result.get("succeeded", 0),
         failed=result.get("failed", 0),
         export_state=result.get("export_state"),
+        monitor_stats=result.get("monitor_stats"),
         success=result.get("success", False),
         error=result.get("error"),
     )
@@ -576,7 +609,7 @@ async def deep_crawl(
 async def seed_urls(
     request: Request,
     body: SeedRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
 ):
     """
     Discover all URLs for a domain via sitemap or crawl-based seeding.
@@ -620,7 +653,7 @@ async def seed_urls(
 async def scrape_http(
     request: Request,
     body: FastScrapeRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
 ):
     """
     Scrape a URL using pure HTTP — no browser, no JavaScript.
@@ -705,7 +738,7 @@ async def adaptive_crawl(
 async def hub_crawl(
     request: Request,
     body: HubCrawlRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
 ):
     """
     Crawl a URL using a CrawlerHub site profile.
@@ -729,3 +762,216 @@ async def hub_crawl(
         success=result.get("success", False),
         error=result.get("error"),
     )
+
+
+@router.post("/c4a/compile", response_model=C4ACompileResponse)
+@limiter.limit("20/minute")
+async def compile_c4a_script(
+    request: Request,
+    body: C4ACompileRequest,
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Compile C4A-Script DSL to JavaScript.
+
+    C4A-Script is a simple DSL for page interactions (click, type, wait, scroll).
+    The compiled JavaScript can be used in `js_code` or `js_code_before_wait`
+    fields of the /scrape endpoint.
+
+    Rate limit: 20/minute
+    """
+    result = WebCrawlerService.compile_c4a(script=body.script)
+    return C4ACompileResponse(
+        js_code=result.get("js_code", ""),
+        success=result.get("success", False),
+        error=result.get("error"),
+    )
+
+
+@router.post("/c4a/validate", response_model=C4AValidateResponse)
+@limiter.limit("30/minute")
+async def validate_c4a_script(
+    request: Request,
+    body: C4AValidateRequest,
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Validate C4A-Script syntax without compiling.
+
+    Returns whether the script is valid and any syntax errors found.
+
+    Rate limit: 30/minute
+    """
+    result = WebCrawlerService.validate_c4a(script=body.script)
+    return C4AValidateResponse(
+        valid=result.get("valid", False),
+        errors=result.get("errors", []),
+    )
+
+
+@router.post("/c4a/compile-file", response_model=C4ACompileResponse)
+@limiter.limit("20/minute")
+async def compile_c4a_file(
+    request: Request,
+    body: C4ACompileFileRequest,
+    current_user: User = Depends(get_current_user),
+):
+    """Compile a C4A-Script file to JavaScript. Rate limit: 20/minute"""
+    result = WebCrawlerService.compile_c4a_file(file_path=body.file_path)
+    return C4ACompileResponse(
+        js_code=result.get("js_code", ""),
+        success=result.get("success", False),
+        error=result.get("error"),
+    )
+
+
+# ------------------------------------------------------------------
+# Browser profiler
+# ------------------------------------------------------------------
+
+@router.get("/profiles", response_model=BrowserProfileResponse)
+@limiter.limit("10/minute")
+async def list_browser_profiles(
+    request: Request,
+    current_user: User = Depends(get_current_user),
+):
+    """List all persistent browser profiles. Rate limit: 10/minute"""
+    result = WebCrawlerService.list_browser_profiles()
+    return BrowserProfileResponse(**result)
+
+
+@router.post("/profiles", response_model=BrowserProfileResponse)
+@limiter.limit("5/minute")
+async def create_browser_profile(
+    request: Request,
+    body: BrowserProfileCreateRequest,
+    current_user: User = Depends(get_current_user),
+):
+    """Create a persistent browser profile. Rate limit: 5/minute"""
+    result = WebCrawlerService.create_browser_profile(profile_name=body.profile_name)
+    return BrowserProfileResponse(**result)
+
+
+@router.delete("/profiles/{profile_name}", response_model=BrowserProfileResponse)
+@limiter.limit("5/minute")
+async def delete_browser_profile(
+    request: Request,
+    profile_name: str,
+    current_user: User = Depends(get_current_user),
+):
+    """Delete a persistent browser profile. Rate limit: 5/minute"""
+    result = WebCrawlerService.delete_browser_profile(profile_name=profile_name)
+    return BrowserProfileResponse(**result)
+
+
+# ------------------------------------------------------------------
+# Docker remote crawl
+# ------------------------------------------------------------------
+
+@router.post("/docker-crawl", response_model=DockerCrawlResponse)
+@limiter.limit("3/minute")
+async def docker_crawl(
+    request: Request,
+    body: DockerCrawlRequest,
+    current_user: User = Depends(get_current_user),
+):
+    """Crawl URLs via a remote crawl4ai Docker container. Rate limit: 3/minute"""
+    result = await WebCrawlerService.docker_crawl(
+        urls=body.urls,
+        docker_url=body.docker_url,
+        timeout=body.timeout,
+    )
+    return DockerCrawlResponse(
+        total=result.get("total", 0),
+        succeeded=result.get("succeeded", 0),
+        failed=result.get("failed", 0),
+        results=[DockerCrawlResult(**r) for r in result.get("results", [])],
+        success=result.get("success", False),
+        error=result.get("error"),
+    )
+
+
+# ------------------------------------------------------------------
+# PDF scraping
+# ------------------------------------------------------------------
+
+@router.post("/scrape-pdf", response_model=PdfScrapeResponse)
+@limiter.limit("5/minute")
+async def scrape_pdf(
+    request: Request,
+    body: PdfScrapeRequest,
+    current_user: User = Depends(get_current_user),
+):
+    """Scrape PDF content using crawl4ai's PDFContentScrapingStrategy. Rate limit: 5/minute"""
+    result = await WebCrawlerService.scrape_pdf(
+        url=body.url,
+        extract_images=body.extract_images,
+    )
+    return PdfScrapeResponse(**result)
+
+
+# ------------------------------------------------------------------
+# Cosine clustering extraction
+# ------------------------------------------------------------------
+
+@router.post("/extract-cosine", response_model=CosineExtractResponse)
+@limiter.limit("5/minute")
+async def extract_cosine(
+    request: Request,
+    body: CosineExtractRequest,
+    current_user: User = Depends(get_current_user),
+):
+    """Extract content clusters using CosineStrategy (semantic similarity). Rate limit: 5/minute"""
+    result = await WebCrawlerService.extract_cosine(
+        url=body.url,
+        word_count_threshold=body.word_count_threshold,
+        max_dist=body.max_dist,
+        top_k=body.top_k,
+        sim_threshold=body.sim_threshold,
+        semantic_filter=body.semantic_filter,
+    )
+    return CosineExtractResponse(
+        url=result["url"],
+        clusters=[CosineCluster(**c) for c in result.get("clusters", [])],
+        total_clusters=result.get("total_clusters", 0),
+        success=result.get("success", False),
+        error=result.get("error"),
+    )
+
+
+# ------------------------------------------------------------------
+# JSON lxml extraction
+# ------------------------------------------------------------------
+
+@router.post("/extract-lxml", response_model=LxmlExtractResponse)
+@limiter.limit("5/minute")
+async def extract_lxml(
+    request: Request,
+    body: LxmlExtractRequest,
+    current_user: User = Depends(get_current_user),
+):
+    """Extract structured data using JsonLxmlExtractionStrategy. Rate limit: 5/minute"""
+    result = await WebCrawlerService.extract_lxml(
+        url=body.url,
+        schema=body.schema,
+    )
+    return LxmlExtractResponse(**result)
+
+
+# ------------------------------------------------------------------
+# Regex chunking
+# ------------------------------------------------------------------
+
+@router.post("/chunk-regex", response_model=RegexChunkResponse)
+@limiter.limit("20/minute")
+async def chunk_regex(
+    request: Request,
+    body: RegexChunkRequest,
+    current_user: User = Depends(get_current_user),
+):
+    """Split text into chunks using RegexChunking. Rate limit: 20/minute"""
+    result = WebCrawlerService.chunk_regex(
+        text=body.text,
+        patterns=body.patterns,
+    )
+    return RegexChunkResponse(**result)

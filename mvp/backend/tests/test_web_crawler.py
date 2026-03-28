@@ -4439,3 +4439,1588 @@ class TestWebCrawlerRoutesV6:
 
         kw = mock_svc.call_args.kwargs
         assert kw["browser_type"] == "undetected"
+
+
+# ---------------------------------------------------------------------------
+# V7 — Schema tests (CrawlProxyConfig, BatchDispatcherConfig, content_filter_mode,
+#        antibot_retry, C4ACompile*, C4AValidate*, composite_scorers)
+# ---------------------------------------------------------------------------
+
+class TestWebCrawlerSchemasV7:
+
+    # -- CrawlProxyConfig --
+
+    def test_proxy_config_valid(self):
+        from app.modules.web_crawler.schemas import CrawlProxyConfig
+        p = CrawlProxyConfig(server="http://proxy:8080")
+        assert p.server == "http://proxy:8080"
+        assert p.username is None
+        assert p.password is None
+
+    def test_proxy_config_with_auth(self):
+        from app.modules.web_crawler.schemas import CrawlProxyConfig
+        p = CrawlProxyConfig(server="socks5://proxy:1080", username="user", password="pass")
+        assert p.username == "user"
+        assert p.password == "pass"
+
+    def test_proxy_config_missing_server(self):
+        from pydantic import ValidationError
+        from app.modules.web_crawler.schemas import CrawlProxyConfig
+        with pytest.raises(ValidationError):
+            CrawlProxyConfig()
+
+    def test_proxy_config_empty_server(self):
+        from pydantic import ValidationError
+        from app.modules.web_crawler.schemas import CrawlProxyConfig
+        with pytest.raises(ValidationError):
+            CrawlProxyConfig(server="")
+
+    # -- BatchDispatcherConfig --
+
+    def test_dispatcher_config_defaults(self):
+        from app.modules.web_crawler.schemas import BatchDispatcherConfig
+        d = BatchDispatcherConfig()
+        assert d.max_session_permit == 20
+        assert d.memory_threshold_percent == 90.0
+        assert d.rate_limit_base_delay_min == 1.0
+        assert d.rate_limit_base_delay_max == 3.0
+        assert d.rate_limit_max_delay == 60.0
+
+    def test_dispatcher_config_custom(self):
+        from app.modules.web_crawler.schemas import BatchDispatcherConfig
+        d = BatchDispatcherConfig(
+            max_session_permit=5,
+            memory_threshold_percent=80.0,
+            rate_limit_base_delay_min=0.5,
+            rate_limit_base_delay_max=2.0,
+            rate_limit_max_delay=30.0,
+        )
+        assert d.max_session_permit == 5
+        assert d.memory_threshold_percent == 80.0
+        assert d.rate_limit_base_delay_min == 0.5
+
+    def test_dispatcher_config_memory_threshold_too_low(self):
+        from pydantic import ValidationError
+        from app.modules.web_crawler.schemas import BatchDispatcherConfig
+        with pytest.raises(ValidationError):
+            BatchDispatcherConfig(memory_threshold_percent=49.9)
+
+    def test_dispatcher_config_memory_threshold_too_high(self):
+        from pydantic import ValidationError
+        from app.modules.web_crawler.schemas import BatchDispatcherConfig
+        with pytest.raises(ValidationError):
+            BatchDispatcherConfig(memory_threshold_percent=99.1)
+
+    # -- ScrapeRequest new fields --
+
+    def test_scrape_request_content_filter_mode_default(self):
+        from app.modules.web_crawler.schemas import ScrapeRequest
+        r = ScrapeRequest(url="https://example.com")
+        assert r.content_filter_mode == "pruning"
+
+    def test_scrape_request_content_filter_mode_bm25(self):
+        from app.modules.web_crawler.schemas import ScrapeRequest
+        r = ScrapeRequest(url="https://example.com", content_filter_mode="bm25")
+        assert r.content_filter_mode == "bm25"
+
+    def test_scrape_request_content_filter_mode_llm(self):
+        from app.modules.web_crawler.schemas import ScrapeRequest
+        r = ScrapeRequest(url="https://example.com", content_filter_mode="llm")
+        assert r.content_filter_mode == "llm"
+
+    def test_scrape_request_content_filter_mode_invalid(self):
+        from pydantic import ValidationError
+        from app.modules.web_crawler.schemas import ScrapeRequest
+        with pytest.raises(ValidationError):
+            ScrapeRequest(url="https://example.com", content_filter_mode="auto")
+
+    def test_scrape_request_antibot_retry_default(self):
+        from app.modules.web_crawler.schemas import ScrapeRequest
+        r = ScrapeRequest(url="https://example.com")
+        assert r.antibot_retry is False
+
+    def test_scrape_request_antibot_retry_enabled(self):
+        from app.modules.web_crawler.schemas import ScrapeRequest
+        r = ScrapeRequest(url="https://example.com", antibot_retry=True)
+        assert r.antibot_retry is True
+
+    def test_scrape_request_with_proxies(self):
+        from app.modules.web_crawler.schemas import ScrapeRequest, CrawlProxyConfig
+        r = ScrapeRequest(
+            url="https://example.com",
+            proxies=[
+                CrawlProxyConfig(server="http://proxy1:8080"),
+                CrawlProxyConfig(server="http://proxy2:8080", username="u", password="p"),
+            ],
+        )
+        assert len(r.proxies) == 2
+        assert r.proxies[0].server == "http://proxy1:8080"
+        assert r.proxies[1].username == "u"
+
+    def test_scrape_request_proxies_none_by_default(self):
+        from app.modules.web_crawler.schemas import ScrapeRequest
+        r = ScrapeRequest(url="https://example.com")
+        assert r.proxies is None
+
+    # -- BatchScrapeRequest new fields --
+
+    def test_batch_request_with_dispatcher(self):
+        from app.modules.web_crawler.schemas import BatchScrapeRequest, BatchDispatcherConfig
+        r = BatchScrapeRequest(
+            urls=["https://a.com"],
+            dispatcher=BatchDispatcherConfig(max_session_permit=10),
+        )
+        assert r.dispatcher is not None
+        assert r.dispatcher.max_session_permit == 10
+
+    def test_batch_request_with_proxies(self):
+        from app.modules.web_crawler.schemas import BatchScrapeRequest, CrawlProxyConfig
+        r = BatchScrapeRequest(
+            urls=["https://a.com"],
+            proxies=[CrawlProxyConfig(server="http://proxy:8080")],
+        )
+        assert len(r.proxies) == 1
+
+    def test_batch_response_with_monitor_stats(self):
+        from app.modules.web_crawler.schemas import BatchScrapeResponse
+        r = BatchScrapeResponse(
+            total=2, succeeded=2, failed=0,
+            monitor_stats={"memory_mb": 512, "tasks_done": 2},
+        )
+        assert r.monitor_stats["memory_mb"] == 512
+
+    def test_batch_response_monitor_stats_none_by_default(self):
+        from app.modules.web_crawler.schemas import BatchScrapeResponse
+        r = BatchScrapeResponse(total=1, succeeded=1, failed=0)
+        assert r.monitor_stats is None
+
+    # -- DeepCrawlRequest new fields --
+
+    def test_deep_crawl_request_composite_scorers(self):
+        from app.modules.web_crawler.schemas import DeepCrawlRequest
+        r = DeepCrawlRequest(
+            url="https://example.com",
+            strategy="best_first",
+            composite_scorers=["domain_authority", "freshness", "path_depth"],
+        )
+        assert r.composite_scorers == ["domain_authority", "freshness", "path_depth"]
+
+    def test_deep_crawl_request_composite_scorers_none_by_default(self):
+        from app.modules.web_crawler.schemas import DeepCrawlRequest
+        r = DeepCrawlRequest(url="https://example.com")
+        assert r.composite_scorers is None
+
+    def test_deep_crawl_request_domain_authority_weights(self):
+        from app.modules.web_crawler.schemas import DeepCrawlRequest
+        r = DeepCrawlRequest(
+            url="https://example.com",
+            domain_authority_weights={"docs.python.org": 0.9, "pypi.org": 0.7},
+        )
+        assert r.domain_authority_weights["docs.python.org"] == 0.9
+
+    def test_deep_crawl_request_with_dispatcher(self):
+        from app.modules.web_crawler.schemas import DeepCrawlRequest, BatchDispatcherConfig
+        r = DeepCrawlRequest(
+            url="https://example.com",
+            dispatcher=BatchDispatcherConfig(max_session_permit=5),
+        )
+        assert r.dispatcher.max_session_permit == 5
+
+    def test_deep_crawl_request_with_proxies(self):
+        from app.modules.web_crawler.schemas import DeepCrawlRequest, CrawlProxyConfig
+        r = DeepCrawlRequest(
+            url="https://example.com",
+            proxies=[CrawlProxyConfig(server="http://proxy:8080")],
+        )
+        assert len(r.proxies) == 1
+
+    def test_deep_crawl_response_monitor_stats(self):
+        from app.modules.web_crawler.schemas import DeepCrawlResponse
+        r = DeepCrawlResponse(
+            url="https://example.com",
+            monitor_stats={"urls_crawled": 10, "memory_mb": 256},
+        )
+        assert r.monitor_stats["urls_crawled"] == 10
+
+    def test_deep_crawl_response_monitor_stats_none_by_default(self):
+        from app.modules.web_crawler.schemas import DeepCrawlResponse
+        r = DeepCrawlResponse(url="https://example.com")
+        assert r.monitor_stats is None
+
+    # -- C4A schemas --
+
+    def test_c4a_compile_request_valid(self):
+        from app.modules.web_crawler.schemas import C4ACompileRequest
+        r = C4ACompileRequest(script="click('.btn')")
+        assert r.script == "click('.btn')"
+
+    def test_c4a_compile_request_empty_script(self):
+        from pydantic import ValidationError
+        from app.modules.web_crawler.schemas import C4ACompileRequest
+        with pytest.raises(ValidationError):
+            C4ACompileRequest(script="")
+
+    def test_c4a_compile_response_defaults(self):
+        from app.modules.web_crawler.schemas import C4ACompileResponse
+        r = C4ACompileResponse()
+        assert r.js_code == ""
+        assert r.success is True
+        assert r.error is None
+
+    def test_c4a_compile_response_with_code(self):
+        from app.modules.web_crawler.schemas import C4ACompileResponse
+        r = C4ACompileResponse(js_code="document.querySelector('.btn').click()", success=True)
+        assert "click" in r.js_code
+
+    def test_c4a_validate_request_valid(self):
+        from app.modules.web_crawler.schemas import C4AValidateRequest
+        r = C4AValidateRequest(script="wait(1000)")
+        assert r.script == "wait(1000)"
+
+    def test_c4a_validate_request_empty_script(self):
+        from pydantic import ValidationError
+        from app.modules.web_crawler.schemas import C4AValidateRequest
+        with pytest.raises(ValidationError):
+            C4AValidateRequest(script="")
+
+    def test_c4a_validate_response_defaults(self):
+        from app.modules.web_crawler.schemas import C4AValidateResponse
+        r = C4AValidateResponse()
+        assert r.valid is True
+        assert r.errors == []
+
+    def test_c4a_validate_response_with_errors(self):
+        from app.modules.web_crawler.schemas import C4AValidateResponse
+        r = C4AValidateResponse(valid=False, errors=["unexpected token at line 3"])
+        assert r.valid is False
+        assert len(r.errors) == 1
+
+
+# ---------------------------------------------------------------------------
+# V7 — Service tests (compile_c4a, validate_c4a)
+# ---------------------------------------------------------------------------
+
+class TestWebCrawlerServiceV7:
+
+    # -- compile_c4a --
+
+    def test_compile_c4a_happy_path(self):
+        from app.modules.web_crawler.service import WebCrawlerService
+
+        mock_result = MagicMock()
+        mock_result.js_code = "document.querySelector('.btn').click();"
+
+        with patch("crawl4ai.c4a_compile", return_value=mock_result):
+            result = WebCrawlerService.compile_c4a(script="click('.btn')")
+
+        assert result["success"] is True
+        assert result["js_code"] == "document.querySelector('.btn').click();"
+
+    def test_compile_c4a_no_js_code(self):
+        from app.modules.web_crawler.service import WebCrawlerService
+
+        mock_result = MagicMock()
+        mock_result.js_code = ""
+        mock_result.error = "Syntax error on line 1"
+
+        with patch("crawl4ai.c4a_compile", return_value=mock_result):
+            result = WebCrawlerService.compile_c4a(script="bad script")
+
+        assert result["success"] is False
+        assert "Syntax error" in result["error"]
+
+    def test_compile_c4a_import_error(self):
+        from app.modules.web_crawler.service import WebCrawlerService
+
+        with patch("crawl4ai.c4a_compile", side_effect=ImportError("no c4a_compile")):
+            result = WebCrawlerService.compile_c4a(script="click('.btn')")
+
+        assert result["success"] is False
+        assert "crawl4ai" in result["error"]
+
+    def test_compile_c4a_exception(self):
+        from app.modules.web_crawler.service import WebCrawlerService
+
+        with patch("crawl4ai.c4a_compile", side_effect=RuntimeError("unexpected")):
+            result = WebCrawlerService.compile_c4a(script="click('.btn')")
+
+        assert result["success"] is False
+        assert "unexpected" in result["error"]
+
+    # -- validate_c4a --
+
+    def test_validate_c4a_happy_path(self):
+        from app.modules.web_crawler.service import WebCrawlerService
+
+        mock_result = MagicMock()
+        mock_result.valid = True
+        mock_result.errors = []
+
+        with patch("crawl4ai.c4a_validate", return_value=mock_result):
+            result = WebCrawlerService.validate_c4a(script="click('.btn')")
+
+        assert result["valid"] is True
+        assert result["errors"] == []
+
+    def test_validate_c4a_invalid_script(self):
+        from app.modules.web_crawler.service import WebCrawlerService
+
+        mock_result = MagicMock()
+        mock_result.valid = False
+        mock_result.errors = ["unexpected token at line 2", "missing argument"]
+
+        with patch("crawl4ai.c4a_validate", return_value=mock_result):
+            result = WebCrawlerService.validate_c4a(script="bad script")
+
+        assert result["valid"] is False
+        assert len(result["errors"]) == 2
+        assert "unexpected token" in result["errors"][0]
+
+    def test_validate_c4a_import_error(self):
+        from app.modules.web_crawler.service import WebCrawlerService
+
+        with patch("crawl4ai.c4a_validate", side_effect=ImportError("no c4a_validate")):
+            result = WebCrawlerService.validate_c4a(script="click('.btn')")
+
+        assert result["valid"] is False
+        assert "crawl4ai" in result["errors"][0]
+
+    def test_validate_c4a_exception(self):
+        from app.modules.web_crawler.service import WebCrawlerService
+
+        with patch("crawl4ai.c4a_validate", side_effect=RuntimeError("parser crash")):
+            result = WebCrawlerService.validate_c4a(script="click('.btn')")
+
+        assert result["valid"] is False
+        assert "parser crash" in result["errors"][0]
+
+
+# ---------------------------------------------------------------------------
+# V7 — Route tests (/c4a/compile, /c4a/validate, /scrape v7, /batch v7,
+#        /deep-crawl v7)
+# ---------------------------------------------------------------------------
+
+class TestWebCrawlerRoutesV7:
+
+    @pytest.fixture(autouse=True)
+    def _override_deps(self, app, test_user):
+        from fastapi import HTTPException, Request
+        from fastapi.security.utils import get_authorization_scheme_param
+        from app.auth import get_current_user
+        from app.database import get_session
+        from app.modules.billing.middleware import require_ai_call_quota
+        from app.rate_limit import limiter
+
+        try:
+            limiter._storage.reset()
+        except Exception:
+            pass
+
+        def _auth_override(request: Request):
+            auth = request.headers.get("Authorization", "")
+            _, token = get_authorization_scheme_param(auth)
+            if not token:
+                raise HTTPException(status_code=401, detail="Not authenticated")
+            return test_user
+
+        def _mock_session():
+            yield MagicMock()
+
+        app.dependency_overrides[get_current_user] = _auth_override
+        app.dependency_overrides[require_ai_call_quota] = _auth_override
+        app.dependency_overrides[get_session] = _mock_session
+
+        with patch("app.modules.web_crawler.service.init_crawler", new_callable=AsyncMock), \
+             patch("app.modules.web_crawler.service.close_crawler", new_callable=AsyncMock):
+            yield
+
+        app.dependency_overrides.clear()
+
+    # -- /c4a/compile --
+
+    @pytest.mark.asyncio
+    async def test_c4a_compile_success(self, client, auth_headers):
+        compile_result = {"js_code": "document.querySelector('.btn').click();", "success": True, "error": None}
+
+        with patch("app.modules.web_crawler.service.WebCrawlerService.compile_c4a",
+                   return_value=compile_result):
+            response = await client.post(
+                "/api/crawler/c4a/compile",
+                json={"script": "click('.btn')"},
+                headers=auth_headers,
+            )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["success"] is True
+        assert "click" in data["js_code"]
+
+    @pytest.mark.asyncio
+    async def test_c4a_compile_unauthorized(self, client):
+        response = await client.post(
+            "/api/crawler/c4a/compile",
+            json={"script": "click('.btn')"},
+        )
+        assert response.status_code == 401
+
+    @pytest.mark.asyncio
+    async def test_c4a_compile_empty_script(self, client, auth_headers):
+        response = await client.post(
+            "/api/crawler/c4a/compile",
+            json={"script": ""},
+            headers=auth_headers,
+        )
+        assert response.status_code == 422
+
+    @pytest.mark.asyncio
+    async def test_c4a_compile_service_error(self, client, auth_headers):
+        compile_result = {"js_code": "", "success": False, "error": "Syntax error"}
+
+        with patch("app.modules.web_crawler.service.WebCrawlerService.compile_c4a",
+                   return_value=compile_result):
+            response = await client.post(
+                "/api/crawler/c4a/compile",
+                json={"script": "bad script"},
+                headers=auth_headers,
+            )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["success"] is False
+        assert data["error"] == "Syntax error"
+
+    # -- /c4a/validate --
+
+    @pytest.mark.asyncio
+    async def test_c4a_validate_success(self, client, auth_headers):
+        validate_result = {"valid": True, "errors": []}
+
+        with patch("app.modules.web_crawler.service.WebCrawlerService.validate_c4a",
+                   return_value=validate_result):
+            response = await client.post(
+                "/api/crawler/c4a/validate",
+                json={"script": "click('.btn')"},
+                headers=auth_headers,
+            )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["valid"] is True
+        assert data["errors"] == []
+
+    @pytest.mark.asyncio
+    async def test_c4a_validate_unauthorized(self, client):
+        response = await client.post(
+            "/api/crawler/c4a/validate",
+            json={"script": "click('.btn')"},
+        )
+        assert response.status_code == 401
+
+    @pytest.mark.asyncio
+    async def test_c4a_validate_empty_script(self, client, auth_headers):
+        response = await client.post(
+            "/api/crawler/c4a/validate",
+            json={"script": ""},
+            headers=auth_headers,
+        )
+        assert response.status_code == 422
+
+    @pytest.mark.asyncio
+    async def test_c4a_validate_invalid_script_response(self, client, auth_headers):
+        validate_result = {"valid": False, "errors": ["unexpected token at line 3"]}
+
+        with patch("app.modules.web_crawler.service.WebCrawlerService.validate_c4a",
+                   return_value=validate_result):
+            response = await client.post(
+                "/api/crawler/c4a/validate",
+                json={"script": "bad_script_here"},
+                headers=auth_headers,
+            )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["valid"] is False
+        assert "unexpected token" in data["errors"][0]
+
+    # -- /scrape with v7 params --
+
+    @pytest.mark.asyncio
+    async def test_scrape_content_filter_mode_forwarded(self, client, auth_headers):
+        scrape_result = {
+            "url": "https://example.com", "title": "", "markdown": "",
+            "fit_markdown": "", "text_length": 0, "images": [], "image_count": 0,
+            "audio": [], "video": [], "screenshot_base64": None, "pdf_base64": None,
+            "mhtml": None, "links_internal": [], "links_external": [], "tables": [],
+            "network_requests": [], "console_messages": [], "ssl_certificate": None,
+            "status_code": 200, "redirected_url": None,
+            "success": True, "scraper": "crawl4ai", "error": None,
+        }
+
+        with patch("app.modules.web_crawler.service.WebCrawlerService.scrape",
+                   new=AsyncMock(return_value=scrape_result)) as mock_scrape:
+            response = await client.post(
+                "/api/crawler/scrape",
+                json={"url": "https://example.com", "content_filter_mode": "llm"},
+                headers=auth_headers,
+            )
+
+        assert response.status_code == 200
+        kw = mock_scrape.call_args.kwargs
+        assert kw["content_filter_mode"] == "llm"
+
+    @pytest.mark.asyncio
+    async def test_scrape_antibot_retry_forwarded(self, client, auth_headers):
+        scrape_result = {
+            "url": "https://example.com", "title": "", "markdown": "",
+            "fit_markdown": "", "text_length": 0, "images": [], "image_count": 0,
+            "audio": [], "video": [], "screenshot_base64": None, "pdf_base64": None,
+            "mhtml": None, "links_internal": [], "links_external": [], "tables": [],
+            "network_requests": [], "console_messages": [], "ssl_certificate": None,
+            "status_code": 200, "redirected_url": None,
+            "success": True, "scraper": "crawl4ai", "error": None,
+        }
+
+        with patch("app.modules.web_crawler.service.WebCrawlerService.scrape",
+                   new=AsyncMock(return_value=scrape_result)) as mock_scrape:
+            response = await client.post(
+                "/api/crawler/scrape",
+                json={"url": "https://example.com", "antibot_retry": True},
+                headers=auth_headers,
+            )
+
+        assert response.status_code == 200
+        kw = mock_scrape.call_args.kwargs
+        assert kw["antibot_retry"] is True
+
+    @pytest.mark.asyncio
+    async def test_scrape_proxies_forwarded(self, client, auth_headers):
+        scrape_result = {
+            "url": "https://example.com", "title": "", "markdown": "",
+            "fit_markdown": "", "text_length": 0, "images": [], "image_count": 0,
+            "audio": [], "video": [], "screenshot_base64": None, "pdf_base64": None,
+            "mhtml": None, "links_internal": [], "links_external": [], "tables": [],
+            "network_requests": [], "console_messages": [], "ssl_certificate": None,
+            "status_code": 200, "redirected_url": None,
+            "success": True, "scraper": "crawl4ai", "error": None,
+        }
+
+        with patch("app.modules.web_crawler.service.WebCrawlerService.scrape",
+                   new=AsyncMock(return_value=scrape_result)) as mock_scrape:
+            response = await client.post(
+                "/api/crawler/scrape",
+                json={
+                    "url": "https://example.com",
+                    "proxies": [
+                        {"server": "http://proxy1:8080"},
+                        {"server": "http://proxy2:8080", "username": "u", "password": "p"},
+                    ],
+                },
+                headers=auth_headers,
+            )
+
+        assert response.status_code == 200
+        kw = mock_scrape.call_args.kwargs
+        assert kw["proxies"] is not None
+        assert len(kw["proxies"]) == 2
+        assert kw["proxies"][0]["server"] == "http://proxy1:8080"
+        assert kw["proxies"][1]["username"] == "u"
+
+    # -- /batch with dispatcher --
+
+    @pytest.mark.asyncio
+    async def test_batch_with_dispatcher_config(self, client, auth_headers):
+        batch_result = {
+            "total": 2, "succeeded": 2, "failed": 0,
+            "results": [
+                {"url": "https://a.com", "title": "A", "markdown": "# A", "success": True, "error": None},
+                {"url": "https://b.com", "title": "B", "markdown": "# B", "success": True, "error": None},
+            ],
+            "monitor_stats": {"memory_mb": 256, "tasks_done": 2},
+        }
+
+        with patch("app.modules.web_crawler.service.WebCrawlerService.batch_scrape",
+                   new=AsyncMock(return_value=batch_result)) as mock_batch:
+            response = await client.post(
+                "/api/crawler/batch",
+                json={
+                    "urls": ["https://a.com", "https://b.com"],
+                    "dispatcher": {"max_session_permit": 5, "memory_threshold_percent": 80.0},
+                },
+                headers=auth_headers,
+            )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["monitor_stats"]["memory_mb"] == 256
+        kw = mock_batch.call_args.kwargs
+        assert kw["dispatcher_config"] is not None
+        assert kw["dispatcher_config"]["max_session_permit"] == 5
+
+    @pytest.mark.asyncio
+    async def test_batch_with_proxies(self, client, auth_headers):
+        batch_result = {
+            "total": 1, "succeeded": 1, "failed": 0,
+            "results": [
+                {"url": "https://a.com", "title": "A", "markdown": "# A", "success": True, "error": None},
+            ],
+            "monitor_stats": None,
+        }
+
+        with patch("app.modules.web_crawler.service.WebCrawlerService.batch_scrape",
+                   new=AsyncMock(return_value=batch_result)) as mock_batch:
+            response = await client.post(
+                "/api/crawler/batch",
+                json={
+                    "urls": ["https://a.com"],
+                    "proxies": [{"server": "http://proxy:8080"}],
+                },
+                headers=auth_headers,
+            )
+
+        assert response.status_code == 200
+        kw = mock_batch.call_args.kwargs
+        assert kw["proxies"] is not None
+        assert len(kw["proxies"]) == 1
+
+    @pytest.mark.asyncio
+    async def test_batch_monitor_stats_none(self, client, auth_headers):
+        batch_result = {
+            "total": 1, "succeeded": 1, "failed": 0,
+            "results": [
+                {"url": "https://a.com", "title": "A", "markdown": "# A", "success": True, "error": None},
+            ],
+            "monitor_stats": None,
+        }
+
+        with patch("app.modules.web_crawler.service.WebCrawlerService.batch_scrape",
+                   new=AsyncMock(return_value=batch_result)):
+            response = await client.post(
+                "/api/crawler/batch",
+                json={"urls": ["https://a.com"]},
+                headers=auth_headers,
+            )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["monitor_stats"] is None
+
+    # -- /deep-crawl with composite scorers --
+
+    @pytest.mark.asyncio
+    async def test_deep_crawl_composite_scorers_forwarded(self, client, auth_headers):
+        deep_result = {
+            "url": "https://example.com", "strategy": "best_first",
+            "pages": [], "total_pages": 0, "succeeded": 0, "failed": 0,
+            "export_state": None, "monitor_stats": {"urls_total": 0},
+            "success": True, "error": None,
+        }
+
+        with patch("app.modules.web_crawler.service.WebCrawlerService.deep_crawl",
+                   new=AsyncMock(return_value=deep_result)) as mock_deep, \
+             patch("app.modules.web_crawler.routes.BillingService.consume_quota",
+                   new_callable=AsyncMock):
+            response = await client.post(
+                "/api/crawler/deep-crawl",
+                json={
+                    "url": "https://example.com",
+                    "strategy": "best_first",
+                    "composite_scorers": ["domain_authority", "freshness"],
+                    "domain_authority_weights": {"docs.python.org": 0.9},
+                },
+                headers=auth_headers,
+            )
+
+        assert response.status_code == 200
+        kw = mock_deep.call_args.kwargs
+        assert kw["composite_scorers"] == ["domain_authority", "freshness"]
+        assert kw["domain_authority_weights"] == {"docs.python.org": 0.9}
+
+    @pytest.mark.asyncio
+    async def test_deep_crawl_dispatcher_forwarded(self, client, auth_headers):
+        deep_result = {
+            "url": "https://example.com", "strategy": "bfs",
+            "pages": [], "total_pages": 0, "succeeded": 0, "failed": 0,
+            "export_state": None, "monitor_stats": {"memory_mb": 128},
+            "success": True, "error": None,
+        }
+
+        with patch("app.modules.web_crawler.service.WebCrawlerService.deep_crawl",
+                   new=AsyncMock(return_value=deep_result)) as mock_deep, \
+             patch("app.modules.web_crawler.routes.BillingService.consume_quota",
+                   new_callable=AsyncMock):
+            response = await client.post(
+                "/api/crawler/deep-crawl",
+                json={
+                    "url": "https://example.com",
+                    "dispatcher": {"max_session_permit": 10, "memory_threshold_percent": 85.0},
+                },
+                headers=auth_headers,
+            )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["monitor_stats"]["memory_mb"] == 128
+        kw = mock_deep.call_args.kwargs
+        assert kw["dispatcher_config"] is not None
+        assert kw["dispatcher_config"]["max_session_permit"] == 10
+
+    @pytest.mark.asyncio
+    async def test_deep_crawl_proxies_forwarded(self, client, auth_headers):
+        deep_result = {
+            "url": "https://example.com", "strategy": "bfs",
+            "pages": [], "total_pages": 0, "succeeded": 0, "failed": 0,
+            "export_state": None, "monitor_stats": None,
+            "success": True, "error": None,
+        }
+
+        with patch("app.modules.web_crawler.service.WebCrawlerService.deep_crawl",
+                   new=AsyncMock(return_value=deep_result)) as mock_deep, \
+             patch("app.modules.web_crawler.routes.BillingService.consume_quota",
+                   new_callable=AsyncMock):
+            response = await client.post(
+                "/api/crawler/deep-crawl",
+                json={
+                    "url": "https://example.com",
+                    "proxies": [{"server": "socks5://proxy:1080"}],
+                },
+                headers=auth_headers,
+            )
+
+        assert response.status_code == 200
+        kw = mock_deep.call_args.kwargs
+        assert kw["proxies"] is not None
+        assert kw["proxies"][0]["server"] == "socks5://proxy:1080"
+
+
+# ---------------------------------------------------------------------------
+# v8 — Schema tests
+# ---------------------------------------------------------------------------
+
+class TestWebCrawlerSchemasV8:
+
+    # -- C4ACompileFileRequest --
+
+    def test_c4a_compile_file_request_valid(self):
+        from app.modules.web_crawler.schemas import C4ACompileFileRequest
+        r = C4ACompileFileRequest(file_path="/scripts/demo.c4a")
+        assert r.file_path == "/scripts/demo.c4a"
+
+    def test_c4a_compile_file_request_empty_path_raises(self):
+        from pydantic import ValidationError
+        from app.modules.web_crawler.schemas import C4ACompileFileRequest
+        with pytest.raises(ValidationError):
+            C4ACompileFileRequest(file_path="")
+
+    # -- BrowserProfileCreateRequest --
+
+    def test_browser_profile_create_request_defaults(self):
+        from app.modules.web_crawler.schemas import BrowserProfileCreateRequest
+        r = BrowserProfileCreateRequest()
+        assert r.profile_name is None
+
+    def test_browser_profile_create_request_with_name(self):
+        from app.modules.web_crawler.schemas import BrowserProfileCreateRequest
+        r = BrowserProfileCreateRequest(profile_name="my-profile")
+        assert r.profile_name == "my-profile"
+
+    # -- BrowserProfileResponse --
+
+    def test_browser_profile_response_defaults(self):
+        from app.modules.web_crawler.schemas import BrowserProfileResponse
+        r = BrowserProfileResponse()
+        assert r.profile_name is None
+        assert r.profile_path is None
+        assert r.profiles == []
+        assert r.success is True
+        assert r.error is None
+
+    # -- DockerCrawlRequest --
+
+    def test_docker_crawl_request_defaults(self):
+        from app.modules.web_crawler.schemas import DockerCrawlRequest
+        r = DockerCrawlRequest(urls=["https://example.com"])
+        assert r.docker_url == "http://localhost:8000"
+        assert r.timeout == 30.0
+
+    def test_docker_crawl_request_custom_docker_url(self):
+        from app.modules.web_crawler.schemas import DockerCrawlRequest
+        r = DockerCrawlRequest(urls=["https://a.com"], docker_url="http://my-docker:9000", timeout=60.0)
+        assert r.docker_url == "http://my-docker:9000"
+        assert r.timeout == 60.0
+
+    # -- DockerCrawlResponse --
+
+    def test_docker_crawl_response_defaults(self):
+        from app.modules.web_crawler.schemas import DockerCrawlResponse
+        r = DockerCrawlResponse()
+        assert r.total == 0
+        assert r.succeeded == 0
+        assert r.failed == 0
+        assert r.results == []
+        assert r.success is True
+        assert r.error is None
+
+    # -- PdfScrapeRequest --
+
+    def test_pdf_scrape_request_defaults(self):
+        from app.modules.web_crawler.schemas import PdfScrapeRequest
+        r = PdfScrapeRequest(url="https://example.com/doc.pdf")
+        assert r.extract_images is False
+
+    def test_pdf_scrape_request_with_extract_images(self):
+        from app.modules.web_crawler.schemas import PdfScrapeRequest
+        r = PdfScrapeRequest(url="https://example.com/doc.pdf", extract_images=True)
+        assert r.extract_images is True
+
+    # -- PdfScrapeResponse --
+
+    def test_pdf_scrape_response_defaults(self):
+        from app.modules.web_crawler.schemas import PdfScrapeResponse
+        r = PdfScrapeResponse(url="https://example.com/doc.pdf")
+        assert r.markdown == ""
+        assert r.text_length == 0
+        assert r.success is True
+        assert r.error is None
+
+    # -- CosineExtractRequest --
+
+    def test_cosine_extract_request_defaults(self):
+        from app.modules.web_crawler.schemas import CosineExtractRequest
+        r = CosineExtractRequest(url="https://example.com")
+        assert r.word_count_threshold == 10
+        assert r.max_dist == 0.2
+        assert r.top_k == 3
+        assert r.sim_threshold == 0.3
+        assert r.semantic_filter is None
+
+    def test_cosine_extract_request_custom_params(self):
+        from app.modules.web_crawler.schemas import CosineExtractRequest
+        r = CosineExtractRequest(
+            url="https://example.com",
+            word_count_threshold=50,
+            max_dist=0.5,
+            top_k=10,
+            sim_threshold=0.7,
+            semantic_filter="machine learning",
+        )
+        assert r.word_count_threshold == 50
+        assert r.max_dist == 0.5
+        assert r.top_k == 10
+        assert r.sim_threshold == 0.7
+        assert r.semantic_filter == "machine learning"
+
+    # -- CosineExtractResponse --
+
+    def test_cosine_extract_response_defaults(self):
+        from app.modules.web_crawler.schemas import CosineExtractResponse
+        r = CosineExtractResponse(url="https://example.com")
+        assert r.clusters == []
+        assert r.total_clusters == 0
+        assert r.success is True
+        assert r.error is None
+
+    def test_cosine_extract_response_with_clusters(self):
+        from app.modules.web_crawler.schemas import CosineExtractResponse, CosineCluster
+        c = CosineCluster(index=0, tags=["ai"], content="Hello world")
+        r = CosineExtractResponse(url="https://example.com", clusters=[c], total_clusters=1)
+        assert r.total_clusters == 1
+        assert r.clusters[0].content == "Hello world"
+
+    # -- CosineCluster --
+
+    def test_cosine_cluster_defaults(self):
+        from app.modules.web_crawler.schemas import CosineCluster
+        c = CosineCluster()
+        assert c.index == 0
+        assert c.tags == []
+        assert c.content == ""
+
+    # -- LxmlExtractRequest --
+
+    def test_lxml_extract_request_valid(self):
+        from app.modules.web_crawler.schemas import LxmlExtractRequest
+        r = LxmlExtractRequest(url="https://example.com", schema={"name": "title", "selector": "h1"})
+        assert r.schema == {"name": "title", "selector": "h1"}
+
+    # -- LxmlExtractResponse --
+
+    def test_lxml_extract_response_defaults(self):
+        from app.modules.web_crawler.schemas import LxmlExtractResponse
+        r = LxmlExtractResponse(url="https://example.com")
+        assert r.data is None
+        assert r.success is True
+        assert r.error is None
+
+    # -- RegexChunkRequest --
+
+    def test_regex_chunk_request_valid(self):
+        from app.modules.web_crawler.schemas import RegexChunkRequest
+        r = RegexChunkRequest(text="Hello world")
+        assert r.text == "Hello world"
+        assert r.patterns is None
+
+    def test_regex_chunk_request_empty_text_raises(self):
+        from pydantic import ValidationError
+        from app.modules.web_crawler.schemas import RegexChunkRequest
+        with pytest.raises(ValidationError):
+            RegexChunkRequest(text="")
+
+    # -- RegexChunkResponse --
+
+    def test_regex_chunk_response_defaults(self):
+        from app.modules.web_crawler.schemas import RegexChunkResponse
+        r = RegexChunkResponse()
+        assert r.chunks == []
+        assert r.total_chunks == 0
+        assert r.success is True
+        assert r.error is None
+
+    # -- SemaphoreDispatcherConfig --
+
+    def test_semaphore_dispatcher_config_defaults(self):
+        from app.modules.web_crawler.schemas import SemaphoreDispatcherConfig
+        r = SemaphoreDispatcherConfig()
+        assert r.semaphore_count == 5
+        assert r.max_session_permit == 20
+
+    def test_semaphore_dispatcher_config_custom(self):
+        from app.modules.web_crawler.schemas import SemaphoreDispatcherConfig
+        r = SemaphoreDispatcherConfig(semaphore_count=10, max_session_permit=50)
+        assert r.semaphore_count == 10
+        assert r.max_session_permit == 50
+
+    # -- BatchScrapeRequest dispatcher fields --
+
+    def test_batch_scrape_request_dispatcher_type_default(self):
+        from app.modules.web_crawler.schemas import BatchScrapeRequest
+        r = BatchScrapeRequest(urls=["https://example.com"])
+        assert r.dispatcher_type == "memory_adaptive"
+        assert r.semaphore_count == 5
+
+    def test_batch_scrape_request_semaphore_dispatcher(self):
+        from app.modules.web_crawler.schemas import BatchScrapeRequest
+        r = BatchScrapeRequest(urls=["https://example.com"], dispatcher_type="semaphore", semaphore_count=15)
+        assert r.dispatcher_type == "semaphore"
+        assert r.semaphore_count == 15
+
+
+# ---------------------------------------------------------------------------
+# v8 — Service tests
+# ---------------------------------------------------------------------------
+
+class TestWebCrawlerServiceV8:
+
+    # -- list_browser_profiles --
+
+    def test_list_browser_profiles_happy(self):
+        from app.modules.web_crawler.service import WebCrawlerService
+
+        mock_profiler = MagicMock()
+        mock_profiler.list_profiles.return_value = [{"name": "default"}]
+
+        with patch("crawl4ai.BrowserProfiler", return_value=mock_profiler):
+            result = WebCrawlerService.list_browser_profiles()
+
+        assert result["success"] is True
+        assert result["profiles"] == [{"name": "default"}]
+
+    def test_list_browser_profiles_import_error(self):
+        import sys
+        from app.modules.web_crawler.service import WebCrawlerService
+
+        with patch.dict(sys.modules, {"crawl4ai": None}):
+            result = WebCrawlerService.list_browser_profiles()
+
+        assert result["success"] is False
+        assert "BrowserProfiler" in result["error"]
+
+    # -- create_browser_profile --
+
+    def test_create_browser_profile_happy(self):
+        from app.modules.web_crawler.service import WebCrawlerService
+
+        mock_profiler = MagicMock()
+        mock_profiler.create_profile.return_value = "test-profile"
+        mock_profiler.get_profile_path.return_value = "/profiles/test-profile"
+
+        with patch("crawl4ai.BrowserProfiler", return_value=mock_profiler):
+            result = WebCrawlerService.create_browser_profile(profile_name="test-profile")
+
+        assert result["success"] is True
+        assert result["profile_name"] == "test-profile"
+        assert result["profile_path"] == "/profiles/test-profile"
+
+    def test_create_browser_profile_import_error(self):
+        import sys
+        from app.modules.web_crawler.service import WebCrawlerService
+
+        with patch.dict(sys.modules, {"crawl4ai": None}):
+            result = WebCrawlerService.create_browser_profile()
+
+        assert result["success"] is False
+        assert "BrowserProfiler" in result["error"]
+
+    # -- delete_browser_profile --
+
+    def test_delete_browser_profile_happy(self):
+        from app.modules.web_crawler.service import WebCrawlerService
+
+        mock_profiler = MagicMock()
+        mock_profiler.delete_profile.return_value = True
+
+        with patch("crawl4ai.BrowserProfiler", return_value=mock_profiler):
+            result = WebCrawlerService.delete_browser_profile("old-profile")
+
+        assert result["success"] is True
+        assert result["error"] is None
+
+    def test_delete_browser_profile_not_found(self):
+        from app.modules.web_crawler.service import WebCrawlerService
+
+        mock_profiler = MagicMock()
+        mock_profiler.delete_profile.return_value = False
+
+        with patch("crawl4ai.BrowserProfiler", return_value=mock_profiler):
+            result = WebCrawlerService.delete_browser_profile("ghost")
+
+        assert result["success"] is False
+        assert "not found" in result["error"]
+
+    # -- docker_crawl --
+
+    @pytest.mark.asyncio
+    async def test_docker_crawl_happy(self):
+        from app.modules.web_crawler.service import WebCrawlerService
+
+        mock_result = MagicMock()
+        mock_result.success = True
+        mock_result.url = "https://example.com"
+        mock_result.metadata = {"title": "Example"}
+        mock_result.markdown_v2 = MagicMock()
+        mock_result.markdown_v2.fit_markdown = "# Example content"
+
+        mock_client = AsyncMock()
+        mock_client.crawl.return_value = [mock_result]
+        mock_client.close = MagicMock()
+
+        with patch("crawl4ai.Crawl4aiDockerClient", return_value=mock_client):
+            result = await WebCrawlerService.docker_crawl(
+                urls=["https://example.com"],
+                docker_url="http://localhost:8000",
+                timeout=30.0,
+            )
+
+        assert result["success"] is True
+        assert result["total"] == 1
+        assert result["succeeded"] == 1
+        assert result["failed"] == 0
+
+    @pytest.mark.asyncio
+    async def test_docker_crawl_import_error(self):
+        import sys
+        from app.modules.web_crawler.service import WebCrawlerService
+
+        with patch.dict(sys.modules, {"crawl4ai": None}):
+            result = await WebCrawlerService.docker_crawl(urls=["https://example.com"])
+
+        assert result["success"] is False
+        assert "Crawl4aiDockerClient" in result["error"]
+
+    # -- scrape_pdf --
+
+    @pytest.mark.asyncio
+    async def test_scrape_pdf_happy(self):
+        from app.modules.web_crawler.service import WebCrawlerService
+
+        mock_result = MagicMock()
+        mock_result.success = True
+        mock_result.markdown = MagicMock()
+        mock_result.markdown.raw_markdown = "# PDF Content"
+        mock_result.markdown.fit_markdown = "# PDF Content"
+
+        mock_crawler = AsyncMock()
+        mock_crawler.arun.return_value = mock_result
+
+        with patch("crawl4ai.PDFContentScrapingStrategy"), \
+             patch("crawl4ai.CrawlerRunConfig"), \
+             patch("crawl4ai.CacheMode"), \
+             patch("app.modules.web_crawler.service.get_crawler", new_callable=AsyncMock, return_value=mock_crawler):
+            result = await WebCrawlerService.scrape_pdf(url="https://example.com/doc.pdf")
+
+        assert result["success"] is True
+        assert result["url"] == "https://example.com/doc.pdf"
+        assert result["text_length"] > 0
+
+    @pytest.mark.asyncio
+    async def test_scrape_pdf_import_error(self):
+        import sys
+        from app.modules.web_crawler.service import WebCrawlerService
+
+        with patch.dict(sys.modules, {"crawl4ai": None}):
+            result = await WebCrawlerService.scrape_pdf(url="https://example.com/doc.pdf")
+
+        assert result["success"] is False
+        assert "PDFContentScrapingStrategy" in result["error"]
+
+    # -- extract_cosine --
+
+    @pytest.mark.asyncio
+    async def test_extract_cosine_happy(self):
+        from app.modules.web_crawler.service import WebCrawlerService
+
+        mock_result = MagicMock()
+        mock_result.success = True
+        mock_result.extracted_content = json.dumps([
+            {"tags": ["ai"], "content": "Cluster about AI"},
+        ])
+
+        mock_crawler = AsyncMock()
+        mock_crawler.arun.return_value = mock_result
+
+        with patch("crawl4ai.CosineStrategy"), \
+             patch("crawl4ai.CrawlerRunConfig"), \
+             patch("crawl4ai.CacheMode"), \
+             patch("app.modules.web_crawler.service.get_crawler", new_callable=AsyncMock, return_value=mock_crawler):
+            result = await WebCrawlerService.extract_cosine(url="https://example.com")
+
+        assert result["success"] is True
+        assert result["total_clusters"] == 1
+        assert result["clusters"][0]["content"] == "Cluster about AI"
+
+    @pytest.mark.asyncio
+    async def test_extract_cosine_import_error(self):
+        import sys
+        from app.modules.web_crawler.service import WebCrawlerService
+
+        with patch.dict(sys.modules, {"crawl4ai": None}):
+            result = await WebCrawlerService.extract_cosine(url="https://example.com")
+
+        assert result["success"] is False
+        assert "CosineStrategy" in result["error"]
+
+    # -- extract_lxml --
+
+    @pytest.mark.asyncio
+    async def test_extract_lxml_happy(self):
+        from app.modules.web_crawler.service import WebCrawlerService
+
+        mock_result = MagicMock()
+        mock_result.success = True
+        mock_result.extracted_content = json.dumps({"title": "Example"})
+
+        mock_crawler = AsyncMock()
+        mock_crawler.arun.return_value = mock_result
+
+        with patch("crawl4ai.JsonLxmlExtractionStrategy"), \
+             patch("crawl4ai.CrawlerRunConfig"), \
+             patch("crawl4ai.CacheMode"), \
+             patch("app.modules.web_crawler.service.get_crawler", new_callable=AsyncMock, return_value=mock_crawler):
+            result = await WebCrawlerService.extract_lxml(
+                url="https://example.com",
+                schema={"name": "title", "selector": "h1"},
+            )
+
+        assert result["success"] is True
+        assert result["data"] == {"title": "Example"}
+
+    @pytest.mark.asyncio
+    async def test_extract_lxml_import_error(self):
+        import sys
+        from app.modules.web_crawler.service import WebCrawlerService
+
+        with patch.dict(sys.modules, {"crawl4ai": None}):
+            result = await WebCrawlerService.extract_lxml(
+                url="https://example.com",
+                schema={"name": "title", "selector": "h1"},
+            )
+
+        assert result["success"] is False
+        assert "JsonLxmlExtractionStrategy" in result["error"]
+
+    # -- chunk_regex --
+
+    def test_chunk_regex_happy(self):
+        from app.modules.web_crawler.service import WebCrawlerService
+
+        mock_chunker = MagicMock()
+        mock_chunker.chunk.return_value = ["chunk1", "chunk2"]
+
+        with patch("crawl4ai.RegexChunking", return_value=mock_chunker):
+            result = WebCrawlerService.chunk_regex(text="Hello world. Goodbye world.")
+
+        assert result["success"] is True
+        assert result["total_chunks"] == 2
+        assert result["chunks"] == ["chunk1", "chunk2"]
+
+    def test_chunk_regex_import_error(self):
+        import sys
+        from app.modules.web_crawler.service import WebCrawlerService
+
+        with patch.dict(sys.modules, {"crawl4ai": None}):
+            result = WebCrawlerService.chunk_regex(text="Hello world.")
+
+        assert result["success"] is False
+        assert "RegexChunking" in result["error"]
+
+    # -- compile_c4a_file --
+
+    def test_compile_c4a_file_happy(self):
+        from app.modules.web_crawler.service import WebCrawlerService
+
+        mock_compiled = MagicMock()
+        mock_compiled.js_code = "document.querySelector('h1').textContent;"
+
+        with patch("crawl4ai.c4a_compile_file", return_value=mock_compiled):
+            result = WebCrawlerService.compile_c4a_file(file_path="/scripts/demo.c4a")
+
+        assert result["success"] is True
+        assert "querySelector" in result["js_code"]
+
+    def test_compile_c4a_file_import_error(self):
+        import sys
+        from app.modules.web_crawler.service import WebCrawlerService
+
+        with patch.dict(sys.modules, {"crawl4ai": None}):
+            result = WebCrawlerService.compile_c4a_file(file_path="/scripts/demo.c4a")
+
+        assert result["success"] is False
+        assert "c4a_compile_file" in result["error"]
+
+
+# ---------------------------------------------------------------------------
+# v8 — Route tests
+# ---------------------------------------------------------------------------
+
+class TestWebCrawlerRoutesV8:
+
+    @pytest.fixture(autouse=True)
+    def _override_deps(self, app, test_user):
+        from fastapi import HTTPException, Request
+        from fastapi.security.utils import get_authorization_scheme_param
+        from app.auth import get_current_user
+        from app.database import get_session
+        from app.modules.billing.middleware import require_ai_call_quota
+        from app.rate_limit import limiter
+
+        try:
+            limiter._storage.reset()
+        except Exception:
+            pass
+
+        def _auth_override(request: Request):
+            auth = request.headers.get("Authorization", "")
+            _, token = get_authorization_scheme_param(auth)
+            if not token:
+                raise HTTPException(status_code=401, detail="Not authenticated")
+            return test_user
+
+        def _mock_session():
+            yield MagicMock()
+
+        app.dependency_overrides[get_current_user] = _auth_override
+        app.dependency_overrides[require_ai_call_quota] = _auth_override
+        app.dependency_overrides[get_session] = _mock_session
+
+        with patch("app.modules.web_crawler.service.init_crawler", new_callable=AsyncMock), \
+             patch("app.modules.web_crawler.service.close_crawler", new_callable=AsyncMock):
+            yield
+
+        app.dependency_overrides.clear()
+
+    # -- /c4a/compile-file --
+
+    @pytest.mark.asyncio
+    async def test_c4a_compile_file_success(self, client, auth_headers):
+        compile_result = {"js_code": "document.querySelector('h1');", "success": True, "error": None}
+
+        with patch("app.modules.web_crawler.service.WebCrawlerService.compile_c4a_file",
+                   return_value=compile_result):
+            response = await client.post(
+                "/api/crawler/c4a/compile-file",
+                json={"file_path": "/scripts/demo.c4a"},
+                headers=auth_headers,
+            )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["success"] is True
+        assert "querySelector" in data["js_code"]
+
+    @pytest.mark.asyncio
+    async def test_c4a_compile_file_unauthorized(self, client):
+        response = await client.post(
+            "/api/crawler/c4a/compile-file",
+            json={"file_path": "/scripts/demo.c4a"},
+        )
+        assert response.status_code == 401
+
+    @pytest.mark.asyncio
+    async def test_c4a_compile_file_empty_path_422(self, client, auth_headers):
+        response = await client.post(
+            "/api/crawler/c4a/compile-file",
+            json={"file_path": ""},
+            headers=auth_headers,
+        )
+        assert response.status_code == 422
+
+    # -- /profiles GET --
+
+    @pytest.mark.asyncio
+    async def test_profiles_list_success(self, client, auth_headers):
+        mock_result = {"profiles": [{"name": "default"}], "success": True}
+
+        with patch("app.modules.web_crawler.service.WebCrawlerService.list_browser_profiles",
+                   return_value=mock_result):
+            response = await client.get(
+                "/api/crawler/profiles",
+                headers=auth_headers,
+            )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["success"] is True
+        assert len(data["profiles"]) == 1
+
+    @pytest.mark.asyncio
+    async def test_profiles_list_unauthorized(self, client):
+        response = await client.get("/api/crawler/profiles")
+        assert response.status_code == 401
+
+    # -- /profiles POST --
+
+    @pytest.mark.asyncio
+    async def test_profiles_create_success(self, client, auth_headers):
+        mock_result = {"profile_name": "new-prof", "profile_path": "/p/new-prof", "success": True}
+
+        with patch("app.modules.web_crawler.service.WebCrawlerService.create_browser_profile",
+                   return_value=mock_result):
+            response = await client.post(
+                "/api/crawler/profiles",
+                json={"profile_name": "new-prof"},
+                headers=auth_headers,
+            )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["success"] is True
+        assert data["profile_name"] == "new-prof"
+
+    @pytest.mark.asyncio
+    async def test_profiles_create_unauthorized(self, client):
+        response = await client.post(
+            "/api/crawler/profiles",
+            json={"profile_name": "x"},
+        )
+        assert response.status_code == 401
+
+    # -- /profiles DELETE --
+
+    @pytest.mark.asyncio
+    async def test_profiles_delete_success(self, client, auth_headers):
+        mock_result = {"success": True, "error": None}
+
+        with patch("app.modules.web_crawler.service.WebCrawlerService.delete_browser_profile",
+                   return_value=mock_result):
+            response = await client.delete(
+                "/api/crawler/profiles/old-prof",
+                headers=auth_headers,
+            )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["success"] is True
+
+    @pytest.mark.asyncio
+    async def test_profiles_delete_unauthorized(self, client):
+        response = await client.delete("/api/crawler/profiles/old-prof")
+        assert response.status_code == 401
+
+    # -- /docker-crawl --
+
+    @pytest.mark.asyncio
+    async def test_docker_crawl_success(self, client, auth_headers):
+        mock_result = {
+            "total": 1, "succeeded": 1, "failed": 0,
+            "results": [{"url": "https://example.com", "title": "Ex", "markdown": "# Ex", "success": True}],
+            "success": True, "error": None,
+        }
+
+        with patch("app.modules.web_crawler.service.WebCrawlerService.docker_crawl",
+                   new=AsyncMock(return_value=mock_result)):
+            response = await client.post(
+                "/api/crawler/docker-crawl",
+                json={"urls": ["https://example.com"]},
+                headers=auth_headers,
+            )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["success"] is True
+        assert data["succeeded"] == 1
+
+    @pytest.mark.asyncio
+    async def test_docker_crawl_unauthorized(self, client):
+        response = await client.post(
+            "/api/crawler/docker-crawl",
+            json={"urls": ["https://example.com"]},
+        )
+        assert response.status_code == 401
+
+    # -- /scrape-pdf --
+
+    @pytest.mark.asyncio
+    async def test_scrape_pdf_success(self, client, auth_headers):
+        mock_result = {"url": "https://example.com/doc.pdf", "markdown": "# PDF text", "text_length": 10, "success": True}
+
+        with patch("app.modules.web_crawler.service.WebCrawlerService.scrape_pdf",
+                   new=AsyncMock(return_value=mock_result)):
+            response = await client.post(
+                "/api/crawler/scrape-pdf",
+                json={"url": "https://example.com/doc.pdf"},
+                headers=auth_headers,
+            )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["success"] is True
+        assert data["text_length"] == 10
+
+    @pytest.mark.asyncio
+    async def test_scrape_pdf_unauthorized(self, client):
+        response = await client.post(
+            "/api/crawler/scrape-pdf",
+            json={"url": "https://example.com/doc.pdf"},
+        )
+        assert response.status_code == 401
+
+    # -- /extract-cosine --
+
+    @pytest.mark.asyncio
+    async def test_extract_cosine_success(self, client, auth_headers):
+        mock_result = {
+            "url": "https://example.com",
+            "clusters": [{"index": 0, "tags": ["ai"], "content": "AI cluster"}],
+            "total_clusters": 1, "success": True, "error": None,
+        }
+
+        with patch("app.modules.web_crawler.service.WebCrawlerService.extract_cosine",
+                   new=AsyncMock(return_value=mock_result)):
+            response = await client.post(
+                "/api/crawler/extract-cosine",
+                json={"url": "https://example.com"},
+                headers=auth_headers,
+            )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["success"] is True
+        assert data["total_clusters"] == 1
+
+    @pytest.mark.asyncio
+    async def test_extract_cosine_unauthorized(self, client):
+        response = await client.post(
+            "/api/crawler/extract-cosine",
+            json={"url": "https://example.com"},
+        )
+        assert response.status_code == 401
+
+    @pytest.mark.asyncio
+    async def test_extract_cosine_params_forwarded(self, client, auth_headers):
+        mock_result = {
+            "url": "https://example.com",
+            "clusters": [], "total_clusters": 0, "success": True, "error": None,
+        }
+
+        with patch("app.modules.web_crawler.service.WebCrawlerService.extract_cosine",
+                   new=AsyncMock(return_value=mock_result)) as mock_svc:
+            response = await client.post(
+                "/api/crawler/extract-cosine",
+                json={
+                    "url": "https://example.com",
+                    "word_count_threshold": 50,
+                    "max_dist": 0.8,
+                    "top_k": 7,
+                    "sim_threshold": 0.6,
+                    "semantic_filter": "deep learning",
+                },
+                headers=auth_headers,
+            )
+
+        assert response.status_code == 200
+        kw = mock_svc.call_args.kwargs
+        assert kw["word_count_threshold"] == 50
+        assert kw["max_dist"] == 0.8
+        assert kw["top_k"] == 7
+        assert kw["sim_threshold"] == 0.6
+        assert kw["semantic_filter"] == "deep learning"
+
+    # -- /extract-lxml --
+
+    @pytest.mark.asyncio
+    async def test_extract_lxml_success(self, client, auth_headers):
+        mock_result = {"url": "https://example.com", "data": {"title": "Test"}, "success": True, "error": None}
+
+        with patch("app.modules.web_crawler.service.WebCrawlerService.extract_lxml",
+                   new=AsyncMock(return_value=mock_result)):
+            response = await client.post(
+                "/api/crawler/extract-lxml",
+                json={"url": "https://example.com", "schema": {"name": "title", "selector": "h1"}},
+                headers=auth_headers,
+            )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["success"] is True
+        assert data["data"] == {"title": "Test"}
+
+    @pytest.mark.asyncio
+    async def test_extract_lxml_unauthorized(self, client):
+        response = await client.post(
+            "/api/crawler/extract-lxml",
+            json={"url": "https://example.com", "schema": {"name": "title"}},
+        )
+        assert response.status_code == 401
+
+    # -- /chunk-regex --
+
+    @pytest.mark.asyncio
+    async def test_chunk_regex_success(self, client, auth_headers):
+        mock_result = {"chunks": ["Hello", "World"], "total_chunks": 2, "success": True, "error": None}
+
+        with patch("app.modules.web_crawler.service.WebCrawlerService.chunk_regex",
+                   return_value=mock_result):
+            response = await client.post(
+                "/api/crawler/chunk-regex",
+                json={"text": "Hello. World."},
+                headers=auth_headers,
+            )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["success"] is True
+        assert data["total_chunks"] == 2
+
+    @pytest.mark.asyncio
+    async def test_chunk_regex_unauthorized(self, client):
+        response = await client.post(
+            "/api/crawler/chunk-regex",
+            json={"text": "Hello. World."},
+        )
+        assert response.status_code == 401
+
+    @pytest.mark.asyncio
+    async def test_chunk_regex_params_forwarded(self, client, auth_headers):
+        mock_result = {"chunks": ["a", "b"], "total_chunks": 2, "success": True, "error": None}
+
+        with patch("app.modules.web_crawler.service.WebCrawlerService.chunk_regex",
+                   return_value=mock_result) as mock_svc:
+            response = await client.post(
+                "/api/crawler/chunk-regex",
+                json={"text": "Hello. World.", "patterns": [r"\.\s+"]},
+                headers=auth_headers,
+            )
+
+        assert response.status_code == 200
+        kw = mock_svc.call_args.kwargs
+        assert kw["text"] == "Hello. World."
+        assert kw["patterns"] == [r"\.\s+"]

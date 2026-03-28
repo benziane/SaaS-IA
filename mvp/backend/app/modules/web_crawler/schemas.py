@@ -1,5 +1,5 @@
 """
-Web crawler schemas — v5 (full crawl4ai feature surface).
+Web crawler schemas — v8 (100% crawl4ai feature surface).
 """
 
 from typing import Any, Optional
@@ -54,6 +54,52 @@ class GeolocationConfig(BaseModel):
         ge=0.0,
         le=10000.0,
         description="Accuracy radius in meters (default 0.0)",
+    )
+
+
+class CrawlProxyConfig(BaseModel):
+    """Single proxy definition for proxy rotation."""
+    server: str = Field(
+        ...,
+        min_length=1,
+        max_length=500,
+        description="Proxy server URL (e.g. http://host:port or socks5://host:port)",
+    )
+    username: Optional[str] = Field(default=None, max_length=200)
+    password: Optional[str] = Field(default=None, max_length=200)
+
+
+class BatchDispatcherConfig(BaseModel):
+    """Configuration for MemoryAdaptiveDispatcher used in batch/deep crawl."""
+    max_session_permit: int = Field(
+        default=20,
+        ge=1,
+        le=100,
+        description="Maximum concurrent browser sessions",
+    )
+    memory_threshold_percent: float = Field(
+        default=90.0,
+        ge=50.0,
+        le=99.0,
+        description="Memory usage % threshold — dispatcher pauses when exceeded",
+    )
+    rate_limit_base_delay_min: float = Field(
+        default=1.0,
+        ge=0.0,
+        le=30.0,
+        description="Minimum base delay (seconds) between requests to the same domain",
+    )
+    rate_limit_base_delay_max: float = Field(
+        default=3.0,
+        ge=0.0,
+        le=60.0,
+        description="Maximum base delay (seconds) between requests to the same domain",
+    )
+    rate_limit_max_delay: float = Field(
+        default=60.0,
+        ge=1.0,
+        le=300.0,
+        description="Maximum delay after exponential backoff on rate-limit (429) responses",
     )
 
 
@@ -198,6 +244,15 @@ class ScrapeRequest(BaseModel):
         pattern="^(default|none|llm)$",
         description="Table extraction mode: default (built-in) | none (skip tables) | llm (AI-powered with chunking)",
     )
+    content_filter_mode: str = Field(
+        default="pruning",
+        pattern="^(pruning|bm25|llm)$",
+        description="Content filter: pruning (stat, default) | bm25 (needs topic) | llm (AI-powered, slowest)",
+    )
+    antibot_retry: bool = Field(
+        default=False,
+        description="Auto-detect bot blocking (captcha/403) and retry with stealth enabled",
+    )
 
     # ---- Links ----
     score_links: bool = Field(
@@ -254,7 +309,12 @@ class ScrapeRequest(BaseModel):
     proxy_url: Optional[str] = Field(
         default=None,
         max_length=500,
-        description="Proxy URL e.g. http://user:pass@host:port",
+        description="Proxy URL e.g. http://user:pass@host:port (single proxy, legacy)",
+    )
+    proxies: Optional[list[CrawlProxyConfig]] = Field(
+        default=None,
+        max_length=20,
+        description="Proxy rotation pool — round-robin across requests (overrides proxy_url)",
     )
     user_agent: Optional[str] = Field(
         default=None,
@@ -511,6 +571,24 @@ class BatchScrapeRequest(BaseModel):
     urls: list[str] = Field(..., min_length=1, max_length=10, description="Up to 10 URLs to crawl in parallel")
     use_fit_markdown: bool = Field(default=True)
     extract_images: bool = Field(default=False)
+    dispatcher: Optional[BatchDispatcherConfig] = Field(
+        default=None,
+        description="Explicit MemoryAdaptiveDispatcher config (concurrency, memory limits, rate limiting)",
+    )
+    dispatcher_type: str = Field(
+        default="memory_adaptive",
+        pattern="^(memory_adaptive|semaphore)$",
+        description="Dispatcher type: memory_adaptive (backpressure) | semaphore (fixed concurrency)",
+    )
+    semaphore_count: int = Field(
+        default=5, ge=1, le=50,
+        description="Concurrency limit when dispatcher_type=semaphore",
+    )
+    proxies: Optional[list[CrawlProxyConfig]] = Field(
+        default=None,
+        max_length=20,
+        description="Proxy rotation pool — round-robin across batch requests",
+    )
 
 
 class BatchScrapeResult(BaseModel):
@@ -526,6 +604,10 @@ class BatchScrapeResponse(BaseModel):
     succeeded: int = 0
     failed: int = 0
     results: list[BatchScrapeResult] = []
+    monitor_stats: Optional[dict] = Field(
+        default=None,
+        description="CrawlerMonitor summary (memory, queue, task stats) — present when dispatcher is used",
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -600,6 +682,29 @@ class DeepCrawlRequest(BaseModel):
         le=1.0,
         description="Weighted SEO score threshold (0–1) for SEOFilter",
     )
+    # ---- Composite scoring (v7) ----
+    composite_scorers: Optional[list[str]] = Field(
+        default=None,
+        description=(
+            "Additional URL scorers for BestFirst strategy. Choices: "
+            "'domain_authority', 'freshness', 'path_depth', 'content_type'. "
+            "Combined via CompositeScorer with keyword_scorer_keywords."
+        ),
+    )
+    domain_authority_weights: Optional[dict[str, float]] = Field(
+        default=None,
+        description="Domain→weight map for DomainAuthorityScorer (e.g. {'docs.python.org': 0.9})",
+    )
+    # ---- Infra (v7) ----
+    dispatcher: Optional[BatchDispatcherConfig] = Field(
+        default=None,
+        description="Dispatcher config for concurrent deep crawl pages (memory limits, rate limiting)",
+    )
+    proxies: Optional[list[CrawlProxyConfig]] = Field(
+        default=None,
+        max_length=20,
+        description="Proxy rotation pool for deep crawl requests",
+    )
     # ---- Resume ----
     resume_state: Optional[dict] = Field(
         default=None,
@@ -625,6 +730,10 @@ class DeepCrawlResponse(BaseModel):
     succeeded: int = 0
     failed: int = 0
     export_state: Optional[dict] = None
+    monitor_stats: Optional[dict] = Field(
+        default=None,
+        description="CrawlerMonitor summary — present when dispatcher config is provided",
+    )
     success: bool = True
     error: Optional[str] = None
 
@@ -948,3 +1057,187 @@ class HubCrawlResponse(BaseModel):
     data: Optional[dict] = None
     success: bool = True
     error: Optional[str] = None
+
+
+# ---------------------------------------------------------------------------
+# C4A-Script — compile / validate DSL for page interactions
+# ---------------------------------------------------------------------------
+
+class C4ACompileRequest(BaseModel):
+    script: str = Field(
+        ...,
+        min_length=1,
+        max_length=10000,
+        description="C4A-Script source (DSL for page interactions, compiles to JavaScript)",
+    )
+
+
+class C4ACompileResponse(BaseModel):
+    js_code: str = ""
+    success: bool = True
+    error: Optional[str] = None
+
+
+class C4AValidateRequest(BaseModel):
+    script: str = Field(
+        ...,
+        min_length=1,
+        max_length=10000,
+        description="C4A-Script source to validate without compiling",
+    )
+
+
+class C4AValidateResponse(BaseModel):
+    valid: bool = True
+    errors: list[str] = []
+
+
+class C4ACompileFileRequest(BaseModel):
+    file_path: str = Field(
+        ..., min_length=1, max_length=500,
+        description="Server-side path to a .c4a script file to compile",
+    )
+
+
+# ---------------------------------------------------------------------------
+# Browser profiler — persistent browser profiles
+# ---------------------------------------------------------------------------
+
+class BrowserProfileCreateRequest(BaseModel):
+    profile_name: Optional[str] = Field(
+        default=None, max_length=100,
+        description="Profile name (auto-generated if omitted)",
+    )
+
+
+class BrowserProfileResponse(BaseModel):
+    profile_name: Optional[str] = None
+    profile_path: Optional[str] = None
+    profiles: list[dict] = []
+    success: bool = True
+    error: Optional[str] = None
+
+
+# ---------------------------------------------------------------------------
+# Docker remote crawl
+# ---------------------------------------------------------------------------
+
+class DockerCrawlRequest(BaseModel):
+    urls: list[str] = Field(..., min_length=1, max_length=5)
+    docker_url: str = Field(
+        default="http://localhost:8000",
+        max_length=500,
+        description="Base URL of the crawl4ai Docker container",
+    )
+    timeout: float = Field(default=30.0, ge=5.0, le=300.0)
+
+
+class DockerCrawlResult(BaseModel):
+    url: str
+    title: str = ""
+    markdown: str = ""
+    success: bool = True
+    error: Optional[str] = None
+
+
+class DockerCrawlResponse(BaseModel):
+    total: int = 0
+    succeeded: int = 0
+    failed: int = 0
+    results: list[DockerCrawlResult] = []
+    success: bool = True
+    error: Optional[str] = None
+
+
+# ---------------------------------------------------------------------------
+# PDF scraping via crawl4ai
+# ---------------------------------------------------------------------------
+
+class PdfScrapeRequest(BaseModel):
+    url: str = Field(..., min_length=1, max_length=2000)
+    extract_images: bool = Field(default=False)
+
+
+class PdfScrapeResponse(BaseModel):
+    url: str
+    markdown: str = ""
+    text_length: int = 0
+    success: bool = True
+    error: Optional[str] = None
+
+
+# ---------------------------------------------------------------------------
+# Cosine clustering extraction
+# ---------------------------------------------------------------------------
+
+class CosineExtractRequest(BaseModel):
+    url: str = Field(..., min_length=1, max_length=2000)
+    word_count_threshold: int = Field(default=10, ge=1, le=200)
+    max_dist: float = Field(default=0.2, ge=0.0, le=1.0)
+    top_k: int = Field(default=3, ge=1, le=50)
+    sim_threshold: float = Field(default=0.3, ge=0.0, le=1.0)
+    semantic_filter: Optional[str] = Field(
+        default=None, max_length=500,
+        description="BM25-style query to pre-filter content before clustering",
+    )
+
+
+class CosineCluster(BaseModel):
+    index: int = 0
+    tags: list[str] = []
+    content: str = ""
+
+
+class CosineExtractResponse(BaseModel):
+    url: str
+    clusters: list[CosineCluster] = []
+    total_clusters: int = 0
+    success: bool = True
+    error: Optional[str] = None
+
+
+# ---------------------------------------------------------------------------
+# JSON lxml extraction
+# ---------------------------------------------------------------------------
+
+class LxmlExtractRequest(BaseModel):
+    url: str = Field(..., min_length=1, max_length=2000)
+    schema: dict = Field(
+        ...,
+        description="lxml extraction schema (same format as JsonCssExtractionStrategy)",
+    )
+
+
+class LxmlExtractResponse(BaseModel):
+    url: str
+    data: Optional[Any] = None
+    success: bool = True
+    error: Optional[str] = None
+
+
+# ---------------------------------------------------------------------------
+# Regex chunking
+# ---------------------------------------------------------------------------
+
+class RegexChunkRequest(BaseModel):
+    text: str = Field(..., min_length=1, max_length=500000)
+    patterns: Optional[list[str]] = Field(
+        default=None,
+        description="Regex patterns for chunk boundaries (defaults to paragraph splits)",
+    )
+
+
+class RegexChunkResponse(BaseModel):
+    chunks: list[str] = []
+    total_chunks: int = 0
+    success: bool = True
+    error: Optional[str] = None
+
+
+# ---------------------------------------------------------------------------
+# Semaphore dispatcher config
+# ---------------------------------------------------------------------------
+
+class SemaphoreDispatcherConfig(BaseModel):
+    semaphore_count: int = Field(default=5, ge=1, le=50)
+    max_session_permit: int = Field(default=20, ge=1, le=100)

@@ -10,6 +10,7 @@ from fastapi.responses import FileResponse
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.auth import get_current_user
+from app.modules.auth_guards.middleware import require_verified_email
 from app.database import get_session
 from app.models.user import User
 from app.models.skill_seekers import ScrapeJob
@@ -57,7 +58,7 @@ async def create_job(
     request: Request,
     data: ScrapeJobCreate,
     background_tasks: BackgroundTasks,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
     service: SkillSeekersService = Depends(get_service),
 ):
@@ -195,7 +196,7 @@ async def get_job(
 async def delete_job(
     request: Request,
     job_id: UUID,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """Delete a scrape job and its output files."""
@@ -251,7 +252,7 @@ async def retry_job(
     request: Request,
     job_id: UUID,
     background_tasks: BackgroundTasks,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
     service: SkillSeekersService = Depends(get_service),
 ):
@@ -294,7 +295,7 @@ async def retry_job(
 async def cancel_job(
     request: Request,
     job_id: UUID,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """Cancel a running or pending scrape job."""
@@ -421,7 +422,7 @@ async def download_with_token(
 async def cleanup_old_jobs(
     request: Request,
     max_age_hours: int = 24,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
 ):
     """Remove completed/failed jobs older than max_age_hours and their output files. Admin only."""
     if not getattr(current_user, "is_superuser", False):

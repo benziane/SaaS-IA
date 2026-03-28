@@ -9,6 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.auth import get_current_user
+from app.modules.auth_guards.middleware import require_verified_email
 from app.database import get_session
 from app.models.user import User
 from app.modules.ai_forms.schemas import (
@@ -66,7 +67,7 @@ def _response_to_read(resp) -> dict:
 async def create_form(
     request: Request,
     body: FormCreate,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """Create a new form with fields and configuration."""
@@ -110,7 +111,7 @@ async def update_form(
     request: Request,
     form_id: UUID,
     body: FormUpdate,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """Update form settings and fields."""
@@ -128,7 +129,7 @@ async def update_form(
 async def delete_form(
     request: Request,
     form_id: UUID,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """Soft delete a form."""
@@ -147,7 +148,7 @@ async def delete_form(
 async def publish_form(
     request: Request,
     form_id: UUID,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """Publish form and generate share token."""
@@ -163,7 +164,7 @@ async def publish_form(
 async def close_form(
     request: Request,
     form_id: UUID,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """Close form to new responses."""
@@ -235,7 +236,7 @@ async def score_response(
     request: Request,
     form_id: UUID,
     response_id: UUID,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """AI scoring of an individual response."""
@@ -254,7 +255,7 @@ async def score_response(
 async def generate_form(
     request: Request,
     body: FormGenerateRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """Generate a form from natural language description using AI."""

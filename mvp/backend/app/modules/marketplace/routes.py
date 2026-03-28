@@ -10,6 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.auth import get_current_user
+from app.modules.auth_guards.middleware import require_verified_email
 from app.database import get_session
 from app.models.user import User
 from app.modules.marketplace.schemas import (
@@ -180,7 +181,7 @@ async def get_reviews(
 async def create_listing(
     request: Request,
     body: ListingCreate,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """
@@ -209,7 +210,7 @@ async def update_listing(
     request: Request,
     listing_id: UUID,
     body: ListingUpdate,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """
@@ -237,7 +238,7 @@ async def update_listing(
 async def publish_listing(
     request: Request,
     listing_id: UUID,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """
@@ -261,7 +262,7 @@ async def publish_listing(
 async def unpublish_listing(
     request: Request,
     listing_id: UUID,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """
@@ -285,7 +286,7 @@ async def unpublish_listing(
 async def delete_listing(
     request: Request,
     listing_id: UUID,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """
@@ -308,7 +309,7 @@ async def delete_listing(
 async def install_listing(
     request: Request,
     listing_id: UUID,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """
@@ -337,7 +338,7 @@ async def install_listing(
 async def uninstall_listing(
     request: Request,
     listing_id: UUID,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """
@@ -387,7 +388,7 @@ async def add_review(
     request: Request,
     listing_id: UUID,
     body: ReviewCreate,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """

@@ -359,6 +359,28 @@ class TestCoreHeuristics:
                     f"Step missing keys for instruction '{instruction}': {step}"
                 )
 
+    def test_batch_crawl_heuristic(self):
+        """batch crawl keywords route to batch_crawl action."""
+        for phrase in ["batch crawl these URLs", "batch scrape the list", "crawl multiple pages", "scrape all links"]:
+            steps = _heuristic_plan(phrase)
+            assert len(steps) >= 1
+            assert steps[0]["action"] == "batch_crawl", f"Failed for: {phrase}"
+
+    def test_deep_crawl_heuristic(self):
+        """deep crawl keywords route to deep_crawl action."""
+        for phrase in ["deep crawl this site", "crawl entire website", "spider the docs", "map site structure", "full site crawl"]:
+            steps = _heuristic_plan(phrase)
+            assert len(steps) >= 1
+            assert steps[0]["action"] == "deep_crawl", f"Failed for: {phrase}"
+
+    def test_batch_deep_crawl_before_generic(self):
+        """batch/deep crawl takes priority over generic crawl_web."""
+        steps_batch = _heuristic_plan("batch crawl web pages")
+        assert steps_batch[0]["action"] == "batch_crawl"
+
+        steps_deep = _heuristic_plan("deep crawl web site")
+        assert steps_deep[0]["action"] == "deep_crawl"
+
 
 class TestAvailableActions:
     """Verify AVAILABLE_ACTIONS dict completeness."""
@@ -400,6 +422,11 @@ class TestAvailableActions:
     def test_batch_and_summary_actions_registered(self):
         batch_summary_actions = ["batch_transcribe", "generate_summary", "edit_audio", "generate_podcast"]
         for action in batch_summary_actions:
+            assert action in AVAILABLE_ACTIONS, f"Missing action: {action}"
+
+    def test_crawl_actions_registered(self):
+        crawl_actions = ["batch_crawl", "deep_crawl"]
+        for action in crawl_actions:
             assert action in AVAILABLE_ACTIONS, f"Missing action: {action}"
 
     def test_content_and_dev_actions_registered(self):

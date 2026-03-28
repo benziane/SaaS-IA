@@ -10,6 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.auth import get_current_user
+from app.modules.auth_guards.middleware import require_verified_email
 from app.database import get_session
 from app.models.user import User
 from app.modules.fine_tuning.schemas import (
@@ -26,7 +27,7 @@ router = APIRouter()
 @limiter.limit("10/minute")
 async def create_dataset(
     request: Request, body: DatasetCreate,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """Create a training dataset with manual samples. Rate limit: 10/min"""
@@ -42,7 +43,7 @@ async def create_dataset(
 @limiter.limit("3/minute")
 async def create_from_source(
     request: Request, body: DatasetFromSourceRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """Create a dataset from platform data (transcriptions, conversations, documents). Rate limit: 3/min"""
@@ -81,7 +82,7 @@ async def get_dataset(
 @limiter.limit("10/minute")
 async def add_samples(
     request: Request, dataset_id: UUID, body: AddSamplesRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """Add samples to a dataset. Rate limit: 10/min"""
@@ -97,7 +98,7 @@ async def add_samples(
 @limiter.limit("3/minute")
 async def assess_quality(
     request: Request, dataset_id: UUID,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """AI quality assessment of a dataset. Rate limit: 3/min"""
@@ -111,7 +112,7 @@ async def assess_quality(
 @limiter.limit("10/minute")
 async def delete_dataset(
     request: Request, dataset_id: UUID,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """Delete a dataset. Rate limit: 10/min"""
@@ -123,7 +124,7 @@ async def delete_dataset(
 @limiter.limit("3/minute")
 async def create_job(
     request: Request, body: FineTuneCreate,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """Create and start a fine-tuning job. Rate limit: 3/min"""
@@ -162,7 +163,7 @@ async def get_job(
 @limiter.limit("3/minute")
 async def evaluate_model(
     request: Request, job_id: UUID, body: EvalRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """Evaluate a fine-tuned model. Rate limit: 3/min"""

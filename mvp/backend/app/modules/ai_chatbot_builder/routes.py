@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.auth import get_current_user
+from app.modules.auth_guards.middleware import require_verified_email
 from app.database import get_session
 from app.models.user import User
 from app.modules.ai_chatbot_builder.schemas import (
@@ -57,7 +58,7 @@ def _chatbot_to_read(chatbot) -> dict:
 async def create_chatbot(
     request: Request,
     body: ChatbotCreate,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """Create a new chatbot with system prompt and configuration."""
@@ -101,7 +102,7 @@ async def update_chatbot(
     request: Request,
     chatbot_id: UUID,
     body: ChatbotUpdate,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """Update chatbot settings."""
@@ -119,7 +120,7 @@ async def update_chatbot(
 async def delete_chatbot(
     request: Request,
     chatbot_id: UUID,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """Soft delete a chatbot."""
@@ -138,7 +139,7 @@ async def delete_chatbot(
 async def publish_chatbot(
     request: Request,
     chatbot_id: UUID,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """Publish chatbot and generate embed token."""
@@ -154,7 +155,7 @@ async def publish_chatbot(
 async def unpublish_chatbot(
     request: Request,
     chatbot_id: UUID,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """Unpublish chatbot and revoke embed token."""
@@ -174,7 +175,7 @@ async def add_channel(
     request: Request,
     chatbot_id: UUID,
     body: ChannelConfig,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """Add a deployment channel to a chatbot."""
@@ -191,7 +192,7 @@ async def remove_channel(
     request: Request,
     chatbot_id: UUID,
     channel_type: str,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """Remove a deployment channel from a chatbot."""

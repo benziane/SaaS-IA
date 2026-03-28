@@ -10,6 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.auth import get_current_user
+from app.modules.auth_guards.middleware import require_verified_email
 from app.database import get_session
 from app.models.user import User
 from app.modules.security_guardian.schemas import (
@@ -32,7 +33,7 @@ router = APIRouter()
 @limiter.limit("10/minute")
 async def scan_content(
     request: Request, body: ScanRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """Scan content for PII, prompt injection, and safety issues. Rate limit: 10/min"""
@@ -100,7 +101,7 @@ async def list_audit_logs(
 @limiter.limit("10/minute")
 async def create_guardrail(
     request: Request, body: GuardrailRuleCreate,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """Create a guardrail rule. Rate limit: 10/min"""
@@ -127,7 +128,7 @@ async def list_guardrails(
 @limiter.limit("10/minute")
 async def update_guardrail(
     request: Request, rule_id: UUID, body: GuardrailRuleUpdate,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """Update a guardrail rule. Rate limit: 10/min"""
@@ -143,7 +144,7 @@ async def update_guardrail(
 @limiter.limit("10/minute")
 async def delete_guardrail(
     request: Request, rule_id: UUID,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """Delete a guardrail rule. Rate limit: 10/min"""

@@ -1,5 +1,5 @@
 """
-Web crawler service — v5 (full crawl4ai feature surface).
+Web crawler service — v8 (100% crawl4ai feature surface).
 
 Capabilities:
 - Singleton browser (avoids 2s Playwright cold-start per request)
@@ -104,21 +104,91 @@ def _extract_markdown(result) -> tuple[str, str]:
     return raw, raw
 
 
+def _build_proxy_config(proxies: list[dict]):
+    """Build a RoundRobinProxyStrategy from a list of proxy dicts."""
+    try:
+        from crawl4ai import ProxyConfig, RoundRobinProxyStrategy
+        proxy_objs = [
+            ProxyConfig(
+                server=p["server"],
+                username=p.get("username"),
+                password=p.get("password"),
+            )
+            for p in proxies
+        ]
+        return RoundRobinProxyStrategy(proxies=proxy_objs)
+    except ImportError:
+        logger.warning("proxy_rotation_unavailable", reason="crawl4ai ProxyConfig not found")
+        return None
+
+
+def _build_dispatcher(config: dict, monitor=None):
+    """Build a MemoryAdaptiveDispatcher from a dispatcher config dict."""
+    try:
+        from crawl4ai import MemoryAdaptiveDispatcher, RateLimiter
+        rate_limiter = RateLimiter(
+            base_delay=(
+                config.get("rate_limit_base_delay_min", 1.0),
+                config.get("rate_limit_base_delay_max", 3.0),
+            ),
+            max_delay=config.get("rate_limit_max_delay", 60.0),
+        )
+        return MemoryAdaptiveDispatcher(
+            max_session_permit=config.get("max_session_permit", 20),
+            memory_threshold_percent=config.get("memory_threshold_percent", 90.0),
+            rate_limiter=rate_limiter,
+            monitor=monitor,
+        )
+    except ImportError:
+        logger.warning("dispatcher_unavailable", reason="MemoryAdaptiveDispatcher not found")
+        return None
+
+
+def _build_monitor(total_urls: int = 0):
+    """Build a CrawlerMonitor (UI disabled for API use)."""
+    try:
+        from crawl4ai import CrawlerMonitor
+        return CrawlerMonitor(urls_total=total_urls, enable_ui=False)
+    except ImportError:
+        return None
+
+
+def _get_monitor_stats(monitor) -> dict | None:
+    """Extract summary stats from a CrawlerMonitor."""
+    if monitor is None:
+        return None
+    try:
+        summary = monitor.get_summary()
+        return summary if isinstance(summary, dict) else {"raw": str(summary)}
+    except Exception:
+        return None
+
+
 def _build_markdown_generator(
     topic: Optional[str] = None,
     word_count_threshold: int = 10,
     ignore_links: bool = False,
     body_width: int = 0,
+    content_filter_mode: str = "pruning",
 ):
     """Build a DefaultMarkdownGenerator with the appropriate content filter."""
     from crawl4ai.markdown_generation_strategy import DefaultMarkdownGenerator
     from crawl4ai.content_filter_strategy import PruningContentFilter, BM25ContentFilter
 
-    content_filter = (
-        BM25ContentFilter(user_query=topic)
-        if topic
-        else PruningContentFilter(threshold=0.48)
-    )
+    if content_filter_mode == "llm":
+        try:
+            from crawl4ai.content_filter_strategy import LLMContentFilter
+            content_filter = LLMContentFilter()
+        except ImportError:
+            logger.warning("llm_content_filter_unavailable")
+            content_filter = PruningContentFilter(threshold=0.48)
+    elif content_filter_mode == "bm25" and topic:
+        content_filter = BM25ContentFilter(user_query=topic)
+    elif topic:
+        content_filter = BM25ContentFilter(user_query=topic)
+    else:
+        content_filter = PruningContentFilter(threshold=0.48)
+
     options: dict = {"word_count_threshold": word_count_threshold}
     if ignore_links:
         options["ignore_links"] = True
@@ -251,6 +321,10 @@ class WebCrawlerService:
         link_preview_max_links: int = 0,
         # Table extraction mode
         table_extraction_mode: str = "default",
+        # v7 — content filter, proxy rotation, antibot
+        content_filter_mode: str = "pruning",
+        proxies: Optional[list] = None,
+        antibot_retry: bool = False,
     ) -> dict:
         """
         Scrape a URL with the full crawl4ai feature set.
@@ -264,7 +338,8 @@ class WebCrawlerService:
             from crawl4ai import CrawlerRunConfig, CacheMode
 
             md_generator = _build_markdown_generator(
-                topic, word_count_threshold, ignore_links=ignore_links, body_width=body_width
+                topic, word_count_threshold, ignore_links=ignore_links, body_width=body_width,
+                content_filter_mode=content_filter_mode,
             )
 
             _cache_mode_map = {
@@ -397,22 +472,33 @@ class WebCrawlerService:
                         for k, v in auth["cookies"].items()
                     ]
 
+            # Proxy rotation — overrides single proxy_url
+            proxy_strategy = None
+            if proxies:
+                proxy_strategy = _build_proxy_config(proxies)
+
             # Determine which crawler to use
             needs_temp = bool(
-                proxy_url or user_agent or enable_stealth
+                proxy_url or proxy_strategy or user_agent or enable_stealth
                 or browser_type != "chromium" or not javascript_enabled or avoid_ads
             )
             _temp = None
             try:
                 if needs_temp:
                     _temp = await _get_temp_crawler(
-                        proxy_url=proxy_url,
+                        proxy_url=proxy_url if not proxy_strategy else None,
                         user_agent=user_agent,
                         browser_type=browser_type,
                         enable_stealth=enable_stealth,
                         javascript_enabled=javascript_enabled,
                         avoid_ads=avoid_ads,
                     )
+                    # Attach proxy rotation if available
+                    if proxy_strategy and _temp:
+                        try:
+                            _temp._config.proxy_config = proxy_strategy
+                        except Exception:
+                            pass
                     _active = _temp
                 else:
                     _active = await get_crawler()
@@ -448,6 +534,39 @@ class WebCrawlerService:
                         await _temp.close()
                     except Exception:
                         pass
+
+            # Antibot detection + stealth retry
+            if antibot_retry and result.success:
+                try:
+                    from crawl4ai.antibot_detector import is_blocked
+                    html = getattr(result, "html", "") or ""
+                    blocked, reason = is_blocked(
+                        getattr(result, "status_code", None),
+                        html,
+                        result.error_message,
+                    )
+                    if blocked and not enable_stealth:
+                        logger.info("antibot_blocked_retrying", url=url, reason=reason)
+                        stealth_crawler = await _get_temp_crawler(
+                            proxy_url=proxy_url,
+                            user_agent=user_agent,
+                            browser_type=browser_type,
+                            enable_stealth=True,
+                            javascript_enabled=javascript_enabled,
+                            avoid_ads=avoid_ads,
+                        )
+                        try:
+                            retry_config = CrawlerRunConfig(**config_kwargs)
+                            result = await stealth_crawler.arun(url=url, config=retry_config)
+                        finally:
+                            try:
+                                await stealth_crawler.close()
+                            except Exception:
+                                pass
+                except ImportError:
+                    pass
+                except Exception as ab_err:
+                    logger.warning("antibot_retry_failed", url=url, error=str(ab_err))
 
             if not result.success:
                 return {
@@ -1080,11 +1199,15 @@ class WebCrawlerService:
         urls: list[str],
         use_fit_markdown: bool = True,
         extract_images: bool = False,
+        dispatcher_config: Optional[dict] = None,
+        proxies: Optional[list] = None,
     ) -> dict:
         """
         Scrape multiple URLs in parallel using crawl4ai's MemoryAdaptiveDispatcher.
 
         Handles rate limiting, memory pressure, and exponential backoff automatically.
+        When dispatcher_config is provided, uses explicit MemoryAdaptiveDispatcher
+        with CrawlerMonitor for stats collection.
         """
         try:
             from crawl4ai import CrawlerRunConfig, CacheMode
@@ -1095,7 +1218,18 @@ class WebCrawlerService:
 
             run_config = CrawlerRunConfig(**config_kwargs)
             crawler = await get_crawler()
-            raw_results = await crawler.arun_many(urls=urls, config=run_config)
+
+            # Build explicit dispatcher + monitor if config provided
+            monitor = None
+            dispatcher = None
+            if dispatcher_config:
+                monitor = _build_monitor(total_urls=len(urls))
+                dispatcher = _build_dispatcher(dispatcher_config, monitor=monitor)
+
+            raw_results = await crawler.arun_many(
+                urls=urls, config=run_config,
+                dispatcher=dispatcher,
+            )
 
             results = []
             succeeded = 0
@@ -1125,6 +1259,7 @@ class WebCrawlerService:
                 "succeeded": succeeded,
                 "failed": len(urls) - succeeded,
                 "results": results,
+                "monitor_stats": _get_monitor_stats(monitor),
             }
 
         except Exception as e:
@@ -1157,6 +1292,11 @@ class WebCrawlerService:
         content_relevance_threshold: float = 2.0,
         seo_filter: bool = False,
         seo_filter_threshold: float = 0.65,
+        # v7 — composite scoring, dispatcher, proxies
+        composite_scorers: Optional[list] = None,
+        domain_authority_weights: Optional[dict] = None,
+        dispatcher_config: Optional[dict] = None,
+        proxies: Optional[list] = None,
         # Resume
         resume_state: dict = None,
     ) -> dict:
@@ -1227,12 +1367,47 @@ class WebCrawlerService:
                     except Exception:
                         pass
 
-            # Build optional KeywordRelevanceScorer for BestFirst
+            # Build optional scorer(s) for BestFirst
             url_scorer = None
-            if keyword_scorer_keywords and strategy == "best_first":
+            if strategy == "best_first":
                 try:
                     from crawl4ai.deep_crawling.scorers import KeywordRelevanceScorer
-                    url_scorer = KeywordRelevanceScorer(keywords=keyword_scorer_keywords, weight=1.0)
+                    scorers_list = []
+
+                    if keyword_scorer_keywords:
+                        scorers_list.append(
+                            KeywordRelevanceScorer(keywords=keyword_scorer_keywords, weight=1.0)
+                        )
+
+                    # v7 — composite scorers
+                    if composite_scorers:
+                        scorer_map = {}
+                        try:
+                            from crawl4ai import (
+                                DomainAuthorityScorer, FreshnessScorer,
+                                PathDepthScorer, ContentTypeScorer,
+                            )
+                            scorer_map = {
+                                "domain_authority": lambda: DomainAuthorityScorer(
+                                    domain_weights=domain_authority_weights or {},
+                                ),
+                                "freshness": lambda: FreshnessScorer(),
+                                "path_depth": lambda: PathDepthScorer(),
+                                "content_type": lambda: ContentTypeScorer(type_weights={}),
+                            }
+                        except ImportError:
+                            logger.warning("composite_scorers_unavailable")
+
+                        for name in composite_scorers:
+                            factory = scorer_map.get(name)
+                            if factory:
+                                scorers_list.append(factory())
+
+                    if len(scorers_list) > 1:
+                        from crawl4ai import CompositeScorer
+                        url_scorer = CompositeScorer(scorers=scorers_list)
+                    elif scorers_list:
+                        url_scorer = scorers_list[0]
                 except Exception:
                     pass
 
@@ -1321,6 +1496,7 @@ class WebCrawlerService:
                 "succeeded": succeeded,
                 "failed": len(pages) - succeeded,
                 "export_state": exported_state if exported_state else None,
+                "monitor_stats": None,
                 "success": True,
             }
 
@@ -1691,6 +1867,16 @@ class WebCrawlerService:
                 headers=headers or {},
                 follow_redirects=follow_redirects,
             )
+            # AsyncWebCrawler internally accesses BrowserConfig attributes on the
+            # config object. HTTPCrawlerConfig doesn't have them — copy all
+            # defaults from a fresh BrowserConfig instance.
+            from crawl4ai import BrowserConfig as _BC
+            _defaults = _BC(headless=True, verbose=False)
+            for _attr in dir(_defaults):
+                if _attr.startswith("_") or callable(getattr(_defaults, _attr)):
+                    continue
+                if not hasattr(http_config, _attr):
+                    setattr(http_config, _attr, getattr(_defaults, _attr))
 
             md_generator = _build_markdown_generator(
                 word_count_threshold=word_count_threshold
@@ -1900,6 +2086,318 @@ class WebCrawlerService:
         except Exception as e:
             logger.error("hub_crawl_failed", url=url, site_profile=site_profile, error=str(e))
             return {"url": url, "success": False, "error": str(e)[:500]}
+
+    # ------------------------------------------------------------------
+    # v8 — Browser profiler
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def list_browser_profiles() -> dict:
+        """List all persistent browser profiles."""
+        try:
+            from crawl4ai import BrowserProfiler
+            profiler = BrowserProfiler()
+            profiles = profiler.list_profiles()
+            return {"profiles": profiles, "success": True}
+        except ImportError:
+            return {"profiles": [], "success": False, "error": "BrowserProfiler requires crawl4ai >= 0.8.0"}
+        except Exception as e:
+            return {"profiles": [], "success": False, "error": str(e)[:500]}
+
+    @staticmethod
+    def create_browser_profile(profile_name: Optional[str] = None) -> dict:
+        """Create a persistent browser profile."""
+        try:
+            from crawl4ai import BrowserProfiler
+            profiler = BrowserProfiler()
+            result_name = profiler.create_profile(profile_name=profile_name)
+            if result_name:
+                path = profiler.get_profile_path(result_name)
+                return {"profile_name": result_name, "profile_path": path, "success": True}
+            return {"success": False, "error": "Profile creation returned None"}
+        except ImportError:
+            return {"success": False, "error": "BrowserProfiler requires crawl4ai >= 0.8.0"}
+        except Exception as e:
+            return {"success": False, "error": str(e)[:500]}
+
+    @staticmethod
+    def delete_browser_profile(profile_name: str) -> dict:
+        """Delete a persistent browser profile."""
+        try:
+            from crawl4ai import BrowserProfiler
+            profiler = BrowserProfiler()
+            deleted = profiler.delete_profile(profile_name)
+            return {"success": deleted, "error": None if deleted else f"Profile '{profile_name}' not found"}
+        except ImportError:
+            return {"success": False, "error": "BrowserProfiler requires crawl4ai >= 0.8.0"}
+        except Exception as e:
+            return {"success": False, "error": str(e)[:500]}
+
+    # ------------------------------------------------------------------
+    # v8 — Docker remote crawl
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    async def docker_crawl(
+        urls: list[str],
+        docker_url: str = "http://localhost:8000",
+        timeout: float = 30.0,
+    ) -> dict:
+        """Crawl URLs via a remote crawl4ai Docker container."""
+        try:
+            from crawl4ai import Crawl4aiDockerClient
+
+            client = Crawl4aiDockerClient(base_url=docker_url, timeout=timeout)
+            try:
+                raw = await client.crawl(urls=urls)
+                all_results = raw if isinstance(raw, list) else [raw]
+
+                results = []
+                succeeded = 0
+                for res in all_results:
+                    if res.success:
+                        raw_md, fit_md = _extract_markdown(res)
+                        results.append({
+                            "url": res.url,
+                            "title": (res.metadata or {}).get("title", ""),
+                            "markdown": fit_md or raw_md,
+                            "success": True,
+                        })
+                        succeeded += 1
+                    else:
+                        results.append({
+                            "url": res.url, "title": "", "markdown": "",
+                            "success": False,
+                            "error": res.error_message or "Docker crawl failed",
+                        })
+
+                return {
+                    "total": len(urls), "succeeded": succeeded,
+                    "failed": len(urls) - succeeded,
+                    "results": results, "success": True,
+                }
+            finally:
+                try:
+                    client.close()
+                except Exception:
+                    pass
+
+        except ImportError:
+            return {
+                "total": len(urls), "succeeded": 0, "failed": len(urls),
+                "results": [], "success": False,
+                "error": "Crawl4aiDockerClient requires crawl4ai >= 0.8.0",
+            }
+        except Exception as e:
+            logger.error("docker_crawl_failed", error=str(e))
+            return {
+                "total": len(urls), "succeeded": 0, "failed": len(urls),
+                "results": [], "success": False, "error": str(e)[:500],
+            }
+
+    # ------------------------------------------------------------------
+    # v8 — PDF scraping via crawl4ai
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    async def scrape_pdf(url: str, extract_images: bool = False) -> dict:
+        """Scrape PDF content using crawl4ai's PDFContentScrapingStrategy."""
+        try:
+            from crawl4ai import CrawlerRunConfig, CacheMode, PDFContentScrapingStrategy
+
+            strategy = PDFContentScrapingStrategy(extract_images=extract_images)
+            config = CrawlerRunConfig(
+                cache_mode=CacheMode.BYPASS,
+                content_scraping_strategy=strategy,
+            )
+            crawler = await get_crawler()
+            result = await crawler.arun(url=url, config=config)
+
+            if not result.success:
+                return {"url": url, "success": False, "error": result.error_message or "PDF scrape failed"}
+
+            raw_md, fit_md = _extract_markdown(result)
+            md = fit_md or raw_md
+            return {"url": url, "markdown": md, "text_length": len(md), "success": True}
+
+        except ImportError:
+            return {"url": url, "success": False, "error": "PDFContentScrapingStrategy requires crawl4ai >= 0.8.0"}
+        except Exception as e:
+            logger.error("scrape_pdf_failed", url=url, error=str(e))
+            return {"url": url, "success": False, "error": str(e)[:500]}
+
+    # ------------------------------------------------------------------
+    # v8 — Cosine clustering extraction
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    async def extract_cosine(
+        url: str,
+        word_count_threshold: int = 10,
+        max_dist: float = 0.2,
+        top_k: int = 3,
+        sim_threshold: float = 0.3,
+        semantic_filter: Optional[str] = None,
+    ) -> dict:
+        """Extract content clusters using CosineStrategy (semantic similarity)."""
+        try:
+            from crawl4ai import CrawlerRunConfig, CacheMode, CosineStrategy
+
+            strategy = CosineStrategy(
+                word_count_threshold=word_count_threshold,
+                max_dist=max_dist,
+                top_k=top_k,
+                sim_threshold=sim_threshold,
+                semantic_filter=semantic_filter,
+            )
+            config = CrawlerRunConfig(
+                cache_mode=CacheMode.BYPASS,
+                extraction_strategy=strategy,
+            )
+            crawler = await get_crawler()
+            result = await crawler.arun(url=url, config=config)
+
+            if not result.success:
+                return {"url": url, "clusters": [], "total_clusters": 0,
+                        "success": False, "error": result.error_message or "Cosine extraction failed"}
+
+            import json as _json
+            clusters = []
+            if result.extracted_content:
+                try:
+                    raw = _json.loads(result.extracted_content)
+                    if isinstance(raw, list):
+                        for i, item in enumerate(raw):
+                            clusters.append({
+                                "index": i,
+                                "tags": item.get("tags", []) if isinstance(item, dict) else [],
+                                "content": item.get("content", str(item)) if isinstance(item, dict) else str(item),
+                            })
+                except Exception:
+                    clusters = [{"index": 0, "tags": [], "content": result.extracted_content}]
+
+            return {"url": url, "clusters": clusters, "total_clusters": len(clusters), "success": True}
+
+        except ImportError:
+            return {"url": url, "clusters": [], "total_clusters": 0,
+                    "success": False, "error": "CosineStrategy requires crawl4ai + sentence-transformers"}
+        except Exception as e:
+            logger.error("extract_cosine_failed", url=url, error=str(e))
+            return {"url": url, "clusters": [], "total_clusters": 0, "success": False, "error": str(e)[:500]}
+
+    # ------------------------------------------------------------------
+    # v8 — JSON lxml extraction
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    async def extract_lxml(url: str, schema: dict, auth: dict = None) -> dict:
+        """Extract structured data using JsonLxmlExtractionStrategy."""
+        try:
+            from crawl4ai import CrawlerRunConfig, CacheMode
+            from crawl4ai import JsonLxmlExtractionStrategy
+
+            strategy = JsonLxmlExtractionStrategy(schema=schema)
+            config_kwargs: dict = {
+                "cache_mode": CacheMode.BYPASS,
+                "extraction_strategy": strategy,
+            }
+            if auth and auth.get("headers"):
+                config_kwargs["headers"] = auth["headers"]
+
+            config = CrawlerRunConfig(**config_kwargs)
+            crawler = await get_crawler()
+            result = await crawler.arun(url=url, config=config)
+
+            if not result.success:
+                return {"url": url, "data": None, "success": False,
+                        "error": result.error_message or "lxml extraction failed"}
+
+            import json as _json
+            data = None
+            if result.extracted_content:
+                try:
+                    data = _json.loads(result.extracted_content)
+                except Exception:
+                    data = result.extracted_content
+
+            return {"url": url, "data": data, "success": True}
+
+        except ImportError:
+            return {"url": url, "data": None, "success": False,
+                    "error": "JsonLxmlExtractionStrategy requires crawl4ai >= 0.8.0"}
+        except Exception as e:
+            logger.error("extract_lxml_failed", url=url, error=str(e))
+            return {"url": url, "data": None, "success": False, "error": str(e)[:500]}
+
+    # ------------------------------------------------------------------
+    # v8 — Regex chunking
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def chunk_regex(text: str, patterns: list = None) -> dict:
+        """Split text into chunks using RegexChunking."""
+        try:
+            from crawl4ai import RegexChunking
+            chunker = RegexChunking(patterns=patterns)
+            chunks = chunker.chunk(text)
+            return {"chunks": chunks, "total_chunks": len(chunks), "success": True}
+        except ImportError:
+            return {"chunks": [], "total_chunks": 0, "success": False,
+                    "error": "RegexChunking requires crawl4ai >= 0.8.0"}
+        except Exception as e:
+            return {"chunks": [], "total_chunks": 0, "success": False, "error": str(e)[:500]}
+
+    # ------------------------------------------------------------------
+    # v8 — C4A compile from file
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def compile_c4a_file(file_path: str) -> dict:
+        """Compile a C4A-Script file to JavaScript."""
+        try:
+            from crawl4ai import c4a_compile_file
+            result = c4a_compile_file(file_path)
+            if hasattr(result, "js_code") and result.js_code:
+                return {"js_code": result.js_code, "success": True}
+            error = getattr(result, "error", None) or "Compilation returned no JS code"
+            return {"js_code": "", "success": False, "error": str(error)}
+        except ImportError:
+            return {"js_code": "", "success": False, "error": "c4a_compile_file requires crawl4ai >= 0.8.0"}
+        except Exception as e:
+            return {"js_code": "", "success": False, "error": str(e)[:500]}
+
+    # ------------------------------------------------------------------
+    # C4A-Script compile / validate
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def compile_c4a(script: str) -> dict:
+        """Compile C4A-Script DSL to JavaScript."""
+        try:
+            from crawl4ai import c4a_compile
+            result = c4a_compile(script)
+            if hasattr(result, "js_code") and result.js_code:
+                return {"js_code": result.js_code, "success": True}
+            error = getattr(result, "error", None) or "Compilation returned no JS code"
+            return {"js_code": "", "success": False, "error": str(error)}
+        except ImportError:
+            return {"js_code": "", "success": False, "error": "c4a_compile requires crawl4ai >= 0.8.0"}
+        except Exception as e:
+            return {"js_code": "", "success": False, "error": str(e)[:500]}
+
+    @staticmethod
+    def validate_c4a(script: str) -> dict:
+        """Validate C4A-Script syntax without compiling."""
+        try:
+            from crawl4ai import c4a_validate
+            result = c4a_validate(script)
+            valid = getattr(result, "valid", True)
+            errors = getattr(result, "errors", []) or []
+            return {"valid": valid, "errors": [str(e) for e in errors]}
+        except ImportError:
+            return {"valid": False, "errors": ["c4a_validate requires crawl4ai >= 0.8.0"]}
+        except Exception as e:
+            return {"valid": False, "errors": [str(e)[:500]]}
 
     @staticmethod
     def _extract_links(markdown: str, base_url: str, max_links: int) -> list[str]:

@@ -10,6 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.auth import get_current_user
+from app.modules.auth_guards.middleware import require_verified_email
 from app.database import get_session
 from app.models.user import User
 from app.modules.multi_agent_crew.schemas import (
@@ -62,7 +63,7 @@ def _run_to_read(run) -> CrewRunRead:
 @limiter.limit("10/minute")
 async def create_crew(
     request: Request, body: CrewCreate,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """Create a new AI agent crew. Rate limit: 10/min"""
@@ -105,7 +106,7 @@ async def list_templates(category: Optional[str] = Query(None)):
 @limiter.limit("10/minute")
 async def create_from_template(
     request: Request, template_id: str, name: Optional[str] = Query(None),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """Create a crew from a template. Rate limit: 10/min"""
@@ -133,7 +134,7 @@ async def get_crew(
 @limiter.limit("10/minute")
 async def update_crew(
     request: Request, crew_id: UUID, body: CrewUpdate,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """Update a crew. Rate limit: 10/min"""
@@ -147,7 +148,7 @@ async def update_crew(
 @limiter.limit("10/minute")
 async def delete_crew(
     request: Request, crew_id: UUID,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """Delete a crew. Rate limit: 10/min"""
@@ -159,7 +160,7 @@ async def delete_crew(
 @limiter.limit("3/minute")
 async def run_crew(
     request: Request, crew_id: UUID, body: CrewRunRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """Run a crew with an instruction. Rate limit: 3/min"""

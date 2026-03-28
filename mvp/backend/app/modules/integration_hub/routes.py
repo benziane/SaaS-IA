@@ -15,6 +15,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 webhook_logger = structlog.get_logger()
 
 from app.auth import get_current_user
+from app.modules.auth_guards.middleware import require_verified_email
 from app.database import get_session
 from app.models.user import User
 from app.modules.integration_hub.schemas import (
@@ -105,7 +106,7 @@ async def list_providers():
 async def create_connector(
     request: Request,
     body: ConnectorCreate,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """
@@ -175,7 +176,7 @@ async def get_connector(
 async def delete_connector(
     request: Request,
     connector_id: UUID,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """
@@ -198,7 +199,7 @@ async def delete_connector(
 async def test_connector(
     request: Request,
     connector_id: UUID,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """
@@ -328,7 +329,7 @@ async def list_events(
 async def create_trigger(
     request: Request,
     body: TriggerCreate,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """
@@ -375,7 +376,7 @@ async def list_triggers(
 async def delete_trigger(
     request: Request,
     trigger_id: UUID,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """

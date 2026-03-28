@@ -11,6 +11,7 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, Uplo
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.auth import get_current_user
+from app.modules.auth_guards.middleware import require_verified_email
 from app.database import get_session
 from app.models.user import User
 from app.modules.knowledge.schemas import (
@@ -56,7 +57,7 @@ def _extract_text(content: bytes, filename: str) -> str:
 async def upload_document(
     request: Request,
     file: UploadFile = File(..., description="Document to index (TXT, MD, CSV)"),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """
@@ -150,7 +151,7 @@ async def list_document_chunks(
 async def delete_document(
     request: Request,
     document_id: UUID,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """
@@ -174,7 +175,7 @@ async def delete_document(
 async def search_documents(
     request: Request,
     body: SearchRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """
@@ -244,7 +245,7 @@ async def ask_question(
 async def search_vector(
     request: Request,
     body: SearchRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """
@@ -273,7 +274,7 @@ async def search_vector(
 @limiter.limit("1/minute")
 async def reindex_embeddings(
     request: Request,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """

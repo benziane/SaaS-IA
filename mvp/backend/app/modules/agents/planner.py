@@ -26,6 +26,8 @@ AVAILABLE_ACTIONS = {
     "create_pipeline": "Create an AI processing pipeline",
     "crawl_web": "Crawl a web page and extract text and images",
     "crawl_and_index": "Crawl a web page and auto-index content to the Knowledge Base",
+    "batch_crawl": "Batch-crawl multiple URLs in parallel with optional proxy rotation and memory-adaptive dispatcher",
+    "deep_crawl": "Deep-crawl a website using BestFirst strategy with composite scoring, configurable depth and max pages",
     "analyze_image": "Analyze an image using AI Vision",
     "generate_content": "Generate multi-format content (blog, Twitter thread, LinkedIn post, newsletter, etc.) from text",
     "run_workflow": "Execute an AI automation workflow",
@@ -170,6 +172,24 @@ def _heuristic_plan(instruction: str) -> list[dict]:
             "description": "Analyze sentiment and emotions",
             "input": {},
         })
+
+    # ── Batch crawl (multiple URLs) ────────────────────
+    if any(w in instruction_lower for w in ["batch crawl", "batch scrape", "crawl multiple", "scrape multiple", "crawl all", "scrape all"]):
+        steps.append({
+            "action": "batch_crawl",
+            "description": "Batch-crawl multiple URLs in parallel",
+            "input": {},
+        })
+        return steps
+
+    # ── Deep crawl (site-wide) ─────────────────────────
+    if any(w in instruction_lower for w in ["deep crawl", "crawl entire", "crawl site", "spider", "full site", "map site"]):
+        steps.append({
+            "action": "deep_crawl",
+            "description": "Deep-crawl the website with BestFirst strategy",
+            "input": {},
+        })
+        return steps
 
     if any(w in instruction_lower for w in ["crawl", "scrape", "web", "website", "page", "site", "url"]):
         # Prefer crawl_and_index when user also mentions indexing or knowledge base

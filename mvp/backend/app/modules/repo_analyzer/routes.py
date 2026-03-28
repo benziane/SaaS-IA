@@ -8,6 +8,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request,
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.auth import get_current_user
+from app.modules.auth_guards.middleware import require_verified_email
 from app.database import get_session
 from app.models.user import User
 from app.modules.repo_analyzer.schemas import (
@@ -38,7 +39,7 @@ async def create_analysis(
     request: Request,
     data: AnalysisCreate,
     background_tasks: BackgroundTasks,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
     service: RepoAnalyzerService = Depends(get_service),
 ):
@@ -141,7 +142,7 @@ async def get_analysis(
 async def delete_analysis(
     request: Request,
     analysis_id: UUID,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """Delete a repo analysis."""
@@ -163,7 +164,7 @@ async def delete_analysis(
 async def compare_repos(
     request: Request,
     data: CompareRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
     service: RepoAnalyzerService = Depends(get_service),
 ):

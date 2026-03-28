@@ -9,6 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.auth import get_current_user
+from app.modules.auth_guards.middleware import require_verified_email
 from app.database import get_session
 from app.models.user import User
 from app.modules.image_gen.schemas import (
@@ -26,7 +27,7 @@ router = APIRouter()
 @limiter.limit("5/minute")
 async def generate_image(
     request: Request, body: GenerateImageRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """Generate an image from a text prompt. Rate limit: 5/min"""
@@ -42,7 +43,7 @@ async def generate_image(
 @limiter.limit("5/minute")
 async def generate_thumbnail(
     request: Request, body: ThumbnailRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """Generate a YouTube thumbnail from content. Rate limit: 5/min"""
@@ -57,7 +58,7 @@ async def generate_thumbnail(
 @limiter.limit("2/minute")
 async def bulk_generate(
     request: Request, body: BulkGenerateRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """Generate multiple images at once. Rate limit: 2/min"""
@@ -87,7 +88,7 @@ async def list_images(
 @limiter.limit("10/minute")
 async def delete_image(
     request: Request, image_id: UUID,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """Delete an image. Rate limit: 10/min"""
@@ -99,7 +100,7 @@ async def delete_image(
 @limiter.limit("3/minute")
 async def upscale_image(
     request: Request, image_id: UUID, body: UpscaleRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """Upscale an image using Real-ESRGAN (x2-x4). Rate limit: 3/min"""
@@ -119,7 +120,7 @@ async def upscale_image(
 @limiter.limit("10/minute")
 async def create_project(
     request: Request, body: ImageProjectCreate,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """Create an image project. Rate limit: 10/min"""

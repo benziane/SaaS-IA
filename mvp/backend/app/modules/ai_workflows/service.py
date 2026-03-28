@@ -422,6 +422,10 @@ class WorkflowService:
             return await WorkflowService._node_generate(previous_output, config, user_id)
         elif action == "crawl":
             return await WorkflowService._node_crawl(previous_output, config)
+        elif action == "batch_crawl":
+            return await WorkflowService._node_batch_crawl(previous_output, config)
+        elif action == "deep_crawl":
+            return await WorkflowService._node_deep_crawl(previous_output, config)
         elif action == "transcribe":
             return await WorkflowService._node_transcribe(previous_output, config)
         elif action == "youtube_transcript":
@@ -576,6 +580,60 @@ class WorkflowService:
             return {"output": "", "error": result.get("error", "Crawl failed"), "action": "crawl"}
         except Exception as e:
             return {"output": "", "error": str(e)[:500], "action": "crawl"}
+
+    @staticmethod
+    async def _node_batch_crawl(text: str, config: dict) -> dict:
+        urls = config.get("urls", [])
+        if not urls and text:
+            urls = [u.strip() for u in text.split("\n") if u.strip().startswith("http")]
+        if not urls:
+            return {"output": "", "error": "No URLs for batch crawl", "action": "batch_crawl"}
+        try:
+            from app.modules.web_crawler.service import WebCrawlerService
+            result = await WebCrawlerService.batch_scrape(
+                urls=urls,
+                extract_images=config.get("extract_images", False),
+                proxies=config.get("proxies"),
+                dispatcher=config.get("dispatcher"),
+            )
+            if result.get("success"):
+                results_list = result.get("results", [])
+                successes = sum(1 for r in results_list if r.get("success"))
+                return {
+                    "output": f"Batch: {successes}/{len(results_list)} succeeded",
+                    "action": "batch_crawl",
+                    "total": len(results_list),
+                }
+            return {"output": "", "error": result.get("error", "Batch failed"), "action": "batch_crawl"}
+        except Exception as e:
+            return {"output": "", "error": str(e)[:500], "action": "batch_crawl"}
+
+    @staticmethod
+    async def _node_deep_crawl(text: str, config: dict) -> dict:
+        url = config.get("url", text or "").strip()
+        if not url or not url.startswith("http"):
+            return {"output": "", "error": "No valid URL", "action": "deep_crawl"}
+        try:
+            from app.modules.web_crawler.service import WebCrawlerService
+            result = await WebCrawlerService.deep_crawl(
+                start_url=url,
+                max_depth=config.get("max_depth", 3),
+                max_pages=config.get("max_pages", 20),
+                extract_images=config.get("extract_images", False),
+                composite_scorers=config.get("composite_scorers"),
+                proxies=config.get("proxies"),
+                dispatcher=config.get("dispatcher"),
+            )
+            if result.get("success"):
+                pages = result.get("results", [])
+                return {
+                    "output": f"Deep crawl: {len(pages)} pages from {url}",
+                    "action": "deep_crawl",
+                    "pages_crawled": len(pages),
+                }
+            return {"output": "", "error": result.get("error", "Deep crawl failed"), "action": "deep_crawl"}
+        except Exception as e:
+            return {"output": "", "error": str(e)[:500], "action": "deep_crawl"}
 
     @staticmethod
     async def _node_transcribe(text: str, config: dict) -> dict:

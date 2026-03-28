@@ -11,6 +11,7 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Reques
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.auth import get_current_user
+from app.modules.auth_guards.middleware import require_verified_email
 from app.database import get_session
 from app.models.user import User
 from app.modules.data_analyst.schemas import (
@@ -46,7 +47,7 @@ def _analysis_to_read(a) -> AnalysisRead:
 async def upload_dataset(
     request: Request,
     file: UploadFile = File(..., description="CSV, JSON, or Excel file"),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """Upload a dataset for analysis. Rate limit: 5/min"""
@@ -97,7 +98,7 @@ async def get_dataset(
 @limiter.limit("10/minute")
 async def delete_dataset(
     request: Request, dataset_id: UUID,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """Delete dataset and analyses. Rate limit: 10/min"""
@@ -109,7 +110,7 @@ async def delete_dataset(
 @limiter.limit("5/minute")
 async def ask_question(
     request: Request, dataset_id: UUID, body: AskDataRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """Ask a natural language question about a dataset. Rate limit: 5/min"""
@@ -124,7 +125,7 @@ async def ask_question(
 @limiter.limit("3/minute")
 async def auto_analyze(
     request: Request, dataset_id: UUID, body: AutoAnalyzeRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """Automatically analyze a dataset. Rate limit: 3/min"""
@@ -138,7 +139,7 @@ async def auto_analyze(
 @limiter.limit("2/minute")
 async def generate_report(
     request: Request, dataset_id: UUID, body: GenerateReportRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """Generate a comprehensive report. Rate limit: 2/min"""

@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.auth import get_current_user
+from app.modules.auth_guards.middleware import require_verified_email
 from app.database import get_session
 from app.models.user import User
 from app.modules.ai_memory.service import AIMemoryService
@@ -31,7 +32,7 @@ class ExtractRequest(BaseModel):
 @limiter.limit("20/minute")
 async def add_memory(
     request: Request, body: MemoryCreate,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """Add a memory entry manually."""
@@ -56,7 +57,7 @@ async def list_memories(
 @limiter.limit("20/minute")
 async def delete_memory(
     request: Request, memory_id: UUID,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """Delete a memory."""
@@ -80,7 +81,7 @@ async def get_context(
 @limiter.limit("5/minute")
 async def extract_memories(
     request: Request, body: ExtractRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """Auto-extract memories from text using AI."""
@@ -110,7 +111,7 @@ async def recall_memories(
 @limiter.limit("2/minute")
 async def sync_to_mem0(
     request: Request,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """Bulk-sync existing DB memories to Mem0 for enhanced semantic recall."""
@@ -122,7 +123,7 @@ async def sync_to_mem0(
 @limiter.limit("1/minute")
 async def forget_all(
     request: Request,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """RGPD: forget all memories."""

@@ -1258,6 +1258,24 @@ CREATE INDEX ix_document_chunks_embedding_hnsw
 
 ---
 
+## Backlog — Post Email Guard & Crawler v7 (2026-03-28)
+
+### P1 — Fonctionnel
+- [ ] Configurer SMTP reel (Mailpit docker compose up + SMTP_HOST/USER/PASSWORD dans .env)
+- [ ] Appliquer `require_verified_email` sur `POST /api/auth/test-email` (admin endpoint)
+- [ ] Run full test suite dans Docker avec Redis + PostgreSQL reels (validation CI)
+
+### P2 — Polish
+- [ ] Remplacer les PWA icons placeholder (cyan) par le vrai logo SaaS-IA (8 tailles + apple-touch-icon)
+- [ ] Ajouter tab "Extract" dans la page /crawler (CSS selector, XPath, Regex — hooks et API prets)
+- [ ] Ajouter tab "Seed URLs" dans la page /crawler (decouverte sitemap — hook pret)
+
+### P3 — Qualite
+- [ ] Tests E2E frontend (Playwright/Cypress : login → verify email → create API key flow)
+- [ ] Ameliorer la coverage backend (actuellement ~59%, identifier les trous critiques)
+
+---
+
 ## CHANGELOG
 
 ### v4.4.0 (2026-03-26) - Deep Audit + Resilience + Database Hardening

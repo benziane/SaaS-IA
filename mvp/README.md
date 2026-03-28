@@ -79,7 +79,7 @@ STRIPE_PRICE_PRO_MONTHLY=price_...
 
 ## Modules backend (auto-decouverts)
 
-25 modules auto-decouverts via `manifest.json` + `ModuleRegistry` :
+42 modules auto-decouverts via `manifest.json` + `ModuleRegistry` :
 
 ### Modules Core
 
@@ -97,6 +97,7 @@ STRIPE_PRICE_PRO_MONTHLY=price_...
 | sentiment | /api/sentiment | 2 |
 | web_crawler | /api/crawler | 4 |
 | cost_tracker | /api/costs | 3 |
+| youtube_transcription | /api/youtube | 13 | YouTube transcript extraction, multi-language, chapter detection, summary |
 | Public API v1 | /v1 | 3 |
 
 ### Modules P0 - Content & Automation (Sprint 7)
@@ -137,6 +138,16 @@ STRIPE_PRICE_PRO_MONTHLY=price_...
 | unified_search | /api/search | 2 | Recherche universelle cross-module (transcriptions, KB, content, conversations) + RAG answer synthesis |
 | ai_memory | /api/memory | 5 | Memoire persistante Mem0-style : preferences, facts, context injection, auto-extraction IA, RGPD forget |
 
+### Modules Enterprise
+
+| Module | Prefix | Endpoints | Description |
+|--------|--------|-----------|-------------|
+| tenants | /api/tenants | 5 | Multi-tenant isolation, PostgreSQL RLS, contextvars middleware |
+| audit | /api/audit | 4 | Immutable hash chain, compliance-grade audit trail |
+| feature_flags | /api/feature-flags | 5 | Kill switches, % rollout, Redis-backed |
+| secrets | /api/secrets | 4 | Rotation tracking, alerts, health score |
+| auth_guards | /api/auth-guards | 3 | Auth guards, policy enforcement, access control |
+
 ### Integrations open-source (18 libs integrees)
 
 | Lib | Module | Impact |
@@ -157,18 +168,9 @@ STRIPE_PRICE_PRO_MONTHLY=price_...
 
 | Systeme | Modules connectes | Description |
 |---------|-------------------|-------------|
-| **Agent Executor** | 23 actions | Les agents autonomes appellent n'importe quel module |
-| **Pipeline Steps** | 15 step types | Les pipelines chainent les operations sequentiellement |
-| **Workflow Actions** | 19 actions | Les workflows orchestrent les modules via DAG parallele |
-
-### Moteur de recherche Knowledge Base
-
-| Mode | Dependance | Description |
-|------|-----------|-------------|
-| TF-IDF | Aucune (built-in) | Cosine similarity sur term frequency (legacy, toujours disponible) |
-| Vector | pgvector + sentence-transformers | Recherche semantique via embeddings 384 dim + index HNSW |
-| Hybrid | pgvector + sentence-transformers | Reciprocal Rank Fusion (70% vector + 30% TF-IDF) |
-| Auto | Auto-detecte | `search()` utilise hybrid si dispo, sinon TF-IDF |
+| **Agent Executor** | ~84 actions | Les agents autonomes appellent n'importe quel module |
+| **Pipeline Steps** | 34 step types | Les pipelines chainent les operations sequentiellement |
+| **Workflow Actions** | 35 types | Les workflows orchestrent les modules via DAG parallele |
 
 ### Moteur de recherche Knowledge Base
 

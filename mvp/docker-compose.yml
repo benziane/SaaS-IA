@@ -151,6 +151,17 @@ services:
     networks:
       - saas-ia-network
 
+  # Mailpit - Dev SMTP Server
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: saas-ia-mailpit
+    ports:
+      - "8025:8025"   # Web UI
+      - "1025:1025"   # SMTP
+    restart: unless-stopped
+    networks:
+      - saas-ia-network
+
 volumes:
   postgres_data:
   redis_data:

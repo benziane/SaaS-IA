@@ -24,6 +24,9 @@ async def _exec_crawl_web(input_data: dict, previous: Optional[str]) -> dict:
             url=url,
             extract_images=input_data.get("extract_images", True),
             max_images=input_data.get("max_images", 10),
+            content_filter_mode=input_data.get("content_filter_mode", "pruning"),
+            antibot_retry=input_data.get("antibot_retry", False),
+            proxies=input_data.get("proxies"),
         )
 
         if result.get("success"):
@@ -78,6 +81,83 @@ async def _exec_seed_web_urls(input_data: dict, previous: Optional[str]) -> dict
         return {"output": "", "error": str(e)[:500], "action": "seed_web_urls"}
 
 
+async def _exec_batch_crawl(input_data: dict, previous: Optional[str]) -> dict:
+    """Batch-crawl multiple URLs in parallel with optional proxy rotation."""
+    urls = input_data.get("urls", [])
+    if not urls and previous:
+        urls = [u.strip() for u in previous.split("\n") if u.strip().startswith("http")]
+    if not urls:
+        return {"output": "", "error": "No URLs provided for batch crawl", "action": "batch_crawl"}
+
+    try:
+        from app.modules.web_crawler.service import WebCrawlerService
+
+        result = await WebCrawlerService.batch_scrape(
+            urls=urls,
+            extract_images=input_data.get("extract_images", False),
+            proxies=input_data.get("proxies"),
+            dispatcher=input_data.get("dispatcher"),
+        )
+
+        if result.get("success"):
+            results_list = result.get("results", [])
+            successes = sum(1 for r in results_list if r.get("success"))
+            output = f"Batch crawl: {successes}/{len(results_list)} succeeded\n"
+            for r in results_list[:10]:
+                title = r.get("title", r.get("url", "?"))[:60]
+                status = "OK" if r.get("success") else "FAIL"
+                output += f"  [{status}] {title}\n"
+            return {
+                "output": output,
+                "action": "batch_crawl",
+                "total": len(results_list),
+                "successes": successes,
+                "monitor_stats": result.get("monitor_stats"),
+            }
+        return {"output": "", "error": result.get("error", "Batch crawl failed"), "action": "batch_crawl"}
+
+    except Exception as e:
+        return {"output": "", "error": str(e)[:500], "action": "batch_crawl"}
+
+
+async def _exec_deep_crawl(input_data: dict, previous: Optional[str]) -> dict:
+    """Deep-crawl a site using BestFirst strategy with composite scoring."""
+    url = input_data.get("url", previous or "")
+    if not url or not url.startswith("http"):
+        return {"output": "", "error": "No valid URL provided for deep crawl", "action": "deep_crawl"}
+
+    try:
+        from app.modules.web_crawler.service import WebCrawlerService
+
+        result = await WebCrawlerService.deep_crawl(
+            start_url=url,
+            max_depth=input_data.get("max_depth", 3),
+            max_pages=input_data.get("max_pages", 20),
+            extract_images=input_data.get("extract_images", False),
+            composite_scorers=input_data.get("composite_scorers"),
+            domain_authority_weights=input_data.get("domain_authority_weights"),
+            proxies=input_data.get("proxies"),
+            dispatcher=input_data.get("dispatcher"),
+        )
+
+        if result.get("success"):
+            pages = result.get("results", [])
+            output = f"Deep crawl from {url}: {len(pages)} pages found\n"
+            for p in pages[:10]:
+                title = p.get("title", p.get("url", "?"))[:60]
+                output += f"  - {title}\n"
+            return {
+                "output": output,
+                "action": "deep_crawl",
+                "pages_crawled": len(pages),
+                "monitor_stats": result.get("monitor_stats"),
+            }
+        return {"output": "", "error": result.get("error", "Deep crawl failed"), "action": "deep_crawl"}
+
+    except Exception as e:
+        return {"output": "", "error": str(e)[:500], "action": "deep_crawl"}
+
+
 async def _exec_analyze_image(input_data: dict, previous: Optional[str]) -> dict:
     """Analyze an image URL with AI Vision."""
     image_url = input_data.get("image_url", input_data.get("url", ""))
@@ -114,6 +194,8 @@ async def execute_step(action: str, input_data: dict, previous_output: Optional[
         "create_pipeline": _exec_generate,  # Fallback to generate for now
         "crawl_web": _exec_crawl_web,
         "seed_web_urls": _exec_seed_web_urls,
+        "batch_crawl": _exec_batch_crawl,
+        "deep_crawl": _exec_deep_crawl,
         "analyze_image": _exec_analyze_image,
         "generate_content": _exec_generate_content,
         "run_workflow": _exec_run_workflow,

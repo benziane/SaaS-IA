@@ -1,7 +1,7 @@
 {
   "name": "web_crawler",
-  "version": "6.0.0",
-  "description": "Full crawl4ai surface: fit_markdown, CSS/XPath/regex extraction, AI schema gen, raw HTML processing, batch crawl, deep crawl (BFS/DFS/Best-First + filters + resume), seed URLs (BM25), adaptive crawl (self-tuning), HTTP-only scrape, CrawlerHub profiles, geolocation, undetected browser, LLM table extraction",
+  "version": "8.0.0",
+  "description": "100% crawl4ai v0.8.5 surface: fit_markdown, CSS/XPath/regex/lxml/cosine extraction, AI schema gen, raw HTML processing, batch crawl (MemoryAdaptiveDispatcher + SemaphoreDispatcher + RateLimiter + CrawlerMonitor), deep crawl (BFS/DFS/Best-First + CompositeScorer + filters + resume), seed URLs (BM25), adaptive crawl (self-tuning), HTTP-only scrape, CrawlerHub profiles, geolocation, undetected browser, LLM table extraction, proxy rotation (RoundRobin), antibot detection + stealth retry, LLMContentFilter, C4A-Script compile/validate/compile-file, BrowserProfiler (create/list/delete), Docker remote crawl, PDF scraping, regex chunking",
   "prefix": "/api/crawler",
   "tags": ["web_crawler"],
   "enabled": true,

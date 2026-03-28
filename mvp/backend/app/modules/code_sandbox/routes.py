@@ -9,6 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.auth import get_current_user
+from app.modules.auth_guards.middleware import require_verified_email
 from app.database import get_session
 from app.models.user import User
 from app.modules.code_sandbox.schemas import (
@@ -46,7 +47,7 @@ def _sandbox_to_read(s) -> SandboxRead:
 async def create_sandbox(
     request: Request,
     body: SandboxCreate,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """Create a new code sandbox. Rate limit: 10/min"""
@@ -90,7 +91,7 @@ async def get_sandbox(
 async def delete_sandbox(
     request: Request,
     sandbox_id: UUID,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """Delete (archive) a sandbox. Rate limit: 10/min"""
@@ -106,7 +107,7 @@ async def add_cell(
     request: Request,
     sandbox_id: UUID,
     body: CellCreate,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """Add a cell to a sandbox. Rate limit: 20/min"""
@@ -128,7 +129,7 @@ async def update_cell(
     sandbox_id: UUID,
     cell_id: str,
     body: CellUpdate,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """Update cell source code. Rate limit: 30/min"""
@@ -150,7 +151,7 @@ async def delete_cell(
     request: Request,
     sandbox_id: UUID,
     cell_id: str,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """Remove a cell from a sandbox. Rate limit: 20/min"""
@@ -164,7 +165,7 @@ async def execute_cell(
     request: Request,
     sandbox_id: UUID,
     cell_id: str,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """Execute a cell in a safe sandbox. Rate limit: 10/min"""
@@ -186,7 +187,7 @@ async def execute_cell(
 async def generate_code(
     request: Request,
     body: CodeGenerateRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
 ):
     """Generate code from natural language. Rate limit: 5/min"""
     result = await CodeSandboxService.generate_code(
@@ -203,7 +204,7 @@ async def generate_code(
 async def explain_code(
     request: Request,
     body: CodeExplainRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
 ):
     """Explain code using AI. Rate limit: 10/min"""
     result = await CodeSandboxService.explain_code(
@@ -218,7 +219,7 @@ async def explain_code(
 async def debug_code(
     request: Request,
     body: CodeDebugRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
 ):
     """Debug code with AI assistance. Rate limit: 5/min"""
     result = await CodeSandboxService.debug_code(

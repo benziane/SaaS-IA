@@ -9,6 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.auth import get_current_user
+from app.modules.auth_guards.middleware import require_verified_email
 from app.database import get_session
 from app.models.user import User
 from app.modules.video_gen.schemas import (
@@ -25,7 +26,7 @@ router = APIRouter()
 @limiter.limit("3/minute")
 async def generate_video(
     request: Request, body: GenerateVideoRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """Generate a video from text prompt. Rate limit: 3/min"""
@@ -42,7 +43,7 @@ async def generate_video(
 @limiter.limit("2/minute")
 async def generate_clips(
     request: Request, body: ClipHighlightsRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """Generate highlight clips from a transcription. Rate limit: 2/min"""
@@ -60,7 +61,7 @@ async def generate_clips(
 @limiter.limit("3/minute")
 async def generate_avatar(
     request: Request, body: AvatarVideoRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """Generate a talking avatar video. Rate limit: 3/min"""
@@ -75,7 +76,7 @@ async def generate_avatar(
 @limiter.limit("3/minute")
 async def generate_from_source(
     request: Request, body: VideoFromSourceRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """Generate video from transcription or document. Rate limit: 3/min"""
@@ -102,7 +103,7 @@ async def list_videos(
 @limiter.limit("10/minute")
 async def delete_video(
     request: Request, video_id: UUID,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """Delete a video. Rate limit: 10/min"""
@@ -114,7 +115,7 @@ async def delete_video(
 @limiter.limit("10/minute")
 async def create_project(
     request: Request, body: VideoProjectCreate,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """Create a video project. Rate limit: 10/min"""

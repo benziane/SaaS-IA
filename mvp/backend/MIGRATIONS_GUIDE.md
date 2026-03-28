@@ -9,6 +9,7 @@
 - [Bonnes Pratiques](#bonnes-pratiques)
 - [Troubleshooting](#troubleshooting)
 - [Exemples](#exemples)
+- [Historique des Migrations](#historique-des-migrations)
 
 ---
 
@@ -544,7 +545,18 @@ alembic current
 
 ---
 
-**Date de création** : 2025-11-13  
-**Auteur** : @benziane  
+## 📝 Historique des Migrations
+
+### Migration 0018 — email_verified (2026-03-27)
+- **File** : `20260327_0018_email_verified_field.py`
+- **Revision** : `email_verified_018`
+- **Down revision** : `cascade_delete_001`
+- **Change** : `ALTER TABLE users ADD COLUMN email_verified BOOLEAN NOT NULL DEFAULT false`
+- **Contexte** : Ajout du champ `email_verified` pour supporter le guard `require_verified_email` sur 177 endpoints. Appliquee live via `docker compose exec saas-ia-backend sh -c "cd /app && PYTHONPATH=/app alembic upgrade head"`.
+
+---
+
+**Date de création** : 2025-11-13
+**Auteur** : @benziane
 **Version** : 1.0.0
 

@@ -9,6 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.auth import get_current_user
+from app.modules.auth_guards.middleware import require_verified_email
 from app.database import get_session
 from app.models.user import User
 from app.modules.billing.middleware import require_ai_call_quota
@@ -154,7 +155,7 @@ async def update_slide(
     presentation_id: UUID,
     slide_number: int,
     body: SlideUpdate,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """
@@ -184,7 +185,7 @@ async def add_slide(
     presentation_id: UUID,
     after_slide: int,
     body: SlideInsert,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """
@@ -213,7 +214,7 @@ async def remove_slide(
     request: Request,
     presentation_id: UUID,
     slide_number: int,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """
@@ -241,7 +242,7 @@ async def export_presentation(
     request: Request,
     presentation_id: UUID,
     body: ExportRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """
@@ -313,7 +314,7 @@ async def generate_from_transcript(
 async def delete_presentation(
     request: Request,
     presentation_id: UUID,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """

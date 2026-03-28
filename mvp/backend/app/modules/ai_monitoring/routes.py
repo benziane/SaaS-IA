@@ -10,6 +10,7 @@ from pydantic import BaseModel, Field
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.auth import get_current_user
+from app.modules.auth_guards.middleware import require_verified_email
 from app.database import get_session
 from app.models.user import User
 from app.modules.ai_monitoring.service import AIMonitoringService
@@ -91,7 +92,7 @@ class LangfuseScoreRequest(BaseModel):
 async def create_langfuse_trace(
     request: Request,
     body: LangfuseTraceRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
 ):
     """Create a Langfuse trace for an LLM operation."""
     trace = AIMonitoringService.create_trace(
@@ -109,7 +110,7 @@ async def create_langfuse_trace(
 async def create_langfuse_generation(
     request: Request,
     body: LangfuseGenerationRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
 ):
     """Create a Langfuse generation (LLM call) within a trace."""
     generation = AIMonitoringService.create_generation(
@@ -131,7 +132,7 @@ async def create_langfuse_generation(
 async def score_langfuse_generation(
     request: Request,
     body: LangfuseScoreRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
 ):
     """Score a Langfuse generation or trace for quality tracking."""
     success = AIMonitoringService.score_generation(
@@ -162,7 +163,7 @@ async def langfuse_status(
 @limiter.limit("5/minute")
 async def flush_langfuse(
     request: Request,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
 ):
     """Flush Langfuse client to ensure all pending events are sent."""
     success = AIMonitoringService.flush()

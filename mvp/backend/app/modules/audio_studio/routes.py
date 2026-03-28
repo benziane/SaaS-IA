@@ -12,6 +12,7 @@ from fastapi.responses import FileResponse, Response
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.auth import get_current_user
+from app.modules.auth_guards.middleware import require_verified_email
 from app.database import get_session
 from app.models.user import User
 from app.modules.audio_studio.schemas import (
@@ -46,7 +47,7 @@ def _get_service(session: AsyncSession = Depends(get_session)) -> AudioStudioSer
 async def upload_audio(
     request: Request,
     file: UploadFile = File(..., description="Audio file (mp3, wav, ogg, flac, m4a, etc.)"),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     service: AudioStudioService = Depends(_get_service),
 ):
     """Upload an audio file. Rate limit: 5/min."""
@@ -144,7 +145,7 @@ async def get_audio(
 async def delete_audio(
     request: Request,
     audio_id: UUID,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     service: AudioStudioService = Depends(_get_service),
 ):
     """Delete an audio file. Rate limit: 5/min."""
@@ -162,7 +163,7 @@ async def edit_audio(
     request: Request,
     audio_id: UUID,
     body: AudioEditRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     service: AudioStudioService = Depends(_get_service),
 ):
     """Apply edit operations to an audio file (non-destructive). Rate limit: 10/min."""
@@ -203,7 +204,7 @@ async def edit_audio(
 async def transcribe_audio(
     request: Request,
     audio_id: UUID,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     service: AudioStudioService = Depends(_get_service),
 ):
     """Transcribe audio file. Rate limit: 5/min."""
@@ -238,7 +239,7 @@ async def transcribe_audio(
 async def generate_chapters(
     request: Request,
     audio_id: UUID,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     service: AudioStudioService = Depends(_get_service),
 ):
     """Generate AI-powered chapter markers. Rate limit: 10/min."""
@@ -273,7 +274,7 @@ async def generate_chapters(
 async def generate_show_notes(
     request: Request,
     audio_id: UUID,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     service: AudioStudioService = Depends(_get_service),
 ):
     """Generate AI-powered podcast show notes. Rate limit: 10/min."""
@@ -313,7 +314,7 @@ async def split_audio(
     request: Request,
     audio_id: UUID,
     body: Optional[SplitRequest] = None,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     service: AudioStudioService = Depends(_get_service),
 ):
     """Split audio at silence points. Rate limit: 5/min."""
@@ -375,7 +376,7 @@ async def export_audio(
 async def create_episode(
     request: Request,
     body: PodcastEpisodeCreate,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     service: AudioStudioService = Depends(_get_service),
 ):
     """Create a podcast episode. Rate limit: 10/min."""
@@ -408,7 +409,7 @@ async def list_episodes(
 async def generate_rss_feed(
     request: Request,
     body: RSSFeedConfig,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     service: AudioStudioService = Depends(_get_service),
 ):
     """Generate RSS/XML podcast feed. Rate limit: 5/min."""

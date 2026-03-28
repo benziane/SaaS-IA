@@ -10,6 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.auth import get_current_user
+from app.modules.auth_guards.middleware import require_verified_email
 from app.database import get_session
 from app.models.user import User
 from app.modules.realtime_ai.schemas import (
@@ -47,7 +48,7 @@ def _session_to_read(rt) -> SessionRead:
 @limiter.limit("10/minute")
 async def create_session(
     request: Request, body: SessionCreate,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """Create a new realtime AI session. Rate limit: 10/min"""
@@ -90,7 +91,7 @@ async def get_session_detail(
 @limiter.limit("30/minute")
 async def send_message(
     request: Request, session_id: UUID, body: SendMessageRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """Send a message and get AI response. Rate limit: 30/min"""
@@ -106,7 +107,7 @@ async def send_message(
 @limiter.limit("10/minute")
 async def end_session(
     request: Request, session_id: UUID,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     session: AsyncSession = Depends(get_session),
 ):
     """End a session and generate summary. Rate limit: 10/min"""

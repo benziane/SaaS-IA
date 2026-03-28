@@ -3,13 +3,13 @@
 > Document de reference permanent. Decrit COMMENT chaque module a ete construit,
 > sa source d'inspiration, et son approche d'integration.
 >
-> Derniere mise a jour : 2026-03-26 | v4.3.0 | 40 modules
+> Derniere mise a jour : 2026-03-27 | v4.4.0 | 42 modules
 
 ---
 
 ## Vue d'ensemble
 
-La plateforme SaaS-IA contient **40 modules backend** auto-decouverts par le `ModuleRegistry`.
+La plateforme SaaS-IA contient **42 modules backend** auto-decouverts par le `ModuleRegistry`.
 Chaque module suit un des 3 patterns d'integration :
 
 | Pattern | Description | Nombre |
@@ -56,6 +56,14 @@ Les migrations Alembic dans `mvp/backend/alembic/versions/`.
 | **billing** | B | Stripe Billing documentation | `stripe` | - | Integration Stripe directe, la plus standard du marche | paddle, lemonsqueezy |
 | **api_keys** | B | Stripe API keys pattern (sk_live / sk_test) | Aucune (SHA-256 stdlib `hashlib`) | - | Pattern simple et eprouve, zero dependance | - |
 | **cost_tracker** | A | FinOps patterns + LiteLLM pricing | `litellm` | Pricing manuel (table de prix statique) | litellm connait les prix de 100+ modeles LLM | - |
+
+### youtube_transcription
+- **Pattern** : A (Lib wrappee) — wraps existing transcription utilities (youtube_transcript.py, youtube_service.py, livestream_service.py)
+- **Prefix** : `/api/youtube`
+- **Version** : 1.0.0
+- **Endpoints** : 8 (validate, metadata, transcript, smart, playlist, stream/status, stream/capture, analyze)
+- **Fallback** : Routes coexistent avec `/api/transcription/` (module transcription original) — zero regression
+- **Dependances** : yt-dlp, youtube_transcript_api (optionnelles, fallback mock)
 
 ### P0 - Content & Automation (2 modules)
 
@@ -134,6 +142,14 @@ Les migrations Alembic dans `mvp/backend/alembic/versions/`.
 | **audit** | B | SOC2 audit trail patterns | Aucune (SHA-256 stdlib `hashlib`) | - | Hash chain immutable pour compliance-grade audit log, zero dependance | auditlog (django), sqlalchemy-continuum |
 | **feature_flags** | B | LaunchDarkly / Unleash | `redis` | In-memory dict | Kill switches + percentage rollout avec evaluation Redis-backed | unleash-client-python, flagsmith |
 | **secrets** | B | HashiCorp Vault metadata patterns | Aucune | - | Rotation tracking + expiry alerts + health score, metadata seulement (pas de stockage de secrets) | python-dotenv, vault hvac |
+
+### auth_guards
+- **Pattern** : B (From scratch) — middleware FastAPI Depends()
+- **Prefix** : N/A (middleware, pas de routes propres)
+- **Version** : 1.0.0
+- **Fonctions** : `require_verified_email` (hard 403), `require_verified_email_soft` (pass-through)
+- **Couverture** : 177 endpoints POST/PUT/DELETE sur 35 modules
+- **Integration** : Remplace `Depends(get_current_user)` sur les mutations, garde `get_current_user` sur les GET
 
 ---
 
@@ -246,11 +262,11 @@ Chaque noeud du DAG est une action typee qui appelle un service.
 ## Resume des patterns par categorie
 
 ```
-Pattern A (Lib wrappee)        : 12 modules
-Pattern B (From scratch)       : 26 modules
+Pattern A (Lib wrappee)        : 13 modules
+Pattern B (From scratch)       : 27 modules
 Pattern C (CLI wrappee)        :  2 modules
 
-Total modules                  : 40
+Total modules                  : 42
 Total libs open-source         : 30+
 Total fallbacks implementes    : 20+
 Enterprise components          : 16
