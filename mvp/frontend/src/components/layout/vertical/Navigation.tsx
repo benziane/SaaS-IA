@@ -112,7 +112,7 @@ const Navigation = (props: Props) => {
         className='absolute top-[72px] z-[2] opacity-0 pointer-events-none w-full transition-opacity duration-150 ease-in-out [&.scrolled]:opacity-100'
         style={{
           height: theme.mixins.toolbar.minHeight,
-          background: 'linear-gradient(var(--bg-surface) 5%, rgba(15,22,41,0.85) 30%, rgba(15,22,41,0.5) 65%, rgba(15,22,41,0.3) 75%, transparent)',
+          background: 'linear-gradient(var(--bg-surface) 5%, color-mix(in srgb, var(--bg-app) 85%, transparent) 30%, color-mix(in srgb, var(--bg-app) 50%, transparent) 65%, color-mix(in srgb, var(--bg-app) 30%, transparent) 75%, transparent)',
         }}
       />
       <VerticalMenu scrollMenu={scrollMenu} />
