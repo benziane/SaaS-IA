@@ -475,7 +475,7 @@ export default function TenantsPage() {
           <p className="text-sm text-[var(--text-mid)]">Active</p>
         </div>
         <div className="surface-card p-5">
-          <p className="text-4xl font-bold text-purple-400">
+          <p className="text-4xl font-bold text-[var(--accent)]">
             {tenants.filter((t) => t.plan === 'enterprise').length}
           </p>
           <p className="text-sm text-[var(--text-mid)]">Enterprise</p>

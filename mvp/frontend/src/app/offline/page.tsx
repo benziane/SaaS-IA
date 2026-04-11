@@ -88,7 +88,7 @@ export default function OfflinePage() {
               fontSize: 28,
               fontWeight: 700,
               marginBottom: 12,
-              background: 'linear-gradient(90deg, #2563eb, #7c3aed)',
+              background: 'linear-gradient(90deg, #2563eb, #22d3ee)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
             }}
@@ -119,7 +119,7 @@ export default function OfflinePage() {
               color: '#ffffff',
               background: isRetrying
                 ? 'rgba(37, 99, 235, 0.4)'
-                : 'linear-gradient(135deg, #2563eb, #7c3aed)',
+                : 'linear-gradient(135deg, #2563eb, #22d3ee)',
               border: 'none',
               borderRadius: 12,
               cursor: isRetrying ? 'wait' : 'pointer',

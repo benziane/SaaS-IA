@@ -272,7 +272,7 @@ export default function ChatPage() {
         ) : (
           /* No conversation selected */
           <div className="flex-1 flex flex-col justify-center items-center gap-4 p-8">
-            <div className="w-16 h-16 rounded-2xl flex items-center justify-center bg-gradient-to-br from-[var(--accent)]/20 to-[#a855f7]/20 border border-[var(--accent)]/20">
+            <div className="w-16 h-16 rounded-2xl flex items-center justify-center bg-[var(--bg-elevated)] border border-[var(--accent)]/20">
               <Sparkles className="w-8 h-8 text-[var(--accent)]" />
             </div>
             <div className="text-center">

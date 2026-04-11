@@ -152,7 +152,7 @@ export const CATEGORY_LABELS: Record<CatalogueCategory, string> = {
 export const CATEGORY_COLORS: Record<CatalogueCategory, string> = {
   official: '#3b82f6',
   community: '#10b981',
-  framework: '#8b5cf6',
+  framework: '#22d3ee',
   skill: '#f59e0b',
   tool: '#ec4899',
   resource: '#06b6d4',

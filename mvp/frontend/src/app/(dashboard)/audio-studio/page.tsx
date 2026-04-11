@@ -412,7 +412,7 @@ export default function AudioStudioPage() {
               episodes.map((ep) => (
                 <div key={ep.id} className="surface-card p-4 mb-3">
                   <div className="flex items-center gap-2 mb-2">
-                    <Podcast className="h-5 w-5 text-purple-500" />
+                    <Podcast className="h-5 w-5 text-[var(--accent)]" />
                     <h3 className="text-lg font-semibold text-[var(--text-high)]">{ep.title}</h3>
                     <Badge variant={ep.is_published ? 'success' : 'default'}>
                       {ep.is_published ? 'Published' : 'Draft'}

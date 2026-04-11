@@ -65,28 +65,28 @@ type BuilderNode = Node<BuilderNodeData>;
 
 const CATEGORY_COLORS: Record<string, { bg: string; border: string; header: string; headerText: string; accent: string }> = {
   input: {
-    bg: '#1e1b2e',
+    bg: 'var(--bg-surface)',
     border: '#f97316',
     header: 'linear-gradient(135deg, #f97316 0%, #fb923c 100%)',
     headerText: '#ffffff',
     accent: '#f97316',
   },
   ai: {
-    bg: '#1e1b2e',
-    border: '#a855f7',
-    header: 'linear-gradient(135deg, #7c3aed 0%, #a855f7 100%)',
-    headerText: '#ffffff',
-    accent: '#a855f7',
+    bg: '#0a0f1e',
+    border: '#22d3ee',
+    header: 'var(--bg-elevated)',
+    headerText: '#22d3ee',
+    accent: '#22d3ee',
   },
   data: {
-    bg: '#1e1b2e',
+    bg: 'var(--bg-surface)',
     border: '#3b82f6',
     header: 'linear-gradient(135deg, #2563eb 0%, #3b82f6 100%)',
     headerText: '#ffffff',
     accent: '#3b82f6',
   },
   output: {
-    bg: '#1e1b2e',
+    bg: 'var(--bg-surface)',
     border: '#22c55e',
     header: 'linear-gradient(135deg, #16a34a 0%, #22c55e 100%)',
     headerText: '#ffffff',
@@ -271,7 +271,7 @@ const CATEGORY_ORDER = ['input', 'ai', 'data', 'output'] as const;
 // ---------------------------------------------------------------------------
 
 const DEFAULT_COLORS = {
-  bg: '#1e1b2e',
+  bg: 'var(--bg-surface)',
   border: '#6b7280',
   header: 'linear-gradient(135deg, #6b7280 0%, #9ca3af 100%)',
   headerText: '#ffffff',
@@ -285,7 +285,7 @@ function BaseNode({ data, selected, id }: NodeProps<BuilderNode>) {
     <div
       style={{
         background: colors.bg,
-        border: `2px solid ${selected ? colors.accent : '#2d2b3d'}`,
+        border: `2px solid ${selected ? colors.accent : 'var(--border)'}`,
         borderRadius: 12,
         minWidth: 220,
         maxWidth: 260,
@@ -351,7 +351,7 @@ function BaseNode({ data, selected, id }: NodeProps<BuilderNode>) {
                 justifyContent: 'space-between',
                 alignItems: 'center',
                 padding: '3px 0',
-                borderBottom: '1px solid #2d2b3d',
+                borderBottom: '1px solid var(--border)',
               }}
             >
               <span style={{ color: '#9ca3af', fontSize: 11 }}>{field.label}</span>
@@ -451,7 +451,7 @@ function SidebarNodeItem({ template }: { template: NodeTemplate }) {
       onDragStart={onDragStart}
       style={{
         background: '#1a1825',
-        border: `1px solid #2d2b3d`,
+        border: `1px solid var(--border)`,
         borderLeft: `3px solid ${colors.accent}`,
         borderRadius: 8,
         padding: '8px 10px',
@@ -576,7 +576,7 @@ function PropertiesPanel({
           style={{
             width: '100%',
             background: '#1a1825',
-            border: '1px solid #2d2b3d',
+            border: '1px solid var(--border)',
             borderRadius: 6,
             padding: '7px 10px',
             color: '#e5e7eb',
@@ -595,7 +595,7 @@ function PropertiesPanel({
         <div
           style={{
             background: '#1a1825',
-            border: '1px solid #2d2b3d',
+            border: '1px solid var(--border)',
             borderRadius: 6,
             padding: '7px 10px',
             color: '#6b7280',
@@ -630,7 +630,7 @@ function PropertiesPanel({
               style={{
                 width: '100%',
                 background: '#1a1825',
-                border: '1px solid #2d2b3d',
+                border: '1px solid var(--border)',
                 borderRadius: 6,
                 padding: '7px 10px',
                 color: '#e5e7eb',
@@ -655,7 +655,7 @@ function PropertiesPanel({
               style={{
                 width: '100%',
                 background: '#1a1825',
-                border: '1px solid #2d2b3d',
+                border: '1px solid var(--border)',
                 borderRadius: 6,
                 padding: '7px 10px',
                 color: '#e5e7eb',
@@ -675,7 +675,7 @@ function PropertiesPanel({
               style={{
                 width: '100%',
                 background: '#1a1825',
-                border: '1px solid #2d2b3d',
+                border: '1px solid var(--border)',
                 borderRadius: 6,
                 padding: '7px 10px',
                 color: '#e5e7eb',
@@ -783,16 +783,16 @@ const defaultEdges: Edge[] = [
     source: 'node_1',
     target: 'node_2',
     animated: true,
-    style: { stroke: '#a855f7', strokeWidth: 2 },
-    markerEnd: { type: MarkerType.ArrowClosed, color: '#a855f7' },
+    style: { stroke: '#22d3ee', strokeWidth: 2 },
+    markerEnd: { type: MarkerType.ArrowClosed, color: '#22d3ee' },
   },
   {
     id: 'e2-3',
     source: 'node_2',
     target: 'node_3',
     animated: true,
-    style: { stroke: '#a855f7', strokeWidth: 2 },
-    markerEnd: { type: MarkerType.ArrowClosed, color: '#a855f7' },
+    style: { stroke: '#22d3ee', strokeWidth: 2 },
+    markerEnd: { type: MarkerType.ArrowClosed, color: '#22d3ee' },
   },
   {
     id: 'e3-4',
@@ -1098,7 +1098,7 @@ export default function PipelineBuilderPage() {
   }, [filteredTemplates]);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 64px)', background: '#0f0e17', color: '#e5e7eb', overflow: 'hidden' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 64px)', background: 'var(--bg-app)', color: '#e5e7eb', overflow: 'hidden' }}>
       {/* Global styles for hover effects */}
       <style>{`
         .sidebar-node-item:hover {
@@ -1128,8 +1128,8 @@ export default function PipelineBuilderPage() {
           alignItems: 'center',
           gap: 10,
           padding: '8px 16px',
-          background: '#161424',
-          borderBottom: '1px solid #2d2b3d',
+          background: 'var(--bg-elevated)',
+          borderBottom: '1px solid var(--border)',
           flexShrink: 0,
           zIndex: 20,
         }}
@@ -1161,7 +1161,7 @@ export default function PipelineBuilderPage() {
           ← Pipelines
         </a>
 
-        <div style={{ width: 1, height: 24, background: '#2d2b3d', marginRight: 4 }} />
+        <div style={{ width: 1, height: 24, background: 'var(--border)', marginRight: 4 }} />
 
         {/* Pipeline name input */}
         <input
@@ -1171,7 +1171,7 @@ export default function PipelineBuilderPage() {
           placeholder="Untitled Pipeline"
           style={{
             background: '#1a1825',
-            border: '1px solid #2d2b3d',
+            border: '1px solid var(--border)',
             borderRadius: 6,
             padding: '6px 10px',
             color: '#e5e7eb',
@@ -1189,7 +1189,7 @@ export default function PipelineBuilderPage() {
           {nodes.length} nodes &middot; {edges.length} connections
         </span>
 
-        <div style={{ width: 1, height: 24, background: '#2d2b3d', margin: '0 4px' }} />
+        <div style={{ width: 1, height: 24, background: 'var(--border)', margin: '0 4px' }} />
 
         {/* Buttons */}
         <button
@@ -1198,7 +1198,7 @@ export default function PipelineBuilderPage() {
           disabled={history.length === 0}
           style={{
             background: '#1a1825',
-            border: '1px solid #2d2b3d',
+            border: '1px solid var(--border)',
             borderRadius: 6,
             padding: '6px 12px',
             color: history.length === 0 ? '#4b5563' : '#e5e7eb',
@@ -1218,7 +1218,7 @@ export default function PipelineBuilderPage() {
           onClick={handleClear}
           style={{
             background: '#1a1825',
-            border: '1px solid #2d2b3d',
+            border: '1px solid var(--border)',
             borderRadius: 6,
             padding: '6px 12px',
             color: '#e5e7eb',
@@ -1259,11 +1259,11 @@ export default function PipelineBuilderPage() {
           onClick={handleSave}
           disabled={createMutation.isPending}
           style={{
-            background: 'linear-gradient(135deg, #7c3aed 0%, #a855f7 100%)',
+            background: 'var(--accent)',
             border: 'none',
             borderRadius: 6,
             padding: '6px 16px',
-            color: '#ffffff',
+            color: '#000000',
             fontSize: 12,
             fontWeight: 600,
             cursor: createMutation.isPending ? 'wait' : 'pointer',
@@ -1337,8 +1337,8 @@ export default function PipelineBuilderPage() {
         <div
           style={{
             width: sidebarCollapsed ? 42 : 260,
-            background: '#161424',
-            borderRight: '1px solid #2d2b3d',
+            background: 'var(--bg-elevated)',
+            borderRight: '1px solid var(--border)',
             display: 'flex',
             flexDirection: 'column',
             flexShrink: 0,
@@ -1352,7 +1352,7 @@ export default function PipelineBuilderPage() {
             style={{
               background: 'none',
               border: 'none',
-              borderBottom: '1px solid #2d2b3d',
+              borderBottom: '1px solid var(--border)',
               color: '#9ca3af',
               padding: '8px',
               cursor: 'pointer',
@@ -1378,7 +1378,7 @@ export default function PipelineBuilderPage() {
                   style={{
                     width: '100%',
                     background: '#1a1825',
-                    border: '1px solid #2d2b3d',
+                    border: '1px solid var(--border)',
                     borderRadius: 6,
                     padding: '6px 10px',
                     color: '#e5e7eb',
@@ -1437,7 +1437,7 @@ export default function PipelineBuilderPage() {
                     padding: '10px 12px',
                     background: '#1a1825',
                     borderRadius: 8,
-                    border: '1px solid #2d2b3d',
+                    border: '1px solid var(--border)',
                   }}
                 >
                   <div style={{ fontSize: 11, fontWeight: 600, color: '#9ca3af', marginBottom: 6 }}>How to use</div>
@@ -1479,21 +1479,21 @@ export default function PipelineBuilderPage() {
               style: { stroke: '#6b7280', strokeWidth: 2 },
               markerEnd: { type: MarkerType.ArrowClosed, color: '#6b7280' },
             }}
-            style={{ background: '#0f0e17' }}
+            style={{ background: 'var(--bg-app)' }}
             proOptions={{ hideAttribution: true }}
           >
-            <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="#1e1b2e" />
+            <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="var(--border)" />
             <Controls
               style={{
-                background: '#161424',
-                border: '1px solid #2d2b3d',
+                background: 'var(--bg-elevated)',
+                border: '1px solid var(--border)',
                 borderRadius: 8,
               }}
             />
             <MiniMap
               style={{
-                background: '#161424',
-                border: '1px solid #2d2b3d',
+                background: 'var(--bg-elevated)',
+                border: '1px solid var(--border)',
                 borderRadius: 8,
               }}
               nodeColor={(node) => {
@@ -1531,8 +1531,8 @@ export default function PipelineBuilderPage() {
         <div
           style={{
             width: propertiesCollapsed ? 42 : 280,
-            background: '#161424',
-            borderLeft: '1px solid #2d2b3d',
+            background: 'var(--bg-elevated)',
+            borderLeft: '1px solid var(--border)',
             display: 'flex',
             flexDirection: 'column',
             flexShrink: 0,
@@ -1546,7 +1546,7 @@ export default function PipelineBuilderPage() {
             style={{
               background: 'none',
               border: 'none',
-              borderBottom: '1px solid #2d2b3d',
+              borderBottom: '1px solid var(--border)',
               color: '#9ca3af',
               padding: '8px',
               cursor: 'pointer',
@@ -1565,7 +1565,7 @@ export default function PipelineBuilderPage() {
                   fontSize: 13,
                   fontWeight: 700,
                   color: '#e5e7eb',
-                  borderBottom: '1px solid #2d2b3d',
+                  borderBottom: '1px solid var(--border)',
                 }}
               >
                 Properties

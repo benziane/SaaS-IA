@@ -22,7 +22,7 @@ const MODULE_COLORS: Record<string, string> = {
   transcriptions: 'bg-blue-500/10 text-blue-400 border-blue-500/30',
   knowledge: 'bg-green-500/10 text-green-400 border-green-500/30',
   content: 'bg-pink-500/10 text-pink-400 border-pink-500/30',
-  conversations: 'bg-purple-500/10 text-purple-400 border-purple-500/30',
+  conversations: 'bg-[var(--bg-elevated)] text-[var(--accent)] border-[var(--border)]',
 };
 
 export default function SearchPage() {

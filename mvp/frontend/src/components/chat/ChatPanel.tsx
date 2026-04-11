@@ -48,7 +48,7 @@ function StreamingDots() {
 function BotAvatar() {
   return (
     <Avatar className="h-8 w-8 mt-1 shrink-0">
-      <AvatarFallback className="bg-gradient-to-br from-[var(--accent)]/20 to-[#a855f7]/20 border border-[var(--accent)]/30">
+      <AvatarFallback className="bg-[var(--bg-elevated)] border border-[var(--accent)]/30">
         <Bot className="h-4 w-4 text-[var(--accent)]" />
       </AvatarFallback>
     </Avatar>
@@ -194,7 +194,7 @@ export function ChatPanel({
     >
       {messages.length === 0 && !isStreaming && (
         <div className="flex-1 flex flex-col justify-center items-center gap-3 text-[var(--text-low)]">
-          <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-[var(--accent)]/20 to-[#a855f7]/20 border border-[var(--accent)]/30 flex items-center justify-center">
+          <div className="h-14 w-14 rounded-2xl bg-[var(--bg-elevated)] border border-[var(--accent)]/30 flex items-center justify-center">
             <Bot className="h-7 w-7 text-[var(--accent)]" />
           </div>
           <p className="text-sm text-[var(--text-mid)]">

@@ -32,7 +32,7 @@ const STATUS_DOT: Record<string, string> = {
 
 const STEP_COLORS: Record<string, string> = {
   transcription: 'text-[var(--accent)] bg-[var(--accent)]/10',
-  summarize: 'text-[#a855f7] bg-[#a855f7]/10',
+  summarize: 'text-[#22d3ee] bg-[#22d3ee]/10',
   translate: 'text-[var(--warning)] bg-[var(--warning)]/10',
   sentiment: 'text-[var(--success)] bg-[var(--success)]/10',
 };
@@ -131,7 +131,7 @@ export default function PipelinesPage() {
       {/* Empty State */}
       {!pipelines?.length ? (
         <div className="surface-card p-12 text-center">
-          <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-gradient-to-br from-[var(--accent)]/20 to-[#a855f7]/20 border border-[var(--accent)]/20 mx-auto mb-4">
+          <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-[var(--bg-elevated)] border border-[var(--accent)]/20 mx-auto mb-4">
             <Layers className="h-7 w-7 text-[var(--accent)]" />
           </div>
           <h2 className="text-base font-semibold text-[var(--text-high)] mb-2">No pipelines yet</h2>
@@ -150,7 +150,7 @@ export default function PipelinesPage() {
               <div className="flex-1 p-5">
                 {/* Card header */}
                 <div className="flex items-start justify-between mb-3">
-                  <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-gradient-to-br from-[var(--accent)]/20 to-[#a855f7]/20 shrink-0 mr-3">
+                  <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-[var(--bg-elevated)] shrink-0 mr-3">
                     <GitBranch className="h-4 w-4 text-[var(--accent)]" />
                   </div>
                   <div className="flex-1 min-w-0">

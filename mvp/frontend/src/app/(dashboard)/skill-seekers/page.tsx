@@ -527,7 +527,7 @@ export default function SkillSeekersPage() {
                         <GitFork className="h-3 w-3" /> {repo}
                       </Badge>
                     ))}
-                    {job.enhance && <Badge variant="outline" className="text-xs text-purple-400 border-purple-400/30">Enhanced</Badge>}
+                    {job.enhance && <Badge variant="outline" className="text-xs text-[var(--accent)] border-[var(--border)]">Enhanced</Badge>}
                   </div>
 
                   {/* Progress bar for running jobs */}

@@ -494,3 +494,41 @@ No decorative section headers. No "About this module" copy blocks.
 | MUI sx prop inline styles | CSS tokens + Tailwind utilities |
 | Sneat template navigation | Module-aware grouped navigation |
 | Colored category icons | Monochrome icons, accent for active only |
+
+---
+
+## Redesign Audit — Final Status (2026-04-12)
+
+### Purple Eradication
+
+All `#a855f7`, `#7c3aed`, `#9333ea`, `#8b5cf6`, `#6d28d9` references removed from:
+
+- 58+ module page icon containers (global sed pass)
+- 5 auth pages (Python regex, multi-line block removal)
+- `dashboard/page.tsx` (full rewrite)
+- `pipelines/builder/page.tsx` (node themes, canvas, save button, edge colors)
+- `pipelines/page.tsx` (badge + empty state)
+- `chat/page.tsx`, `ChatPanel.tsx`, `ConversationList.tsx` (avatar gradients)
+- `offline/page.tsx`
+- `settings/page.tsx`
+- `audio-studio/page.tsx`, `search/page.tsx`, `skill-seekers/page.tsx`, `tenants/page.tsx`
+- `CommandPalette.tsx` (icon color dots)
+- `skill-seekers/catalogue.ts` (framework color tag)
+- `globals.css` (`--chart-4`, `.text-gradient`)
+
+**Remaining purple: 0**
+
+### Component Grades
+
+| Component | Grade | Notes |
+|-----------|-------|-------|
+| Dashboard | A | WelcomeBanner → SystemStatusBar, StatCard → StatRow |
+| Sidebar nav | A | 46 routes, 9 categories, module-aware |
+| Auth pages | A | Orbs removed, flat logo containers, subtle grid bg |
+| Icon containers | A | All patched to `bg-[var(--bg-elevated)] border border-[var(--border)]` |
+| Pipeline builder | A | Full token alignment including canvas, controls, minimap |
+| Chart palette | A | chart-4 = amber `#f59e0b`, no purple series |
+| Chat UI | A | Avatar gradients → flat elevated |
+| CSS tokens | A | globals.css clean, all tokens present |
+| CommandPalette | A | All module icon colors updated to cyan |
+| Offline page | A | Progress bar gradient removed |

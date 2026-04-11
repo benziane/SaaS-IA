@@ -26,9 +26,9 @@ export default function SettingsPage() {
       <div className="flex items-center gap-3">
         <div
           className="flex items-center justify-center w-11 h-11 rounded-xl shrink-0"
-          style={{ background: 'linear-gradient(135deg, var(--accent), #a855f7)' }}
+          style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}
         >
-          <Settings className="w-5 h-5 text-white" />
+          <Settings className="w-5 h-5 text-[var(--accent)]" />
         </div>
         <div>
           <h4 className="text-[var(--text-high)] text-lg font-bold leading-tight">Settings</h4>

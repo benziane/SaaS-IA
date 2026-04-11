@@ -148,7 +148,7 @@
   --chart-1: hsl(187, 93%, 65%);
   --chart-2: #28c76f;
   --chart-3: #ff9f43;
-  --chart-4: #a855f7;
+  --chart-4: #f59e0b;
   --chart-5: #ea5455;
 
   /* --- Sidebar --- */
@@ -381,7 +381,7 @@ a {
    ======================================================================== */
 
 .text-gradient {
-  background: linear-gradient(135deg, var(--accent) 0%, #a855f7 100%);
+  background: linear-gradient(135deg, var(--accent) 0%, hsl(187, 60%, 45%) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;

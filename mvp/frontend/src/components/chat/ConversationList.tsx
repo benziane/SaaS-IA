@@ -75,7 +75,7 @@ export function ConversationList({
       {/* Header */}
       <div className="p-4 pb-3 flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <div className="h-7 w-7 rounded-lg bg-gradient-to-br from-[var(--accent)]/20 to-[#a855f7]/20 border border-[var(--accent)]/30 flex items-center justify-center shrink-0">
+          <div className="h-7 w-7 rounded-lg bg-[var(--bg-elevated)] border border-[var(--accent)]/30 flex items-center justify-center shrink-0">
             <MessageSquare className="h-3.5 w-3.5 text-[var(--accent)]" />
           </div>
           <h2 className="text-sm font-semibold text-[var(--text-high)]">Conversations</h2>
@@ -109,7 +109,7 @@ export function ConversationList({
           </div>
         ) : conversations.length === 0 ? (
           <div className="p-8 flex flex-col items-center gap-3 text-[var(--text-low)]">
-            <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-[var(--accent)]/10 to-[#a855f7]/10 border border-[var(--accent)]/20 flex items-center justify-center">
+            <div className="h-12 w-12 rounded-2xl bg-[var(--bg-elevated)] border border-[var(--accent)]/20 flex items-center justify-center">
               <MessageSquare className="h-6 w-6 text-[var(--accent)]/50" />
             </div>
             <p className="text-xs text-[var(--text-low)] text-center leading-relaxed">
