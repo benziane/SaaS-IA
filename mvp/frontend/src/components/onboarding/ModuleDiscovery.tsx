@@ -39,7 +39,7 @@ const CATEGORIES = [
 
 const MODULES: ModuleInfo[] = [
   // Core (12)
-  { name: 'Transcription', description: 'Transcription audio/video avec Whisper et AssemblyAI.', icon: 'tabler-microphone', color: '#667eea', href: '/transcription', category: 'core', badge: 'popular' },
+  { name: 'Transcription', description: 'Transcription audio/video avec Whisper et AssemblyAI.', icon: 'tabler-microphone', color: 'var(--accent)', href: '/transcription', category: 'core', badge: 'popular' },
   { name: 'Conversation', description: 'Chat IA multi-provider avec historique et contexte.', icon: 'tabler-message-chatbot', color: '#28c76f', href: '/chat', category: 'core', badge: 'popular' },
   { name: 'Knowledge Base', description: 'Base de connaissances avec recherche hybride pgvector + TF-IDF.', icon: 'tabler-books', color: '#ffd93d', href: '/knowledge', category: 'core' },
   { name: 'Compare', description: 'Comparez les reponses de plusieurs providers IA en parallele.', icon: 'tabler-arrows-diff', color: '#ff9f43', href: '/compare', category: 'core' },
@@ -54,7 +54,7 @@ const MODULES: ModuleInfo[] = [
 
   // Content (4)
   { name: 'Content Studio', description: 'Generation de contenu IA avec 10 formats differents.', icon: 'tabler-brush', color: '#7367f0', href: '/content-studio', category: 'content', badge: 'popular' },
-  { name: 'Image Generation', description: 'Generation d\'images IA avec 10 styles et upscaling Real-ESRGAN.', icon: 'tabler-photo-ai', color: '#764ba2', href: '/images', category: 'content', badge: 'new' },
+  { name: 'Image Generation', description: 'Generation d\'images IA avec 10 styles et upscaling Real-ESRGAN.', icon: 'tabler-photo-ai', color: 'var(--accent)', href: '/images', category: 'content', badge: 'new' },
   { name: 'Video Generation', description: 'Generation de videos IA avec 6 types de contenus.', icon: 'tabler-video', color: '#e91e63', href: '/forms', category: 'content', badge: 'new' },
   { name: 'Presentations', description: 'Generation de presentations professionnelles avec l\'IA.', icon: 'tabler-presentation', color: '#ff5722', href: '/presentations', category: 'content', badge: 'new' },
 
@@ -118,7 +118,7 @@ export default function ModuleDiscovery() {
   }, [selectedCategory, searchQuery]);
 
   const badgeColors: Record<string, { bg: string; text: string }> = {
-    new: { bg: '#667eea', text: '#fff' },
+    new: { bg: 'var(--accent)', text: 'var(--bg-app)' },
     popular: { bg: '#ff9f43', text: '#fff' },
   };
 
@@ -129,7 +129,7 @@ export default function ModuleDiscovery() {
         <div className="flex items-center gap-3 mb-4">
           <div
             className="w-9 h-9 rounded-lg flex items-center justify-center"
-            style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}
+            style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}
           >
             <i className="tabler-apps" style={{ fontSize: 20, color: '#fff' }} />
           </div>

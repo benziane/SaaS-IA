@@ -24,7 +24,7 @@ const QUICK_ACTIONS: QuickAction[] = [
     title: 'Transcrire',
     description: 'Transcrivez des videos YouTube ou des fichiers audio en texte.',
     icon: 'tabler-microphone',
-    color: '#667eea',
+    color: 'var(--accent)',
     href: '/transcription',
   },
   {
@@ -75,7 +75,7 @@ export default function QuickActionsPanel() {
         <div className="flex items-center gap-3 mb-6">
           <div
             className="w-9 h-9 rounded-lg flex items-center justify-center"
-            style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}
+            style={{ background: 'var(--accent)', color: 'var(--bg-app)' }}
           >
             <i className="tabler-rocket" style={{ fontSize: 20, color: '#fff' }} />
           </div>

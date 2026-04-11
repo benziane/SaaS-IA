@@ -42,7 +42,7 @@ export default function OfflinePage() {
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            background: 'linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 50%, #16213e 100%)',
+            background: 'var(--bg-app)',
             color: '#e0e0e0',
             fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
             padding: '24px',

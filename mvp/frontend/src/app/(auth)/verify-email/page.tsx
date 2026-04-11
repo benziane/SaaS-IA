@@ -152,7 +152,7 @@ export default function VerifyEmailPage(): ReactElement {
           <div className="flex flex-col items-center text-center">
             <div
               className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4"
-              style={{ background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)' }}
+              style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}
             >
               <MailX className="h-6 w-6 text-[var(--accent)]" />
             </div>
