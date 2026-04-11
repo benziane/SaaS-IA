@@ -1,146 +1,152 @@
 # SaaS-IA MVP - Python Dependencies
-# Updated: 2026-03-23
+# Python 3.14 — versions non-pinned, pip résout les compatibilités
+# Packages incompatibles Python 3.14 commentés avec fallback noté
 
 # FastAPI & Server
-fastapi==0.135.1
-uvicorn[standard]==0.42.0
+fastapi
+uvicorn[standard]
 
 # Database
-sqlmodel==0.0.37
-psycopg2-binary==2.9.9
-asyncpg==0.31.0
-aiosqlite==0.22.1
-alembic==1.18.4
+sqlmodel
+psycopg[binary]
+asyncpg
+aiosqlite
+alembic
 
 # Cache & Queue
-redis==5.2.1
-celery[redis]==5.6.2
-flower==2.0.1
+redis
+celery[redis]
+flower
 
 # Payments
-stripe==8.0.0
+stripe
 
 # Validation & Settings
-pydantic==2.12.5
-pydantic-settings==2.13.1
+pydantic[email]
+pydantic-settings
 
 # Auth
-python-jose[cryptography]==3.3.0
-passlib[bcrypt]==1.7.4
-python-multipart==0.0.22
+python-jose[cryptography]
+bcrypt
+python-multipart
 
 # AI Services
-assemblyai==0.58.0
-yt-dlp>=2026.3.17
-youtube-transcript-api>=0.6.0
-faster-whisper>=1.0.0
-pyannote.audio>=3.1.0
-streamlink>=6.0.0
-moviepy>=2.0.0
-ffmpeg-python>=0.2.0
-pydub>=0.25.0
-noisereduce>=3.0.0
-Pillow>=10.0.0
+assemblyai
+yt-dlp
+youtube-transcript-api
+faster-whisper
+pyannote.audio
+streamlink
+instaloader
+moviepy
+ffmpeg-python
+pydub
+noisereduce
+Pillow
 
 # Vector Search & Embeddings
-pgvector>=0.3.0
-sentence-transformers>=3.0.0
+pgvector
+sentence-transformers
 
 # LLM Proxy & Cost Tracking
-litellm>=1.50.0
+litellm
 
 # Security & PII Detection
-presidio-analyzer>=2.2.0
-presidio-anonymizer>=2.2.0
-nemoguardrails>=0.10.0
+presidio-analyzer
+presidio-anonymizer
+nemoguardrails
 
-# Voice (open-source TTS)
-TTS>=0.22.0
+# Voice TTS — Coqui TTS (TTS>=0.22.0) incompatible Python 3.14, fallback: OpenAI TTS
+# TTS
 
-# PDF Processing (auto-detect: PyMuPDF preferred, pdfplumber fallback)
-PyMuPDF>=1.24.0
-pdfplumber>=0.11.0
+# PDF Processing
+PyMuPDF
+pdfplumber
 
 # Data Analysis
-duckdb>=1.0.0
-ydata-profiling>=4.6.0
+duckdb
+# ydata-profiling — bloqué <3.14, fallback pandas dans data_analyst
 
 # Graph & Agent Engine
-networkx>=3.2.0
+networkx
 
-# Sentiment (local model - optional, falls back to LLM)
-transformers>=4.40.0
+# Sentiment (local model)
+transformers
+torch
 
-# Content Readability (optional)
-textstat>=0.7.0
+# Content Readability
+textstat
 
-# Image Upscaling (optional, falls back to no-op)
-realesrgan>=0.3.0
-basicsr>=1.4.0
+# Image Upscaling — realesrgan/basicsr incompatibles Python 3.14, fallback: sans upscaling
+# realesrgan
+# basicsr
 
-# Fine-Tuning (optional - heavy deps, falls back to mock)
-# unsloth>=2024.0  # Uncomment when GPU available
-# lm-eval>=0.4.0   # Uncomment when GPU available
+# Fine-Tuning (GPU uniquement)
+# unsloth
+# lm-eval
 
-# WebRTC Realtime (optional, falls back to text-based)
-livekit-server-sdk>=0.6.0
+# WebRTC Realtime — livekit-server-sdk sans wheel Python 3.14, fallback: text-based
+# livekit-server-sdk
 
-# Code Sandbox isolation (optional - falls back to subprocess)
-docker>=7.0.0
+# Code Sandbox
+docker
 
 # AI Providers
-google-generativeai==0.8.6
-anthropic==0.86.0
-openai==1.54.5  # Pinned v1.x for Groq compatibility
+google-generativeai
+anthropic
+openai
 
-# Persistent AI Memory (optional - falls back to DB queries)
-mem0ai>=0.1.0
+# Persistent AI Memory
+mem0ai
 
-# Search (optional - falls back to PostgreSQL)
-meilisearch>=0.31.0
+# Search
+meilisearch
 
-# Web Crawling
-crawl4ai>=0.4.0
+# Web Crawling — lxml forced to 6.x via Dockerfile override (crawl4ai/streamlink pin lxml<6)
+crawl4ai
 
-# GitHub Repo Scraping & AI Packaging
-skill-seekers>=0.1.0
+# GitHub Repo Scraping
+skill-seekers
+
+# Instagram Intelligence — instagrapi pins pydantic strictement, fallback: instaloader
+# instagrapi
 
 # Utils
-python-dotenv==1.2.2
-structlog==25.5.0
-python-dateutil>=2.9.0
+python-dotenv
+structlog
+python-dateutil
 
 # Monitoring & Observability
-prometheus-client==0.24.1
-pyyaml==6.0.3
+prometheus-client
+pyyaml
 
-# LLM Observability (Langfuse - optional, falls back to DB-only monitoring)
-langfuse>=2.0.0
+# LLM Observability
+langfuse
 
 # Enterprise Observability (OpenTelemetry)
-opentelemetry-api>=1.27.0
-opentelemetry-sdk>=1.27.0
-opentelemetry-exporter-otlp-proto-grpc>=1.27.0
-opentelemetry-instrumentation-fastapi>=0.48b0
-opentelemetry-instrumentation-asyncpg>=0.48b0
-opentelemetry-instrumentation-redis>=0.48b0
-opentelemetry-instrumentation-httpx>=0.48b0
+opentelemetry-api
+opentelemetry-sdk
+opentelemetry-exporter-otlp-proto-grpc
+opentelemetry-instrumentation-fastapi
+opentelemetry-instrumentation-asyncpg
+opentelemetry-instrumentation-redis
+opentelemetry-instrumentation-httpx
 
-# Error Tracking (Sentry/GlitchTip)
-sentry-sdk[fastapi]>=2.14.0
+# Error Tracking
+sentry-sdk[fastapi]
 
 # Compression
-brotli>=1.1.0
+brotli
 
 # Rate Limiting
-slowapi==0.1.9
+slowapi
 
-# Development (optional)
-pytest==8.3.4
-pytest-asyncio==0.25.0
-pytest-cov==7.1.0
-httpx==0.28.1
-ruff==0.15.7
-black==26.3.1
-bandit==1.9.4
-mypy==1.19.1
+# Development
+pytest
+pytest-asyncio
+pytest-cov
+httpx
+ruff
+black
+bandit
+mypy

@@ -60,6 +60,9 @@ AVAILABLE_ACTIONS = {
     "youtube_smart": "Smart YouTube transcription: tries free subtitles first, falls back to Whisper local transcription",
     "youtube_playlist": "Batch transcribe all videos in a YouTube playlist or channel (up to 50 videos)",
     "youtube_analyze": "Download YouTube video and analyze frames with AI Vision (content, scenes, objects)",
+    "instagram_analyze_profile": "Analyze a public Instagram profile: fetch Reels, transcribe audio with Whisper, score sentiment, extract topics",
+    "instagram_analyze_reel": "Analyze a single public Instagram Reel: download, transcribe audio, score sentiment",
+    "instagram_validate": "Validate a public Instagram profile username (check it exists and is public)",
     "scrape_http": "Fast HTTP scrape of a URL without browser (lightweight, CSS selector, fit markdown)",
     "adaptive_crawl": "Self-tuning adaptive crawl with configurable strategy and confidence threshold",
     "hub_crawl": "Crawl using pre-built site profiles for known sites (e.g., GitHub, Reddit, Wikipedia)",
@@ -126,6 +129,14 @@ def _heuristic_plan(instruction: str) -> list[dict]:
     """Simple rule-based planning fallback."""
     instruction_lower = instruction.lower()
     steps = []
+
+    # Instagram-specific: profile analysis, reel analysis, validation
+    if any(w in instruction_lower for w in ["instagram.com", "instagram", "reel", "reels", "insta"]):
+        if any(w in instruction_lower for w in ["instagram.com/reel", "/reel/", "reel url", "cette reel", "ce reel"]):
+            return [{"action": "instagram_analyze_reel", "description": "Analyze Instagram Reel (transcription + sentiment)", "input": {"reel_url": "", "transcribe": True, "language": "auto"}}]
+        if any(w in instruction_lower for w in ["valid", "exist", "public", "private", "check"]):
+            return [{"action": "instagram_validate", "description": "Validate Instagram profile", "input": {"username": ""}}]
+        return [{"action": "instagram_analyze_profile", "description": "Analyze Instagram profile Reels (transcription + sentiment + topics)", "input": {"username": "", "max_reels": 5, "transcribe": True, "language": "auto"}}]
 
     # YouTube-specific: smart transcript, metadata, playlist, analysis
     if any(w in instruction_lower for w in ["youtube.com", "youtu.be", "youtube playlist", "playlist youtube"]):

@@ -5,6 +5,7 @@ import { Loader2, Mail, MailCheck, MailX } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import type { ReactElement } from 'react';
 
 import apiClient from '@/lib/apiClient';
 import { Button } from '@/lib/design-hub/components/Button';
@@ -20,7 +21,7 @@ type VerifyState = 'loading' | 'success' | 'error' | 'no-token';
    COMPONENT
    ======================================================================== */
 
-export default function VerifyEmailPage(): JSX.Element {
+export default function VerifyEmailPage(): ReactElement {
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
 

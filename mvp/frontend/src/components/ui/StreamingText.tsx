@@ -41,7 +41,7 @@ export function StreamingText({
   isStreaming,
   provider,
   tokenCount,
-}: StreamingTextProps): JSX.Element {
+}: StreamingTextProps) {
   const showMeta = !isStreaming && provider;
 
   return (

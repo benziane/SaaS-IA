@@ -35,11 +35,6 @@ export default defineConfig({
     
     /* Performance */
     pool: 'threads',
-    poolOptions: {
-      threads: {
-        singleThread: false,
-      },
-    },
     
     /* Reporters */
     reporters: ['verbose'],

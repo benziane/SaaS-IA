@@ -59,7 +59,7 @@ type PasswordFormData = z.infer<typeof passwordSchema>;
    PAGE COMPONENT
    ======================================================================== */
 
-export default function ProfilePage(): JSX.Element {
+export default function ProfilePage() {
   const { data: user, isLoading: userLoading } = useCurrentUser();
   const queryClient = useQueryClient();
 

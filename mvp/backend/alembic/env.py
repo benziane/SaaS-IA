@@ -27,6 +27,7 @@ from app.models.pipeline import Pipeline, PipelineExecution  # noqa: F401
 from app.models.knowledge import Document, DocumentChunk  # noqa: F401
 from app.models.api_key import APIKey  # noqa: F401
 from app.models.skill_seekers import ScrapeJob  # noqa: F401
+from app.models.instagram_intelligence import InstagramReel  # noqa: F401
 
 # Alembic Config object
 config = context.config

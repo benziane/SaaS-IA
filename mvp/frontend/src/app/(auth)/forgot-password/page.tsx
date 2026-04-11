@@ -3,7 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { CheckCircle2, Mail } from 'lucide-react';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, type ReactElement } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { useMutation } from '@tanstack/react-query';
@@ -31,7 +31,7 @@ type ForgotPasswordSchema = z.infer<typeof forgotPasswordSchema>;
    COMPONENT
    ======================================================================== */
 
-export default function ForgotPasswordPage(): JSX.Element {
+export default function ForgotPasswordPage(): ReactElement {
   const [sent, setSent] = useState(false);
 
   const {

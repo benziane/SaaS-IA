@@ -64,7 +64,7 @@ export function Providers({
   mode,
   systemMode,
   settingsCookie 
-}: ProvidersProps): JSX.Element {
+}: ProvidersProps) {
   return (
     <AuthProvider>
       <QueryClientProvider client={queryClient}>

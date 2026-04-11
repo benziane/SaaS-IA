@@ -81,16 +81,16 @@ const MenuButton: ForwardRefRenderFunction<HTMLAnchorElement, MenuButtonProps> =
       )
     } else {
       // Otherwise, clone the element
-      const { className: classNameProp, ...props } = component.props
+      const componentProps = component.props as { className?: string } & Record<string, unknown>
+      const { className: classNameProp, ...props } = componentProps
 
       return cloneElement(
-        component,
-        {
+        component as any,
+        ({
           className: classnames(className, classNameProp),
           ...rest,
-          ...props,
-          ref
-        },
+          ...props
+        } as any),
         children
       )
     }

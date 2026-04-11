@@ -1148,6 +1148,50 @@ class PipelineService:
                 step_output = "No text provided for chunking"
             return {"type": "chunk_regex", "output": step_output}
 
+        elif step_type == "instagram_analyze_profile":
+            username = step.get("config", {}).get("username", previous_output or "").lstrip("@").strip()
+            max_reels = int(step.get("config", {}).get("max_reels", 5))
+            transcribe = bool(step.get("config", {}).get("transcribe", True))
+            language = step.get("config", {}).get("language", "auto")
+            step_output = ""
+            if username:
+                try:
+                    from app.modules.instagram_intelligence.service import InstagramIntelligenceService
+
+                    svc = InstagramIntelligenceService()
+                    report = await svc.analyze_profile(username, max_reels, transcribe, language)
+                    topics = ", ".join(report.get("top_topics", [])[:5])
+                    step_output = (
+                        f"@{username}: {report.get('reels_analyzed')} reels. "
+                        f"Avg sentiment: {report.get('avg_sentiment_score')}. Topics: {topics}"
+                    )
+                except Exception as e:
+                    step_output = f"Error: {str(e)[:200]}"
+            else:
+                step_output = "No username provided"
+            return {"type": "instagram_analyze_profile", "output": step_output}
+
+        elif step_type == "instagram_analyze_reel":
+            reel_url = step.get("config", {}).get("reel_url", previous_output or "")
+            transcribe = bool(step.get("config", {}).get("transcribe", True))
+            language = step.get("config", {}).get("language", "auto")
+            step_output = ""
+            if reel_url and "instagram.com" in reel_url:
+                try:
+                    from app.modules.instagram_intelligence.service import InstagramIntelligenceService
+
+                    svc = InstagramIntelligenceService()
+                    reel = await svc.analyze_reel(reel_url, transcribe, language)
+                    step_output = (
+                        f"Reel @{reel.get('username')}: {reel.get('likes')} likes, "
+                        f"sentiment: {reel.get('sentiment_label')}"
+                    )
+                except Exception as e:
+                    step_output = f"Error: {str(e)[:200]}"
+            else:
+                step_output = "No valid Instagram Reel URL provided"
+            return {"type": "instagram_analyze_reel", "output": step_output}
+
         else:
             return {"type": step_type, "output": previous_output or "", "note": "Unknown step type"}
 

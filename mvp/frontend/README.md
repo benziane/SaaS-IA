@@ -1,7 +1,7 @@
 # 🎨 SaaS-IA Frontend - Grade S++
 
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.5.4-blue)](https://www.typescriptlang.org/)
-[![Next.js](https://img.shields.io/badge/Next.js-15.1.2-black)](https://nextjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.9.3-blue)](https://www.typescriptlang.org/)
+[![Next.js](https://img.shields.io/badge/Next.js-15.5.15-black)](https://nextjs.org/)
 [![Material-UI](https://img.shields.io/badge/MUI-6.2.1-007FFF)](https://mui.com/)
 [![TanStack Query](https://img.shields.io/badge/TanStack%20Query-5.62.8-FF4154)](https://tanstack.com/query)
 
@@ -39,15 +39,15 @@ Frontend Next.js 15 avec Material-UI pour la plateforme SaaS-IA. Respecte les st
 ## 🛠️ Stack Technique
 
 ### Core
-- **Next.js 15.1.2** - React framework avec App Router
+- **Next.js 15.5.15** - React framework avec App Router
 - **React 18.3.1** - UI library
-- **TypeScript 5.5.4** - Type safety
+- **TypeScript 5.9.3** - Type safety
 - **Material-UI 6.2.1** - UI components (Sneat template)
 
 ### State & Data
-- **TanStack Query 5.62.8** - Server state management
+- **TanStack Query 5.97.0** - Server state management
 - **Zustand 5.0.2** - Client state management
-- **Axios 1.7.9** - HTTP client
+- **Axios 1.15.0** - HTTP client
 
 ### Forms & Validation
 - **React Hook Form 7.54.2** - Form management
@@ -55,7 +55,7 @@ Frontend Next.js 15 avec Material-UI pour la plateforme SaaS-IA. Respecte les st
 
 ### Tests
 - **Vitest 2.1.8** - Unit tests
-- **Playwright 1.49.1** - E2E tests
+- **Playwright 1.59.1** - E2E tests
 - **@axe-core/playwright 4.10.2** - Accessibility tests
 
 ### Dev Tools

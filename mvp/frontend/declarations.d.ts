@@ -7,6 +7,9 @@ declare module '*.module.css' {
   export default classes
 }
 
+// Allow importing plain CSS files for side effects (e.g. library styles).
+declare module '*.css'
+
 declare module '*.svg' {
   import type { FC, SVGProps } from 'react'
   const content: FC<SVGProps<SVGSVGElement>>

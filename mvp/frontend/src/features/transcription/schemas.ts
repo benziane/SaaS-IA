@@ -38,7 +38,8 @@ export const transcriptionCreateSchema = z.object({
     .default('auto'),
 });
 
-export type TranscriptionCreateSchema = z.infer<typeof transcriptionCreateSchema>;
+// React Hook Form values correspond to the input shape (before Zod defaults are applied).
+export type TranscriptionCreateSchema = z.input<typeof transcriptionCreateSchema>;
 
 /* ========================================================================
    EXPORTS

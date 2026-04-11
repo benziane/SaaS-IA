@@ -33,7 +33,7 @@ export function ChatInput({
   isStreaming,
   disabled = false,
   placeholder = 'Type your message...',
-}: ChatInputProps): JSX.Element {
+}: ChatInputProps) {
   const [value, setValue] = useState('');
 
   const trimmedValue = value.trim();

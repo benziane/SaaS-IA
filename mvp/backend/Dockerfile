@@ -3,26 +3,38 @@
 # ──────────────────────────────────────────────────────────────
 
 # ── Stage 1: builder ─────────────────────────────────────────
-FROM python:3.13-slim AS builder
+FROM python:3.14-slim AS builder
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    PIP_NO_CACHE_DIR=1
+    PYTHONUNBUFFERED=1
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
         build-essential \
         libpq-dev \
+        libxml2-dev \
+        libxslt1-dev \
+        zlib1g-dev \
         curl \
         git \
         ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
+# Install uv — fast Python package manager (replaces pip for dependency resolution)
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+
 RUN python -m venv /opt/venv
-ENV PATH="/opt/venv/bin:$PATH"
+ENV PATH="/opt/venv/bin:$PATH" \
+    UV_SYSTEM_PYTHON=0 \
+    UV_PROJECT_ENVIRONMENT=/opt/venv
 
 COPY requirements.txt /tmp/requirements.txt
-RUN pip install --no-cache-dir -r /tmp/requirements.txt \
-    && rm /tmp/requirements.txt
+# lxml 6.x override — crawl4ai and streamlink try to pull lxml<6 which has no Py3.14 wheel
+# We force lxml>=6.0.0 via uv override, bypassing transitive pins
+RUN echo "lxml>=6.0.0" > /tmp/lxml_override.txt
+RUN uv pip install --no-cache \
+        --override /tmp/lxml_override.txt \
+        -r /tmp/requirements.txt \
+    && rm /tmp/requirements.txt /tmp/lxml_override.txt
 
 # Install Playwright browser so web_crawler module works
 ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
@@ -31,7 +43,7 @@ RUN playwright install chromium --with-deps \
 
 
 # ── Stage 2: runtime ────────────────────────────────────────
-FROM python:3.13-slim AS runtime
+FROM python:3.14-slim AS runtime
 
 LABEL org.opencontainers.image.title="saas-ia-backend" \
       org.opencontainers.image.description="SaaS-IA AI Platform – FastAPI backend" \
@@ -57,6 +69,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         libxkbcommon0 \
         libgbm1 \
         libasound2 \
+        libxcomposite1 \
+        libxdamage1 \
+        libxrandr2 \
+        libxfixes3 \
+        libcairo2 \
+        libpango-1.0-0 \
+        libpangocairo-1.0-0 \
+        libatspi2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy pre-built virtualenv from builder

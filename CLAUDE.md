@@ -117,6 +117,9 @@ skill_seekers (GitHub repo scraper + Claude AI packager, mock mode, async CLI, 1
 ### New (3)
 repo_analyzer (git CLI analysis, code metrics), pdf_processor (PyMuPDF + pdfplumber, text/table extraction), audio_studio (pydub + noisereduce, audio editing)
 
+### Media Intelligence (1)
+instagram_intelligence (Playwright + yt-dlp + Whisper + RoBERTa, 5 endpoints, /api/instagram, migration 0019)
+
 ### Enterprise (5)
 tenants (multi-tenant isolation, PostgreSQL RLS, contextvars middleware), audit (immutable hash chain, compliance-grade), feature_flags (kill switches, % rollout, Redis-backed), secrets (rotation tracking, alerts, health score), auth_guards (require_verified_email on 177 POST/PUT/DELETE endpoints, soft+hard variants)
 
@@ -135,6 +138,7 @@ tenants (multi-tenant isolation, PostgreSQL RLS, contextvars middleware), audit 
 | cardiffnlp/RoBERTa (transformers) | sentiment | LLM analysis |
 | textstat | content_studio | word count basique |
 | crawl4ai (v8, 55 classes, 100% API surface, ~30 endpoints) | web_crawler | Jina Reader API |
+| playwright + yt-dlp + faster-whisper | instagram_intelligence | mock mode |
 | ffmpeg-python | video_gen | mock placeholders |
 | Real-ESRGAN | image_gen | pas d'upscaling |
 | unsloth | fine_tuning | mock training |

@@ -1,0 +1,25 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "../ai-coos"
+		},
+		{
+			"path": "../design-hub"
+		},
+		{
+			"path": "../cockpit-ui"
+		},
+		{
+			"path": "../design-system"
+		},
+		{
+			"path": "../design"
+		},
+		{
+			"path": "../design-monorepo"
+		}
+	]
+}

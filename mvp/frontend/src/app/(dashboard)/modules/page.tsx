@@ -27,7 +27,7 @@ interface ModuleInfo {
    LOADING SKELETON
    ======================================================================== */
 
-function ModuleCardSkeleton(): JSX.Element {
+function ModuleCardSkeleton() {
   return (
     <div className="surface-card p-5 h-full">
       <div className="flex justify-between items-start mb-3">
@@ -49,7 +49,7 @@ function ModuleCardSkeleton(): JSX.Element {
    MODULE CARD
    ======================================================================== */
 
-function ModuleCard({ module }: { module: ModuleInfo }): JSX.Element {
+function ModuleCard({ module }: { module: ModuleInfo }) {
   return (
     <div className="surface-card p-5 h-full flex flex-col">
       <div className="flex justify-between items-start mb-3">
@@ -96,7 +96,7 @@ function ModuleCard({ module }: { module: ModuleInfo }): JSX.Element {
    PAGE COMPONENT
    ======================================================================== */
 
-export default function ModulesPage(): JSX.Element {
+export default function ModulesPage() {
   const [modules, setModules] = useState<ModuleInfo[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);

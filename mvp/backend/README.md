@@ -1,7 +1,7 @@
 # 🚀 SaaS-IA Backend - Grade S++
 
-[![Python](https://img.shields.io/badge/Python-3.11+-blue)](https://www.python.org/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.109+-green)](https://fastapi.tiangolo.com/)
+[![Python](https://img.shields.io/badge/Python-3.13+-blue)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.135+-green)](https://fastapi.tiangolo.com/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue)](https://www.postgresql.org/)
 [![Redis](https://img.shields.io/badge/Redis-7-red)](https://redis.io/)
 
@@ -40,8 +40,8 @@ Backend FastAPI avec PostgreSQL et Redis pour la plateforme SaaS-IA. Respecte le
 ## 🛠️ Stack Technique
 
 ### Core
-- **FastAPI 0.109** - Framework API moderne
-- **Python 3.11+** - Langage
+- **FastAPI 0.135** - Framework API moderne
+- **Python 3.13+** - Langage
 - **SQLModel** - ORM avec Pydantic
 - **Alembic 1.13** - Migrations database
 
@@ -64,7 +64,7 @@ Backend FastAPI avec PostgreSQL et Redis pour la plateforme SaaS-IA. Respecte le
 
 ### Prérequis
 
-- Python 3.11+
+- Python 3.13+
 - Docker & Docker Compose
 - Poetry (optionnel)
 

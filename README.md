@@ -1,9 +1,9 @@
 # SaaS-IA - Plateforme SaaS d'Orchestration IA
 
 [![CI](https://github.com/benziane/SaaS-IA/workflows/CI/badge.svg)](https://github.com/benziane/SaaS-IA/actions)
-[![Python 3.11+](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://www.python.org/)
-[![TypeScript 5+](https://img.shields.io/badge/TypeScript-5.0+-blue.svg)](https://www.typescriptlang.org/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.109-green.svg)](https://fastapi.tiangolo.com/)
+[![Python 3.13+](https://img.shields.io/badge/Python-3.13+-blue.svg)](https://www.python.org/)
+[![TypeScript 5.9+](https://img.shields.io/badge/TypeScript-5.9+-blue.svg)](https://www.typescriptlang.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.135-green.svg)](https://fastapi.tiangolo.com/)
 [![Next.js 15](https://img.shields.io/badge/Next.js-15-black.svg)](https://nextjs.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 
@@ -24,9 +24,9 @@ Plateforme modulaire d'intelligence artificielle permettant de transcrire, analy
 
 ## Stack technique
 
-**Backend** : FastAPI 0.109, Python 3.11, SQLModel, PostgreSQL 16, Redis 7, Celery, Stripe
+**Backend** : FastAPI 0.135, Python 3.13, SQLModel, PostgreSQL 16, Redis 7, Celery, Stripe
 
-**Frontend** : Next.js 15, React 18, TypeScript, Material-UI 6, TanStack Query 5
+**Frontend** : Next.js 15.5, React 18.3, TypeScript 5.9, Material-UI 6, TanStack Query 5
 
 **Infrastructure** : Docker Compose (backend, worker, flower, PostgreSQL, Redis), GitHub Actions CI/CD
 

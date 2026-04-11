@@ -167,7 +167,7 @@ function formatFileSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-function getSourceIcon(sourceType: TranscriptionSourceType | undefined): JSX.Element {
+function getSourceIcon(sourceType: TranscriptionSourceType | undefined) {
   switch (sourceType) {
     case 'upload':
       return <FileAudio className="h-4 w-4 text-blue-400" />;
@@ -206,7 +206,7 @@ interface ExportButtonsProps {
   transcription: Transcription;
 }
 
-function ExportButtons({ transcription }: ExportButtonsProps): JSX.Element | null {
+function ExportButtons({ transcription }: ExportButtonsProps) {
   const [copied, setCopied] = useState(false);
 
   if (transcription.status !== TranscriptionStatus.COMPLETED || !transcription.text) {
@@ -269,7 +269,7 @@ interface TranscriptionDetailProps {
   onClose: () => void;
 }
 
-function TranscriptionDetail({ transcription, onClose }: TranscriptionDetailProps): JSX.Element {
+function TranscriptionDetail({ transcription, onClose }: TranscriptionDetailProps) {
   const router = useRouter();
   const { startStream, stopStream, isStreaming } = useSSE();
   const [improvedText, setImprovedText] = useState('');
@@ -505,7 +505,7 @@ interface FileUploadFormProps {
   onUploadComplete: () => void;
 }
 
-function FileUploadForm({ onUploadComplete }: FileUploadFormProps): JSX.Element {
+function FileUploadForm({ onUploadComplete }: FileUploadFormProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadLanguage, setUploadLanguage] = useState<string>('auto');
   const [uploadProgress, setUploadProgress] = useState<number>(0);
@@ -710,7 +710,7 @@ interface RecordAudioTabProps {
   onRecordingUploaded: () => void;
 }
 
-function RecordAudioTab({ onRecordingUploaded }: RecordAudioTabProps): JSX.Element {
+function RecordAudioTab({ onRecordingUploaded }: RecordAudioTabProps) {
   const [recordLanguage, setRecordLanguage] = useState<string>('auto');
 
   const uploadMutation = useUploadTranscription();
@@ -770,7 +770,7 @@ function RecordAudioTab({ onRecordingUploaded }: RecordAudioTabProps): JSX.Eleme
    PAGE COMPONENT
    ======================================================================== */
 
-export default function TranscriptionPage(): JSX.Element {
+export default function TranscriptionPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [deleteDialogId, setDeleteDialogId] = useState<string | null>(null);
 

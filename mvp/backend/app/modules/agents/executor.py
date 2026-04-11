@@ -503,6 +503,9 @@ async def execute_step(action: str, input_data: dict, previous_output: Optional[
         "youtube_smart": _exec_youtube_smart,
         "youtube_playlist": _exec_youtube_playlist,
         "youtube_analyze": _exec_youtube_analyze,
+        "instagram_analyze_profile": _exec_instagram_analyze_profile,
+        "instagram_analyze_reel": _exec_instagram_analyze_reel,
+        "instagram_validate": _exec_instagram_validate,
     }
 
     handler = handlers.get(action, _exec_generate)
@@ -1861,3 +1864,71 @@ async def _exec_analyze_repo(input_data: dict, previous: Optional[str]) -> dict:
         }
     except Exception as e:
         return {"output": "", "error": str(e)[:500], "action": "analyze_repo"}
+
+
+async def _exec_instagram_validate(input_data: dict, previous: Optional[str]) -> dict:
+    """Validate a public Instagram profile username."""
+    username = input_data.get("username", previous or "").lstrip("@").strip()
+    if not username:
+        return {"output": "", "error": "No Instagram username provided", "action": "instagram_validate"}
+    try:
+        from app.modules.instagram_intelligence.service import InstagramIntelligenceService
+
+        svc = InstagramIntelligenceService()
+        result = await svc.validate_profile(username)
+        status = "public" if result.get("valid") else ("private" if result.get("is_private") else "not found")
+        return {
+            "output": f"Instagram @{username}: {status}",
+            "valid": result.get("valid"),
+            "is_private": result.get("is_private"),
+            "action": "instagram_validate",
+        }
+    except Exception as e:
+        return {"output": "", "error": str(e)[:500], "action": "instagram_validate"}
+
+
+async def _exec_instagram_analyze_profile(input_data: dict, previous: Optional[str]) -> dict:
+    """Analyze a public Instagram profile: fetch Reels, transcribe, score sentiment."""
+    username = input_data.get("username", previous or "").lstrip("@").strip()
+    if not username:
+        return {"output": "", "error": "No Instagram username provided", "action": "instagram_analyze_profile"}
+    max_reels = int(input_data.get("max_reels", 5))
+    transcribe = bool(input_data.get("transcribe", True))
+    language = input_data.get("language", "auto")
+    try:
+        from app.modules.instagram_intelligence.service import InstagramIntelligenceService
+
+        svc = InstagramIntelligenceService()
+        report = await svc.analyze_profile(username, max_reels, transcribe, language)
+        reels_count = report.get("reels_analyzed", 0)
+        avg = report.get("avg_sentiment_score")
+        topics = ", ".join(report.get("top_topics", [])[:5])
+        output = (
+            f"Instagram @{username}: {reels_count} Reels analyzed. "
+            f"Avg sentiment: {avg}. Top topics: {topics}"
+        )
+        return {"output": output, "report": report, "action": "instagram_analyze_profile"}
+    except Exception as e:
+        return {"output": "", "error": str(e)[:500], "action": "instagram_analyze_profile"}
+
+
+async def _exec_instagram_analyze_reel(input_data: dict, previous: Optional[str]) -> dict:
+    """Analyze a single public Instagram Reel by URL."""
+    reel_url = input_data.get("reel_url", previous or "")
+    if not reel_url or "instagram.com" not in reel_url:
+        return {"output": "", "error": "No valid Instagram Reel URL provided", "action": "instagram_analyze_reel"}
+    transcribe = bool(input_data.get("transcribe", True))
+    language = input_data.get("language", "auto")
+    try:
+        from app.modules.instagram_intelligence.service import InstagramIntelligenceService
+
+        svc = InstagramIntelligenceService()
+        reel = await svc.analyze_reel(reel_url, transcribe, language)
+        output = (
+            f"Reel @{reel.get('username')}: {reel.get('likes')} likes, "
+            f"{reel.get('views')} views. Sentiment: {reel.get('sentiment_label')}. "
+            f"Transcript: {(reel.get('transcript') or '')[:200]}"
+        )
+        return {"output": output, "reel": reel, "action": "instagram_analyze_reel"}
+    except Exception as e:
+        return {"output": "", "error": str(e)[:500], "action": "instagram_analyze_reel"}

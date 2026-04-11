@@ -26,7 +26,7 @@ export interface ChatPanelProps {
    SUB-COMPONENTS
    ======================================================================== */
 
-function StreamingDots(): JSX.Element {
+function StreamingDots() {
   return (
     <span className="inline-flex items-center gap-[3px] h-4">
       <span
@@ -45,7 +45,7 @@ function StreamingDots(): JSX.Element {
   );
 }
 
-function BotAvatar(): JSX.Element {
+function BotAvatar() {
   return (
     <Avatar className="h-8 w-8 mt-1 shrink-0">
       <AvatarFallback className="bg-gradient-to-br from-[var(--accent)]/20 to-[#a855f7]/20 border border-[var(--accent)]/30">
@@ -55,7 +55,7 @@ function BotAvatar(): JSX.Element {
   );
 }
 
-function UserAvatar(): JSX.Element {
+function UserAvatar() {
   return (
     <Avatar className="h-8 w-8 mt-1 shrink-0">
       <AvatarFallback className="bg-gradient-to-br from-[var(--accent)] to-[#a855f7]">
@@ -69,7 +69,7 @@ interface MessageBubbleProps {
   message: Message;
 }
 
-function MessageBubble({ message }: MessageBubbleProps): JSX.Element {
+function MessageBubble({ message }: MessageBubbleProps) {
   const isUser = message.role === 'user';
   const isSystem = message.role === 'system';
 
@@ -127,7 +127,7 @@ function MessageBubble({ message }: MessageBubbleProps): JSX.Element {
    LOADING SKELETON
    ======================================================================== */
 
-function ChatSkeleton(): JSX.Element {
+function ChatSkeleton() {
   return (
     <div className="flex flex-col gap-4 px-4 py-6">
       <div className="flex items-start gap-2.5">
@@ -167,7 +167,7 @@ export function ChatPanel({
   streamingProvider,
   streamingTokenCount,
   isLoading,
-}: ChatPanelProps): JSX.Element {
+}: ChatPanelProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 

@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Eye, EyeOff, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
+import type { ReactElement } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 
 import { Button } from '@/lib/design-hub/components/Button';
@@ -11,7 +12,7 @@ import { Input } from '@/lib/design-hub/components/Input';
 import { useLogin } from '@/features/auth/hooks';
 import { loginSchema, type LoginSchema } from '@/features/auth/schemas';
 
-export default function LoginPage(): JSX.Element {
+export default function LoginPage(): ReactElement {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
 

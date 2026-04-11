@@ -507,6 +507,10 @@ class WorkflowService:
             return await WorkflowService._node_create_webhook(previous_output, config, user_id)
         elif action == "fine_tune":
             return await WorkflowService._node_fine_tune(previous_output, config, user_id)
+        elif action == "instagram_analyze_profile":
+            return await WorkflowService._node_instagram_analyze_profile(previous_output, config)
+        elif action == "instagram_analyze_reel":
+            return await WorkflowService._node_instagram_analyze_reel(previous_output, config)
         else:
             return await WorkflowService._node_generate(previous_output, config, user_id)
 
@@ -1680,3 +1684,45 @@ class WorkflowService:
             }
         except Exception as e:
             return {"output": "", "error": str(e)[:500], "action": "fine_tune"}
+
+    @staticmethod
+    async def _node_instagram_analyze_profile(text: str, config: dict) -> dict:
+        username = config.get("username", text or "").lstrip("@").strip()
+        if not username:
+            return {"output": "", "error": "No Instagram username provided", "action": "instagram_analyze_profile"}
+        max_reels = int(config.get("max_reels", 5))
+        transcribe = bool(config.get("transcribe", True))
+        language = config.get("language", "auto")
+        try:
+            from app.modules.instagram_intelligence.service import InstagramIntelligenceService
+
+            svc = InstagramIntelligenceService()
+            report = await svc.analyze_profile(username, max_reels, transcribe, language)
+            topics = ", ".join(report.get("top_topics", [])[:5])
+            output = (
+                f"@{username}: {report.get('reels_analyzed')} reels analyzed. "
+                f"Avg sentiment: {report.get('avg_sentiment_score')}. Topics: {topics}"
+            )
+            return {"output": output, "report": report, "action": "instagram_analyze_profile"}
+        except Exception as e:
+            return {"output": "", "error": str(e)[:500], "action": "instagram_analyze_profile"}
+
+    @staticmethod
+    async def _node_instagram_analyze_reel(text: str, config: dict) -> dict:
+        reel_url = config.get("reel_url", text or "")
+        if not reel_url or "instagram.com" not in reel_url:
+            return {"output": "", "error": "No valid Instagram Reel URL provided", "action": "instagram_analyze_reel"}
+        transcribe = bool(config.get("transcribe", True))
+        language = config.get("language", "auto")
+        try:
+            from app.modules.instagram_intelligence.service import InstagramIntelligenceService
+
+            svc = InstagramIntelligenceService()
+            reel = await svc.analyze_reel(reel_url, transcribe, language)
+            output = (
+                f"Reel @{reel.get('username')}: {reel.get('likes')} likes, "
+                f"sentiment: {reel.get('sentiment_label')}"
+            )
+            return {"output": output, "reel": reel, "action": "instagram_analyze_reel"}
+        except Exception as e:
+            return {"output": "", "error": str(e)[:500], "action": "instagram_analyze_reel"}

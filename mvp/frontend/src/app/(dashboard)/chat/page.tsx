@@ -39,7 +39,7 @@ const CHAT_STREAM_URL = '/api/conversation';
    COMPONENT
    ======================================================================== */
 
-export default function ChatPage(): JSX.Element {
+export default function ChatPage() {
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
 

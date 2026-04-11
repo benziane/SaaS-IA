@@ -103,7 +103,7 @@ interface RootLayoutProps {
    COMPONENT
    ======================================================================== */
 
-export default async function RootLayout({ children }: RootLayoutProps): Promise<JSX.Element> {
+export default async function RootLayout({ children }: RootLayoutProps) {
   // Vars
   const direction = 'ltr'; // TODO: Add i18n support later
   const mode = await getMode();

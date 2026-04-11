@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Eye, EyeOff, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
+import type { ReactElement } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { z } from 'zod';
 
@@ -33,7 +34,7 @@ type RegisterPageSchema = z.infer<typeof registerPageSchema>;
    COMPONENT
    ======================================================================== */
 
-export default function RegisterPage(): JSX.Element {
+export default function RegisterPage(): ReactElement {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 

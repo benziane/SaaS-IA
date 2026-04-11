@@ -6,6 +6,7 @@ import { CheckCircle2, Eye, EyeOff, KeyRound } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useState } from 'react';
+import type { ReactElement } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { z } from 'zod';
 
@@ -38,7 +39,7 @@ type ResetPasswordSchema = z.infer<typeof resetPasswordSchema>;
    COMPONENT
    ======================================================================== */
 
-export default function ResetPasswordPage(): JSX.Element {
+export default function ResetPasswordPage(): ReactElement {
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
 

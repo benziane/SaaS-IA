@@ -1,3 +1,5 @@
+import path from 'node:path';
+
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
@@ -5,17 +7,12 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   // 👇 C'EST LA LIGNE MAGIQUE QUI MANQUAIT POUR DOCKER ! 👇
   output: 'standalone',
+  outputFileTracingRoot: path.join(__dirname),
   // 👆 SANS ÇA, DOCKER NE TROUVE PAS LES FICHIERS 👆
   
   poweredByHeader: false,
   compress: true,
 
-  /* ESLint Config */
-  eslint: {
-    dirs: ['src'],
-    ignoreDuringBuilds: true,
-  },
-  
   /* Image Optimization */
   images: {
     remotePatterns: [

@@ -1,0 +1,9 @@
+{
+  "name": "instagram_intelligence",
+  "version": "1.0.0",
+  "description": "Instagram content intelligence — download public Reels, transcribe with Whisper, score with RoBERTa sentiment, store vectors for semantic search",
+  "prefix": "/api/instagram",
+  "tags": ["instagram"],
+  "enabled": true,
+  "dependencies": ["transcription", "sentiment"]
+}

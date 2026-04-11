@@ -48,7 +48,7 @@ export default function AudioRecorder({
   onRecordingComplete,
   maxDurationSeconds = DEFAULT_MAX_DURATION,
   disabled = false,
-}: AudioRecorderProps): JSX.Element {
+}: AudioRecorderProps) {
   const [state, setState] = useState<RecorderState>('idle');
   const [elapsed, setElapsed] = useState(0);
   const [error, setError] = useState<string | null>(null);

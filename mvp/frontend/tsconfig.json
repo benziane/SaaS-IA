@@ -2,11 +2,14 @@
   "compilerOptions": {
     /* Base Options */
     "target": "ES2022",
-    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "lib": [
+      "ES2022",
+      "DOM",
+      "DOM.Iterable"
+    ],
     "module": "ESNext",
     "moduleResolution": "bundler",
     "jsx": "preserve",
-    
     /* Strict Type-Checking Options - Grade S++ */
     "strict": true,
     "noImplicitAny": true,
@@ -16,7 +19,6 @@
     "strictPropertyInitialization": true,
     "noImplicitThis": true,
     "alwaysStrict": true,
-    
     /* Additional Checks - Grade S++ */
     "noUnusedLocals": true,
     "noUnusedParameters": true,
@@ -25,7 +27,6 @@
     "noUncheckedIndexedAccess": true,
     "noImplicitOverride": true,
     "noPropertyAccessFromIndexSignature": false, // TODO: Re-enable after fixing Sneat template
-    
     /* Module Resolution Options */
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
@@ -34,39 +35,61 @@
     "allowJs": false,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    
     /* Emit Options */
     "noEmit": true,
     "incremental": true,
-    
     /* Advanced Options */
     "allowUnreachableCode": false,
     "allowUnusedLabels": false,
     "exactOptionalPropertyTypes": false, // TODO: Re-enable after fixing Sneat template types
-    
     /* Next.js Specific */
     "plugins": [
       {
         "name": "next"
       }
     ],
-    
     /* Path Mapping */
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"],
-      "@core/*": ["./src/@core/*"],
-      "@layouts/*": ["./src/@layouts/*"],
-      "@menu/*": ["./src/@menu/*"],
-      "@components/*": ["./src/components/*"],
-      "@configs/*": ["./src/configs/*"],
-      "@hooks/*": ["./src/hooks/*"],
-      "@lib/*": ["./src/lib/*"],
-      "@types/*": ["./src/types/*"],
-      "@utils/*": ["./src/utils/*"],
-      "@views/*": ["./src/views/*"],
-      "@features/*": ["./src/features/*"],
-      "@api/*": ["./src/api/*"]
+      "@/*": [
+        "./src/*"
+      ],
+      "@core/*": [
+        "./src/@core/*"
+      ],
+      "@layouts/*": [
+        "./src/@layouts/*"
+      ],
+      "@menu/*": [
+        "./src/@menu/*"
+      ],
+      "@components/*": [
+        "./src/components/*"
+      ],
+      "@configs/*": [
+        "./src/configs/*"
+      ],
+      "@hooks/*": [
+        "./src/hooks/*"
+      ],
+      "@lib/*": [
+        "./src/lib/*"
+      ],
+      "@types/*": [
+        "./src/types/*"
+      ],
+      "@utils/*": [
+        "./src/utils/*"
+      ],
+      "@views/*": [
+        "./src/views/*"
+      ],
+      "@features/*": [
+        "./src/features/*"
+      ],
+      "@api/*": [
+        "./src/api/*"
+      ]
     }
   },
   "include": [
@@ -74,7 +97,8 @@
     "declarations.d.ts",
     "**/*.ts",
     "**/*.tsx",
-    ".next/types/**/*.ts"
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules",
@@ -84,4 +108,3 @@
     "build"
   ]
 }
-

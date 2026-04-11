@@ -51,6 +51,15 @@ class Settings(BaseSettings):
     # Social Publisher token encryption key (Fernet-compatible base64 key, or any string)
     SOCIAL_TOKEN_KEY: str = ""
 
+    # Instagram — Option 1: instaloader session login
+    INSTAGRAM_USERNAME: str = ""
+    INSTAGRAM_PASSWORD: str = ""
+
+    # Instagram — Option 2: Meta Basic Display API
+    INSTAGRAM_APP_ID: str = ""
+    INSTAGRAM_APP_SECRET: str = ""
+    INSTAGRAM_ACCESS_TOKEN: str = ""
+
     # Email / SMTP (optional — falls back to console logger if not set)
     SMTP_HOST: str = ""
     SMTP_PORT: int = 587

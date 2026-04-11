@@ -60,7 +60,7 @@ export function ConversationList({
   onDelete,
   onCreate,
   isLoading,
-}: ConversationListProps): JSX.Element {
+}: ConversationListProps) {
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
   const handleConfirmDelete = (): void => {
