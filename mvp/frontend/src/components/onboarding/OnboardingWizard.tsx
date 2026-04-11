@@ -37,7 +37,7 @@ const USE_CASE_OPTIONS: UseCaseOption[] = [
     label: 'Creation de contenu',
     description: 'Content Studio, Image Gen, Video Gen, Presentations',
     icon: 'tabler-brush',
-    color: '#667eea',
+    color: 'var(--accent)',
     modules: ['content-studio', 'images', 'presentations', 'social'],
   },
   {
@@ -88,7 +88,7 @@ const FEATURE_CARDS: FeatureCard[] = [
     title: 'Transcription IA',
     description: 'Transcrivez des videos YouTube, fichiers audio ou enregistrements en texte avec Whisper.',
     icon: 'tabler-microphone',
-    color: '#667eea',
+    color: 'var(--accent)',
     href: '/transcription',
     useCases: ['content', 'communication'],
   },
@@ -152,7 +152,7 @@ const FEATURE_CARDS: FeatureCard[] = [
     title: 'Image Generation',
     description: 'Generez des images IA avec 10 styles artistiques et upscaling Real-ESRGAN.',
     icon: 'tabler-photo-ai',
-    color: '#764ba2',
+    color: 'var(--accent)',
     href: '/images',
     useCases: ['content'],
   },
@@ -225,9 +225,9 @@ function StepWelcome({ userName }: { userName: string }) {
     <div className="text-center py-8 animate-in fade-in duration-500">
       <div
         className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6"
-        style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}
+        style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}
       >
-        <i className="tabler-sparkles" style={{ fontSize: 36, color: '#fff' }} />
+        <i className="tabler-sparkles" style={{ fontSize: 36, color: 'var(--accent)' }} />
       </div>
       <h2 className="text-3xl font-bold mb-2 text-[var(--text-high)]">
         Bienvenue sur SaaS-IA !
@@ -443,7 +443,7 @@ function StepReady({ onComplete }: { onComplete: () => void }) {
   const [dontShowAgain, setDontShowAgain] = useState(true);
 
   const quickActions = [
-    { label: 'Transcrire une video', href: '/transcription', icon: 'tabler-microphone', color: '#667eea' },
+    { label: 'Transcrire une video', href: '/transcription', icon: 'tabler-microphone', color: 'var(--accent)' },
     { label: 'Creer du contenu', href: '/content-studio', icon: 'tabler-brush', color: '#7367f0' },
     { label: 'Analyser des donnees', href: '/data', icon: 'tabler-chart-bar', color: '#28c76f' },
   ];
@@ -459,9 +459,9 @@ function StepReady({ onComplete }: { onComplete: () => void }) {
     <div className="text-center py-8 animate-in fade-in duration-500">
       <div
         className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6"
-        style={{ background: 'linear-gradient(135deg, #28c76f 0%, #48dbfb 100%)' }}
+        style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}
       >
-        <i className="tabler-rocket" style={{ fontSize: 36, color: '#fff' }} />
+        <i className="tabler-rocket" style={{ fontSize: 36, color: 'var(--success, #28c76f)' }} />
       </div>
       <h2 className="text-3xl font-bold mb-2 text-[var(--text-high)]">
         Votre plateforme est prete !
@@ -495,8 +495,7 @@ function StepReady({ onComplete }: { onComplete: () => void }) {
       <Button
         size="lg"
         onClick={handleExplore}
-        className="px-10 py-3 rounded-xl font-semibold mb-4"
-        style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}
+        className="px-10 py-3 rounded-xl font-semibold mb-4 bg-[var(--accent)] text-[var(--bg-app)] hover:bg-[var(--accent-dim)]"
       >
         Explorer le dashboard
       </Button>
@@ -582,9 +581,9 @@ export default function OnboardingWizard({ userName = '' }: OnboardingWizardProp
             <div className="flex items-center gap-2">
               <div
                 className="w-8 h-8 rounded-md flex items-center justify-center"
-                style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}
+                style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}
               >
-                <i className="tabler-sparkles" style={{ fontSize: 18, color: '#fff' }} />
+                <i className="tabler-sparkles" style={{ fontSize: 18, color: 'var(--accent)' }} />
               </div>
               <span className="text-base font-bold text-[var(--text-high)]">
                 SaaS-IA
@@ -653,8 +652,7 @@ export default function OnboardingWizard({ userName = '' }: OnboardingWizardProp
               )}
               <Button
                 onClick={handleNext}
-                className="px-8 font-semibold"
-                style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}
+                className="px-8 font-semibold bg-[var(--accent)] text-[var(--bg-app)] hover:bg-[var(--accent-dim)]"
               >
                 {currentStep === 0 ? 'Commencer' : 'Suivant'}
               </Button>
