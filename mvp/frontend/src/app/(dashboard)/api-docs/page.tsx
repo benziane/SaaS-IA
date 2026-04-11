@@ -82,8 +82,8 @@ export default function APIDocsPage() {
   return (
     <div className="p-5 space-y-5 animate-enter">
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-[var(--accent)] to-[#a855f7] shrink-0">
-          <Code2 className="h-5 w-5 text-white" />
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-[var(--bg-elevated)] border border-[var(--border)] shrink-0">
+          <Code2 className="h-5 w-5 text-[var(--accent)]" />
         </div>
         <div>
           <h1 className="text-xl font-bold text-[var(--text-high)]">API Documentation &amp; Keys</h1>

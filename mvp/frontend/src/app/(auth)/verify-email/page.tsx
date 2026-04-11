@@ -73,22 +73,9 @@ export default function VerifyEmailPage(): ReactElement {
     >
       {/* Skip to main content - Accessibility */}
       <a href="#main-content" className="skip-to-main">Skip to main content</a>
-
-      {/* Background radial glows */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full opacity-10"
-          style={{ background: 'radial-gradient(circle, var(--accent) 0%, transparent 70%)' }}
-        />
-        <div
-          className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-5"
-          style={{ background: 'radial-gradient(circle, #a855f7 0%, transparent 70%)' }}
-        />
-        <div
-          className="absolute bottom-0 left-0 w-80 h-80 rounded-full opacity-5"
-          style={{ background: 'radial-gradient(circle, #05c3db 0%, transparent 70%)' }}
-        />
-      </div>
+      {/* Subtle grid pattern */}
+      <div className="absolute inset-0 pointer-events-none opacity-[0.03]"
+        style={{ backgroundImage: 'repeating-linear-gradient(0deg, var(--border) 0px, var(--border) 1px, transparent 1px, transparent 48px), repeating-linear-gradient(90deg, var(--border) 0px, var(--border) 1px, transparent 1px, transparent 48px)' }} />
 
       {/* Auth card */}
       <div
@@ -104,7 +91,7 @@ export default function VerifyEmailPage(): ReactElement {
           <div className="flex flex-col items-center text-center">
             <div
               className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4 animate-pulse-glow"
-              style={{ background: 'linear-gradient(135deg, var(--accent) 0%, #a855f7 100%)' }}
+              className="bg-[var(--bg-elevated)] border border-[var(--border)]"
             >
               <Loader2 className="h-7 w-7 text-white animate-spin" />
             </div>
@@ -139,7 +126,7 @@ export default function VerifyEmailPage(): ReactElement {
               className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4"
               style={{ background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)' }}
             >
-              <MailCheck className="h-7 w-7 text-white" />
+              <MailCheck className="h-6 w-6 text-[var(--accent)]" />
             </div>
             <h1
               id="verify-email-title"
@@ -167,7 +154,7 @@ export default function VerifyEmailPage(): ReactElement {
               className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4"
               style={{ background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)' }}
             >
-              <MailX className="h-7 w-7 text-white" />
+              <MailX className="h-6 w-6 text-[var(--accent)]" />
             </div>
             <h1
               id="verify-email-title"
@@ -220,9 +207,9 @@ export default function VerifyEmailPage(): ReactElement {
           <div className="flex flex-col items-center text-center">
             <div
               className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4 animate-pulse-glow"
-              style={{ background: 'linear-gradient(135deg, var(--accent) 0%, #a855f7 100%)' }}
+              className="bg-[var(--bg-elevated)] border border-[var(--border)]"
             >
-              <Mail className="h-7 w-7 text-white" />
+              <Mail className="h-6 w-6 text-[var(--accent)]" />
             </div>
             <h1
               id="verify-email-title"

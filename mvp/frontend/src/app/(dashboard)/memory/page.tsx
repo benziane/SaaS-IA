@@ -82,8 +82,8 @@ export default function MemoryPage() {
     <div className="p-5 space-y-5 animate-enter">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-[var(--accent)] to-[#a855f7] shrink-0">
-            <Brain className="h-5 w-5 text-white" />
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-[var(--bg-elevated)] border border-[var(--border)] shrink-0">
+            <Brain className="h-5 w-5 text-[var(--accent)]" />
           </div>
           <div>
             <h1 className="text-xl font-bold text-[var(--text-high)]">AI Memory</h1>
@@ -121,7 +121,7 @@ export default function MemoryPage() {
         ) : memories.length === 0 ? (
           <div className="col-span-full">
             <div className="surface-card p-5 text-center py-12">
-              <div className="w-16 h-16 rounded-2xl flex items-center justify-center bg-gradient-to-br from-[var(--accent)] to-[#a855f7] mx-auto mb-4">
+              <div className="w-16 h-16 rounded-2xl flex items-center justify-center bg-[var(--bg-elevated)] border border-[var(--border)] mx-auto mb-4">
                 <Brain className="h-8 w-8 text-white" />
               </div>
               <p className="text-[var(--text-mid)]">No memories yet. Add one or auto-extract from text.</p>

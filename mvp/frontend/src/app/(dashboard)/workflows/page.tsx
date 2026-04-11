@@ -137,8 +137,8 @@ export default function WorkflowsPage() {
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-[var(--accent)] to-[#a855f7] shrink-0">
-            <Workflow className="h-5 w-5 text-white" />
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-[var(--bg-elevated)] border border-[var(--border)] shrink-0">
+            <Workflow className="h-5 w-5 text-[var(--accent)]" />
           </div>
           <div>
             <h1 className="text-xl font-bold text-[var(--text-high)]">AI Workflows</h1>
@@ -169,7 +169,7 @@ export default function WorkflowsPage() {
                 onClick={() => handleUseTemplate(template.id)}
               >
                 <div className="flex items-center gap-2 mb-2">
-                  <div className="w-7 h-7 rounded-lg flex items-center justify-center bg-gradient-to-br from-[var(--accent)] to-[#a855f7] shrink-0">
+                  <div className="w-7 h-7 rounded-lg flex items-center justify-center bg-[var(--bg-elevated)] border border-[var(--border)] shrink-0">
                     <Sparkles className="h-3.5 w-3.5 text-white" />
                   </div>
                   <h4 className="text-sm font-bold text-[var(--text-high)]">{template.name}</h4>
@@ -194,7 +194,7 @@ export default function WorkflowsPage() {
         </div>
       ) : !workflows?.length ? (
         <div className="surface-card rounded-xl text-center py-16 px-6">
-          <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-gradient-to-br from-[var(--accent)] to-[#a855f7] mx-auto mb-4">
+          <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-[var(--bg-elevated)] border border-[var(--border)] mx-auto mb-4">
             <Workflow className="h-7 w-7 text-white" />
           </div>
           <h3 className="text-base font-semibold text-[var(--text-high)]">No workflows yet</h3>
@@ -213,7 +213,7 @@ export default function WorkflowsPage() {
               {/* Card Header */}
               <div className="flex items-start justify-between gap-2">
                 <div className="flex items-center gap-2 min-w-0">
-                  <div className="w-7 h-7 rounded-lg flex items-center justify-center bg-gradient-to-br from-[var(--accent)] to-[#a855f7] shrink-0">
+                  <div className="w-7 h-7 rounded-lg flex items-center justify-center bg-[var(--bg-elevated)] border border-[var(--border)] shrink-0">
                     <Workflow className="h-3.5 w-3.5 text-white" />
                   </div>
                   <h4 className="text-sm font-bold text-[var(--text-high)] truncate">{workflow.name}</h4>
@@ -446,7 +446,7 @@ export default function WorkflowsPage() {
                 onClick={() => handleUseTemplate(template.id)}
               >
                 <div className="flex items-center gap-2 mb-2">
-                  <div className="w-7 h-7 rounded-lg flex items-center justify-center bg-gradient-to-br from-[var(--accent)] to-[#a855f7] shrink-0">
+                  <div className="w-7 h-7 rounded-lg flex items-center justify-center bg-[var(--bg-elevated)] border border-[var(--border)] shrink-0">
                     <Sparkles className="h-3.5 w-3.5 text-white" />
                   </div>
                   <h4 className="text-sm font-bold text-[var(--text-high)]">{template.name}</h4>

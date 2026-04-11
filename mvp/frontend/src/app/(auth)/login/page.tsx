@@ -40,15 +40,9 @@ export default function LoginPage(): ReactElement {
       {/* Skip to main content - Accessibility */}
       <a href="#main-content" className="skip-to-main">Skip to main content</a>
 
-      {/* Background radial glows */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full opacity-10"
-          style={{ background: 'radial-gradient(circle, var(--accent) 0%, transparent 70%)' }} />
-        <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-5"
-          style={{ background: 'radial-gradient(circle, #a855f7 0%, transparent 70%)' }} />
-        <div className="absolute bottom-0 left-0 w-80 h-80 rounded-full opacity-5"
-          style={{ background: 'radial-gradient(circle, #05c3db 0%, transparent 70%)' }} />
-      </div>
+      {/* Subtle grid pattern */}
+      <div className="absolute inset-0 pointer-events-none opacity-[0.03]"
+        style={{ backgroundImage: 'repeating-linear-gradient(0deg, var(--border) 0px, var(--border) 1px, transparent 1px, transparent 48px), repeating-linear-gradient(90deg, var(--border) 0px, var(--border) 1px, transparent 1px, transparent 48px)' }} />
 
       {/* Auth card */}
       <div
@@ -60,10 +54,9 @@ export default function LoginPage(): ReactElement {
         {/* Logo & branding */}
         <div className="flex flex-col items-center mb-8">
           <div
-            className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4 animate-pulse-glow"
-            style={{ background: 'linear-gradient(135deg, var(--accent) 0%, #a855f7 100%)' }}
+            className="w-12 h-12 rounded-xl flex items-center justify-center mb-4 bg-[var(--bg-elevated)] border border-[var(--border)]"
           >
-            <Sparkles className="h-7 w-7 text-white" />
+            <Sparkles className="h-6 w-6 text-[var(--accent)]" />
           </div>
           <h1 id="login-title" className="text-xl font-bold text-[var(--text-high)] tracking-tight mb-1">
             Welcome back

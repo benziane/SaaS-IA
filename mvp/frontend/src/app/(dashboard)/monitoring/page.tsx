@@ -45,8 +45,8 @@ export default function MonitoringPage() {
     <div className="p-5 space-y-5 animate-enter">
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-[var(--accent)] to-[#a855f7] shrink-0">
-            <Activity className="h-5 w-5 text-white" />
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-[var(--bg-elevated)] border border-[var(--border)] shrink-0">
+            <Activity className="h-5 w-5 text-[var(--accent)]" />
           </div>
           <div>
             <h1 className="text-xl font-bold text-[var(--text-high)]">AI Monitoring</h1>

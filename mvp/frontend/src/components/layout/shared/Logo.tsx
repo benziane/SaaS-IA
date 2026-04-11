@@ -45,8 +45,8 @@ const Logo = ({ color }: { color?: CSSProperties['color'] }) => {
 
   return (
     <div className='flex items-center'>
-      <div className='w-7 h-7 rounded-lg flex items-center justify-center bg-gradient-to-br from-[var(--accent)] to-[#a855f7] shrink-0'>
-        <Sparkles className='h-4 w-4 text-white' />
+      <div className='w-7 h-7 rounded-lg flex items-center justify-center bg-[var(--bg-elevated)] border border-[var(--border)] shrink-0'>
+        <Sparkles className='h-4 w-4 text-[var(--accent)]' />
       </div>
       <span
         ref={logoTextRef}

@@ -213,8 +213,8 @@ export default function ChatPage() {
           <>
             {/* Chat Header */}
             <div className="px-5 py-3.5 border-b border-[var(--border)] flex items-center gap-3 shrink-0">
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-gradient-to-br from-[var(--accent)] to-[#a855f7] shrink-0">
-                <MessageSquare className="w-4 h-4 text-white" />
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-[var(--bg-elevated)] border border-[var(--border)] shrink-0">
+                <MessageSquare className="w-4 h-4 text-[var(--accent)]" />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-[var(--text-high)] truncate">

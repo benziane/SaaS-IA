@@ -58,8 +58,8 @@ function BotAvatar() {
 function UserAvatar() {
   return (
     <Avatar className="h-8 w-8 mt-1 shrink-0">
-      <AvatarFallback className="bg-gradient-to-br from-[var(--accent)] to-[#a855f7]">
-        <User className="h-4 w-4 text-white" />
+      <AvatarFallback className="bg-[var(--bg-elevated)] border border-[var(--border)]">
+        <User className="h-4 w-4 text-[var(--accent)]" />
       </AvatarFallback>
     </Avatar>
   );

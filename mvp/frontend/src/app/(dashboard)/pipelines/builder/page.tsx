@@ -1136,8 +1136,8 @@ export default function PipelineBuilderPage() {
       >
         {/* S+++ Page header */}
         <div className="flex items-center gap-3 mr-2">
-          <div className="w-8 h-8 rounded-xl flex items-center justify-center bg-gradient-to-br from-[var(--accent)] to-[#a855f7] shrink-0">
-            <GitBranch className="h-4 w-4 text-white" />
+          <div className="w-8 h-8 rounded-xl flex items-center justify-center bg-[var(--bg-elevated)] border border-[var(--border)] shrink-0">
+            <GitBranch className="h-4 w-4 text-[var(--accent)]" />
           </div>
           <div>
             <h1 className="text-sm font-bold text-[var(--text-high)] leading-none">Pipeline Builder</h1>
