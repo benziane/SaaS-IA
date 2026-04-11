@@ -14,6 +14,8 @@
    ======================================================================== */
 
 :root {
+  color-scheme: dark;
+
   /* --- Primary color scale (cyan) --- */
   --color-primary-50: hsl(187, 61%, 97%);
   --color-primary-100: hsl(187, 71%, 94%);
@@ -163,6 +165,7 @@
 }
 
 [data-mode="light"] {
+  color-scheme: light;
   --bg-app: hsl(210, 40%, 98%);
   --bg-surface: hsl(0, 0%, 100%);
   --bg-elevated: hsl(210, 40%, 96%);
@@ -452,6 +455,54 @@ a {
 .border-glow-accent:focus-within {
   border-color: color-mix(in srgb, var(--accent) 40%, transparent);
   box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+/* ========================================================================
+   TYPOGRAPHY POLISH — S+++ Grade
+   ======================================================================== */
+
+/* Balanced headings — no orphan words */
+h1, h2, h3, h4, h5, h6 {
+  text-wrap: balance;
+}
+
+/* Tabular numbers everywhere they matter */
+.tabular-nums,
+[class*="stat"],
+[class*="count"],
+[class*="metric"],
+table td,
+.font-mono {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ========================================================================
+   MOTION — Grade S+++
+   ======================================================================== */
+
+/* Only transform + opacity animated — never layout properties */
+* {
+  transition-property: color, background-color, border-color, opacity, transform, box-shadow, filter;
+}
+
+/* Respect user preference */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .animate-enter,
+  .animate-fade-in,
+  .animate-slide-in-up,
+  .animate-pulse-glow,
+  .animate-shimmer {
+    animation: none !important;
+  }
 }
 
 /* ========================================================================
