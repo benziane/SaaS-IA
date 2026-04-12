@@ -40,9 +40,14 @@ async def require_verified_email(
     """
     Dependency: blocks with 403 if user has not verified their email.
 
-    Add to any route that requires a verified email address.
-    Example: premium features, publishing, API key creation.
+    In DEV_MODE (ENVIRONMENT=development), this check is skipped entirely
+    so seeded dev users can access all endpoints without email verification.
     """
+    from app.config import settings
+
+    if settings.dev_mode:
+        return current_user
+
     if not current_user.email_verified:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
