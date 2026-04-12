@@ -41,7 +41,7 @@ const styles: Record<string, React.CSSProperties> = {
   card: {
     maxWidth: '480px',
     width: '100%',
-    backgroundColor: '#ffffff',
+    backgroundColor: 'var(--bg-surface)',
     borderRadius: '8px',
     padding: '48px 32px',
     textAlign: 'center' as const,
@@ -50,7 +50,7 @@ const styles: Record<string, React.CSSProperties> = {
   code: {
     fontSize: '64px',
     fontWeight: 700,
-    color: '#7367f0',
+    color: 'var(--accent)',
     lineHeight: 1,
     marginBottom: '12px',
     letterSpacing: '-2px',
@@ -58,13 +58,13 @@ const styles: Record<string, React.CSSProperties> = {
   title: {
     fontSize: '20px',
     fontWeight: 600,
-    color: '#2f2b3d',
+    color: 'var(--text-high)',
     margin: '0 0 12px 0',
     lineHeight: 1.3,
   },
   message: {
     fontSize: '14px',
-    color: '#6e6b7b',
+    color: 'var(--text-mid)',
     lineHeight: 1.6,
     margin: '0 0 32px 0',
   },
