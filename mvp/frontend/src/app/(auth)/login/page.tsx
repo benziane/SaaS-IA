@@ -168,15 +168,41 @@ export default function LoginPage(): ReactElement {
             <p className="text-xs font-semibold text-[var(--warning)] mb-3 text-center uppercase tracking-wider">
               Dev Quick Login
             </p>
-            <Button
-              className="w-full"
-              variant="outline"
-              size="md"
-              onClick={() => quickLogin('admin@saas-ia.com', 'admin123')}
-              disabled={isSubmitting || loginMutation.isPending}
-            >
-              {loginMutation.isPending ? 'Logging in…' : 'Admin — admin@saas-ia.com'}
-            </Button>
+            <div className="flex flex-col gap-2">
+              <Button
+                variant="outline"
+                size="md"
+                onClick={() => quickLogin('admin@saas-ia.com', 'Admin123!')}
+                disabled={loginMutation.isPending}
+                className="w-full justify-start text-left"
+              >
+                <span className="text-xs font-mono mr-2 opacity-60">ADMIN</span>
+                admin@saas-ia.com
+              </Button>
+              <Button
+                variant="outline"
+                size="md"
+                onClick={() => quickLogin('manager@saas-ia.com', 'Manager123!')}
+                disabled={loginMutation.isPending}
+                className="w-full justify-start text-left"
+              >
+                <span className="text-xs font-mono mr-2 opacity-60">MANAGER</span>
+                manager@saas-ia.com
+              </Button>
+              <Button
+                variant="outline"
+                size="md"
+                onClick={() => quickLogin('demo@saas-ia.com', 'Demo123!')}
+                disabled={loginMutation.isPending}
+                className="w-full justify-start text-left"
+              >
+                <span className="text-xs font-mono mr-2 opacity-60">USER</span>
+                demo@saas-ia.com
+              </Button>
+            </div>
+            {loginMutation.isPending && (
+              <p className="text-xs text-center text-[var(--text-low)] mt-2">Signing in…</p>
+            )}
           </div>
         )}
       </div>
