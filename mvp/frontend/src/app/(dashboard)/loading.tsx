@@ -41,14 +41,14 @@ const styles: Record<string, React.CSSProperties> = {
   spinner: {
     width: '40px',
     height: '40px',
-    border: '3px solid #ebe9f1',
-    borderTopColor: '#7367f0',
+    border: '3px solid var(--border)',
+    borderTopColor: 'var(--accent)',
     borderRadius: '50%',
     animation: 'dashboard-spin 0.8s linear infinite',
   },
   text: {
     fontSize: '14px',
-    color: '#6e6b7b',
+    color: 'var(--text-mid)',
     margin: 0,
   },
 };
