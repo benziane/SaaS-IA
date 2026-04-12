@@ -199,3 +199,185 @@ class TestTokenIntegrationScenarios:
         refresh = create_refresh_token(user_id="u@e.com")
         payload = jwt.decode(refresh, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         assert payload["type"] == "refresh"
+
+
+from unittest.mock import AsyncMock, MagicMock
+
+# ---------------------------------------------------------------------------
+# Tests: login lockout (_check_login_lockout, _record_failed_login)
+# ---------------------------------------------------------------------------
+
+class TestLoginLockout:
+    """Tests for account lockout logic after repeated failed login attempts."""
+
+    @pytest.mark.asyncio
+    async def test_lockout_returns_none_when_attempts_below_threshold(self):
+        """No lockout when failed attempt count is below LOGIN_MAX_ATTEMPTS."""
+        from app.auth import _check_login_lockout
+
+        mock_redis = MagicMock()
+        # Redis returns "3" attempts (< 5)
+        mock_redis.get = AsyncMock(return_value="3")
+
+        with patch("app.auth._get_login_redis", new_callable=AsyncMock, return_value=mock_redis):
+            result = await _check_login_lockout("user@example.com")
+
+        assert result is None
+
+    @pytest.mark.asyncio
+    async def test_lockout_returns_ttl_when_attempts_at_threshold(self):
+        """Returns remaining TTL when failed attempts reach LOGIN_MAX_ATTEMPTS (5)."""
+        from app.auth import _check_login_lockout
+
+        mock_redis = MagicMock()
+        mock_redis.get = AsyncMock(return_value="5")
+        mock_redis.ttl = AsyncMock(return_value=720)
+
+        with patch("app.auth._get_login_redis", new_callable=AsyncMock, return_value=mock_redis):
+            result = await _check_login_lockout("locked@example.com")
+
+        assert result == 720
+
+    @pytest.mark.asyncio
+    async def test_lockout_returns_minimum_1_when_ttl_zero(self):
+        """TTL of 0 is clamped to 1 to avoid returning a falsy lockout value."""
+        from app.auth import _check_login_lockout
+
+        mock_redis = MagicMock()
+        mock_redis.get = AsyncMock(return_value="10")
+        mock_redis.ttl = AsyncMock(return_value=0)
+
+        with patch("app.auth._get_login_redis", new_callable=AsyncMock, return_value=mock_redis):
+            result = await _check_login_lockout("user@example.com")
+
+        assert result >= 1
+
+    @pytest.mark.asyncio
+    async def test_lockout_fails_closed_when_redis_unavailable(self):
+        """When Redis is None (down), lockout returns LOGIN_REDIS_FAIL_LOCKOUT (fail-closed)."""
+        from app.auth import _check_login_lockout, LOGIN_REDIS_FAIL_LOCKOUT
+
+        with patch("app.auth._get_login_redis", new_callable=AsyncMock, return_value=None):
+            result = await _check_login_lockout("user@example.com")
+
+        assert result == LOGIN_REDIS_FAIL_LOCKOUT
+
+    @pytest.mark.asyncio
+    async def test_lockout_fails_closed_on_redis_exception(self):
+        """If Redis.get raises, lockout returns LOGIN_REDIS_FAIL_LOCKOUT (fail-closed)."""
+        from app.auth import _check_login_lockout, LOGIN_REDIS_FAIL_LOCKOUT
+
+        mock_redis = MagicMock()
+        mock_redis.get = AsyncMock(side_effect=Exception("Redis connection error"))
+
+        with patch("app.auth._get_login_redis", new_callable=AsyncMock, return_value=mock_redis):
+            result = await _check_login_lockout("user@example.com")
+
+        assert result == LOGIN_REDIS_FAIL_LOCKOUT
+
+    @pytest.mark.asyncio
+    async def test_record_failed_login_increments_counter(self):
+        """_record_failed_login should INCR the key and set TTL via pipeline."""
+        from app.auth import _record_failed_login
+
+        mock_pipeline = MagicMock()
+        mock_pipeline.incr = MagicMock()
+        mock_pipeline.expire = MagicMock()
+        mock_pipeline.execute = AsyncMock()
+
+        mock_redis = MagicMock()
+        mock_redis.pipeline = MagicMock(return_value=mock_pipeline)
+
+        with patch("app.auth._get_login_redis", new_callable=AsyncMock, return_value=mock_redis):
+            await _record_failed_login("user@example.com")
+
+        mock_pipeline.incr.assert_called_once()
+        mock_pipeline.expire.assert_called_once()
+        mock_pipeline.execute.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_record_failed_login_noop_when_redis_none(self):
+        """_record_failed_login is a no-op when Redis is unavailable."""
+        from app.auth import _record_failed_login
+
+        with patch("app.auth._get_login_redis", new_callable=AsyncMock, return_value=None):
+            # Should not raise
+            await _record_failed_login("user@example.com")
+
+    @pytest.mark.asyncio
+    async def test_reset_login_attempts_clears_key(self):
+        """_reset_login_attempts deletes the Redis key on successful login."""
+        from app.auth import _reset_login_attempts
+
+        mock_redis = MagicMock()
+        mock_redis.delete = AsyncMock()
+
+        with patch("app.auth._get_login_redis", new_callable=AsyncMock, return_value=mock_redis):
+            await _reset_login_attempts("user@example.com")
+
+        mock_redis.delete.assert_awaited_once_with("login_attempts:user@example.com")
+
+
+# ---------------------------------------------------------------------------
+# Tests: get_current_user — token blacklist enforcement
+# ---------------------------------------------------------------------------
+
+class TestGetCurrentUserBlacklist:
+    """get_current_user must reject blacklisted tokens and user-revoked tokens."""
+
+    @pytest.mark.asyncio
+    async def test_blacklisted_jti_raises_401(self):
+        """A token whose JTI is in the blacklist should be rejected with 401."""
+        from fastapi import HTTPException
+        from app.auth import get_current_user
+        from unittest.mock import AsyncMock, patch
+
+        # Build a valid token
+        token = create_access_token(data={"sub": "user@example.com"})
+
+        mock_session = AsyncMock()
+        mock_user = MagicMock()
+        mock_user.is_active = True
+
+        with (
+            patch("app.auth.is_blacklisted", new_callable=AsyncMock, return_value=True),
+            patch("app.auth.is_user_tokens_revoked", new_callable=AsyncMock, return_value=False),
+        ):
+            with pytest.raises(HTTPException) as exc_info:
+                await get_current_user(token=token, session=mock_session)
+
+        assert exc_info.value.status_code == 401
+        assert "revoked" in exc_info.value.detail.lower()
+
+    @pytest.mark.asyncio
+    async def test_user_revoked_tokens_raises_401(self):
+        """A token issued before the user's revoked-at timestamp should be rejected."""
+        from fastapi import HTTPException
+        from app.auth import get_current_user
+
+        token = create_access_token(data={"sub": "user@example.com"})
+        mock_session = AsyncMock()
+
+        with (
+            patch("app.auth.is_blacklisted", new_callable=AsyncMock, return_value=False),
+            patch("app.auth.is_user_tokens_revoked", new_callable=AsyncMock, return_value=True),
+        ):
+            with pytest.raises(HTTPException) as exc_info:
+                await get_current_user(token=token, session=mock_session)
+
+        assert exc_info.value.status_code == 401
+
+    @pytest.mark.asyncio
+    async def test_refresh_token_used_as_access_raises_401(self):
+        """A refresh token must NOT be accepted as an access token."""
+        from fastapi import HTTPException
+        from app.auth import get_current_user, create_refresh_token
+
+        # create_refresh_token sets type='refresh'
+        token = create_refresh_token(user_id="user@example.com")
+        mock_session = AsyncMock()
+
+        with pytest.raises(HTTPException) as exc_info:
+            await get_current_user(token=token, session=mock_session)
+
+        assert exc_info.value.status_code == 401

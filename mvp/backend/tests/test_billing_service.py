@@ -406,3 +406,226 @@ class TestBillingPlanUpgrade:
         assert "user_quotas" in compiled_str
         assert "audio_minutes_used" in compiled_str
         session.commit.assert_awaited()
+
+# ---------------------------------------------------------------------------
+# Stripe: create_portal_session
+# ---------------------------------------------------------------------------
+
+class TestStripePortalSession:
+    """Tests for StripeService.create_portal_session."""
+
+    @pytest.mark.asyncio
+    async def test_portal_session_returns_url(self):
+        """create_portal_session should return a portal_url when customer exists."""
+        from app.modules.billing.stripe_service import StripeService
+        from app.modules.billing.service import BillingService
+
+        user_id = uuid4()
+        plan = _make_plan("pro")
+        quota = _make_quota(user_id, plan.id)
+        quota.stripe_customer_id = "cus_existing123"
+
+        mock_portal = MagicMock()
+        mock_portal.url = "https://billing.stripe.com/portal/session123"
+
+        mock_stripe = MagicMock()
+        mock_stripe.billing_portal.Session.create.return_value = mock_portal
+
+        session = AsyncMock()
+
+        with (
+            patch("app.modules.billing.stripe_service._get_stripe", return_value=mock_stripe),
+            patch("app.modules.billing.stripe_service.settings") as mock_settings,
+            patch.object(BillingService, "get_user_quota", new_callable=AsyncMock, return_value=(quota, plan)),
+        ):
+            mock_settings.STRIPE_SECRET_KEY = "sk_test_123"
+            mock_settings.CORS_ORIGINS = "http://localhost:3000"
+
+            result = await StripeService.create_portal_session(user_id, session)
+
+        assert "portal_url" in result
+        assert result["portal_url"] == "https://billing.stripe.com/portal/session123"
+
+    @pytest.mark.asyncio
+    async def test_portal_session_raises_when_no_customer(self):
+        """create_portal_session raises ValueError when no Stripe customer exists."""
+        from app.modules.billing.stripe_service import StripeService
+        from app.modules.billing.service import BillingService
+
+        user_id = uuid4()
+        plan = _make_plan("free")
+        quota = _make_quota(user_id, plan.id)
+        quota.stripe_customer_id = None
+
+        mock_stripe = MagicMock()
+        session = AsyncMock()
+
+        with (
+            patch("app.modules.billing.stripe_service._get_stripe", return_value=mock_stripe),
+            patch("app.modules.billing.stripe_service.settings") as mock_settings,
+            patch.object(BillingService, "get_user_quota", new_callable=AsyncMock, return_value=(quota, plan)),
+        ):
+            mock_settings.STRIPE_SECRET_KEY = "sk_test_123"
+
+            with pytest.raises(ValueError, match="No Stripe customer"):
+                await StripeService.create_portal_session(user_id, session)
+
+    @pytest.mark.asyncio
+    async def test_portal_session_raises_when_stripe_not_configured(self):
+        """create_portal_session raises ValueError when STRIPE_SECRET_KEY is empty."""
+        from app.modules.billing.stripe_service import StripeService
+
+        user_id = uuid4()
+        mock_stripe = MagicMock()
+        session = AsyncMock()
+
+        with (
+            patch("app.modules.billing.stripe_service._get_stripe", return_value=mock_stripe),
+            patch("app.modules.billing.stripe_service.settings") as mock_settings,
+        ):
+            mock_settings.STRIPE_SECRET_KEY = ""
+
+            with pytest.raises(ValueError, match="not configured"):
+                await StripeService.create_portal_session(user_id, session)
+
+
+# ---------------------------------------------------------------------------
+# Stripe: _handle_checkout_completed
+# ---------------------------------------------------------------------------
+
+class TestHandleCheckoutCompleted:
+    """Tests for StripeService._handle_checkout_completed."""
+
+    @pytest.mark.asyncio
+    async def test_checkout_completed_upgrades_plan(self):
+        """_handle_checkout_completed should set the user quota to the purchased plan."""
+        from app.modules.billing.stripe_service import StripeService
+        from app.modules.billing.service import BillingService
+
+        user_id = uuid4()
+        pro_plan = _make_plan("pro")
+        quota = _make_quota(user_id, _make_plan("free").id)
+        subscription_id = "sub_test456"
+
+        data = {
+            "metadata": {"user_id": str(user_id), "plan_name": "pro"},
+            "subscription": subscription_id,
+        }
+
+        session = AsyncMock()
+        session.add = MagicMock()
+        session.commit = AsyncMock()
+
+        mock_result = MagicMock()
+        mock_result.scalar_one_or_none.return_value = pro_plan
+        session.execute = AsyncMock(return_value=mock_result)
+
+        with patch.object(BillingService, "get_user_quota", new_callable=AsyncMock, return_value=(quota, pro_plan)):
+            await StripeService._handle_checkout_completed(data, session)
+
+        assert quota.plan_id == pro_plan.id
+        assert quota.stripe_subscription_id == subscription_id
+        session.commit.assert_awaited()
+
+    @pytest.mark.asyncio
+    async def test_checkout_completed_missing_user_id_is_noop(self):
+        """_handle_checkout_completed ignores events without user_id in metadata."""
+        from app.modules.billing.stripe_service import StripeService
+
+        data = {"metadata": {}, "subscription": "sub_123"}
+        session = AsyncMock()
+        session.execute = AsyncMock()
+
+        await StripeService._handle_checkout_completed(data, session)
+
+        session.execute.assert_not_awaited()
+
+    @pytest.mark.asyncio
+    async def test_checkout_completed_plan_not_found_is_noop(self):
+        """_handle_checkout_completed is a no-op when the plan does not exist in the DB."""
+        from app.modules.billing.stripe_service import StripeService
+
+        user_id = uuid4()
+        data = {
+            "metadata": {"user_id": str(user_id), "plan_name": "nonexistent"},
+            "subscription": "sub_abc",
+        }
+
+        session = AsyncMock()
+        mock_result = MagicMock()
+        mock_result.scalar_one_or_none.return_value = None
+        session.execute = AsyncMock(return_value=mock_result)
+
+        await StripeService._handle_checkout_completed(data, session)
+        session.commit.assert_not_awaited()
+
+
+# ---------------------------------------------------------------------------
+# Stripe: _handle_subscription_deleted
+# ---------------------------------------------------------------------------
+
+class TestHandleSubscriptionDeleted:
+    """Tests for StripeService._handle_subscription_deleted (downgrade to free)."""
+
+    @pytest.mark.asyncio
+    async def test_subscription_deleted_downgrades_to_free(self):
+        """When a subscription is deleted, the user is downgraded to the free plan."""
+        from app.modules.billing.stripe_service import StripeService
+
+        user_id = uuid4()
+        customer_id = "cus_toDowngrade"
+
+        free_plan = _make_plan("free")
+        pro_plan = _make_plan("pro")
+        quota = _make_quota(user_id, pro_plan.id)
+        quota.stripe_customer_id = customer_id
+        quota.stripe_subscription_id = "sub_old"
+
+        data = {"customer": customer_id}
+
+        session = AsyncMock()
+        session.add = MagicMock()
+        session.commit = AsyncMock()
+
+        quota_result = MagicMock()
+        quota_result.scalar_one_or_none.return_value = quota
+
+        free_plan_result = MagicMock()
+        free_plan_result.scalar_one_or_none.return_value = free_plan
+
+        session.execute = AsyncMock(side_effect=[quota_result, free_plan_result])
+
+        await StripeService._handle_subscription_deleted(data, session)
+
+        assert quota.plan_id == free_plan.id
+        assert quota.stripe_subscription_id is None
+        session.commit.assert_awaited()
+
+    @pytest.mark.asyncio
+    async def test_subscription_deleted_missing_customer_is_noop(self):
+        """_handle_subscription_deleted is a no-op when customer field is absent."""
+        from app.modules.billing.stripe_service import StripeService
+
+        data = {}
+        session = AsyncMock()
+        session.execute = AsyncMock()
+
+        await StripeService._handle_subscription_deleted(data, session)
+
+        session.execute.assert_not_awaited()
+
+    @pytest.mark.asyncio
+    async def test_subscription_deleted_customer_not_found_is_noop(self):
+        """_handle_subscription_deleted is safe when customer is not in the DB."""
+        from app.modules.billing.stripe_service import StripeService
+
+        data = {"customer": "cus_unknown999"}
+
+        quota_result = MagicMock()
+        quota_result.scalar_one_or_none.return_value = None
+
+        session = AsyncMock()
+        session.execute = AsyncMock(return_value=quota_result)
+
+        await StripeService._handle_subscription_deleted(data, session)
+        session.commit.assert_not_awaited()

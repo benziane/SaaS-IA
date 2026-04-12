@@ -14,6 +14,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useIndexUrl, useScrape, useScrapeWithVision, useBatchScrape, useDeepCrawl, useExtractCss, useSeedUrls, useScrapeHttp, useAdaptiveCrawl, useScrapePdf, useExtractCosine, useHubCrawl } from '@/features/crawler/hooks/useCrawler';
 import { extractXpath, extractRegex } from '@/features/crawler/api';
 import type { ImageData, ExtractResponse } from '@/features/crawler/types';
+import { AdvancedTab } from './AdvancedTab';
 
 function ImageCard({ image }: { image: ImageData }) {
   return (
@@ -148,6 +149,7 @@ export default function CrawlerPage() {
             <TabsTrigger value="pdf-scrape">PDF Scrape</TabsTrigger>
             <TabsTrigger value="cosine">Cosine Extract</TabsTrigger>
             <TabsTrigger value="hub">Hub Crawl</TabsTrigger>
+            <TabsTrigger value="advanced">Advanced</TabsTrigger>
           </TabsList>
 
           <TabsContent value="scrape">
@@ -569,6 +571,10 @@ export default function CrawlerPage() {
                 )}
               </Button>
             </div>
+          </TabsContent>
+
+          <TabsContent value="advanced">
+            <AdvancedTab />
           </TabsContent>
         </Tabs>
 
