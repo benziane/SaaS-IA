@@ -12,7 +12,7 @@ import {
   Download, ChevronDown, Link as LinkIcon, Mic, RefreshCw, Square,
   Subtitles, Eye,
 } from 'lucide-react';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Controller, useForm } from 'react-hook-form';
 
@@ -314,6 +314,16 @@ function TranscriptionDetail({ transcription, onClose }: TranscriptionDetailProp
     setTimeout(() => setCopiedImproved(false), 2000);
   };
 
+  const [elapsed, setElapsed] = useState(0);
+  useEffect(() => {
+    if (transcription.status !== TranscriptionStatus.PROCESSING || !transcription.created_at) return;
+    const interval = setInterval(() => {
+      setElapsed(Math.floor((Date.now() - new Date(transcription.created_at).getTime()) / 1000));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [transcription.status, transcription.created_at]);
+  const formatElapsed = (s: number) => s < 60 ? `${s}s` : `${Math.floor(s / 60)}m ${s % 60}s`;
+
   const showImprovedSection = isStreaming || streamDone || !!streamError;
   const showOriginalText = !streamDone;
 
@@ -380,9 +390,14 @@ function TranscriptionDetail({ transcription, onClose }: TranscriptionDetailProp
         {/* Processing indicator */}
         {transcription.status === TranscriptionStatus.PROCESSING && (
           <div className="mb-4">
-            <p className="text-sm text-[var(--text-mid)] mb-2">
-              Transcription in progress...
-            </p>
+            <div className="flex items-center gap-2 mb-2">
+              <p className="text-sm text-[var(--text-mid)]">
+                Processing · {formatElapsed(elapsed)}
+              </p>
+              {elapsed > 300 && (
+                <p className="text-xs text-[var(--text-low)]">Large files may take several minutes.</p>
+              )}
+            </div>
             <Progress />
           </div>
         )}
@@ -641,7 +656,7 @@ function FileUploadForm({ onUploadComplete }: FileUploadFormProps) {
                   {selectedFile.name}
                 </p>
                 <p className="text-xs text-[var(--text-low)]">
-                  {formatFileSize(selectedFile.size)} -- {selectedFile.type || 'Unknown type'}
+                  {formatFileSize(selectedFile.size)} · {selectedFile.type || 'Unknown type'}
                 </p>
               </div>
             </div>
@@ -857,7 +872,7 @@ export default function TranscriptionPage() {
         </div>
 
         {/* Create Form with Tabs */}
-        <div className="surface-card p-6">
+        <div className="surface-card p-6 border-l-2 border-l-[var(--accent)]">
           <h3 className="text-sm font-semibold text-[var(--text-high)] mb-4 flex items-center gap-2">
             <Sparkles className="h-4 w-4 text-[var(--accent)]" />
             New Transcription
@@ -950,21 +965,37 @@ export default function TranscriptionPage() {
           </h3>
 
             {isLoading ? (
-              <div className="py-8 text-center">
-                <Progress className="mb-4" />
-                <p className="text-sm text-[var(--text-mid)]">
-                  Loading transcriptions...
-                </p>
+              <div className="space-y-3">
+                {[...Array(5)].map((_, i) => (
+                  <div key={i} className="flex gap-4 items-center h-12 animate-pulse">
+                    <div className="bg-[var(--bg-elevated)] rounded h-4 w-40" />
+                    <div className="bg-[var(--bg-elevated)] rounded h-4 w-16" />
+                    <div className="bg-[var(--bg-elevated)] rounded h-4 w-20" />
+                    <div className="bg-[var(--bg-elevated)] rounded h-4 w-28" />
+                    <div className="bg-[var(--bg-elevated)] rounded h-4 w-16" />
+                  </div>
+                ))}
               </div>
             ) : !data || data.items.length === 0 ? (
               <div className="py-12 text-center">
                 <Subtitles className="h-12 w-12 text-[var(--text-low)] mx-auto mb-4" />
                 <h4 className="text-lg text-[var(--text-mid)] mb-2">
-                  No transcriptions yet
+                  Ready to transcribe something?
                 </h4>
-                <p className="text-sm text-[var(--text-mid)]">
+                <p className="text-sm text-[var(--text-mid)] mb-4">
                   Use the form above to transcribe a YouTube video, upload an audio file, or record audio directly.
                 </p>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    const el = document.querySelector('input[type="url"], input[placeholder*="URL"], input[placeholder*="youtube"]') as HTMLInputElement;
+                    el?.scrollIntoView({ behavior: 'smooth' });
+                    setTimeout(() => el?.focus(), 300);
+                  }}
+                >
+                  Get started
+                </Button>
               </div>
             ) : (
               <div className="rounded-md border border-[var(--border)] overflow-hidden">
