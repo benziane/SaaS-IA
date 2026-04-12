@@ -41,12 +41,12 @@ const UserDropdown = () => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className='relative ms-2.5 cursor-pointer rounded-full outline-none'>
+        <button className='relative ms-2.5 cursor-pointer rounded-full focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-none'>
           <Avatar className='h-10 w-10'>
             <AvatarImage src='/images/avatars/1.png' alt={displayName} />
             <AvatarFallback>{displayName.charAt(0).toUpperCase()}</AvatarFallback>
           </Avatar>
-          <span className='absolute bottom-0 right-0 h-2 w-2 rounded-full bg-green-500 ring-2 ring-[var(--bg-surface)]' />
+          <span className='absolute bottom-0 right-0 h-2 w-2 rounded-full bg-[var(--success,#22c55e)] ring-2 ring-[var(--bg-surface)]' />
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align='end' className='min-w-[240px]'>
