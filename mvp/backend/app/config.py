@@ -96,6 +96,12 @@ class Settings(BaseSettings):
         return self.SQL_ECHO
 
     @property
+    def dev_mode(self) -> bool:
+        """True when ENVIRONMENT=development — enables dev shortcuts (email bypass, seeded users, etc.).
+        Always False in production regardless of any other flag."""
+        return self.ENVIRONMENT == "development"
+
+    @property
     def cors_origins_list(self) -> List[str]:
         """Parse CORS origins string to list"""
         return [origin.strip() for origin in self.CORS_ORIGINS.split(",")]
