@@ -169,12 +169,19 @@ export default function ModulesPage() {
       {!loading && !error && modules.length === 0 && (
         <div className="surface-card p-5 mt-5">
           <div className="py-12 text-center">
-            <h2 className="text-lg font-semibold text-[var(--text-mid)] mb-1">
+            <Package2 className="h-8 w-8 text-[var(--text-low)] mx-auto mb-3" />
+            <h2 className="text-lg font-semibold text-[var(--text-high)] mb-1">
               No modules registered
             </h2>
             <p className="text-sm text-[var(--text-mid)]">
               Backend modules will appear here once they are registered with the platform.
             </p>
+            <a
+              href="/monitoring"
+              className="text-xs text-[var(--accent)] hover:underline mt-1 inline-block"
+            >
+              Check backend status →
+            </a>
           </div>
         </div>
       )}

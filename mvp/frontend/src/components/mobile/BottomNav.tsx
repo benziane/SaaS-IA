@@ -46,13 +46,16 @@ export default function BottomNav() {
             <button
               key={item.path}
               onClick={() => router.push(item.path)}
-              className={`flex flex-col items-center justify-center min-w-0 flex-1 py-1.5 transition-colors ${
+              className={`flex flex-col items-center justify-center min-w-0 flex-1 py-2 transition-colors ${
                 isActive
-                  ? 'text-[var(--accent)]'
+                  ? 'text-[var(--accent)] bg-[var(--accent)]/10 rounded-xl'
                   : 'text-[var(--text-low)] hover:text-[var(--text-mid)]'
               }`}
             >
-              <Icon className="h-5 w-5" />
+              <Icon
+                className="h-5 w-5"
+                style={{ transform: isActive ? 'scale(1.1)' : 'scale(1)', transition: 'transform 0.15s' }}
+              />
               <span
                 className={`mt-0.5 ${
                   isActive ? 'text-[0.7rem] font-medium' : 'text-[0.65rem]'

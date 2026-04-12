@@ -262,7 +262,7 @@ function QuickActions() {
                       style={{ fontSize: 16, color: 'var(--text-mid)' }}
                     />
                   </div>
-                  <span className="text-[0.68rem] text-[var(--text-low)] font-medium group-hover:text-[var(--text-mid)] transition-colors leading-tight text-center">
+                  <span className="text-xs text-[var(--text-mid)] font-medium group-hover:text-[var(--text-mid)] transition-colors leading-tight text-center">
                     {action.label}
                   </span>
                 </Link>
