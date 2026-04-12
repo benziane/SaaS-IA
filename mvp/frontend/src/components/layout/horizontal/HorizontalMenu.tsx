@@ -57,7 +57,7 @@ const HorizontalMenu = () => {
       verticalNavContent={VerticalNavContent}
       verticalNavProps={{
         customStyles: verticalNavigationCustomStyles(verticalNavOptions, theme),
-        backgroundColor: 'var(--mui-palette-background-paper)'
+        backgroundColor: 'var(--bg-surface)'
       }}
     >
       <Menu

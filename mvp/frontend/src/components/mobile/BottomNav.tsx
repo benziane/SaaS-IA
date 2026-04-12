@@ -32,7 +32,7 @@ export default function BottomNav() {
 
   return (
     <div
-      className="fixed bottom-0 left-0 right-0 z-[1300] border-t border-[var(--border)] bg-[var(--bg-surface)] shadow-[0_-2px_10px_rgba(0,0,0,0.3)]"
+      className="fixed bottom-0 left-0 right-0 z-[1300] border-t border-[var(--border)] bg-[var(--bg-surface)] shadow-[0_-2px_10px_color-mix(in_srgb,var(--bg-app)_70%,transparent)]"
       style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
     >
       <nav className="flex h-16 items-center justify-around">

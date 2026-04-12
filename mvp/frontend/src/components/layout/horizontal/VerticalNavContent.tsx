@@ -69,9 +69,9 @@ const VerticalNavContent = ({ children }: ChildrenType) => {
         className='absolute top-[72px] z-[2] opacity-0 pointer-events-none w-full transition-opacity duration-150 ease-in-out [&.scrolled]:opacity-100'
         style={{
           height: theme.mixins.toolbar.minHeight,
-          background: `linear-gradient(var(--mui-palette-background-paper) ${
+          background: `linear-gradient(var(--bg-surface) ${
             theme.direction === 'rtl' ? '95%' : '5%'
-          }, rgb(var(--mui-palette-background-paperChannel) / 0.85) 30%, rgb(var(--mui-palette-background-paperChannel) / 0.5) 65%, rgb(var(--mui-palette-background-paperChannel) / 0.3) 75%, transparent)`,
+          }, color-mix(in srgb, var(--bg-app) 85%, transparent) 30%, color-mix(in srgb, var(--bg-app) 50%, transparent) 65%, color-mix(in srgb, var(--bg-app) 30%, transparent) 75%, transparent)`,
         }}
       />
       <ScrollWrapper

@@ -52,7 +52,7 @@ const Logo = ({ color }: { color?: CSSProperties['color'] }) => {
         ref={logoTextRef}
         className='text-[1.75rem] leading-none font-bold tracking-[0.15px]'
         style={{
-          color: color ?? 'var(--mui-palette-text-primary)',
+          color: color ?? 'var(--text-high)',
           transition: `margin-inline-start ${transitionDuration}ms ease-in-out, opacity ${transitionDuration}ms ease-in-out`,
           opacity: isHidden ? 0 : 1,
           marginInlineStart: isHidden ? 0 : 8,
