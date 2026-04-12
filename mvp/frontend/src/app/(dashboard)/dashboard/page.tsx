@@ -80,8 +80,7 @@ function StatRow({
     {
       label: 'Transcriptions',
       value: stats?.total_transcriptions ?? 0,
-      trend: 12,
-      trendLabel: 'vs last month',
+      trendLabel: 'total',
     },
     {
       label: 'Success rate',
@@ -291,14 +290,16 @@ function UsageChart() {
     ].filter((d) => d.value > 0);
   }, [stats]);
 
-  const weeklyData = useMemo(() => {
-    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    return days.map((day) => ({
-      day,
-      transcriptions: Math.floor(Math.random() * 8) + 1,
-      aiCalls: Math.floor(Math.random() * 15) + 2,
-    }));
-  }, []);
+  // Static placeholder — real per-day data not yet available from the API
+  const weeklyData = [
+    { day: 'Mon', transcriptions: 0, aiCalls: 0 },
+    { day: 'Tue', transcriptions: 0, aiCalls: 0 },
+    { day: 'Wed', transcriptions: 0, aiCalls: 0 },
+    { day: 'Thu', transcriptions: 0, aiCalls: 0 },
+    { day: 'Fri', transcriptions: 0, aiCalls: 0 },
+    { day: 'Sat', transcriptions: 0, aiCalls: 0 },
+    { day: 'Sun', transcriptions: 0, aiCalls: 0 },
+  ];
 
   const tooltipStyle = {
     backgroundColor: 'var(--bg-surface)',
