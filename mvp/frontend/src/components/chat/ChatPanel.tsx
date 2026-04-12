@@ -20,6 +20,7 @@ export interface ChatPanelProps {
   streamingProvider?: string;
   streamingTokenCount?: number;
   isLoading: boolean;
+  onSend?: (content: string) => void;
 }
 
 /* ========================================================================
@@ -167,6 +168,7 @@ export function ChatPanel({
   streamingProvider,
   streamingTokenCount,
   isLoading,
+  onSend,
 }: ChatPanelProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -200,6 +202,20 @@ export function ChatPanel({
           <p className="text-sm text-[var(--text-mid)]">
             Send a message to start the conversation.
           </p>
+          {onSend && (
+            <div className="flex flex-wrap gap-2 justify-center mt-4">
+              {['Summarize a document', 'Explain this code', 'Answer questions from a transcript'].map((prompt) => (
+                <button
+                  key={prompt}
+                  type="button"
+                  onClick={() => onSend(prompt)}
+                  className="px-3 py-1.5 text-xs rounded-full border border-[var(--border)] text-[var(--text-mid)] hover:bg-[var(--bg-elevated)] hover:text-[var(--text-high)] transition-colors cursor-pointer"
+                >
+                  {prompt}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       )}
 

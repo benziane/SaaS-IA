@@ -210,11 +210,21 @@ export default function ChatPage() {
           'surface-card flex flex-col overflow-hidden shrink-0',
           'sm:relative sm:flex',
           mobileSidebarOpen
-            ? 'fixed inset-y-0 left-0 z-30 w-[300px] flex'
+            ? 'fixed inset-y-0 left-0 z-30 w-[85vw] max-w-[300px] flex'
             : 'hidden',
         ].join(' ')}
         style={{ width: SIDEBAR_WIDTH }}
       >
+        {mobileSidebarOpen && (
+          <button
+            type="button"
+            onClick={() => setMobileSidebarOpen(false)}
+            className="absolute top-3 right-3 z-10 p-1.5 rounded-lg bg-[var(--bg-elevated)] border border-[var(--border)] text-[var(--text-mid)] hover:text-[var(--text-high)] sm:hidden"
+            aria-label="Close sidebar"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        )}
         <ConversationList
           conversations={conversations}
           activeId={activeConversationId}
@@ -287,6 +297,7 @@ export default function ChatPage() {
               streamingProvider={streamProvider}
               streamingTokenCount={streamTokenCount}
               isLoading={isLoadingConversation}
+              onSend={handleSendMessage}
             />
 
             {/* Input Area */}
@@ -312,8 +323,16 @@ export default function ChatPage() {
             </div>
             <button
               type="button"
+              onClick={handleCreateConversation}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold"
+              style={{ background: 'var(--accent)', color: '#000' }}
+            >
+              New conversation
+            </button>
+            <button
+              type="button"
               onClick={() => setMobileSidebarOpen(true)}
-              className="sm:hidden flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--accent)] text-black text-sm font-semibold"
+              className="sm:hidden flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--bg-elevated)] border border-[var(--border)] text-[var(--text-mid)] text-sm font-semibold"
             >
               <PanelLeftOpen className="w-4 h-4" />
               Browse conversations
