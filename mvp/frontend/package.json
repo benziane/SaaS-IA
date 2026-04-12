@@ -32,7 +32,7 @@
     "@iconify/tailwind": "^1.2.0",
     "@mui/icons-material": "^6.5.0",
     "@mui/lab": "^6.0.1-beta.36",
-    "@mui/material": "^6.5.0",
+    "@mui/material": "^9.0.0",
     "@mui/material-nextjs": "^6.5.0",
     "@mui/x-charts": "^8.28.2",
     "@radix-ui/react-accordion": "^1.2.12",
