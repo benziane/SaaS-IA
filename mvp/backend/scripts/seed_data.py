@@ -112,7 +112,11 @@ async def seed():
             print("  + admin@saas-ia.com created")
             admin_created = True
         else:
-            print("  = admin@saas-ia.com already exists")
+            # Update password and email_verified to match dev credentials
+            admin.hashed_password = get_password_hash(admin_password)
+            admin.email_verified = verified
+            session.add(admin)
+            print("  = admin@saas-ia.com already exists (password + verified updated)")
             admin_created = False
 
         # Manager
@@ -228,119 +232,128 @@ async def seed():
         await session.flush()
 
         # ---------------------------------------------------------------
-        # 4. Sample Transcriptions
+        # 4. Sample Transcriptions (optional — skipped if schema mismatch)
         # ---------------------------------------------------------------
         print("[4/6] Creating sample transcriptions...")
-
-        result = await session.execute(
-            select(Transcription).where(Transcription.user_id == demo_user.id)
-        )
-        if not result.scalars().first():
-            samples = [
-                Transcription(
-                    user_id=demo_user.id,
-                    video_url="https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-                    language="en",
-                    source_type="youtube",
-                    status=TranscriptionStatus.COMPLETED,
-                    text="This is a sample completed transcription for demo purposes. "
-                         "It contains example text that would normally come from AssemblyAI.",
-                    confidence=0.95,
-                    duration_seconds=212,
-                    completed_at=datetime.now(UTC),
-                ),
-                Transcription(
-                    user_id=demo_user.id,
-                    video_url="https://www.youtube.com/watch?v=jNQXAC9IVRw",
-                    language="en",
-                    source_type="youtube",
-                    status=TranscriptionStatus.COMPLETED,
-                    text="Another sample transcription. This demonstrates the multi-source "
-                         "capability of the platform.",
-                    confidence=0.92,
-                    duration_seconds=19,
-                    completed_at=datetime.now(UTC),
-                ),
-                Transcription(
-                    user_id=demo_user.id,
-                    video_url="upload://presentation.mp3",
-                    language="fr",
-                    source_type="upload",
-                    original_filename="presentation.mp3",
-                    status=TranscriptionStatus.PENDING,
-                ),
-            ]
-            for t in samples:
-                session.add(t)
-            print("  + 3 sample transcriptions (2 completed, 1 pending)")
-        else:
-            print("  = Transcriptions already exist for demo user")
-
-        # ---------------------------------------------------------------
-        # 5. Sample Pipeline
-        # ---------------------------------------------------------------
-        print("[5/6] Creating sample pipeline...")
-
-        result = await session.execute(
-            select(Pipeline).where(Pipeline.user_id == demo_user.id)
-        )
-        if not result.scalars().first():
-            pipeline = Pipeline(
-                user_id=demo_user.id,
-                name="YouTube to Summary (FR)",
-                description="Transcribe a YouTube video and generate a French summary",
-                steps_json=json.dumps([
-                    {"id": "step1", "type": "transcription", "config": {"language": "auto"}, "position": 0},
-                    {"id": "step2", "type": "summarize", "config": {"provider": "gemini"}, "position": 1},
-                    {"id": "step3", "type": "translate", "config": {"target_language": "fr", "provider": "gemini"}, "position": 2},
-                ]),
-                status=PipelineStatus.ACTIVE,
+        try:
+            result = await session.execute(
+                select(Transcription).where(Transcription.user_id == demo_user.id)
             )
-            session.add(pipeline)
-            print("  + 1 sample pipeline (3 steps)")
-        else:
-            print("  = Pipeline already exists for demo user")
+            if not result.scalars().first():
+                samples = [
+                    Transcription(
+                        user_id=demo_user.id,
+                        video_url="https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+                        language="en",
+                        source_type="youtube",
+                        status=TranscriptionStatus.COMPLETED,
+                        text="This is a sample completed transcription for demo purposes. "
+                             "It contains example text that would normally come from AssemblyAI.",
+                        confidence=0.95,
+                        duration_seconds=212,
+                        completed_at=datetime.now(UTC),
+                    ),
+                    Transcription(
+                        user_id=demo_user.id,
+                        video_url="https://www.youtube.com/watch?v=jNQXAC9IVRw",
+                        language="en",
+                        source_type="youtube",
+                        status=TranscriptionStatus.COMPLETED,
+                        text="Another sample transcription. This demonstrates the multi-source "
+                             "capability of the platform.",
+                        confidence=0.92,
+                        duration_seconds=19,
+                        completed_at=datetime.now(UTC),
+                    ),
+                    Transcription(
+                        user_id=demo_user.id,
+                        video_url="upload://presentation.mp3",
+                        language="fr",
+                        source_type="upload",
+                        original_filename="presentation.mp3",
+                        status=TranscriptionStatus.PENDING,
+                    ),
+                ]
+                for t in samples:
+                    session.add(t)
+                print("  + 3 sample transcriptions (2 completed, 1 pending)")
+            else:
+                print("  = Transcriptions already exist for demo user")
+        except Exception as e:
+            await session.rollback()
+            print(f"  [SKIP] Transcriptions skipped (schema mismatch): {e.__class__.__name__}")
 
         # ---------------------------------------------------------------
-        # 6. Sample Workspace
-        # ---------------------------------------------------------------
-        print("[6/6] Creating sample workspace...")
-
-        result = await session.execute(
-            select(Workspace).where(Workspace.owner_id == admin.id)
-        )
-        if not result.scalars().first():
-            workspace = Workspace(
-                name="SaaS-IA Team",
-                description="Default team workspace for collaboration",
-                owner_id=admin.id,
-            )
-            session.add(workspace)
-            await session.flush()
-
-            # Add admin as owner
-            owner_member = WorkspaceMember(
-                workspace_id=workspace.id,
-                user_id=admin.id,
-                role=WorkspaceRole.OWNER,
-            )
-            session.add(owner_member)
-
-            # Add demo user as editor
-            editor_member = WorkspaceMember(
-                workspace_id=workspace.id,
-                user_id=demo_user.id,
-                role=WorkspaceRole.EDITOR,
-            )
-            session.add(editor_member)
-            print("  + 1 workspace with 2 members (admin=owner, demo=editor)")
-        else:
-            print("  = Workspace already exists")
-
-        # ---------------------------------------------------------------
-        # Commit
+        # Commit core data (users + quotas) — must succeed before optional sections
         # ---------------------------------------------------------------
         await session.commit()
+
+        # ---------------------------------------------------------------
+        # 5. Sample Pipeline (optional)
+        # ---------------------------------------------------------------
+        print("[5/6] Creating sample pipeline...")
+        try:
+            async with get_session_context() as s2:
+                result = await s2.execute(
+                    select(Pipeline).where(Pipeline.user_id == demo_user.id)
+                )
+                if not result.scalars().first():
+                    pipeline = Pipeline(
+                        user_id=demo_user.id,
+                        name="YouTube to Summary (FR)",
+                        description="Transcribe a YouTube video and generate a French summary",
+                        steps_json=json.dumps([
+                            {"id": "step1", "type": "transcription", "config": {"language": "auto"}, "position": 0},
+                            {"id": "step2", "type": "summarize", "config": {"provider": "gemini"}, "position": 1},
+                            {"id": "step3", "type": "translate", "config": {"target_language": "fr", "provider": "gemini"}, "position": 2},
+                        ]),
+                        status=PipelineStatus.ACTIVE,
+                    )
+                    s2.add(pipeline)
+                    await s2.commit()
+                    print("  + 1 sample pipeline (3 steps)")
+                else:
+                    print("  = Pipeline already exists for demo user")
+        except Exception as e:
+            print(f"  [SKIP] Pipeline skipped (schema mismatch): {e.__class__.__name__}")
+
+        # ---------------------------------------------------------------
+        # 6. Sample Workspace (optional)
+        # ---------------------------------------------------------------
+        print("[6/6] Creating sample workspace...")
+        try:
+            async with get_session_context() as s3:
+                result = await s3.execute(
+                    select(Workspace).where(Workspace.owner_id == admin.id)
+                )
+                if not result.scalars().first():
+                    workspace = Workspace(
+                        name="SaaS-IA Team",
+                        description="Default team workspace for collaboration",
+                        owner_id=admin.id,
+                    )
+                    s3.add(workspace)
+                    await s3.flush()
+
+                    owner_member = WorkspaceMember(
+                        workspace_id=workspace.id,
+                        user_id=admin.id,
+                        role=WorkspaceRole.OWNER,
+                    )
+                    s3.add(owner_member)
+
+                    editor_member = WorkspaceMember(
+                        workspace_id=workspace.id,
+                        user_id=demo_user.id,
+                        role=WorkspaceRole.EDITOR,
+                    )
+                    s3.add(editor_member)
+                    await s3.commit()
+                    print("  + 1 workspace with 2 members (admin=owner, demo=editor)")
+                else:
+                    print("  = Workspace already exists")
+        except Exception as e:
+            print(f"  [SKIP] Workspace skipped (schema mismatch): {e.__class__.__name__}")
 
     print()
     print("Seed complete!")

@@ -29,7 +29,7 @@ class Plan(SQLModel, table=True):
     price_cents: int = Field(default=0)
     stripe_price_id: Optional[str] = Field(default=None, max_length=100)
     is_active: bool = Field(default=True)
-    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC).replace(tzinfo=None))
 
 
 class UserQuota(SQLModel, table=True):
@@ -46,5 +46,5 @@ class UserQuota(SQLModel, table=True):
     stripe_subscription_id: Optional[str] = Field(default=None, max_length=100)
     period_start: date = Field(default_factory=date.today)
     period_end: date
-    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
-    updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC).replace(tzinfo=None))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC).replace(tzinfo=None))
