@@ -9,7 +9,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { MessageSquare, X, Sparkles } from 'lucide-react';
+import { MessageSquare, X, Sparkles, PanelLeftOpen } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -70,6 +70,9 @@ export default function ChatPage() {
 
   // Optimistic messages added while streaming (before refetch)
   const [pendingMessages, setPendingMessages] = useState<Message[]>([]);
+
+  // Mobile sidebar toggle
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   // Derived data
   const conversations = conversationsData?.items ?? [];
@@ -190,17 +193,32 @@ export default function ChatPage() {
   );
 
   return (
-    <div className="flex gap-4 p-5 animate-enter" style={{ height: 'calc(100vh - 120px)' }}>
+    <div className="flex gap-4 p-5 animate-enter relative" style={{ height: 'calc(100vh - 120px)' }}>
+
+      {/* Mobile overlay backdrop */}
+      {mobileSidebarOpen && (
+        <div
+          className="fixed inset-0 z-20 bg-black/50 sm:hidden"
+          onClick={() => setMobileSidebarOpen(false)}
+        />
+      )}
 
       {/* Left Panel: Conversation List */}
+      {/* On mobile: absolute overlay; on sm+: regular flex panel */}
       <div
-        className="surface-card flex flex-col overflow-hidden shrink-0"
-        style={{ width: SIDEBAR_WIDTH, minWidth: SIDEBAR_WIDTH }}
+        className={[
+          'surface-card flex flex-col overflow-hidden shrink-0',
+          'sm:relative sm:flex',
+          mobileSidebarOpen
+            ? 'fixed inset-y-0 left-0 z-30 w-[300px] flex'
+            : 'hidden',
+        ].join(' ')}
+        style={{ width: SIDEBAR_WIDTH }}
       >
         <ConversationList
           conversations={conversations}
           activeId={activeConversationId}
-          onSelect={setActiveConversationId}
+          onSelect={(id) => { setActiveConversationId(id); setMobileSidebarOpen(false); }}
           onDelete={handleDeleteConversation}
           onCreate={handleCreateConversation}
           isLoading={isLoadingList}
@@ -208,12 +226,21 @@ export default function ChatPage() {
       </div>
 
       {/* Right Panel: Active Chat */}
-      <div className="surface-card flex-1 flex flex-col overflow-hidden">
+      <div className="surface-card flex-1 flex flex-col overflow-hidden min-w-0">
         {activeConversationId ? (
           <>
             {/* Chat Header */}
             <div className="px-5 py-3.5 border-b border-[var(--border)] flex items-center gap-3 shrink-0">
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-[var(--bg-elevated)] border border-[var(--border)] shrink-0">
+              {/* Mobile: show conversations toggle */}
+              <button
+                type="button"
+                onClick={() => setMobileSidebarOpen(true)}
+                className="sm:hidden w-8 h-8 rounded-lg flex items-center justify-center bg-[var(--bg-elevated)] border border-[var(--border)] shrink-0"
+                aria-label="Show conversations"
+              >
+                <PanelLeftOpen className="w-4 h-4 text-[var(--accent)]" />
+              </button>
+              <div className="hidden sm:flex w-8 h-8 rounded-lg items-center justify-center bg-[var(--bg-elevated)] border border-[var(--border)] shrink-0">
                 <MessageSquare className="w-4 h-4 text-[var(--accent)]" />
               </div>
               <div className="flex-1 min-w-0">
@@ -283,6 +310,14 @@ export default function ChatPage() {
                 Select a conversation from the list or create a new one.
               </p>
             </div>
+            <button
+              type="button"
+              onClick={() => setMobileSidebarOpen(true)}
+              className="sm:hidden flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--accent)] text-black text-sm font-semibold"
+            >
+              <PanelLeftOpen className="w-4 h-4" />
+              Browse conversations
+            </button>
           </div>
         )}
       </div>

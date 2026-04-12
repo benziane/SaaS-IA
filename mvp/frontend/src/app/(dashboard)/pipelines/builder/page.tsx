@@ -22,7 +22,7 @@ import {
   type ReactFlowInstance,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { GitBranch } from 'lucide-react';
+import { GitBranch, MonitorSmartphone } from 'lucide-react';
 
 import { useCreatePipeline } from '@/features/pipelines/hooks/usePipelines';
 
@@ -1101,6 +1101,31 @@ export default function PipelineBuilderPage() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 64px)', background: 'var(--bg-app)', color: '#e5e7eb', overflow: 'hidden' }}>
+      {/* Mobile fallback — ReactFlow drag-and-drop requires a pointer device */}
+      <div className="flex sm:hidden flex-col items-center justify-center flex-1 gap-6 p-8 text-center" style={{ height: '100%' }}>
+        <div className="w-16 h-16 rounded-2xl flex items-center justify-center bg-[var(--bg-elevated)] border border-[var(--border)]">
+          <MonitorSmartphone className="w-8 h-8 text-[var(--accent)]" />
+        </div>
+        <div>
+          <p className="text-base font-semibold text-[var(--text-high)] mb-2">
+            Pipeline Builder requires a desktop
+          </p>
+          <p className="text-sm text-[var(--text-mid)] max-w-xs">
+            The visual DAG editor uses drag-and-drop interactions that are not supported on mobile screens.
+            Please open this page on a desktop or tablet browser.
+          </p>
+        </div>
+        <a
+          href="/pipelines"
+          className="px-4 py-2 rounded-lg text-sm font-semibold"
+          style={{ background: 'var(--accent)', color: '#000' }}
+        >
+          ← Back to Pipelines
+        </a>
+      </div>
+
+      {/* Desktop builder — hidden on mobile */}
+      <div className="hidden sm:contents">
       {/* Global styles for hover effects */}
       <style>{`
         .sidebar-node-item:hover {
@@ -1583,6 +1608,7 @@ export default function PipelineBuilderPage() {
           )}
         </div>
       </div>
+      </div>{/* end sm:contents desktop wrapper */}
     </div>
   );
 }
