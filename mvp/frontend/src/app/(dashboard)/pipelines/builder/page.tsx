@@ -72,7 +72,7 @@ const CATEGORY_COLORS: Record<string, { bg: string; border: string; header: stri
     accent: '#f97316',
   },
   ai: {
-    bg: '#0a0f1e',
+    bg: 'var(--bg-elevated)',
     border: '#22d3ee',
     header: 'var(--bg-elevated)',
     headerText: '#22d3ee',
@@ -354,10 +354,10 @@ function BaseNode({ data, selected, id }: NodeProps<BuilderNode>) {
                 borderBottom: '1px solid var(--border)',
               }}
             >
-              <span style={{ color: '#9ca3af', fontSize: 11 }}>{field.label}</span>
+              <span style={{ color: 'var(--text-mid)', fontSize: 11 }}>{field.label}</span>
               <span
                 style={{
-                  color: '#e5e7eb',
+                  color: 'var(--text-high)',
                   fontSize: 11,
                   maxWidth: 110,
                   overflow: 'hidden',
@@ -372,12 +372,12 @@ function BaseNode({ data, selected, id }: NodeProps<BuilderNode>) {
           );
         })}
         {data.fields.length > 3 && (
-          <div style={{ color: '#6b7280', fontSize: 10, textAlign: 'center', marginTop: 4 }}>
+          <div style={{ color: 'var(--text-mid)', fontSize: 10, textAlign: 'center', marginTop: 4 }}>
             +{data.fields.length - 3} more fields
           </div>
         )}
         {data.fields.length === 0 && (
-          <div style={{ color: '#6b7280', fontSize: 11, textAlign: 'center', padding: '4px 0' }}>
+          <div style={{ color: 'var(--text-mid)', fontSize: 11, textAlign: 'center', padding: '4px 0' }}>
             No configuration needed
           </div>
         )}
@@ -394,7 +394,7 @@ function BaseNode({ data, selected, id }: NodeProps<BuilderNode>) {
         <span
           style={{
             fontSize: 9,
-            color: '#4b5563',
+            color: 'var(--text-mid)',
             fontFamily: 'monospace',
           }}
         >
@@ -450,7 +450,7 @@ function SidebarNodeItem({ template }: { template: NodeTemplate }) {
       draggable
       onDragStart={onDragStart}
       style={{
-        background: '#1a1825',
+        background: 'var(--bg-surface)',
         border: `1px solid var(--border)`,
         borderLeft: `3px solid ${colors.accent}`,
         borderRadius: 8,
@@ -467,10 +467,10 @@ function SidebarNodeItem({ template }: { template: NodeTemplate }) {
     >
       <span style={{ fontSize: 16, flexShrink: 0 }}>{template.icon}</span>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ color: '#e5e7eb', fontSize: 12, fontWeight: 600 }}>{template.label}</div>
+        <div style={{ color: 'var(--text-high)', fontSize: 12, fontWeight: 600 }}>{template.label}</div>
         <div
           style={{
-            color: '#6b7280',
+            color: 'var(--text-mid)',
             fontSize: 10,
             overflow: 'hidden',
             textOverflow: 'ellipsis',
@@ -518,14 +518,14 @@ function PropertiesPanel({
           alignItems: 'center',
           justifyContent: 'center',
           height: '100%',
-          color: '#6b7280',
+          color: 'var(--text-mid)',
           padding: 20,
           textAlign: 'center',
         }}
       >
         <span style={{ fontSize: 32, marginBottom: 12, opacity: 0.4 }}>{'👈'}</span>
         <div style={{ fontSize: 13, fontWeight: 500 }}>Select a node</div>
-        <div style={{ fontSize: 11, marginTop: 4, color: '#4b5563' }}>
+        <div style={{ fontSize: 11, marginTop: 4, color: 'var(--text-mid)' }}>
           Click on a node in the canvas to edit its properties
         </div>
       </div>
@@ -568,7 +568,7 @@ function PropertiesPanel({
 
       {/* Node label */}
       <div style={{ marginBottom: 14 }}>
-        <label style={{ color: '#9ca3af', fontSize: 11, fontWeight: 600, display: 'block', marginBottom: 4, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+        <label style={{ color: 'var(--text-mid)', fontSize: 11, fontWeight: 600, display: 'block', marginBottom: 4, textTransform: 'uppercase', letterSpacing: 0.5 }}>
           Node Label
         </label>
         <input
@@ -577,11 +577,11 @@ function PropertiesPanel({
           onChange={(e) => handleLabelChange(e.target.value)}
           style={{
             width: '100%',
-            background: '#1a1825',
+            background: 'var(--bg-surface)',
             border: '1px solid var(--border)',
             borderRadius: 6,
             padding: '7px 10px',
-            color: '#e5e7eb',
+            color: 'var(--text-high)',
             fontSize: 12,
             outline: 'none',
             boxSizing: 'border-box',
@@ -591,16 +591,16 @@ function PropertiesPanel({
 
       {/* Node ID */}
       <div style={{ marginBottom: 14 }}>
-        <label style={{ color: '#9ca3af', fontSize: 11, fontWeight: 600, display: 'block', marginBottom: 4, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+        <label style={{ color: 'var(--text-mid)', fontSize: 11, fontWeight: 600, display: 'block', marginBottom: 4, textTransform: 'uppercase', letterSpacing: 0.5 }}>
           Node ID
         </label>
         <div
           style={{
-            background: '#1a1825',
+            background: 'var(--bg-surface)',
             border: '1px solid var(--border)',
             borderRadius: 6,
             padding: '7px 10px',
-            color: '#6b7280',
+            color: 'var(--text-mid)',
             fontSize: 11,
             fontFamily: 'monospace',
           }}
@@ -614,7 +614,7 @@ function PropertiesPanel({
         <div key={field.key} style={{ marginBottom: 14 }}>
           <label
             style={{
-              color: '#9ca3af',
+              color: 'var(--text-mid)',
               fontSize: 11,
               fontWeight: 600,
               display: 'block',
@@ -631,11 +631,11 @@ function PropertiesPanel({
               onChange={(e) => handleFieldChange(field.key, e.target.value)}
               style={{
                 width: '100%',
-                background: '#1a1825',
+                background: 'var(--bg-surface)',
                 border: '1px solid var(--border)',
                 borderRadius: 6,
                 padding: '7px 10px',
-                color: '#e5e7eb',
+                color: 'var(--text-high)',
                 fontSize: 12,
                 outline: 'none',
                 cursor: 'pointer',
@@ -656,11 +656,11 @@ function PropertiesPanel({
               rows={3}
               style={{
                 width: '100%',
-                background: '#1a1825',
+                background: 'var(--bg-surface)',
                 border: '1px solid var(--border)',
                 borderRadius: 6,
                 padding: '7px 10px',
-                color: '#e5e7eb',
+                color: 'var(--text-high)',
                 fontSize: 12,
                 outline: 'none',
                 resize: 'vertical',
@@ -676,11 +676,11 @@ function PropertiesPanel({
               placeholder={field.placeholder}
               style={{
                 width: '100%',
-                background: '#1a1825',
+                background: 'var(--bg-surface)',
                 border: '1px solid var(--border)',
                 borderRadius: 6,
                 padding: '7px 10px',
-                color: '#e5e7eb',
+                color: 'var(--text-high)',
                 fontSize: 12,
                 outline: 'none',
                 boxSizing: 'border-box',
@@ -1100,7 +1100,7 @@ export default function PipelineBuilderPage() {
   }, [filteredTemplates]);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 64px)', background: 'var(--bg-app)', color: '#e5e7eb', overflow: 'hidden' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 64px)', background: 'var(--bg-app)', color: 'var(--text-high)', overflow: 'hidden' }}>
       {/* Mobile fallback — ReactFlow drag-and-drop requires a pointer device */}
       <div className="flex sm:hidden flex-col items-center justify-center flex-1 gap-6 p-8 text-center" style={{ height: '100%' }}>
         <div className="w-16 h-16 rounded-2xl flex items-center justify-center bg-[var(--bg-elevated)] border border-[var(--border)]">
@@ -1129,13 +1129,13 @@ export default function PipelineBuilderPage() {
       {/* Global styles for hover effects */}
       <style>{`
         .sidebar-node-item:hover {
-          background: #252336 !important;
-          border-color: #3d3b52 !important;
+          background: var(--bg-elevated) !important;
+          border-color: var(--border) !important;
           transform: translateX(2px);
         }
         .toolbar-btn:hover {
-          background: #252336 !important;
-          border-color: #4b5563 !important;
+          background: var(--bg-elevated) !important;
+          border-color: var(--border) !important;
         }
         .toolbar-btn:active {
           transform: scale(0.97);
@@ -1176,7 +1176,7 @@ export default function PipelineBuilderPage() {
         <a
           href="/pipelines"
           style={{
-            color: '#9ca3af',
+            color: 'var(--text-mid)',
             fontSize: 12,
             textDecoration: 'none',
             display: 'flex',
@@ -1197,11 +1197,11 @@ export default function PipelineBuilderPage() {
           onChange={(e) => setPipelineName(e.target.value)}
           placeholder="Untitled Pipeline"
           style={{
-            background: '#1a1825',
+            background: 'var(--bg-surface)',
             border: '1px solid var(--border)',
             borderRadius: 6,
             padding: '6px 10px',
-            color: '#e5e7eb',
+            color: 'var(--text-high)',
             fontSize: 13,
             fontWeight: 600,
             width: 220,
@@ -1212,7 +1212,7 @@ export default function PipelineBuilderPage() {
         <div style={{ flex: 1 }} />
 
         {/* Node count */}
-        <span style={{ color: '#6b7280', fontSize: 11, marginRight: 4 }}>
+        <span style={{ color: 'var(--text-mid)', fontSize: 11, marginRight: 4 }}>
           {nodes.length} nodes &middot; {edges.length} connections
         </span>
 
@@ -1224,11 +1224,11 @@ export default function PipelineBuilderPage() {
           onClick={handleUndo}
           disabled={history.length === 0}
           style={{
-            background: '#1a1825',
+            background: 'var(--bg-surface)',
             border: '1px solid var(--border)',
             borderRadius: 6,
             padding: '6px 12px',
-            color: history.length === 0 ? '#4b5563' : '#e5e7eb',
+            color: history.length === 0 ? 'var(--text-mid)' : 'var(--text-high)',
             fontSize: 12,
             cursor: history.length === 0 ? 'not-allowed' : 'pointer',
             display: 'flex',
@@ -1244,11 +1244,11 @@ export default function PipelineBuilderPage() {
           className="toolbar-btn"
           onClick={handleClear}
           style={{
-            background: '#1a1825',
+            background: 'var(--bg-surface)',
             border: '1px solid var(--border)',
             borderRadius: 6,
             padding: '6px 12px',
-            color: '#e5e7eb',
+            color: 'var(--text-high)',
             fontSize: 12,
             cursor: 'pointer',
             display: 'flex',
@@ -1380,7 +1380,7 @@ export default function PipelineBuilderPage() {
               background: 'none',
               border: 'none',
               borderBottom: '1px solid var(--border)',
-              color: '#9ca3af',
+              color: 'var(--text-mid)',
               padding: '8px',
               cursor: 'pointer',
               fontSize: 14,
@@ -1394,7 +1394,7 @@ export default function PipelineBuilderPage() {
             <>
               {/* Sidebar header */}
               <div style={{ padding: '12px 14px 8px' }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: '#e5e7eb', marginBottom: 8 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-high)', marginBottom: 8 }}>
                   Node Library
                 </div>
                 <input
@@ -1404,11 +1404,11 @@ export default function PipelineBuilderPage() {
                   placeholder="Search nodes..."
                   style={{
                     width: '100%',
-                    background: '#1a1825',
+                    background: 'var(--bg-surface)',
                     border: '1px solid var(--border)',
                     borderRadius: 6,
                     padding: '6px 10px',
-                    color: '#e5e7eb',
+                    color: 'var(--text-high)',
                     fontSize: 12,
                     outline: 'none',
                     boxSizing: 'border-box',
@@ -1452,7 +1452,7 @@ export default function PipelineBuilderPage() {
                 ))}
 
                 {filteredTemplates.length === 0 && (
-                  <div style={{ color: '#6b7280', fontSize: 12, textAlign: 'center', padding: 20 }}>
+                  <div style={{ color: 'var(--text-mid)', fontSize: 12, textAlign: 'center', padding: 20 }}>
                     No nodes match your search.
                   </div>
                 )}
@@ -1462,17 +1462,17 @@ export default function PipelineBuilderPage() {
                   style={{
                     marginTop: 16,
                     padding: '10px 12px',
-                    background: '#1a1825',
+                    background: 'var(--bg-surface)',
                     borderRadius: 8,
                     border: '1px solid var(--border)',
                   }}
                 >
-                  <div style={{ fontSize: 11, fontWeight: 600, color: '#9ca3af', marginBottom: 6 }}>How to use</div>
-                  <div style={{ fontSize: 10, color: '#6b7280', lineHeight: 1.6 }}>
-                    <div><strong style={{ color: '#9ca3af' }}>Drag</strong> nodes from here onto the canvas</div>
-                    <div><strong style={{ color: '#9ca3af' }}>Connect</strong> nodes by dragging from handles</div>
-                    <div><strong style={{ color: '#9ca3af' }}>Click</strong> a node to edit its properties</div>
-                    <div><strong style={{ color: '#9ca3af' }}>Delete</strong> key to remove selected nodes</div>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-mid)', marginBottom: 6 }}>How to use</div>
+                  <div style={{ fontSize: 10, color: 'var(--text-mid)', lineHeight: 1.6 }}>
+                    <div><strong style={{ color: 'var(--text-mid)' }}>Drag</strong> nodes from here onto the canvas</div>
+                    <div><strong style={{ color: 'var(--text-mid)' }}>Connect</strong> nodes by dragging from handles</div>
+                    <div><strong style={{ color: 'var(--text-mid)' }}>Click</strong> a node to edit its properties</div>
+                    <div><strong style={{ color: 'var(--text-mid)' }}>Delete</strong> key to remove selected nodes</div>
                   </div>
                 </div>
               </div>
@@ -1537,12 +1537,12 @@ export default function PipelineBuilderPage() {
                   style={{
                     marginTop: 120,
                     textAlign: 'center',
-                    color: '#4b5563',
+                    color: 'var(--text-mid)',
                     userSelect: 'none',
                   }}
                 >
                   <div style={{ fontSize: 48, marginBottom: 12, opacity: 0.3 }}>⭐</div>
-                  <div style={{ fontSize: 16, fontWeight: 600, color: '#6b7280' }}>
+                  <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-mid)' }}>
                     Drag nodes here to build your pipeline
                   </div>
                   <div style={{ fontSize: 12, marginTop: 6 }}>
@@ -1574,7 +1574,7 @@ export default function PipelineBuilderPage() {
               background: 'none',
               border: 'none',
               borderBottom: '1px solid var(--border)',
-              color: '#9ca3af',
+              color: 'var(--text-mid)',
               padding: '8px',
               cursor: 'pointer',
               fontSize: 14,
@@ -1591,7 +1591,7 @@ export default function PipelineBuilderPage() {
                   padding: '10px 14px 6px',
                   fontSize: 13,
                   fontWeight: 700,
-                  color: '#e5e7eb',
+                  color: 'var(--text-high)',
                   borderBottom: '1px solid var(--border)',
                 }}
               >
