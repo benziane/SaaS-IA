@@ -77,7 +77,7 @@ export default function DashboardError({ error, reset }: DashboardErrorProps) {
             href="/dashboard"
             style={styles.secondaryButton}
             onMouseOver={(e) => {
-              (e.target as HTMLAnchorElement).style.backgroundColor = '#f5f5f5';
+              (e.target as HTMLAnchorElement).style.backgroundColor = 'var(--bg-elevated)';
             }}
             onMouseOut={(e) => {
               (e.target as HTMLAnchorElement).style.backgroundColor = 'transparent';
@@ -104,7 +104,7 @@ const styles: Record<string, React.CSSProperties> = {
   card: {
     maxWidth: '480px',
     width: '100%',
-    backgroundColor: '#ffffff',
+    backgroundColor: 'var(--bg-surface)',
     borderRadius: '8px',
     padding: '40px 32px',
     textAlign: 'center' as const,
@@ -116,26 +116,26 @@ const styles: Record<string, React.CSSProperties> = {
   title: {
     fontSize: '20px',
     fontWeight: 600,
-    color: '#2f2b3d',
+    color: 'var(--text-high)',
     margin: '0 0 12px 0',
     lineHeight: 1.3,
   },
   message: {
     fontSize: '14px',
-    color: '#6e6b7b',
+    color: 'var(--text-mid)',
     lineHeight: 1.6,
     margin: '0 0 24px 0',
   },
   details: {
     textAlign: 'left' as const,
     marginBottom: '24px',
-    border: '1px solid #ebe9f1',
+    border: '1px solid var(--border)',
     borderRadius: '6px',
     padding: '12px',
   },
   summary: {
     fontSize: '13px',
-    color: '#a8aaae',
+    color: 'var(--text-low)',
     cursor: 'pointer',
     userSelect: 'none' as const,
   },
@@ -146,7 +146,7 @@ const styles: Record<string, React.CSSProperties> = {
     wordBreak: 'break-word' as const,
     marginTop: '12px',
     padding: '12px',
-    backgroundColor: '#fff5f5',
+    backgroundColor: 'var(--bg-elevated)',
     borderRadius: '4px',
     maxHeight: '200px',
     overflow: 'auto',
@@ -179,9 +179,9 @@ const styles: Record<string, React.CSSProperties> = {
     padding: '10px 24px',
     fontSize: '15px',
     fontWeight: 500,
-    color: '#6e6b7b',
+    color: 'var(--text-mid)',
     backgroundColor: 'transparent',
-    border: '1px solid #ebe9f1',
+    border: '1px solid var(--border)',
     borderRadius: '6px',
     cursor: 'pointer',
     transition: 'background-color 0.2s ease',
