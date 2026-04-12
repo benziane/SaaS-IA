@@ -82,13 +82,13 @@ export default function InstallPrompt() {
     >
       <Alert
         variant="info"
-        className="relative rounded-xl shadow-[0_8px_32px_var(--shadow-overlay,rgba(0,0,0,0.3))] bg-[var(--accent)] text-white border-[var(--accent)]"
+        className="relative rounded-xl shadow-[0_8px_32px_var(--shadow-overlay,rgba(0,0,0,0.3))] bg-[var(--accent)] text-[var(--accent-foreground)] border-[var(--accent)]"
       >
         <Download className="h-5 w-5" />
         <button
           onClick={handleDismiss}
           aria-label="Dismiss install prompt"
-          className="absolute right-3 top-3 text-white/80 hover:text-white transition-colors focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-none rounded"
+          className="absolute right-3 top-3 text-[var(--accent-foreground)] opacity-80 hover:opacity-100 transition-opacity focus-visible:ring-2 focus-visible:ring-[var(--accent-foreground)] focus-visible:outline-none rounded"
         >
           <X className="h-4 w-4" />
         </button>
