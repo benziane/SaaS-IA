@@ -90,8 +90,7 @@ export default function VerifyEmailPage(): ReactElement {
         {state === 'loading' && (
           <div className="flex flex-col items-center text-center">
             <div
-              className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4 animate-pulse-glow"
-              className="bg-[var(--bg-elevated)] border border-[var(--border)]"
+              className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4 animate-pulse-glow bg-[var(--bg-elevated)] border border-[var(--border)]"
             >
               <Loader2 className="h-7 w-7 text-white animate-spin" />
             </div>
@@ -206,8 +205,7 @@ export default function VerifyEmailPage(): ReactElement {
         {state === 'no-token' && (
           <div className="flex flex-col items-center text-center">
             <div
-              className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4 animate-pulse-glow"
-              className="bg-[var(--bg-elevated)] border border-[var(--border)]"
+              className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4 animate-pulse-glow bg-[var(--bg-elevated)] border border-[var(--border)]"
             >
               <Mail className="h-6 w-6 text-[var(--accent)]" />
             </div>

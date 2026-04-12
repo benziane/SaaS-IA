@@ -42,6 +42,7 @@
     "allowUnreachableCode": false,
     "allowUnusedLabels": false,
     "exactOptionalPropertyTypes": false, // TODO: Re-enable after fixing Sneat template types
+    "ignoreDeprecations": "6.0",
     /* Next.js Specific */
     "plugins": [
       {

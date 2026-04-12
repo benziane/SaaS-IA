@@ -497,6 +497,18 @@ function PropertiesPanel({
   onUpdate: (nodeId: string, fieldValues: Record<string, string>, label: string) => void;
   onDelete: (nodeId: string) => void;
 }) {
+  // Hooks must be called unconditionally before any early return
+  const [localValues, setLocalValues] = useState<Record<string, string>>(node?.data.fieldValues ?? {});
+  const [localLabel, setLocalLabel] = useState(node?.data.label ?? '');
+  const nodeIdRef = useRef(node?.id ?? '');
+
+  // Sync when selected node changes
+  if (node && nodeIdRef.current !== node.id) {
+    nodeIdRef.current = node.id;
+    setLocalValues(node.data.fieldValues);
+    setLocalLabel(node.data.label);
+  }
+
   if (!node) {
     return (
       <div
@@ -521,16 +533,6 @@ function PropertiesPanel({
   }
 
   const colors = CATEGORY_COLORS[node.data.category] ?? DEFAULT_COLORS;
-  const [localValues, setLocalValues] = useState<Record<string, string>>(node.data.fieldValues);
-  const [localLabel, setLocalLabel] = useState(node.data.label);
-
-  // Sync when selected node changes
-  const nodeIdRef = useRef(node.id);
-  if (nodeIdRef.current !== node.id) {
-    nodeIdRef.current = node.id;
-    setLocalValues(node.data.fieldValues);
-    setLocalLabel(node.data.label);
-  }
 
   const handleFieldChange = (key: string, value: string) => {
     const updated = { ...localValues, [key]: value };

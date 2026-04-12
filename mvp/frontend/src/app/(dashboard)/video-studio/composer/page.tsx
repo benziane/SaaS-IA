@@ -50,6 +50,7 @@ interface Composition {
 const SCENE_TYPE_META: Record<SceneType, { label: string; icon: React.ReactNode; color: string }> = {
   title_card:    { label: 'Title Card',    icon: <Type className="h-4 w-4" />,  color: '#7c4dff' },
   text_overlay:  { label: 'Text Overlay',  icon: <Type className="h-4 w-4" />,  color: '#00bfa5' },
+  // eslint-disable-next-line jsx-a11y/alt-text
   image:         { label: 'Image',         icon: <Image className="h-4 w-4" />, color: '#ff6d00' },
   bullet_points: { label: 'Bullets',       icon: <List className="h-4 w-4" />,  color: '#2979ff' },
   outro:         { label: 'Outro',         icon: <Hand className="h-4 w-4" />,  color: '#f50057' },
@@ -314,6 +315,7 @@ function SceneRenderer({
       return (
         <div style={baseStyle}>
           <div style={{ width: '70%', height: '60%', borderRadius: 12, background: `linear-gradient(135deg, ${scene.bgColor}cc, ${scene.bgColor}66)`, border: `2px dashed ${scene.textColor}40`, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
+            {/* eslint-disable-next-line jsx-a11y/alt-text */}
             <Image style={{ fontSize: 48, color: `${scene.textColor}60` }} />
             <span style={{ color: `${scene.textColor}80`, fontSize: 14 }}>Image placeholder</span>
           </div>

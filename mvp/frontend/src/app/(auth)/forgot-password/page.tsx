@@ -125,8 +125,7 @@ export default function ForgotPasswordPage(): ReactElement {
             {/* Logo & branding */}
             <div className="flex flex-col items-center mb-8">
               <div
-                className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4 animate-pulse-glow"
-                className="bg-[var(--bg-elevated)] border border-[var(--border)]"
+                className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4 bg-[var(--bg-elevated)] border border-[var(--border)]"
               >
                 <Mail className="h-6 w-6 text-[var(--accent)]" />
               </div>

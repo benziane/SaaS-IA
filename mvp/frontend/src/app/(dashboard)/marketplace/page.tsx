@@ -37,6 +37,7 @@ const CATEGORY_ICONS: Record<string, React.ReactNode> = {
   productivity: <Gauge className="h-4 w-4" />,
   content: <Pencil className="h-4 w-4" />,
   data: <BarChart3 className="h-4 w-4" />,
+  // eslint-disable-next-line jsx-a11y/alt-text
   media: <Image className="h-4 w-4" />,
   security: <Shield className="h-4 w-4" />,
   automation: <RefreshCw className="h-4 w-4" />,

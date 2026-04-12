@@ -14,7 +14,7 @@ import {
   Tooltip as RechartsTooltip,
   ResponsiveContainer,
 } from 'recharts';
-import { TrendingUp, TrendingDown, ArrowRight, CheckCircle2, AlertCircle, Clock, Activity } from 'lucide-react';
+import { TrendingUp, TrendingDown, ArrowRight, CheckCircle2, Activity } from 'lucide-react';
 
 import { Button } from '@/lib/design-hub/components/Button';
 import { Skeleton } from '@/lib/design-hub/components/Skeleton';
@@ -472,7 +472,7 @@ function ModuleStatus() {
 
 // --- Main Dashboard ---
 export default function DashboardPage() {
-  const { data: user, isLoading: userLoading } = useCurrentUser();
+  const { isLoading: userLoading } = useCurrentUser();
   const { data: stats, isLoading: statsLoading } = useStats();
 
   if (userLoading) {
