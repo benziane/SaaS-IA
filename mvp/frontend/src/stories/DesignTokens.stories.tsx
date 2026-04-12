@@ -175,7 +175,7 @@ function TokenShowcase() {
 const meta = {
   title: 'Design System/Tokens',
   component: TokenShowcase,
-  tags: ['autodocs'],
+  tags: ['autodocs', 'a11y'],
   parameters: {
     layout: 'fullscreen',
     docs: {

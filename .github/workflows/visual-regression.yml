@@ -1,0 +1,121 @@
+name: Visual Regression Tests
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'mvp/frontend/**'
+      - '.github/workflows/visual-regression.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'mvp/frontend/**'
+      - '.github/workflows/visual-regression.yml'
+  # Allow manual trigger to regenerate baseline snapshots
+  workflow_dispatch:
+    inputs:
+      update_snapshots:
+        description: 'Update baseline snapshots (--update-snapshots)'
+        required: false
+        default: 'false'
+        type: boolean
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  visual-regression:
+    name: Playwright Visual Snapshots
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: mvp/frontend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: mvp/frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright Chromium browser
+        run: npx playwright install chromium --with-deps
+
+      # Build the Next.js app so we can serve a static/production build
+      # and avoid relying on a live dev server in CI.
+      - name: Build Next.js application
+        run: npm run build
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:8004
+
+      # Serve the production build on port 3002 in the background
+      - name: Start production server
+        run: npm run start &
+        env:
+          PORT: 3002
+
+      # Wait until the server is accepting connections before running tests
+      - name: Wait for server to be ready
+        run: |
+          echo "Waiting for http://localhost:3002 ..."
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:3002 > /dev/null 2>&1; then
+              echo "Server is up after ${i}s"
+              break
+            fi
+            sleep 1
+          done
+
+      # Optionally update snapshots when triggered manually with update_snapshots=true
+      - name: Run visual regression tests (update snapshots)
+        if: ${{ inputs.update_snapshots == 'true' }}
+        run: npx playwright test e2e/visual.spec.ts --update-snapshots
+        env:
+          CI: true
+          E2E_BASE_URL: http://localhost:3002
+
+      - name: Run visual regression tests
+        if: ${{ inputs.update_snapshots != 'true' }}
+        run: npx playwright test e2e/visual.spec.ts
+        env:
+          CI: true
+          E2E_BASE_URL: http://localhost:3002
+
+      # Always upload the HTML report and any diff/actual screenshots on failure
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-visual-report
+          path: mvp/frontend/playwright-report/
+          retention-days: 14
+
+      - name: Upload screenshot diffs on failure
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-visual-diffs
+          path: |
+            mvp/frontend/e2e/visual.spec.ts-snapshots/
+            mvp/frontend/test-results/
+          retention-days: 14
+
+      # When snapshots were updated, commit them back to the branch
+      - name: Commit updated snapshots
+        if: ${{ inputs.update_snapshots == 'true' }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add e2e/visual.spec.ts-snapshots/ || true
+          git diff --staged --quiet || git commit -m "chore(ci): update visual regression baselines [skip ci]"
+          git push
