@@ -78,7 +78,7 @@
   "devDependencies": {
     "@axe-core/playwright": "^4.11.1",
     "@iconify/json": "^2.2.453",
-    "@iconify/tools": "^4.2.0",
+    "@iconify/tools": "^5.0.11",
     "@iconify/types": "^2.0.0",
     "@iconify/utils": "^2.3.0",
     "@playwright/test": "^1.59.1",
