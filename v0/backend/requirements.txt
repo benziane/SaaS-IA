@@ -40,7 +40,7 @@ passlib[bcrypt]==1.7.4
 python-dateutil==2.8.2
 
 # HTTP and API
-httpx==0.26.0
+httpx==0.28.1
 aiofiles==23.2.1
 
 # Monitoring and logging
@@ -54,7 +54,7 @@ python-dotenv==1.0.0
 pytest==7.4.4
 pytest-asyncio==0.23.3
 pytest-cov==4.1.0
-httpx==0.26.0
+httpx==0.28.1
 
 # CORS
 fastapi-cors==0.0.6
