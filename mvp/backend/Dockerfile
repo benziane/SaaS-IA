@@ -19,19 +19,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
-# Install uv — fast Python package manager (replaces pip for dependency resolution)
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
-
+# Install uv via pip instead of ghcr.io (network issues)
 RUN python -m venv /opt/venv
-ENV PATH="/opt/venv/bin:$PATH" \
-    UV_SYSTEM_PYTHON=0 \
-    UV_PROJECT_ENVIRONMENT=/opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+RUN /opt/venv/bin/pip install --upgrade pip setuptools wheel uv
 
 COPY requirements.txt /tmp/requirements.txt
 # lxml 6.x override — crawl4ai and streamlink try to pull lxml<6 which has no Py3.14 wheel
 # We force lxml>=6.0.0 via uv override, bypassing transitive pins
 RUN echo "lxml>=6.0.0" > /tmp/lxml_override.txt
-RUN uv pip install --no-cache \
+RUN /opt/venv/bin/uv pip install --no-cache \
         --override /tmp/lxml_override.txt \
         -r /tmp/requirements.txt \
     && rm /tmp/requirements.txt /tmp/lxml_override.txt
